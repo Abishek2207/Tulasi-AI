@@ -1,0 +1,14 @@
+fastapi==0.109.2
+uvicorn==0.27.1
+pydantic==2.6.1
+pydantic-settings==2.1.0
+python-dotenv==1.0.1
+supabase==2.3.4
+langchain==0.1.7
+langchain-google-genai==0.0.8
+langchain-groq==0.0.1
+pymupdf==1.23.21  # For fast PDF text extraction
+faiss-cpu==1.7.4  # For local vector storage (if chroma fails on low RAM)
+chromadb==0.4.22
+python-multipart==0.0.9
+vecs==0.4.0
