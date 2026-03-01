@@ -11,7 +11,7 @@ async def get_educational_videos(query: str = "software engineering tutorial", l
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults={limit}&q={query}&type=video&videoCategoryId=27&key={YOUTUBE_API_KEY}"
     
     async with httpx.AsyncClient() as client:
-        try {
+        try:
             response = await client.get(url)
             response.raise_for_status()
             data = response.json()
