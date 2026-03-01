@@ -11,7 +11,17 @@ from langchain.chains import LLMChain
 # Document Processing Imports
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+# Langchain imports
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import SystemMessage, HumanMessage
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import LLMChain
+
+# Document Processing Imports
+from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import SupabaseVectorStore
 from supabase.client import create_client, Client
 
@@ -32,13 +42,6 @@ def get_ai_model():
     return ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key, temperature=0.7)
 
 llm = get_ai_model()
-
-# Initialize Local Embedding Model (100% Free, runs offline)
-try:
-    hf_embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-except Exception as e:
-    print(f"Warning: Failed to load local embeddings. {e}")
-    hf_embeddings = None
 
 # Memory for user sessions
 user_memories = {}
@@ -70,7 +73,7 @@ def chat_with_tulasiai(message: str, user_id: str = "default_user", context: str
     
     # RAG: Query Supabase pgvector
     rag_context = ""
-    if supabase and hf_embeddings:
+    if supabase:
         rag_context = query_supabase_vectorstore(message, user_id)
     
     # Combine provided context and RAG context
@@ -99,9 +102,9 @@ def chat_with_tulasiai(message: str, user_id: str = "default_user", context: str
 
 # RAG specific functions (Supabase pgvector)
 def process_pdf_for_rag(pdf_path: str, user_id: str = "default_user"):
-    """Loads a PDF, chunks it, and saves to Supabase pgvector using local embeddings."""
-    if not hf_embeddings or not supabase:
-        print("Error: Embeddings model or Supabase client not initialized.")
+    """Loads a PDF, chunks it, and saves to Supabase pgvector."""
+    if not os.getenv("GOOGLE_API_KEY") or not supabase:
+        print("Error: Google API key or Supabase client not initialized.")
         return None
     
     try:
@@ -115,10 +118,12 @@ def process_pdf_for_rag(pdf_path: str, user_id: str = "default_user"):
         for split in splits:
             split.metadata["user_id"] = user_id
             
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        
         # Save to Supabase
         vector_store = SupabaseVectorStore.from_documents(
             splits,
-            hf_embeddings,
+            embeddings,
             client=supabase,
             table_name="documents",
             query_name="match_documents",
@@ -130,11 +135,12 @@ def process_pdf_for_rag(pdf_path: str, user_id: str = "default_user"):
 
 def query_supabase_vectorstore(query: str, user_id: str):
     """Searches Supabase pgvector for relevant chunks filtered by user_id."""
-    if not supabase or not hf_embeddings: return ""
+    if not supabase: return ""
     try:
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         vector_store = SupabaseVectorStore(
             client=supabase,
-            embedding=hf_embeddings,
+            embedding=embeddings,
             table_name="documents",
             query_name="match_documents",
         )
