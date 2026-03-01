@@ -1,59 +1,126 @@
 "use client";
-import React from 'react';
-import Link from 'next/link';
-import { Mail, ArrowLeft, ShieldQuestion, Sparkles, ChevronRight, Send, Cpu } from 'lucide-react';
+import React, { useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion } from 'framer-motion';
+import {
+    Mail, ArrowRight, Bot, Loader2,
+    CheckCircle2, ChevronLeft
+} from 'lucide-react';
+import Link from 'next/link';
 
 export default function ForgotPasswordPage() {
+    const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+    const supabase = createClientComponentClient();
+
+    const handleReset = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+        });
+
+        if (authError) {
+            setError(authError.message);
+            setLoading(false);
+        } else {
+            setSuccess(true);
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-gray-950">
-            {/* Background Decorations */}
-            <div className="absolute top-0 left-0 w-full h-full -z-10">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full"></div>
-            </div>
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center p-6 relative overflow-hidden">
+            <div className="absolute top-1/4 -right-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
+            <div className="absolute bottom-1/4 -left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-700"></div>
 
             <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="max-w-[480px] w-full glass-panel p-10 md:p-14 space-y-10 relative border-2 border-white/5 shadow-[0_32px_120px_-10px_rgba(0,0,0,0.8)]"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="w-full max-w-[450px] glass-panel p-10 relative z-10 border border-white/10 shadow-2xl"
             >
-                <div className="absolute top-0 right-0 p-8 opacity-10 -rotate-12 pointer-events-none">
-                    <ShieldQuestion size={120} className="text-indigo-500" />
-                </div>
-
-                <div className="space-y-4 text-center md:text-left">
-                    <div className="flex items-center justify-center md:justify-start gap-4 mb-2">
-                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-600/20">
-                            <ShieldQuestion size={24} />
-                        </div>
-                        <h1 className="text-4xl font-black text-white tracking-tight uppercase">Recover</h1>
-                    </div>
-                    <p className="text-gray-500 text-sm font-bold uppercase tracking-widest pl-1">Restore your access to the Neural Ecosystem</p>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Registered Email</label>
-                        <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 flex items-center gap-3 focus-within:border-indigo-500/50 transition-all">
-                            <Mail size={18} className="text-gray-500" />
-                            <input type="email" placeholder="student@tulasiai.com" className="bg-transparent border-none outline-none flex-1 text-sm text-gray-200" />
-                        </div>
-                    </div>
-
-                    <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/30 active:scale-95 flex items-center justify-center gap-3">
-                        <Send size={18} /> Send Recovery Link
-                    </button>
-
-                    <Link href="/(auth)/login" className="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white py-4 rounded-2xl transition-all flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest group">
-                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Authentication
+                <div className="mb-10 text-left">
+                    <Link href="/login" className="flex items-center gap-2 text-xs font-black text-gray-500 hover:text-white transition-colors uppercase tracking-[4px] mb-8 group">
+                        <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Login
                     </Link>
+                    <div className="w-16 h-16 bg-indigo-600 rounded-2xl mb-6 flex items-center justify-center shadow-lg shadow-indigo-600/20">
+                        <Bot size={32} className="text-white" />
+                    </div>
+                    <h1 className="text-3xl font-black text-white mb-2">Neural Reset</h1>
+                    <p className="text-gray-400 text-sm font-medium">We'll help you reconnect to your dashboard</p>
                 </div>
 
-                <div className="text-center pt-4 border-t border-white/5">
-                    <p className="text-[10px] font-black text-gray-700 uppercase tracking-[4px] leading-relaxed">
-                        Security Notice: If you don't receive an email within 5 minutes, please check your spam folder or contact neural-support.
-                    </p>
-                </div>
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-bold uppercase tracking-wider text-center"
+                    >
+                        {error}
+                    </motion.div>
+                )}
+
+                {success ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center space-y-6"
+                    >
+                        <div className="w-16 h-16 bg-green-500/20 rounded-full mx-auto flex items-center justify-center text-green-500">
+                            <CheckCircle2 size={32} />
+                        </div>
+                        <p className="text-sm text-gray-400 leading-relaxed">
+                            If an account exists for <span className="text-white font-bold">{email}</span>, you will receive a password reset link shortly.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setEmail('');
+                                setSuccess(false);
+                            }}
+                            className="text-[10px] font-black text-indigo-400 hover:text-indigo-300 uppercase tracking-widest transition-colors"
+                        >
+                            Try another email?
+                        </button>
+                    </motion.div>
+                ) : (
+                    <form onSubmit={handleReset} className="space-y-8">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Account Email</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Mail size={18} className="text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+                                </div>
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600"
+                                    placeholder="name@example.com"
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed group"
+                        >
+                            {loading ? (
+                                <Loader2 className="animate-spin" size={20} />
+                            ) : (
+                                <>
+                                    Send Reset Link <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
+                        </button>
+                    </form>
+                )}
             </motion.div>
         </div>
     );
