@@ -2,16 +2,6 @@ import sys
 import os
 import pydantic
 
-# Pydantic v2 Compatibility Shim for Legacy Libs
-if pydantic.__version__.startswith("2"):
-    try:
-        from pydantic import v1 as pydantic_v1
-        sys.modules["pydantic.fields"] = pydantic_v1.fields
-        if hasattr(pydantic_v1, "main"): sys.modules["pydantic.main"] = pydantic_v1.main
-        if hasattr(pydantic_v1, "typing"): sys.modules["pydantic.typing"] = pydantic_v1.typing
-    except (ImportError, AttributeError):
-        pass
-
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
