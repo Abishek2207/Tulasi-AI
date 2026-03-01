@@ -45,11 +45,17 @@ export default function LoginPage() {
     };
 
     const signInWithGoogle = async () => {
-        await supabase.auth.signInWithOAuth({ provider: 'google' });
+        await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: `${window.location.origin}/dashboard` }
+        });
     };
 
     const signInWithGithub = async () => {
-        await supabase.auth.signInWithOAuth({ provider: 'github' });
+        await supabase.auth.signInWithOAuth({
+            provider: 'github',
+            options: { redirectTo: `${window.location.origin}/dashboard` }
+        });
     };
 
     return (
