@@ -1,19 +1,19 @@
-fastapi==0.109.2
-uvicorn==0.27.1
-pydantic==2.6.1
-pydantic-settings==2.1.0
-python-dotenv==1.0.1
-supabase==2.3.4
-langchain==0.1.7
-langchain-google-genai==0.0.8
-langchain-groq==0.0.1
-langchain-community==0.0.20
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-dotenv
+supabase
+langchain
+langchain-google-genai
+langchain-groq
+langchain-community
 PyMuPDF==1.24.4  # For fast PDF text extraction (pre-built wheels available)
-faiss-cpu==1.8.0  # For local vector storage
-chromadb==0.4.22
-python-multipart==0.0.9
-httpx==0.25.2
-langchain-text-splitters==0.0.1
-gunicorn==21.2.0
-vecs==0.4.0
-SQLAlchemy==2.0.28
+faiss-cpu
+chromadb
+python-multipart
+httpx
+langchain-text-splitters
+gunicorn
+vecs
+SQLAlchemy
