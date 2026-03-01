@@ -12,4 +12,7 @@ PyMuPDF==1.24.4  # For fast PDF text extraction (pre-built wheels available)
 faiss-cpu==1.8.0  # For local vector storage
 chromadb==0.4.22
 python-multipart==0.0.9
+httpx==0.27.0
+langchain-text-splitters==0.0.1
+gunicorn==21.2.0
 vecs==0.4.0
