@@ -8,12 +8,13 @@ langchain
 langchain-google-genai
 langchain-groq
 langchain-community
-PyMuPDF==1.24.4  # For fast PDF text extraction (pre-built wheels available)
+PyMuPDF==1.25.1
 faiss-cpu
-chromadb
 python-multipart
 httpx
 langchain-text-splitters
 gunicorn
-vecs
 SQLAlchemy
+reportlab
+python-socketio
+websockets
