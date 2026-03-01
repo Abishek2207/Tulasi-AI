@@ -34,7 +34,8 @@ const CodeLab: React.FC = () => {
     const fetchLeetCodeStats = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('http://localhost:8000/api/leetcode/stats/demo_user');
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const response = await axios.get(`${API_BASE_URL}/api/leetcode/stats/demo_user`);
             setStats(response.data);
         } catch (error) {
             console.error('Error fetching LeetCode stats:', error);

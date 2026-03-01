@@ -61,8 +61,9 @@ const MockInterview: React.FC = () => {
         };
         setMessages([welcomeMsg]);
 
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         try {
-            const response = await axios.post('http://localhost:8000/api/interview', {
+            const response = await axios.post(`${API_BASE_URL}/api/interview`, {
                 user_id: "demo_student",
                 action: "start",
                 topic: topic,
@@ -88,8 +89,9 @@ const MockInterview: React.FC = () => {
         setInput('');
         setIsLoading(true);
 
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         try {
-            const response = await axios.post('http://localhost:8000/api/interview', {
+            const response = await axios.post(`${API_BASE_URL}/api/interview`, {
                 user_id: "demo_student",
                 action: "answer",
                 answer: userMsg.text
