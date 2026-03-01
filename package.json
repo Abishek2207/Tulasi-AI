@@ -1,0 +1,12 @@
+{
+    "name": "tulasiai",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev:frontend": "cd frontend && npm run dev",
+        "dev:backend": "cd backend && uvicorn main:app --reload",
+        "build:frontend": "cd frontend && npm run build",
+        "start:frontend": "cd frontend && npm run start",
+        "install:all": "npm install --prefix frontend && pip install -r backend/requirements.txt"
+    }
+}

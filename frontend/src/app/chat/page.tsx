@@ -43,8 +43,9 @@ export default function ChatPage() {
         formData.append('file', file);
         formData.append('user_id', 'demo_student');
 
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         try {
-            const response = await axios.post('http://localhost:8000/api/upload-document', formData, {
+            const response = await axios.post(`${API_BASE_URL}/api/upload-document`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: response.data.status }]);
@@ -66,8 +67,9 @@ export default function ChatPage() {
         setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'user', text: input }]);
         setIsTyping(true);
 
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         try {
-            const response = await axios.post('http://localhost:8000/api/chat', { message: input, user_id: "demo_student" });
+            const response = await axios.post(`${API_BASE_URL}/api/chat`, { message: input, user_id: "demo_student" });
             setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), sender: 'ai', text: response.data.response }]);
         } catch (error) {
             setMessages(prev => [...prev, { id: 'err', sender: 'ai', text: "Neural link interrupted. Please verify backend connectivity." }]);
