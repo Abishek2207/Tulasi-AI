@@ -5,8 +5,16 @@ import uvicorn
 import os
 from typing import Optional
 
-# Import Routers
-from routers import auth, chat, code, interview, leetcode, youtube, roadmap, groups, resume, certificates, notes, hackathons, activity, leaderboard
+# Use absolute imports for reliability
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from routers import (
+    auth, chat, code, interview, leetcode, youtube, 
+    roadmap, groups, resume, certificates, notes, 
+    hackathons, activity, leaderboard
+)
 
 app = FastAPI(title="TulasiAI API", version="2.0.0")
 
