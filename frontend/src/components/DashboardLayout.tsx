@@ -4,7 +4,6 @@ import TopHeader from "@/components/TopHeader";
 import PageTransition from "@/components/PageTransition";
 import { useAppStore } from "@/lib/store";
 import { motion } from "framer-motion";
-import "./App.css";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { user, isSidebarOpen } = useAppStore();

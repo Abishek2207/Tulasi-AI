@@ -1,0 +1,33 @@
+{
+    "common": {
+        "welcome": "Welcome to TulasiAI",
+        "login": "Login",
+        "register": "Register",
+        "logout": "Logout",
+        "dashboard": "Dashboard",
+        "search": "Search anything...",
+        "ai_assistant": "Neural Assistant",
+        "notifications": "Notifications",
+        "settings": "Settings",
+        "profile": "Profile"
+    },
+    "dashboard": {
+        "xp_level": "Level {{level}} Scholar",
+        "daily_streak": "{{days}} Day Streak",
+        "weekly_progress": "Weekly Performance",
+        "badges": "Badges Earned",
+        "daily_challenge": "Daily Neural Challenge",
+        "recommended": "Recommended for You"
+    },
+    "chat": {
+        "placeholder": "Ask anything or upload a lecture PDF...",
+        "ai_thinking": "Neural Engine is processing...",
+        "upload_pdf": "Attach PDF for Analysis"
+    },
+    "notes": {
+        "title": "AI Notes Hub",
+        "new_note": "Create New Note",
+        "summarize": "AI Summarize",
+        "generate_quiz": "Generate Quiz"
+    }
+}

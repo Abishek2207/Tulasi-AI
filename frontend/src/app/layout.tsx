@@ -1,26 +1,48 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import { Inter } from "next/font/google";
+import "@/app/globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TulasiAI – AI-Powered Education & Career Ecosystem",
-  description: "Your all-in-one AI-powered learning platform. Practice coding, prepare for interviews, build your resume, and more.",
-  keywords: "TulasiAI, AI learning, coding practice, mock interview, resume builder, career roadmap",
+  title: "TulasiAI — Advanced AI Education Platform",
+  description: "Accelerate your learning with AI roadmaps, mock interviews, and personalized tutoring.",
   openGraph: {
-    title: "TulasiAI – AI-Powered Education Ecosystem",
-    description: "AI-powered all-in-one education and career development platform",
+    title: "TulasiAI — Advanced AI Education Platform",
+    description: "Accelerate your learning with AI roadmaps, mock interviews, and personalized tutoring.",
+    url: "https://tulasiai.com",
+    siteName: "TulasiAI",
+    images: [
+      {
+        url: "https://tulasiai.com/og-image.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "en_US",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TulasiAI — Advanced AI Education Platform",
+    description: "Accelerate your learning with AI roadmaps, mock interviews, and personalized tutoring.",
+    creator: "@TulasiAI",
+    images: ["https://tulasiai.com/twitter-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-      </head>
-      <body>{children}</body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }

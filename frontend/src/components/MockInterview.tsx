@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Play, CheckCircle, Mic, Send, Star } from 'lucide-react';
 import axios from 'axios';
-import '../Chat.css';
 
 interface InterviewMessage {
     id: string;
@@ -21,26 +20,32 @@ const MockInterview: React.FC = () => {
 
     // Voice Recognition State
     const [isListening, setIsListening] = useState(false);
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+    const recognitionRef = useRef<any>(null);
 
-    if (recognition) {
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const rec = new SpeechRecognition();
+                rec.continuous = false;
+                rec.interimResults = false;
+                rec.lang = 'en-US';
 
-        recognition.onstart = () => setIsListening(true);
-        recognition.onend = () => setIsListening(false);
-        recognition.onerror = () => setIsListening(false);
-        recognition.onresult = (e: any) => {
-            const transcript = e.results[0][0].transcript;
-            setInput(prev => prev + (prev ? ' ' : '') + transcript);
-        };
-    }
+                rec.onstart = () => setIsListening(true);
+                rec.onend = () => setIsListening(false);
+                rec.onerror = () => setIsListening(false);
+                rec.onresult = (e: any) => {
+                    const transcript = e.results[0][0].transcript;
+                    setInput(prev => prev + (prev ? ' ' : '') + transcript);
+                };
+                recognitionRef.current = rec;
+            }
+        }
+    }, []);
 
     const toggleListen = () => {
-        if (isListening) recognition?.stop();
-        else recognition?.start();
+        if (isListening) recognitionRef.current?.stop();
+        else recognitionRef.current?.start();
     };
 
     const scrollToBottom = () => {

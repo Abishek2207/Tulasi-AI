@@ -2,11 +2,26 @@
     "name": "tulasiai",
     "version": "1.0.0",
     "private": true,
+    "workspaces": [
+        "frontend"
+    ],
     "scripts": {
-        "dev:frontend": "cd frontend && npm run dev",
+        "dev": "npm run dev --prefix frontend & npm run dev:backend",
+        "dev:frontend": "npm run dev --prefix frontend",
         "dev:backend": "cd backend && uvicorn main:app --reload",
-        "build:frontend": "cd frontend && npm run build",
-        "start:frontend": "cd frontend && npm run start",
-        "install:all": "npm install --prefix frontend && pip install -r backend/requirements.txt"
+        "build": "npm run build --prefix frontend",
+        "start": "npm run start --prefix frontend",
+        "install:all": "npm install && pip install -r backend/requirements.txt",
+        "docker:up": "docker-compose -f docker/docker-compose.yml up --build",
+        "docker:down": "docker-compose -f docker/docker-compose.yml down"
+    },
+    "dependencies": {
+        "concurrently": "^8.2.2"
+    },
+    "devDependencies": {
+        "typescript": "^5",
+        "postcss": "^8",
+        "tailwindcss": "^3.4.1",
+        "autoprefixer": "^10.0.1"
     }
 }

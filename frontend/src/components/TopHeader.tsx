@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from 'react';
 import { Search, Bell } from 'lucide-react';
-import './App.css';
 
 const TopHeader = ({ user }: { user: any }) => {
     const [isSearchFocused, setIsSearchFocused] = useState(false);

@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
-import './App.css';
 
 const Sidebar = () => {
-    const { isSidebarOpen, 切换Sidebar: toggleSidebar } = useAppStore();
+    const { isSidebarOpen, toggleSidebar } = useAppStore();
     const pathname = usePathname();
 
     const navItems = [
