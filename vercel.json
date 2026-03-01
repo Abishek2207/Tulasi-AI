@@ -1,0 +1,9 @@
+{
+    "version": 2,
+    "public": true,
+    "cleanUrls": true,
+    "buildCommand": "npm run build",
+    "installCommand": "npm install --legacy-peer-deps",
+    "framework": "nextjs",
+    "rootDirectory": "frontend"
+}
