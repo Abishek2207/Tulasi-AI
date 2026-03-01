@@ -16,3 +16,6 @@ httpx==0.25.2
 langchain-text-splitters==0.0.1
 gunicorn==21.2.0
 vecs==0.4.0
+SQLAlchemy==2.0.28
+langchain-huggingface==0.0.3
+sentence-transformers==2.7.0

@@ -12,16 +12,18 @@ if pydantic.__version__.startswith("2"):
     except (ImportError, AttributeError):
         pass
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 # Graceful imports - don't crash if optional modules fail
 try:
-    from database import create_user, save_chat_history
+    from database import get_db, create_user, save_chat_history
 except Exception as e:
     print(f"Warning: database module failed to load: {e}")
+    def get_db(): yield None
     def create_user(*args, **kwargs): return None
     def save_chat_history(*args, **kwargs): return None
 
@@ -59,6 +61,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class AuthRequest(BaseModel):
+    user_id: str
+    email: str
+    name: str
+
+@app.post("/api/auth/login")
+async def sync_user(request: AuthRequest, db: Session = Depends(get_db)):
+    """Syncs Firebase/Auth provider user into our SQLite/Supabase DB."""
+    try:
+        user = create_user(db, request.email, request.user_id, request.name)
+        if user:
+            return {"status": "success", "message": "User synced successfully", "streak": user.streak}
+        return {"status": "success", "message": "User already exists"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class ChatRequest(BaseModel):
     message: str
     user_id: str = "demo_student"
@@ -69,13 +87,20 @@ async def root():
     return {"message": "Welcome to the TulasiAI API", "status": "online"}
 
 @app.post("/api/chat")
-async def chat_interaction(request: ChatRequest):
+async def chat_interaction(request: ChatRequest, db: Session = Depends(get_db)):
     try:
+        # Save user message
+        if db: save_chat_history(db, request.user_id, request.message, "user")
+        
         ai_response = chat_with_tulasiai(
             message=request.message, 
             user_id=request.user_id, 
-            context=request.context
+            context=request.context,
+            db_session=db
         )
+        
+        # Save AI response
+        if db: save_chat_history(db, request.user_id, ai_response, "ai")
         return {"response": ai_response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
