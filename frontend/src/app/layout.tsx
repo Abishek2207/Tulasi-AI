@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "@/app/globals.css";
+import EasterEgg from "@/components/EasterEgg";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "TulasiAI — Advanced AI Education Platform",
   description: "Accelerate your learning with AI roadmaps, mock interviews, and personalized tutoring.",
+  other: {
+    "tulasi-ai": "antigravity-enabled"
+  },
   openGraph: {
     title: "TulasiAI — Advanced AI Education Platform",
     description: "Accelerate your learning with AI roadmaps, mock interviews, and personalized tutoring.",
@@ -42,7 +46,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <EasterEgg />
+        {children}
+      </body>
     </html>
   );
 }
