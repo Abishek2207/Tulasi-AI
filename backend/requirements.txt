@@ -11,7 +11,7 @@ httpx==0.24.1
 deep-translator==1.11.4
 SpeechRecognition>=3.10.0
 gtts==2.5.1
-pillow>=11.0.0
+pillow>=10.0.0,<11.0.0
 reportlab==4.1.0
 python-jose==3.3.0
 passlib==1.7.4
@@ -19,5 +19,4 @@ redis==5.0.1
 celery==5.3.6
 websockets==12.0
 langdetect==1.0.9
-sentence-transformers>=3.0.0
 setuptools
