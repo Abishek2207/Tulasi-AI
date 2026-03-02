@@ -1,21 +1,54 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+# backend/routers/resume.py
+from fastapi import APIRouter
+from services.langchain_service import llm
 from pydantic import BaseModel
-from typing import List, Optional
 
-router = APIRouter(prefix="/api/resume", tags=["AI Resume Builder"])
+router = APIRouter()
 
 class ResumeData(BaseModel):
     name: str
-    experience: List[dict]
-    education: List[dict]
-    skills: List[str]
+    email: str
+    phone: str
+    skills: list
+    experience: list
+    education: list
+    projects: list
+    target_role: str
 
-@router.post("/build")
-async def build_resume(data: ResumeData):
-    # Logic to generate a PDF resume
-    return {"status": "success", "resume_url": "/assets/certificates/sample_resume.pdf"}
+@router.post("/generate")
+async def generate_resume(data: ResumeData):
+    resume_content = llm.invoke(f"""
+    Create a professional ATS-friendly resume for:
+    Name: {data.name}
+    Target Role: {data.target_role}
+    Skills: {', '.join(data.skills)}
+    
+    Experience: {data.experience}
+    Education: {data.education}
+    Projects: {data.projects}
+    
+    Return a complete, formatted resume in HTML format.
+    Make it ATS-friendly with proper keywords for {data.target_role}.
+    Use clean, professional formatting.
+    """)
+    return {"resume_html": resume_content.content}
 
 @router.post("/ats-check")
-async def check_ats_score(file: UploadFile = File(...)):
-    # Mock ATS scoring logic
-    return {"score": 85, "suggestions": ["Add more keywords", "Simplify layout"]}
+async def check_ats_score(resume_text: str, job_description: str):
+    analysis = llm.invoke(f"""
+    Analyze this resume against the job description for ATS compatibility:
+    
+    Resume: {resume_text}
+    Job Description: {job_description}
+    
+    Provide JSON:
+    {{
+      "ats_score": 0-100,
+      "matched_keywords": [],
+      "missing_keywords": [],
+      "improvements": [],
+      "strengths": [],
+      "overall_feedback": "..."
+    }}
+    """)
+    return {"analysis": analysis.content}
