@@ -11,18 +11,21 @@ import os
 from datetime import date, timedelta
 from langdetect import detect
 
+# ENV
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# 🔥 Lazy Supabase Init (IMPORTANT FIX)
+def get_supabase():
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+    return create_client(url, key)
 
-# Free Embeddings
+# Embeddings
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-# Free LLM via Groq
+# LLM (Groq)
 llm = ChatGroq(
     model="llama3-70b-8192",
     api_key=GROQ_API_KEY,
@@ -55,7 +58,13 @@ Chat History:
 {chat_history}
 """
 
+# -------------------------
+# RAG CHAIN
+# -------------------------
+
 def get_rag_chain(session_id: str):
+    supabase = get_supabase()
+
     vectorstore = SupabaseVectorStore(
         client=supabase,
         embedding=embeddings,
@@ -85,14 +94,23 @@ def get_rag_chain(session_id: str):
     
     return chain
 
+
+# -------------------------
+# PDF PROCESSING
+# -------------------------
+
 async def process_pdf(file_content: bytes, user_id: str, filename: str):
     import PyPDF2
     import io
+
+    supabase = get_supabase()
     
     reader = PyPDF2.PdfReader(io.BytesIO(file_content))
     text = ""
     for page in reader.pages:
-        text += page.extract_text()
+        extracted = page.extract_text()
+        if extracted:
+            text += extracted
     
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
@@ -100,8 +118,7 @@ async def process_pdf(file_content: bytes, user_id: str, filename: str):
     )
     chunks = splitter.split_text(text)
     
-    # Store in Supabase vector store
-    vectorstore = SupabaseVectorStore.from_texts(
+    SupabaseVectorStore.from_texts(
         texts=chunks,
         embedding=embeddings,
         client=supabase,
@@ -112,13 +129,25 @@ async def process_pdf(file_content: bytes, user_id: str, filename: str):
     
     return {"chunks": len(chunks), "filename": filename}
 
+
+# -------------------------
+# TRANSLATION
+# -------------------------
+
 async def translate_text(text: str, target_lang: str) -> str:
     if target_lang == "en":
         return text
     translator = GoogleTranslator(source="auto", target=target_lang)
     return translator.translate(text)
 
+
+# -------------------------
+# CHAT RESPONSE
+# -------------------------
+
 async def detect_and_respond(question: str, session_id: str, user_id: str):
+    supabase = get_supabase()
+
     lang = detect(question)
     chain = get_rag_chain(session_id)
     
@@ -130,25 +159,44 @@ async def detect_and_respond(question: str, session_id: str, user_id: str):
         supabase.table("activity_logs").insert({
             "user_id": user_id,
             "action": "chat_message",
-            "metadata": {"question_length": len(question), "language": lang}
+            "metadata": {
+                "question_length": len(question),
+                "language": lang
+            }
         }).execute()
     except Exception as e:
         print(f"Error logging activity: {e}")
     
-    # Update streak
     update_streak(user_id)
     
     return {
         "answer": answer,
         "language": lang,
-        "sources": [doc.page_content[:200] for doc in result.get("source_documents", [])]
+        "sources": [
+            doc.page_content[:200]
+            for doc in result.get("source_documents", [])
+        ]
     }
 
+
+# -------------------------
+# STREAK SYSTEM
+# -------------------------
+
 def update_streak(user_id: str):
+    supabase = get_supabase()
     today = date.today()
     
     try:
-        user = supabase.table("users").select("*").eq("id", user_id).single().execute()
+        user = (
+            supabase
+            .table("users")
+            .select("*")
+            .eq("id", user_id)
+            .single()
+            .execute()
+        )
+
         user_data = user.data
         
         if not user_data:
@@ -172,5 +220,6 @@ def update_streak(user_id: str):
             "last_active": str(today),
             "total_xp": user_data.get("total_xp", 0) + 10
         }).eq("id", user_id).execute()
+
     except Exception as e:
         print(f"Error updating streak: {e}")
