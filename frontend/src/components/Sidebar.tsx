@@ -87,9 +87,7 @@ export function Sidebar() {
             {/* Logo */}
             <div className="flex h-16 items-center border-b border-border px-5 shrink-0">
                 <Link href="/" className="flex items-center gap-2.5 group">
-                    <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                        <Zap className="h-4 w-4 text-white" />
-                    </div>
+                    <img src="/logo.png" alt="Tulasi AI" className="w-8 h-8 rounded-lg object-contain bg-white shadow-md group-hover:shadow-lg transition-all" />
                     <div className="flex flex-col leading-none">
                         <span className="font-bold text-base gradient-brand-text">Tulasi AI</span>
                         <span className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">Pro Platform</span>
