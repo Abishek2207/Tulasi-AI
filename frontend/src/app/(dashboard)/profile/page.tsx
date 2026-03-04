@@ -1,139 +1,158 @@
 "use client";
-import React, { useState } from 'react';
-import {
-    User, Mail, Shield, ShieldCheck,
-    Bell, Settings, LogOut, Camera,
-    ChevronRight, Zap, Target, Flame,
-    Globe, Lock, Layout, CreditCard,
-    Bot, MoreHorizontal, Rocket
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useAppStore } from '@/lib/store';
 
-const SettingItem = ({ icon: Icon, title, description, badge, delay }: { icon: any, title: string, description: string, badge?: string, delay: number }) => (
-    <motion.div
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, delay }}
-        className="p-6 glass-panel flex items-center justify-between group hover:border-white/20 transition-all cursor-pointer"
-    >
-        <div className="flex items-center gap-6">
-            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-hover:bg-indigo-600/20 group-hover:text-indigo-400 transition-all">
-                <Icon size={22} />
-            </div>
-            <div>
-                <div className="flex items-center gap-3 mb-1">
-                    <h4 className="text-sm font-black text-white">{title}</h4>
-                    {badge && <span className="text-[8px] font-black bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-widest">{badge}</span>}
-                </div>
-                <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
-            </div>
-        </div>
-        <ChevronRight size={18} className="text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
-    </motion.div>
-);
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { User, Flame, Code2, Brain, Award, Star, TrendingUp, BookOpen, Clock, Zap } from "lucide-react";
+
+const skills = [
+    { name: "Python", level: 85 },
+    { name: "System Design", level: 72 },
+    { name: "DSA", level: 68 },
+    { name: "ML/AI", level: 60 },
+    { name: "React", level: 78 },
+    { name: "SQL", level: 55 },
+];
+
+const badges = [
+    { name: "Streak Master", emoji: "🔥", desc: "30-day streak" },
+    { name: "Code Ninja", emoji: "⚡", desc: "100 problems solved" },
+    { name: "AI Pioneer", emoji: "🤖", desc: "RAG expert" },
+    { name: "Interview Pro", emoji: "🎯", desc: "Avg score 8+/10" },
+    { name: "Cert Champion", emoji: "🏆", desc: "5 certificates" },
+    { name: "Team Player", emoji: "👥", desc: "50 group sessions" },
+];
+
+const activity = [
+    { action: "Solved", detail: "Binary Search Tree (Medium)", time: "2h ago", icon: Code2, color: "text-blue-500 bg-blue-500/10" },
+    { action: "Completed", detail: "Mock Interview — System Design", time: "Yesterday", icon: Brain, color: "text-violet-500 bg-violet-500/10" },
+    { action: "Uploaded", detail: "AWS Certificate", time: "2 days ago", icon: Award, color: "text-emerald-500 bg-emerald-500/10" },
+    { action: "Completed", detail: "LangChain RAG Module", time: "3 days ago", icon: BookOpen, color: "text-orange-500 bg-orange-500/10" },
+];
 
 export default function ProfilePage() {
-    const { user } = useAppStore();
-
     return (
-        <div className="max-w-6xl mx-auto space-y-12 pb-20">
-            {/* Profile Hero */}
-            <div className="relative glass-panel p-12 overflow-hidden bg-gradient-to-br from-indigo-900/40 to-transparent flex flex-col md:flex-row items-center gap-12">
-                <div className="absolute top-0 right-0 p-10 opacity-5 -rotate-12 pointer-events-none">
-                    <User size={280} className="text-indigo-500" />
-                </div>
-
-                <div className="relative group cursor-pointer group shrink-0">
-                    <div className="w-32 h-32 md:w-44 md:h-44 rounded-[40px] bg-indigo-600 border-4 border-white/10 shadow-2xl overflow-hidden relative">
-                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=4f46e5&color=fff&size=512`} alt="Avatar" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Camera size={32} className="text-white" />
+        <div className="flex flex-col gap-6 fade-in-up">
+            {/* Header Banner */}
+            <div className="relative rounded-2xl overflow-hidden border border-border">
+                <div className="h-28 gradient-brand opacity-80" />
+                <div className="px-6 pb-5">
+                    <div className="flex items-end gap-4 -mt-12">
+                        <div className="w-20 h-20 rounded-2xl gradient-brand border-4 border-card flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                            U
+                        </div>
+                        <div className="flex-1 pb-1">
+                            <h1 className="text-xl font-bold">User Name</h1>
+                            <p className="text-sm text-muted-foreground">user@email.com · Joined March 2025</p>
+                        </div>
+                        <div className="flex items-center gap-2 pb-1">
+                            <div className="px-3 py-1.5 rounded-xl bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-xs font-bold">PRO</div>
+                            <button className="px-3 py-1.5 rounded-xl border border-border text-sm hover:bg-accent transition-colors flex items-center gap-1.5">
+                                <User className="h-3.5 w-3.5" /> Edit Profile
+                            </button>
                         </div>
                     </div>
-                    <div className="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-2xl border-4 border-gray-950 shadow-lg animate-pulse"></div>
-                </div>
 
-                <div className="flex-1 space-y-6 text-center md:text-left relative z-10">
-                    <div className="space-y-2">
-                        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white uppercase">{user?.name || 'Tulasi Student'}</h1>
-                        <p className="text-indigo-400 font-bold uppercase tracking-[4px] text-xs flex items-center justify-center md:justify-start gap-2">
-                            <ShieldCheck size={14} /> Elite Academic Scholar
-                        </p>
-                    </div>
-                    <p className="text-gray-400 max-w-xl text-sm leading-relaxed">Full Stack Developer & AI Enthusiast from Chennai. Currently mastering Neural Cloud Architecture and Advanced RAG Systems on the TulasiAI Platform.</p>
-
-                    <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                        <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/30 active:scale-95">Edit Public Profile</button>
-                        <button className="bg-white/5 border border-white/10 text-gray-400 hover:text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:bg-white/10 active:scale-95">Share Profile</button>
-                    </div>
-                </div>
-
-                <div className="w-full md:w-64 glass-panel p-6 bg-black/40 border border-white/10 space-y-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-500 border border-orange-500/20"><Flame size={24} /></div>
-                        <div>
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Global Streak</p>
-                            <p className="text-lg font-black text-white">{user?.streak || 0} Days</p>
+                    {/* XP Bar */}
+                    <div className="mt-4">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                            <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-yellow-500" /> Level 14</span>
+                            <span>3,540 / 4,000 XP to Level 15</span>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 border border-indigo-500/20"><Zap size={24} /></div>
-                        <div>
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total XP</p>
-                            <p className="text-lg font-black text-white">{user?.xp || 0}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-yellow-500/10 rounded-2xl flex items-center justify-center text-yellow-500 border border-yellow-500/20"><Target size={24} /></div>
-                        <div>
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Accuracy</p>
-                            <p className="text-lg font-black text-white">92.4%</p>
+                        <div className="w-full bg-muted rounded-full h-2.5">
+                            <div className="gradient-brand h-2.5 rounded-full" style={{ width: "88.5%" }} />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Settings Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                    <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3 ml-2">
-                        <Settings size={22} className="text-indigo-500" /> Account Configuration
-                    </h3>
-                    <div className="space-y-4">
-                        <SettingItem icon={User} title="Personal Information" description="Update your name, bio, and student demographics." delay={0.1} />
-                        <SettingItem icon={Mail} title="Email & Notifications" description="Manage your contact preferences and alert systems." delay={0.2} />
-                        <SettingItem icon={Lock} title="Security & Privacy" description="Adjust password, 2FA, and data visibility settings." delay={0.3} badge="High Safety" />
-                        <SettingItem icon={CreditCard} title="Billing & Subscription" description="Manage your Tulasi Pro membership and invoices." delay={0.4} />
-                    </div>
-                </div>
-
-                <div className="space-y-6">
-                    <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3 ml-2">
-                        <Layout size={22} className="text-purple-500" /> Platform Preferences
-                    </h3>
-                    <div className="space-y-4">
-                        <SettingItem icon={Globe} title="Language & Location" description="Set your preferred UI language and regional context." delay={0.5} />
-                        <SettingItem icon={Bot} title="AI Assistant Personality" description="Customize how the neural tutor interacts with you." delay={0.6} badge="Beta" />
-                        <SettingItem icon={Shield} title="Content Filtering" description="Safe search and educational resource guarding." delay={0.7} />
-                        <SettingItem icon={LogOut} title="Terminate Sessions" description="Sign out from all active devices and portal sessions." delay={0.8} />
-                    </div>
-                </div>
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                    { label: "Day Streak", value: "12", icon: Flame, color: "text-orange-500", bg: "bg-orange-500/10" },
+                    { label: "Problems Solved", value: "34", icon: Code2, color: "text-blue-500", bg: "bg-blue-500/10" },
+                    { label: "Study Hours", value: "120h", icon: Clock, color: "text-violet-500", bg: "bg-violet-500/10" },
+                    { label: "Certificates", value: "5", icon: Award, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+                ].map((s) => (
+                    <Card key={s.label} className="card-hover">
+                        <CardContent className="flex items-center gap-3 pt-5 pb-4 px-4">
+                            <div className={`p-2.5 rounded-xl ${s.bg}`}>
+                                <s.icon className={`h-5 w-5 ${s.color}`} />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold">{s.value}</p>
+                                <p className="text-xs text-muted-foreground">{s.label}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
 
-            {/* Bottom: Pro Upgrade Teaser */}
-            <div className="glass-panel p-10 bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-indigo-600/20 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-10">
-                <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 bg-indigo-600/20 rounded-3xl flex items-center justify-center text-indigo-500 shadow-inner">
-                        <Rocket size={40} className="animate-bounce-slow" />
-                    </div>
-                    <div>
-                        <h4 className="text-2xl font-black">Level Up with Tulasi Pro</h4>
-                        <p className="text-sm text-gray-400">Unlock unlimited RAG processing, senior-level mock interviews, and verifiable blockchain certificates.</p>
-                    </div>
-                </div>
-                <button className="bg-white text-gray-950 px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl">Upgrade Now</button>
+            <div className="grid gap-4 md:grid-cols-5">
+                {/* Skills */}
+                <Card className="col-span-3">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-primary" /> Skill Proficiency
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {skills.map((s) => (
+                            <div key={s.name}>
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span className="font-medium">{s.name}</span>
+                                    <span className="text-muted-foreground">{s.level}%</span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-2">
+                                    <div className="gradient-brand h-2 rounded-full" style={{ width: `${s.level}%` }} />
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                {/* Badges */}
+                <Card className="col-span-2">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <Star className="h-4 w-4 text-yellow-500" /> Badges
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 gap-2">
+                            {badges.map((b) => (
+                                <div key={b.name} className="flex flex-col items-center text-center p-3 rounded-xl border border-border hover:bg-accent/50 transition-colors card-hover cursor-pointer">
+                                    <span className="text-2xl mb-1">{b.emoji}</span>
+                                    <p className="text-xs font-semibold">{b.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{b.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
+
+            {/* Activity Timeline */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-primary" /> Recent Activity
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-3">
+                        {activity.map((a, i) => (
+                            <div key={i} className="flex items-center gap-4 p-3 rounded-xl hover:bg-accent/50 transition-colors">
+                                <div className={`p-2 rounded-xl shrink-0 ${a.color.split(" ")[1]}`}>
+                                    <a.icon className={`h-4 w-4 ${a.color.split(" ")[0]}`} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium">{a.action} <span className="text-muted-foreground font-normal">{a.detail}</span></p>
+                                </div>
+                                <span className="text-xs text-muted-foreground shrink-0">{a.time}</span>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

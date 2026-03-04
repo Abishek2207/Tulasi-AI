@@ -1,182 +1,146 @@
 "use client";
-import React, { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import {
-    Mail, Lock, Eye, EyeOff, Github,
-    Chrome, ArrowRight, Bot, Loader2
-} from 'lucide-react';
-import Link from 'next/link';
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { BookOpen, Github, Mail, Zap } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    const router = useRouter();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const router = useRouter();
-    const supabase = createClientComponentClient();
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        const { error: authError } = await supabase.auth.signInWithPassword({
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
 
-        if (authError) {
-            setError(authError.message);
+        if (error) {
+            setError(error.message);
             setLoading(false);
         } else {
-            router.push('/dashboard');
+            router.push("/dashboard");
             router.refresh();
         }
     };
 
-    const handleOAuthLogin = async (provider: 'google' | 'github') => {
-        setLoading(true);
-        const { error: authError } = await supabase.auth.signInWithOAuth({
+    const handleOAuthLogin = async (provider: 'github' | 'google') => {
+        const supabase = createClient();
+        await supabase.auth.signInWithOAuth({
             provider,
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${location.origin}/auth/callback`,
             },
         });
-
-        if (authError) {
-            setError(authError.message);
-            setLoading(false);
-        }
     };
 
     return (
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center p-6 relative overflow-hidden">
-            {/* Background Orbs */}
-            <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
-            <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-700"></div>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 blur-[120px] rounded-full opacity-50 pointer-events-none" />
 
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-[450px] glass-panel p-10 relative z-10 border border-white/10 shadow-2xl"
-            >
-                <div className="text-center mb-10">
-                    <div className="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-indigo-600/20">
-                        <Bot size={32} className="text-white" />
-                    </div>
-                    <h1 className="text-3xl font-black text-white mb-2">Welcome Back</h1>
-                    <p className="text-gray-400 text-sm font-medium">Continue your neural learning journey</p>
+            <div className="w-full max-w-md bg-card/80 backdrop-blur-xl border border-border rounded-3xl shadow-2xl overflow-hidden relative z-10 fade-in-up">
+                {/* Header */}
+                <div className="px-8 pt-10 pb-6 text-center">
+                    <Link href="/" className="inline-flex items-center justify-center w-12 h-12 rounded-2xl gradient-brand shadow-lg mb-6 card-hover">
+                        <Zap className="h-6 w-6 text-white" />
+                    </Link>
+                    <h1 className="text-2xl font-bold tracking-tight mb-2 text-foreground">Welcome back</h1>
+                    <p className="text-sm text-muted-foreground">Sign in to continue your learning journey</p>
                 </div>
 
-                {error && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-bold uppercase tracking-wider text-center"
-                    >
-                        {error}
-                    </motion.div>
-                )}
+                <div className="px-8 pb-10 space-y-6">
+                    {error && (
+                        <div className="p-3 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
+                            {error}
+                        </div>
+                    )}
 
-                <div className="space-y-4 mb-8">
-                    <button
-                        onClick={() => handleOAuthLogin('google')}
-                        disabled={loading}
-                        className="w-full bg-white text-gray-950 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-gray-100 transition-all border border-transparent shadow-xl"
-                    >
-                        <Chrome size={18} /> Continue with Google
-                    </button>
-                    <button
-                        onClick={() => handleOAuthLogin('github')}
-                        disabled={loading}
-                        className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all border border-white/5 shadow-xl"
-                    >
-                        <Github size={18} /> Continue with GitHub
-                    </button>
-                </div>
-
-                <div className="relative mb-8">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-white/5"></div>
+                    {/* OAuth Buttons */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            onClick={() => handleOAuthLogin('github')}
+                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border bg-background hover:bg-accent transition-colors text-sm font-semibold"
+                        >
+                            <Github className="h-4 w-4" /> GitHub
+                        </button>
+                        <button
+                            onClick={() => handleOAuthLogin('google')}
+                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border bg-background hover:bg-accent transition-colors text-sm font-semibold"
+                        >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                            </svg>
+                            Google
+                        </button>
                     </div>
-                    <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[4px]">
-                        <span className="bg-gray-900 px-4 text-gray-500">OR</span>
-                    </div>
-                </div>
 
-                <form onSubmit={handleEmailLogin} className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
-                        <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Mail size={18} className="text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                        <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or continue with email</span></div>
+                    </div>
+
+                    {/* Email Form */}
+                    <form onSubmit={handleEmailLogin} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Email Address</label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="name@example.com"
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background/50 focus:bg-background focus:ring-2 focus:ring-primary/50 focus:outline-none transition-all text-sm"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between ml-1">
+                                <label className="text-xs font-semibold text-muted-foreground">Password</label>
+                                <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
                             </div>
                             <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600"
-                                placeholder="name@example.com"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center px-1">
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Password</label>
-                            <Link href="/forgot-password" className="text-[10px] font-black text-indigo-400 hover:text-indigo-300 uppercase tracking-widest transition-colors">
-                                Forgot?
-                            </Link>
-                        </div>
-                        <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Lock size={18} className="text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
-                            </div>
-                            <input
-                                type={showPassword ? 'text' : 'password'}
+                                type="password"
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-12 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600"
                                 placeholder="••••••••"
+                                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background/50 focus:bg-background focus:ring-2 focus:ring-primary/50 focus:outline-none transition-all text-sm"
                             />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-indigo-400 transition-colors"
-                            >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
                         </div>
-                    </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed group"
-                    >
-                        {loading ? (
-                            <Loader2 className="animate-spin" size={20} />
-                        ) : (
-                            <>
-                                Sign In <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                            </>
-                        )}
-                    </button>
-                </form>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-2.5 rounded-xl gradient-brand text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md hover:shadow-lg disabled:opacity-50"
+                        >
+                            {loading ? "Signing in..." : "Sign In"}
+                            {!loading && <Zap className="h-4 w-4" />}
+                        </button>
+                    </form>
 
-                <p className="mt-10 text-center text-gray-500 text-xs font-bold uppercase tracking-widest">
-                    Don't have an account?{' '}
-                    <Link href="/register" className="text-indigo-400 hover:text-indigo-300 transition-colors">
-                        Register Now
-                    </Link>
-                </p>
-            </motion.div>
+                    <p className="text-center text-sm text-muted-foreground">
+                        Don't have an account?{" "}
+                        <Link href="/register" className="text-primary font-semibold hover:underline">
+                            Sign up
+                        </Link>
+                    </p>
+                </div>
+            </div>
         </div>
     );
 }

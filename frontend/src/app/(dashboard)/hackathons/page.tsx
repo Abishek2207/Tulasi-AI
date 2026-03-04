@@ -1,129 +1,188 @@
-"use client";
-import React, { useState } from 'react';
-import { Target, Calendar, ExternalLink, Bookmark, Clock, MapPin, Search, ChevronRight, Filter } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Rocket, Users, Trophy, Calendar, ExternalLink, Zap, Clock, Globe } from "lucide-react";
 
-const HackathonCard = ({ title, date, location, prize, tags, delay }: { title: string, date: string, location: string, prize: string, tags: string[], delay: number }) => (
-    <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay }}
-        viewport={{ once: true }}
-        className="glass-panel p-6 group hover:border-indigo-500/30 transition-all flex flex-col md:flex-row items-center gap-6"
-    >
-        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-indigo-600/20 group-hover:border-indigo-600/30 transition-all duration-500">
-            <Calendar size={24} className="text-gray-400 group-hover:text-indigo-400" />
-        </div>
-
-        <div className="flex-1 space-y-2 text-center md:text-left">
-            <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                {tags.map((tag, i) => (
-                    <span key={i} className="text-[9px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase tracking-widest">{tag}</span>
-                ))}
-            </div>
-            <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">{title}</h3>
-            <div className="flex justify-center md:justify-start items-center gap-4 text-xs text-gray-500 font-medium">
-                <span className="flex items-center gap-1.5"><Clock size={14} /> Ends {date}</span>
-                <span className="flex items-center gap-1.5"><MapPin size={14} /> {location}</span>
-                <span className="text-green-500 font-bold">{prize} Prize Pool</span>
-            </div>
-        </div>
-
-        <div className="flex gap-3">
-            <button className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
-                <Bookmark size={18} className="text-gray-400" />
-            </button>
-            <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center gap-2">
-                Register <ExternalLink size={16} />
-            </button>
-        </div>
-    </motion.div>
-);
+const hackathons = [
+    {
+        name: "Google AI Hackathon 2026",
+        org: "Google",
+        prize: "$50,000",
+        deadline: "Mar 20, 2026",
+        participants: "12,400+",
+        tags: ["AI", "ML", "Open Source"],
+        status: "upcoming",
+        statusColor: "bg-blue-500",
+        link: "#",
+        emoji: "🔵",
+        desc: "Build innovative AI solutions using Google Cloud Vertex AI and Gemini models. Open to all skill levels.",
+    },
+    {
+        name: "HackAI — India Edition",
+        org: "Devfolio",
+        prize: "₹5,00,000",
+        deadline: "Mar 14, 2026",
+        participants: "8,200+",
+        tags: ["AI", "SaaS", "EdTech"],
+        status: "live",
+        statusColor: "bg-emerald-500",
+        link: "#",
+        emoji: "🟢",
+        desc: "India's largest AI hackathon. Build products that solve real problems using cutting-edge AI technologies.",
+    },
+    {
+        name: "MLH Global Hack Week",
+        org: "Major League Hacking",
+        prize: "Swag + Internships",
+        deadline: "Mar 10, 2026",
+        participants: "50,000+",
+        tags: ["Open Source", "Community", "All Tracks"],
+        status: "live",
+        statusColor: "bg-emerald-500",
+        link: "#",
+        emoji: "🟢",
+        desc: "A week-long global event with daily challenges and mini-hacks across multiple domains.",
+    },
+    {
+        name: "ETHIndia Buildathon",
+        org: "ETHIndia",
+        prize: "$25,000 in crypto",
+        deadline: "Apr 5, 2026",
+        participants: "3,500+",
+        tags: ["Web3", "DeFi", "Blockchain"],
+        status: "upcoming",
+        statusColor: "bg-blue-500",
+        link: "#",
+        emoji: "🔵",
+        desc: "India's premier Web3 hackathon. Build decentralized applications on Ethereum and Layer 2s.",
+    },
+    {
+        name: "NASA Space Apps 2025",
+        org: "NASA",
+        prize: "Global Recognition",
+        deadline: "Oct 2025",
+        participants: "200,000+",
+        tags: ["Space", "Data", "AI"],
+        status: "past",
+        statusColor: "bg-muted-foreground",
+        link: "#",
+        emoji: "⚫",
+        desc: "International hackathon using NASA open data to address challenges on Earth and in space.",
+    },
+    {
+        name: "Smart India Hackathon",
+        org: "Government of India",
+        prize: "₹1,00,000",
+        deadline: "Aug 2025",
+        participants: "1,00,000+",
+        tags: ["GovTech", "Social Impact"],
+        status: "past",
+        statusColor: "bg-muted-foreground",
+        link: "#",
+        emoji: "⚫",
+        desc: "National level hackathon presenting government problem statements for innovative digital solutions.",
+    },
+];
 
 export default function HackathonsPage() {
-    const [activeTab, setActiveTab] = useState('upcoming');
+    const live = hackathons.filter(h => h.status === "live");
+    const upcoming = hackathons.filter(h => h.status === "upcoming");
+    const past = hackathons.filter(h => h.status === "past");
 
     return (
-        <div className="space-y-8 pb-10">
+        <div className="flex flex-col gap-6 fade-in-up">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="rounded-2xl page-header-bg border border-border px-6 py-5 flex items-center justify-between">
                 <div>
-                    <h1 className="text-4xl font-black mb-2 flex items-center gap-3">
-                        <Target size={32} className="text-indigo-500" />
-                        Opportunity Hub
+                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                        <Rocket className="h-6 w-6 text-primary" /> Hackathons
                     </h1>
-                    <p className="text-gray-400">Track upcoming hackathons, internships, and global coding challenges.</p>
+                    <p className="text-sm text-muted-foreground mt-1">Compete, build, and win with top global hackathons</p>
                 </div>
-
-                <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10">
-                    <button
-                        onClick={() => setActiveTab('upcoming')}
-                        className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'upcoming' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        Upcoming
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('saved')}
-                        className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'saved' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        My Bookmarks
-                    </button>
+                <div className="flex items-center gap-4">
+                    <div className="text-center">
+                        <p className="text-2xl font-bold text-emerald-500">{live.length}</p>
+                        <p className="text-xs text-muted-foreground">Live Now</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-500">{upcoming.length}</p>
+                        <p className="text-xs text-muted-foreground">Upcoming</p>
+                    </div>
                 </div>
             </div>
 
-            {/* Filter Bar */}
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 glass-panel px-4 py-1 flex items-center gap-3">
-                    <Search size={18} className="text-gray-500" />
-                    <input type="text" placeholder="Filter by tech or city..." className="bg-transparent border-none outline-none flex-1 py-3 text-sm text-gray-200" />
-                </div>
-                <button className="glass-panel px-6 py-3 flex items-center gap-2 text-sm font-bold hover:bg-white/5 transition-all text-gray-400 hover:text-white">
-                    <Filter size={18} /> Filters
-                </button>
-            </div>
+            {/* Live */}
+            <Section label="🟢 Live Now" count={live.length} color="text-emerald-500">
+                {live.map(h => <HackCard key={h.name} h={h} />)}
+            </Section>
 
-            {/* Content List */}
-            <div className="space-y-6">
-                <HackathonCard
-                    title="Google Solution Challenge 2026"
-                    date="April 30, 2026"
-                    location="Global / Online"
-                    tags={["Google", "SDGs", "Global"]}
-                    prize="$50,000"
-                    delay={0.1}
-                />
-                <HackathonCard
-                    title="NASA Space Apps Challenge"
-                    date="Oct 5, 2026"
-                    location="Multiple Sites"
-                    tags={["Space", "Data", "Open Source"]}
-                    prize="Global Fame"
-                    delay={0.2}
-                />
-                <HackathonCard
-                    title="Hack India: Build for Bharat"
-                    date="June 15, 2026"
-                    location="New Delhi, IN"
-                    tags={["Web3", "Scale", "India"]}
-                    prize="₹10,00,000"
-                    delay={0.3}
-                />
-                <HackathonCard
-                    title="Hack India: Build for Bharat"
-                    date="June 15, 2026"
-                    location="New Delhi, IN"
-                    tags={["Web3", "Scale", "India"]}
-                    prize="₹10,00,000"
-                    delay={0.4}
-                />
-            </div>
+            {/* Upcoming */}
+            <Section label="🔵 Upcoming" count={upcoming.length} color="text-blue-500">
+                {upcoming.map(h => <HackCard key={h.name} h={h} />)}
+            </Section>
 
-            {/* Pagination Placeholder */}
-            <div className="flex justify-center pt-8">
-                <button className="flex items-center gap-2 glass-panel px-8 py-3 text-sm font-bold hover:bg-white/5 transition-all group text-gray-400 hover:text-white">
-                    Load More Opportunities <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-            </div>
+            {/* Past */}
+            <Section label="⚫ Past" count={past.length} color="text-muted-foreground">
+                {past.map(h => <HackCard key={h.name} h={h} />)}
+            </Section>
         </div>
+    );
+}
+
+function Section({ label, count, color, children }: { label: string; count: number; color: string; children: React.ReactNode }) {
+    return (
+        <div>
+            <div className="flex items-center gap-2 mb-3">
+                <h2 className={`text-sm font-bold uppercase tracking-wide ${color}`}>{label}</h2>
+                <span className="text-xs text-muted-foreground">({count})</span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">{children}</div>
+        </div>
+    );
+}
+
+function HackCard({ h }: { h: typeof hackathons[number] }) {
+    return (
+        <Card className={`card-hover ${h.status === "past" ? "opacity-70" : ""}`}>
+            <CardHeader className="pb-2 pt-4 px-5">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-sm">{h.name}</h3>
+                        </div>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Globe className="h-3 w-3" />{h.org}</p>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full text-white ${h.statusColor}`}>
+                        {h.status}
+                    </span>
+                </div>
+            </CardHeader>
+            <CardContent className="px-5 pb-4">
+                <p className="text-xs text-muted-foreground mb-3">{h.desc}</p>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                    {h.tags.map(t => (
+                        <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{t}</span>
+                    ))}
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs mb-3">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Trophy className="h-3 w-3 text-yellow-500" />
+                        <span>{h.prize}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Users className="h-3 w-3" />
+                        <span>{h.participants}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        <span>{h.deadline}</span>
+                    </div>
+                </div>
+                {h.status !== "past" && (
+                    <a href={h.link} target="_blank" rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center gap-2 py-2 rounded-xl gradient-brand text-white text-xs font-semibold hover:opacity-90 transition-opacity">
+                        <Zap className="h-3.5 w-3.5" /> Register Now <ExternalLink className="h-3 w-3" />
+                    </a>
+                )}
+            </CardContent>
+        </Card>
     );
 }
