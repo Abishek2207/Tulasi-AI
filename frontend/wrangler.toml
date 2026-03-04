@@ -1,0 +1,20 @@
+# ============================================================
+# Cloudflare Pages — Wrangler Configuration
+# Run: npx wrangler pages deploy ./out
+# Build: npm run build (Next.js static export)
+# ============================================================
+name = "tulasi-ai"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+pages_build_output_dir = ".next"
+
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = ""
+NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
+NEXT_PUBLIC_API_URL = ""
+
+# Optional R2 binding
+# [[r2_buckets]]
+# binding = "R2"
+# bucket_name = "tulasi-certificates"

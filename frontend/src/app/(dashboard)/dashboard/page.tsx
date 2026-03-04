@@ -1,203 +1,311 @@
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Zap, Trophy, Target, Clock, MessageSquare,
-    TrendingUp, Rocket, Flame, Star, Activity,
-    Calendar, Users, BookOpen
-} from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+    Brain, Code2, Users, Map as MapIcon, Trophy, Target,
+    Flame, BookOpen, Zap, TrendingUp, Clock, Star, ArrowRight, CheckCircle2, Activity
+} from "lucide-react";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 
-const data = [
-    { name: 'Mon', xp: 400 },
-    { name: 'Tue', xp: 1200 },
-    { name: 'Wed', xp: 900 },
-    { name: 'Thu', xp: 1800 },
-    { name: 'Fri', xp: 1400 },
-    { name: 'Sat', xp: 2100 },
-    { name: 'Sun', xp: 2400 },
+const quickActions = [
+    { label: "Start Coding", href: "/coding", icon: Code2, color: "bg-blue-500 hover:bg-blue-600" },
+    { label: "AI Chat", href: "/learning", icon: Brain, color: "bg-violet-500 hover:bg-violet-600" },
+    { label: "Mock Interview", href: "/interviews", icon: Users, color: "bg-emerald-500 hover:bg-emerald-600" },
+    { label: "Roadmaps", href: "/roadmaps", icon: MapIcon, color: "bg-orange-500 hover:bg-orange-600" },
 ];
 
-const radarData = [
-    { subject: 'Coding', A: 120, fullMark: 150 },
-    { subject: 'Concept', A: 98, fullMark: 150 },
-    { subject: 'Groups', A: 86, fullMark: 150 },
-    { subject: 'Interview', A: 99, fullMark: 150 },
-    { subject: 'Roadmap', A: 85, fullMark: 150 },
-    { subject: 'Notes', A: 65, fullMark: 150 },
+const goals = [
+    { label: "Complete Graph Algorithms", sub: "Data Structures Roadmap", done: true },
+    { label: "Mock Interview — System Design", sub: "Scheduled: Tomorrow 10 AM", done: false },
+    { label: "Upload ML Certificate", sub: "Certificate Vault", done: false },
+    { label: "Group Study: React Hooks", sub: "Social Learning Room", done: false },
 ];
 
-const StatCard = ({ icon: Icon, label, value, color, delay }: { icon: any, label: string, value: string, color: string, delay: number }) => (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay }}
-        className="glass-panel p-6 flex items-center gap-5 hover:border-white/20 transition-all group lg:min-w-[200px]"
-    >
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`} style={{ backgroundColor: `${color}10`, color: color }}>
-            <Icon size={24} />
-        </div>
-        <div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[2px] mb-1">{label}</p>
-            <h3 className="text-2xl font-black text-white leading-none">{value}</h3>
-        </div>
-    </motion.div>
-);
+const leaderboard = [
+    { name: "Aditya K.", xp: 4820, rank: 1, emoji: "🥇" },
+    { name: "Priya M.", xp: 4310, rank: 2, emoji: "🥈" },
+    { name: "Rahul S.", xp: 3990, rank: 3, emoji: "🥉" },
+    { name: "You", xp: 3540, rank: 4, emoji: "⭐" },
+];
 
 export default function DashboardPage() {
-    const router = useRouter();
+    const [user, setUser] = useState<any>(null);
+    const [streakData, setStreakData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            const supabase = createClient();
+            const { data: { session } } = await supabase.auth.getSession();
+            setUser(session?.user || null);
+
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/streak`, {
+                    headers: {
+                        "Authorization": `Bearer ${session?.access_token}`
+                    }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setStreakData(data);
+                } else {
+                    // Fallback stub if backend not running
+                    setStreakData({
+                        current_streak: 12, checked_in_today: false, weekly_heatmap: [
+                            { day: "M", active: false }, { day: "T", active: true }, { day: "W", active: false },
+                            { day: "T", active: true }, { day: "F", active: false }, { day: "S", active: true }, { day: "S", active: false }
+                        ]
+                    });
+                }
+            } catch (e) {
+                setStreakData({
+                    current_streak: 12, checked_in_today: false, weekly_heatmap: [
+                        { day: "M", active: false }, { day: "T", active: true }, { day: "W", active: false },
+                        { day: "T", active: true }, { day: "F", active: false }, { day: "S", active: true }, { day: "S", active: false }
+                    ]
+                });
+            }
+            setLoading(false);
+        };
+
+        fetchDashboardData();
+    }, []);
+
+    const performCheckin = async () => {
+        if (!streakData || streakData.checked_in_today) return;
+
+        // Optimistic UI update
+        setStreakData({ ...streakData, current_streak: streakData.current_streak + 1, checked_in_today: true });
+
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/streak/checkin`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${session?.access_token}`
+                }
+            });
+        } catch (e) {
+            console.error("Checkin failed", e);
+        }
+    };
+
+    if (loading) {
+        return <div className="p-10 flex justify-center"><Activity className="animate-spin text-primary h-8 w-8" /></div>;
+    }
+
+    const statCards = [
+        {
+            title: "Daily Streak",
+            value: `${streakData?.current_streak || 0} Days`,
+            sub: streakData?.checked_in_today ? "Checked in today! 🔥" : "Check in to keep it up!",
+            icon: Flame,
+            color: "text-orange-500",
+            bg: "bg-orange-500/10",
+            border: "border-orange-500/20",
+        },
+        {
+            title: "Problems Solved",
+            value: "34",
+            sub: "+4 from yesterday",
+            icon: Code2,
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
+            border: "border-blue-500/20",
+        },
+        {
+            title: "Study Hours",
+            value: "120h",
+            sub: "Top 10% of learners",
+            icon: Brain,
+            color: "text-violet-500",
+            bg: "bg-violet-500/10",
+            border: "border-violet-500/20",
+        },
+        {
+            title: "Roadmap Progress",
+            value: "45%",
+            sub: "AI Engineer Track",
+            icon: MapIcon,
+            color: "text-emerald-500",
+            bg: "bg-emerald-500/10",
+            border: "border-emerald-500/20",
+        },
+    ];
 
     return (
-        <div className="space-y-8 pb-10">
-            {/* Header / XP Section */}
-            <div className="flex flex-col lg:flex-row gap-8 items-stretch">
-                <div className="flex-1 glass-panel p-8 bg-gradient-to-br from-indigo-600/20 to-transparent relative overflow-hidden border border-white/10">
-                    <div className="relative z-10">
-                        <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight uppercase tracking-tighter text-white">Neural<br /><span className="text-indigo-500">Analytics.</span></h1>
-                        <p className="text-gray-400 mb-10 max-w-md font-medium">You're in the top 5% of global learners this week. Maintain your neural streak to unlock level 15.</p>
-
-                        <div className="flex flex-wrap gap-4">
-                            <StatCard icon={Flame} label="Daily Streak" value="15 Days" color="#f97316" delay={0.1} />
-                            <StatCard icon={Zap} label="Tulasi Points" value="12,450" color="#4f46e5" delay={0.2} />
-                            <StatCard icon={Trophy} label="Global Rank" value="#142" color="#eab308" delay={0.3} />
-                        </div>
-                    </div>
+        <div className="flex flex-col gap-6 fade-in-up">
+            {/* Header */}
+            <div className="rounded-2xl page-header-bg border border-border px-6 py-5 flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        Good afternoon, <span className="gradient-brand-text">{user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || "User"}</span> 👋
+                    </h1>
+                    <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
+                        {streakData?.checked_in_today ? (
+                            <><CheckCircle2 className="h-4 w-4 text-emerald-500" /> You're on a {streakData?.current_streak}-day streak! Great job today.</>
+                        ) : (
+                            <>You're on a {streakData?.current_streak}-day streak. <button onClick={performCheckin} className="text-orange-500 hover:underline font-semibold ml-1">Check in now!</button></>
+                        )}
+                    </p>
                 </div>
-
-                <div className="w-full lg:w-[400px] glass-panel p-8 flex flex-col items-center justify-center text-center border border-white/10 bg-black/40">
-                    <div className="relative w-44 h-44 mb-6">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="88" cy="88" r="80" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-white/5" />
-                            <circle cx="88" cy="88" r="80" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray="502" strokeDashoffset="150" className="text-indigo-500 drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-5xl font-black text-white leading-none">70<span className="text-2xl">%</span></span>
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[2px] mt-1">To LVL 15</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 bg-indigo-500/10 px-5 py-2.5 rounded-full border border-indigo-500/20 shadow-lg">
-                        <Star size={16} className="text-indigo-400" />
-                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[2px]">Master Grade Scholar</span>
-                    </div>
+                <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground bg-card/60 border border-border px-4 py-2 rounded-xl">
+                    <Clock className="h-4 w-4" />
+                    {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
                 </div>
             </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 glass-panel p-8 border border-white/10 bg-black/20">
-                    <div className="flex items-center justify-between mb-10">
-                        <div>
-                            <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                                <Activity size={24} className="text-indigo-500" />
-                                Growth Signal
-                            </h3>
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">XP fluctuation over last 7 cycles</p>
-                        </div>
-                        <select className="bg-black/50 border border-white/10 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 py-2 outline-none cursor-pointer hover:border-white/20 transition-all">
-                            <option>Last 7 Cycles</option>
-                            <option>Monthly View</option>
-                        </select>
-                    </div>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data}>
-                                <defs>
-                                    <linearGradient id="colorXp" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.4} />
-                                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#4b5563', fontWeight: 900 }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#4b5563', fontWeight: 900 }} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#000', borderColor: '#4f46e520', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
-                                    itemStyle={{ color: '#fff', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }}
-                                />
-                                <Area type="monotone" dataKey="xp" stroke="#4f46e5" strokeWidth={4} fillOpacity={1} fill="url(#colorXp)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
+            {/* Stat Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {statCards.map((s, i) => (
+                    <Card key={i} className={`card-hover border ${s.border}`}>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-5">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">{s.title}</CardTitle>
+                            <div className={`p-2 rounded-lg ${s.bg}`}>
+                                <s.icon className={`h-4 w-4 ${s.color}`} />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="px-5 pb-4">
+                            <div className="text-2xl font-bold">{s.value}</div>
+                            <p className="text-xs text-muted-foreground mt-1">{s.sub}</p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
 
-                <div className="glass-panel p-8 border border-white/10 bg-black/20 flex flex-col">
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3 mb-8">
-                        <Rocket size={24} className="text-purple-500" />
-                        Capability
-                    </h3>
-                    <div className="flex-1 w-full flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                                <PolarGrid stroke="#ffffff05" />
-                                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, fill: '#4b5563', fontWeight: 900 }} />
-                                <Radar name="Scholar" dataKey="A" stroke="#8b5cf6" strokeWidth={3} fill="#8b5cf6" fillOpacity={0.4} />
-                            </RadarChart>
-                        </ResponsiveContainer>
-                    </div>
+            {/* Quick Actions */}
+            <div>
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Quick Actions</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {quickActions.map((a, i) => (
+                        <Link key={i} href={a.href}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-white font-medium text-sm transition-all ${a.color} shadow-sm hover:shadow-md hover:-translate-y-0.5`}>
+                            <a.icon className="h-4 w-4" />
+                            {a.label}
+                        </Link>
+                    ))}
                 </div>
             </div>
 
-            {/* Bottom Widgets */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div className="glass-panel p-6 border-l-4 border-indigo-500 bg-black/20 hover:bg-black/30 transition-all group">
-                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <Calendar size={14} /> Neural Challenge
-                    </h4>
-                    <p className="font-black text-white text-lg leading-tight mb-1 uppercase tracking-tighter">Google Solution Challenge</p>
-                    <p className="text-[10px] text-indigo-400 font-black mb-8 uppercase tracking-widest">Starts in 72 hours</p>
-                    <button
-                        onClick={() => router.push('/hackathons')}
-                        className="w-full py-3.5 bg-indigo-600/10 text-indigo-500 rounded-xl text-[10px] font-black uppercase tracking-[2px] transition-all hover:bg-indigo-600 hover:text-white group-hover:shadow-lg group-hover:shadow-indigo-600/20"
-                    >
-                        View Details
-                    </button>
-                </div>
+            {/* Activity + Goals + Leaderboard Row */}
+            <div className="grid gap-4 md:grid-cols-7">
+                {/* Weekly Activity */}
+                <Card className="col-span-4">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4 text-primary" />
+                                Weekly Activity
+                            </CardTitle>
+                            <span className="text-xs text-muted-foreground">This week</span>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-end gap-2 h-28 mt-2">
+                            {streakData?.weekly_heatmap?.map((v: any, i: number) => (
+                                <div key={i} className="flex flex-col items-center gap-1 flex-1">
+                                    <div
+                                        className={`w-full rounded-md transition-all hover:opacity-100 ${v.active ? 'gradient-brand opacity-80' : 'bg-muted opacity-50'}`}
+                                        style={{ height: v.active ? '100%' : '15%' }}
+                                        title={v.active ? 'Active' : 'Missing'}
+                                    />
+                                    <span className="text-[10px] text-muted-foreground">{v.day.charAt(0)}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <Zap className="h-3.5 w-3.5 text-yellow-500" />
+                                <span>Consistency is key</span>
+                            </div>
+                            <Link href="/profile" className="text-xs text-primary hover:underline flex items-center gap-1">
+                                Full Analytics <ArrowRight className="h-3 w-3" />
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                <div className="glass-panel p-6 border-l-4 border-orange-500 bg-black/20 hover:bg-black/30 transition-all group">
-                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <Clock size={14} /> Roadmap Delta
-                    </h4>
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="font-black text-white text-lg leading-tight uppercase tracking-tighter">Full Stack Dev</p>
-                        <span className="text-[10px] font-black text-orange-500">65%</span>
-                    </div>
-                    <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden mb-8">
-                        <div className="h-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" style={{ width: '65%' }}></div>
-                    </div>
-                    <button
-                        onClick={() => router.push('/roadmap')}
-                        className="w-full py-3.5 bg-orange-500/10 text-orange-500 rounded-xl text-[10px] font-black uppercase tracking-[2px] transition-all hover:bg-orange-500 hover:text-white group-hover:shadow-lg group-hover:shadow-orange-500/20"
-                    >
-                        Continue Journey
-                    </button>
-                </div>
+                {/* Goals */}
+                <Card className="col-span-3">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <Target className="h-4 w-4 text-primary" />
+                            Today's Goals
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2.5">
+                        {goals.map((g, i) => (
+                            <div key={i} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-accent/50 transition-colors">
+                                <CheckCircle2 className={`h-4 w-4 mt-0.5 shrink-0 ${g.done ? "text-emerald-500" : "text-muted-foreground/40"}`} />
+                                <div>
+                                    <p className={`text-sm font-medium leading-none ${g.done ? "line-through text-muted-foreground" : ""}`}>
+                                        {g.label}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">{g.sub}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
 
-                <div className="glass-panel p-6 border-l-4 border-emerald-500 bg-black/20 hover:bg-black/30 transition-all group">
-                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <Users size={14} /> Neural Nexus
-                    </h4>
-                    <p className="font-black text-white text-lg leading-tight mb-1 uppercase tracking-tighter">Frontend Wizards</p>
-                    <p className="text-[10px] text-emerald-400 font-black mb-8 uppercase tracking-widest">24 Scholars Active</p>
-                    <button
-                        onClick={() => router.push('/groups')}
-                        className="w-full py-3.5 bg-emerald-500/10 text-emerald-500 rounded-xl text-[10px] font-black uppercase tracking-[2px] transition-all hover:bg-emerald-500 hover:text-white group-hover:shadow-lg group-hover:shadow-emerald-500/20"
-                    >
-                        Join Room
-                    </button>
-                </div>
+            {/* Leaderboard + Learning Spotlight Row */}
+            <div className="grid gap-4 md:grid-cols-7">
+                {/* Leaderboard */}
+                <Card className="col-span-3">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <Trophy className="h-4 w-4 text-yellow-500" />
+                            Leaderboard
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {leaderboard.map((u) => (
+                            <div key={u.rank} className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors ${u.name === "You" ? "bg-primary/10 border border-primary/20" : "hover:bg-accent/50"}`}>
+                                <span className="text-lg w-6 text-center">{u.emoji}</span>
+                                <div className="flex-1">
+                                    <p className="text-sm font-semibold">{u.name}</p>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Star className="h-3 w-3 text-yellow-500" />
+                                    {u.xp.toLocaleString()} XP
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
 
-                <div className="glass-panel p-6 border-l-4 border-purple-500 bg-black/20 hover:bg-black/30 transition-all group">
-                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <BookOpen size={14} /> Weekly Intel
-                    </h4>
-                    <p className="font-black text-white text-lg leading-tight mb-1 uppercase tracking-tighter">Advanced React Patterns</p>
-                    <p className="text-[10px] text-purple-400 font-black mb-8 uppercase tracking-widest">12 Min Read Buffer</p>
-                    <button
-                        onClick={() => router.push('/ai-hub')}
-                        className="w-full py-3.5 bg-purple-600/10 text-purple-500 rounded-xl text-[10px] font-black uppercase tracking-[2px] transition-all hover:bg-purple-600 hover:text-white group-hover:shadow-lg group-hover:shadow-purple-600/20"
-                    >
-                        Start Reading
-                    </button>
-                </div>
+                {/* Learning Spotlight */}
+                <Card className="col-span-4">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-primary" />
+                            Continue Learning
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {[
+                            { title: "System Design Fundamentals", progress: 68, tag: "AI Engineer", tagColor: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300" },
+                            { title: "Dynamic Programming Patterns", progress: 42, tag: "DSA", tagColor: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
+                            { title: "LangChain for Production", progress: 25, tag: "AI/ML", tagColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+                        ].map((item, i) => (
+                            <div key={i} className="p-3 rounded-xl border border-border hover:bg-accent/40 transition-colors card-hover cursor-pointer">
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-sm font-medium">{item.title}</p>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${item.tagColor}`}>{item.tag}</span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-1.5">
+                                    <div className="gradient-brand h-1.5 rounded-full transition-all" style={{ width: `${item.progress}%` }} />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1.5">{item.progress}% complete</p>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
