@@ -1,139 +1,255 @@
 "use client";
-import React from 'react';
-import {
-    Award, ShieldCheck, Download, Share2,
-    ChevronRight, ExternalLink, QrCode, Bot,
-    Clock, Globe, Target, Sparkles, Trophy
-} from 'lucide-react';
-import { motion } from 'framer-motion';
 
-const CertificateCard = ({ id, title, date, verified, delay }: { id: string, title: string, date: string, verified: boolean, delay: number }) => (
-    <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay }}
-        viewport={{ once: true }}
-        className="glass-panel group overflow-hidden border-2 border-white/5 hover:border-indigo-500/30 transition-all duration-500"
-    >
-        <div className="aspect-video relative overflow-hidden bg-gray-950 p-6 flex flex-col justify-center items-center text-center">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
-            <div className="absolute inset-0 opacity-5 pointer-events-none">
-                <img src="https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover" alt="pattern" />
-            </div>
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Award, Upload, Download, Share2, Search, ExternalLink, Trash2, Eye, Plus, Activity } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
-            <div className="relative z-10 space-y-4">
-                <div className="w-16 h-16 bg-white/5 border border-white/20 rounded-2xl mx-auto flex items-center justify-center text-indigo-500 shadow-inner">
-                    <Award size={32} />
-                </div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">{title}</h3>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">This verifies that the recipient has mastered the curriculum</p>
-                <div className="pt-2 flex items-center justify-center gap-2">
-                    <QrCode size={40} className="text-gray-700" />
-                    <div className="text-left">
-                        <p className="text-[8px] font-bold text-gray-600 uppercase">Verification ID</p>
-                        <p className="text-[10px] font-mono text-gray-400">{id}</p>
-                    </div>
-                </div>
-            </div>
+type Certificate = {
+    id: string;
+    file_name: string;
+    category: string;
+    description: string;
+    file_url: string;
+    uploaded_at: string;
+};
 
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-indigo-500/20 border border-indigo-500/30 px-3 py-1 rounded-full">
-                <ShieldCheck size={12} className="text-indigo-400" />
-                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Verified</span>
-            </div>
-        </div>
+const categories = ["All", "AI/ML", "Cloud", "Frontend", "Data", "DevOps", "Other"];
 
-        <div className="p-6 bg-white/[0.02] space-y-6">
-            <div className="flex justify-between items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
-                <span className="flex items-center gap-1.5"><Clock size={14} /> Issued {date}</span>
-                <span className="flex items-center gap-1.5"><Globe size={14} /> Public Link</span>
-            </div>
-
-            <div className="flex gap-3">
-                <button className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2">
-                    <Download size={16} /> PDF
-                </button>
-                <button className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2">
-                    <Share2 size={16} /> LinkedIn
-                </button>
-            </div>
-        </div>
-    </motion.div>
-);
+// Helper to calculate UI properties based on category
+const getCategoryProps = (cat: string) => {
+    switch (cat) {
+        case "Cloud": return { color: "from-orange-500 to-amber-400", emoji: "☁️" };
+        case "AI/ML": return { color: "from-violet-500 to-indigo-400", emoji: "🤖" };
+        case "Frontend": return { color: "from-blue-500 to-cyan-400", emoji: "💻" };
+        case "Data": return { color: "from-emerald-500 to-teal-400", emoji: "📊" };
+        case "DevOps": return { color: "from-cyan-500 to-blue-400", emoji: "🐳" };
+        default: return { color: "from-gray-500 to-slate-400", emoji: "📜" };
+    }
+};
 
 export default function CertificatesPage() {
+    const [certs, setCerts] = useState<Certificate[]>([]);
+    const [filter, setFilter] = useState("All");
+    const [search, setSearch] = useState("");
+    const [preview, setPreview] = useState<Certificate | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
+
+    const getAuthHeaders = async () => {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        return {
+            "Authorization": `Bearer ${session?.access_token}`
+        };
+    };
+
+    const fetchCerts = async () => {
+        try {
+            const headers = await getAuthHeaders();
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/certificates`, { headers });
+            if (res.ok) {
+                const data = await res.json();
+                setCerts(data);
+            }
+        } catch (e) {
+            console.error("Failed to fetch certificates", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCerts();
+    }, []);
+
+    const filtered = certs.filter(c =>
+        (filter === "All" || c.category === filter) &&
+        (c.file_name.toLowerCase().includes(search.toLowerCase()) ||
+            (c.description && c.description.toLowerCase().includes(search.toLowerCase())))
+    );
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("category", "Other"); // Default category
+
+            const headers = await getAuthHeaders();
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/certificates/upload`, {
+                method: "POST",
+                headers, // FormData handles Content-Type automatically
+                body: formData
+            });
+
+            if (res.ok) {
+                const newCert = await res.json();
+                setCerts([newCert, ...certs]);
+            }
+        } catch (error) {
+            console.error("Upload failed", error);
+        } finally {
+            setUploading(false);
+            e.target.value = ""; // Reset input
+        }
+    };
+
+    const deleteCert = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this certificate?")) return;
+        try {
+            const headers = await getAuthHeaders();
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/certificates/${id}`, {
+                method: "DELETE",
+                headers
+            });
+            if (res.ok) {
+                setCerts(certs.filter(c => c.id !== id));
+            }
+        } catch (e) {
+            console.error("Failed to delete certificate", e);
+        }
+    };
+
+    if (loading) {
+        return <div className="p-10 flex justify-center"><Activity className="animate-spin text-primary h-8 w-8" /></div>;
+    }
+
     return (
-        <div className="space-y-8 pb-10">
-            {/* Page Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <h1 className="text-4xl font-black mb-2 flex items-center gap-3">
-                        <ShieldCheck size={32} className="text-indigo-500" />
-                        Certificate Vault
-                    </h1>
-                    <p className="text-gray-400">Verifiable credentials for your achievements and roadmap completions.</p>
-                </div>
-
-                <div className="bg-indigo-600/10 border border-indigo-500/20 px-6 py-3 rounded-2xl flex items-center gap-4">
-                    <Trophy size={24} className="text-indigo-500" />
+        <div className="flex flex-col gap-6 fade-in-up">
+            {/* Header */}
+            <div className="rounded-2xl page-header-bg border border-border px-6 py-5">
+                <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Earned</p>
-                        <p className="text-lg font-black text-white">4 Certificates</p>
+                        <h1 className="text-2xl font-bold flex items-center gap-2">
+                            <Award className="h-6 w-6 text-primary" /> Certificate Vault
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-1">Store, showcase, and share your achievements</p>
                     </div>
+                    <label className="cursor-pointer">
+                        <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-brand text-white text-sm font-semibold hover:opacity-90 transition shadow-sm ${uploading ? 'opacity-50 cursor-wait' : ''}`}>
+                            {uploading ? <Activity className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            {uploading ? 'Uploading...' : 'Upload Certificate'}
+                        </div>
+                        <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={handleUpload} disabled={uploading} />
+                    </label>
+                </div>
+                <div className="flex items-center gap-4 mt-4">
+                    <div className="text-center px-4 py-2 rounded-xl bg-card/60 border border-border">
+                        <p className="text-xl font-bold">{certs.length}</p>
+                        <p className="text-xs text-muted-foreground">Total</p>
+                    </div>
+                    {["AI/ML", "Cloud", "Frontend"].map(c => (
+                        <div key={c} className="text-center px-4 py-2 rounded-xl bg-card/60 border border-border">
+                            <p className="text-xl font-bold">{certs.filter(x => x.category === c).length}</p>
+                            <p className="text-xs text-muted-foreground">{c}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            {/* Grid Container */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pt-8">
-                <CertificateCard
-                    id="tulasi-7821-ax92"
-                    title="Frontend Optimization Expert"
-                    date="Feb 24, 2026"
-                    verified
-                    delay={0.1}
-                />
-                <CertificateCard
-                    id="tulasi-9102-bc32"
-                    title="Neural RAG System Architect"
-                    date="Jan 15, 2026"
-                    verified
-                    delay={0.2}
-                />
-                <CertificateCard
-                    id="tulasi-4512-kd82"
-                    title="Deep Learning Foundation"
-                    date="Dec 12, 2025"
-                    verified
-                    delay={0.3}
-                />
-
-                {/* Empty State / Locked State Placeholder */}
-                <div className="glass-panel border-2 border-dashed border-white/5 flex flex-col items-center justify-center text-center p-12 opacity-40">
-                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-gray-600 mb-6">
-                        <Sparkles size={32} />
-                    </div>
-                    <h4 className="text-lg font-bold text-gray-500 mb-2">Cloud Infrastructure Mastery</h4>
-                    <p className="text-xs text-gray-600 max-w-xs mb-6">Complete the Roadmap to unlock this certificate and its public verification URL.</p>
-                    <button className="bg-white/5 border border-white/10 text-gray-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">Current Progress: 65%</button>
+            {/* Filters & Search */}
+            <div className="flex items-center gap-3 flex-wrap">
+                <div className="relative flex-1 max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input value={search} onChange={e => setSearch(e.target.value)}
+                        placeholder="Search certificates..."
+                        className="w-full rounded-xl border border-border bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                    {categories.map(c => (
+                        <button key={c} onClick={() => setFilter(c)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${filter === c ? "gradient-brand text-white shadow-sm" : "border border-border hover:bg-accent"}`}>
+                            {c}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Verification Helper */}
-            <div className="max-w-4xl mx-auto glass-panel p-10 mt-12 flex flex-col md:flex-row items-center gap-10 bg-gradient-to-br from-indigo-600/10 to-transparent">
-                <div className="flex-1 space-y-4">
-                    <h3 className="text-2xl font-black flex items-center gap-3">
-                        <Globe size={24} className="text-indigo-500" />
-                        Verify a Certificate
-                    </h3>
-                    <p className="text-sm text-gray-400">Employers and institutions can verify the authenticity of a TulasiAI certificate by entering the unique verification ID below.</p>
-                    <div className="flex gap-4">
-                        <input type="text" placeholder="e.g. tulasi-XXXX-XXXX" className="bg-white/5 border border-white/10 px-6 py-4 rounded-2xl flex-1 outline-none focus:border-indigo-500/50 transition-all font-mono text-xs uppercase" />
-                        <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/30 transition-all">Verify Now</button>
-                    </div>
-                </div>
-                <div className="hidden lg:block">
-                    <QrCode size={120} className="text-white opacity-20" />
-                </div>
+            {/* Certificate Grid */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filtered.map(cert => {
+                    const props = getCategoryProps(cert.category);
+                    return (
+                        <div key={cert.id} className="group rounded-2xl border border-border overflow-hidden card-hover bg-card">
+                            {/* Card Visual */}
+                            <div className={`h-28 bg-gradient-to-br ${props.color} relative flex items-center justify-center`}>
+                                <span className="text-5xl">{props.emoji}</span>
+                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
+                                    <button onClick={() => setPreview(cert)} className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 transition text-white">
+                                        <Eye className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button onClick={() => deleteCert(cert.id)} className="p-1.5 rounded-lg bg-black/30 hover:bg-red-500/70 transition text-white">
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                                <div className="absolute bottom-3 left-3">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{cert.category}</span>
+                                </div>
+                            </div>
+                            {/* Info */}
+                            <div className="p-4">
+                                <h3 className="font-bold text-sm mb-1 truncate" title={cert.file_name}>{cert.file_name}</h3>
+                                <p className="text-xs text-muted-foreground mb-1 line-clamp-1">{cert.description || "Uploaded Certificate"}</p>
+                                <p className="text-xs text-muted-foreground mb-3">Added: {new Date(cert.uploaded_at).toLocaleDateString()}</p>
+                                <div className="flex items-center gap-2">
+                                    <a href={cert.file_url} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-border text-xs hover:bg-accent transition-colors">
+                                        <Download className="h-3 w-3" /> View/DL
+                                    </a>
+                                    <button className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-border text-xs hover:bg-accent transition-colors">
+                                        <Share2 className="h-3 w-3" /> Share
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {/* Upload Placeholder */}
+                <label className="cursor-pointer rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center h-52 hover:border-primary hover:bg-primary/5 transition-all group">
+                    {uploading ? (
+                        <div className="flex flex-col items-center">
+                            <Activity className="h-8 w-8 text-primary animate-spin mb-2" />
+                            <p className="text-sm font-medium text-primary">Uploading...</p>
+                        </div>
+                    ) : (
+                        <>
+                            <Plus className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+                            <p className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">Add Certificate</p>
+                            <p className="text-xs text-muted-foreground mt-1">PDF, JPG, or PNG</p>
+                        </>
+                    )}
+                    <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={handleUpload} disabled={uploading} />
+                </label>
             </div>
+
+            {/* Preview Modal */}
+            {preview && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setPreview(null)}>
+                    <Card className="w-full max-w-md" onClick={e => e.stopPropagation()}>
+                        <div className={`h-40 bg-gradient-to-br ${getCategoryProps(preview.category).color} flex items-center justify-center rounded-t-xl relative`}>
+                            <span className="text-6xl">{getCategoryProps(preview.category).emoji}</span>
+                        </div>
+                        <CardContent className="p-6">
+                            <h2 className="text-xl font-bold mb-1 truncate" title={preview.file_name}>{preview.file_name}</h2>
+                            <p className="text-muted-foreground text-sm mb-1">{preview.description || "Uploaded Certificate"}</p>
+                            <p className="text-xs text-muted-foreground mb-4">Added: {new Date(preview.uploaded_at).toLocaleDateString()}</p>
+                            <div className="flex gap-2">
+                                <Button className="flex-1 gradient-brand border-0 text-white gap-2 rounded-xl" asChild>
+                                    <a href={preview.file_url} target="_blank" rel="noopener noreferrer">
+                                        <Download className="h-4 w-4" /> Download / View Origin
+                                    </a>
+                                </Button>
+                                <Button variant="outline" className="rounded-xl" onClick={() => setPreview(null)}>Close</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

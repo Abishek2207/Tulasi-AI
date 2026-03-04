@@ -1,42 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "@/app/globals.css";
-import EasterEgg from "@/components/EasterEgg";
+import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TulasiAI — Advanced AI Education Platform",
-  description: "Accelerate your learning with AI roadmaps, mock interviews, and personalized tutoring.",
-  other: {
-    "tulasi-ai": "antigravity-enabled"
-  },
-  openGraph: {
-    title: "TulasiAI — Advanced AI Education Platform",
-    description: "Accelerate your learning with AI roadmaps, mock interviews, and personalized tutoring.",
-    url: "https://tulasiai.com",
-    siteName: "TulasiAI",
-    images: [
-      {
-        url: "https://tulasiai.com/og-image.png",
-        width: 1200,
-        height: 630,
-      },
-    ],
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "TulasiAI — Advanced AI Education Platform",
-    description: "Accelerate your learning with AI roadmaps, mock interviews, and personalized tutoring.",
-    creator: "@TulasiAI",
-    images: ["https://tulasiai.com/twitter-image.png"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  title: "Tulasi AI - AI Education Super App",
+  description: "A production-ready scalable AI education platform.",
 };
 
 export default function RootLayout({
@@ -45,10 +16,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <EasterEgg />
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
