@@ -13,3 +13,9 @@ faiss-cpu==1.7.4
 numpy
 aiofiles==23.2.1
 pydantic-settings==2.1.0
+langchain
+langchain-community
+langchain-chroma
+langchain-text-splitters
+chromadb
+sentence-transformers
