@@ -1,29 +1,25 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from functools import lru_cache
+from pydantic_settings import BaseSettings
+import os
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Tulasi AI Base API"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
-    
-    # DB (Supabase)
-    SUPABASE_URL: str = ""
-    SUPABASE_SERVICE_ROLE_KEY: str = ""
-    
-    # AI models
-    HF_TOKEN: str = ""
-    
-    # Cloudflare R2
-    CLOUDFLARE_R2_ACCESS_KEY_ID: str = ""
-    CLOUDFLARE_R2_SECRET_ACCESS_KEY: str = ""
-    CLOUDFLARE_R2_ENDPOINT_URL: str = ""
-    CLOUDFLARE_R2_BUCKET_NAME: str = "tulasiai-storage"
+    # App
+    APP_NAME: str = "Tulasi AI"
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me-in-production-super-secret")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
-    # Security
-    JWT_SECRET: str = "supersecretkey_change_in_prod"
+    # Database
+    DATABASE_URL: str = "sqlite:///./tulasi_ai.db"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    # AI Keys
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
 
-@lru_cache()
-def get_settings() -> Settings:
-    return Settings()
+    # Admin
+    ADMIN_EMAIL: str = "admin@tulasi.ai"
+
+    class Config:
+        env_file = ".env"
+
+settings = Settings()

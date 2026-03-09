@@ -1,27 +1,57 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import get_settings
-from app.api.v1.api import api_router
+import uvicorn
 
-settings = get_settings()
+from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup
+from app.core.database import init_db
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title="Tulasi AI API",
+    description="Production-grade AI learning platform backend",
+    version="3.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
 )
 
-# Set up CORS for frontend communication
+# CORS — allow frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Tighten this in production
+    allow_origins=["http://localhost:3000", "https://*.vercel.app", "https://tulasi.ai"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
+# Mount all routers
+app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
+app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
+app.include_router(pdf.router,          prefix="/api/pdf",          tags=["PDF Q&A"])
+app.include_router(interview.router,    prefix="/api/interview",    tags=["Mock Interview"])
+app.include_router(roadmap.router,      prefix="/api/roadmap",      tags=["Roadmaps"])
+app.include_router(hackathons.router,   prefix="/api/hackathons",   tags=["Hackathons"])
+app.include_router(code.router,         prefix="/api/code",         tags=["Code Practice"])
+app.include_router(certificates.router, prefix="/api/certificates", tags=["Certificates"])
+app.include_router(messages.router,     prefix="/api/messages",     tags=["Messages"])
+app.include_router(startup.router,      prefix="/api/startup",      tags=["Startup Lab"])
+app.include_router(admin.router,        prefix="/api/admin",        tags=["Admin"])
+
+
+@app.on_event("startup")
+async def startup():
+    init_db()
+    print("✅ Tulasi AI v3.0 — Backend started!")
+    print("📖 API Docs: http://localhost:8000/api/docs")
+
+
+@app.get("/")
+def root():
+    return {"name": "Tulasi AI API", "version": "3.0.0", "status": "running"}
+
 
 @app.get("/health")
-def health_check():
-    return {"status": "ok", "api": settings.PROJECT_NAME}
+def health():
+    return {"status": "healthy", "version": "3.0.0"}
+
+
+if __name__ == "__main__":
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

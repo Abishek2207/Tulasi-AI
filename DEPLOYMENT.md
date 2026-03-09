@@ -1,48 +1,56 @@
-# Tulasi AI Production Deployment Guide
+# Tulasi AI - Deployment Guide
 
-Due to a local Node.js environment error on your machine blocking the Cloudflare CLI, the best and most professional way to deploy SaaS platforms (which also sets up continuous CI/CD) is through GitHub. 
+This document outlines how to deploy the Tulasi AI platform using free-tier services. The frontend is optimized for **Vercel** and the backend for **Render**.
 
-Follow these exact steps to get both your Frontend and Backend live for free!
+---
 
-## Step 1: Push to GitHub
-First, we need your code in a repository.
-1. Go to [GitHub.com](https://github.com) and create a **New Repository** called `tulasi-ai`.
-2. Open your VS Code terminal and run these commands to push your code:
-```bash
-git remote add origin https://github.com/YOUR_USERNAME/tulasi-ai.git
-git branch -M main
-git push -u origin main
-```
+## 🏗️ 1. Frontend Deployment (Vercel)
 
-*(Replace `YOUR_USERNAME` with your real GitHub username)*
+Vercel is the optimal host for Next.js applications, offering a generous completely free tier.
 
-## Step 2: Deploy Frontend to Vercel
-Now we connect Vercel to your new GitHub repository.
-1. Go to [Vercel.com](https://vercel.com/) and sign up/log in with your GitHub account.
-2. Click **Add New...** -> **Project**.
-3. Under "Import Git Repository", find your `tulasi-ai` repository and click **Import**.
-4. Configure the project settings:
-   - **Project Name:** `tulasi-ai`
-   - **Framework Preset:** `Next.js` (Usually auto-detected)
-   - **Root Directory:** Edit this and select `frontend` *(Important! Since your code is inside a subfolder)*
-5. Expand the **Environment Variables** section and add:
-   - Name: `NEXT_PUBLIC_SUPABASE_URL`, Value: (Your Supabase URL)
-   - Name: `NEXT_PUBLIC_SUPABASE_ANON_KEY`, Value: (Your Supabase Anon Key)
-   - Name: `NEXT_PUBLIC_API_URL`, Value: (We will update this after deploying the backend)
-6. Click **Deploy**. Vercel will now build and host your site!
+**Steps:**
+1. Push your `tulasi-ai` monorepo to GitHub.
+2. Sign in to [Vercel](https://vercel.com/) and click **Add New Project**.
+3. Import your GitHub repository.
+4. **Important**: Since this is a monorepo, in the "Framework Preset" section, make sure:
+   - **Root Directory**: Select `frontend` (Do not leave it as the root `tulasi-ai`).
+   - Framework Preview: Next.js.
+5. **Environment Variables**: Add the following vars:
+   - `NEXT_PUBLIC_API_URL`: The URL of your Render backend (e.g., `https://tulasi-backend.onrender.com`).
+   - `NEXTAUTH_URL`: The Vercel domain you are deploying to.
+   - `NEXTAUTH_SECRET`: A secure random string (can use `openssl rand -base64 32`).
+6. Click **Deploy**. Vercel will auto-install NPM packages and build your Next.js project.
 
-## Step 3: Deploy Backend to Render
-1. Go to the [Render Dashboard](https://dashboard.render.com/) and log in (Create an account using GitHub if needed).
-2. Go to the **Blueprints** page.
-3. Click **New Blueprint Instance** and connect your `tulasi-ai` GitHub repository.
-4. Render will automatically detect the `render.yaml` file I created in your project root!
-5. It will automatically provision the FastAPI Web Service.
-6. Once it says "Live", click on your Web Service to copy the backend URL (e.g., `https://tulasi-backend-xxxx.onrender.com`).
+---
 
-## Step 4: Final Connection
-1. Go back to your Vercel Dashboard for `tulasi-ai`.
-2. Go to **Settings** -> **Environment Variables**.
-3. Edit the `NEXT_PUBLIC_API_URL` and paste your new Render backend URL.
-4. Go to the **Deployments** tab, click the three dots on your latest deployment, and select **Redeploy** to rebuild the frontend with the active backend URL.
+## 🚀 2. Backend Deployment (Render)
 
-🎉 **You are live!** Your platform is now publicly accessible with continuous deployment (meaning every time you push to GitHub, it updates automatically!).
+Render offers free Web Services which can run Python APIs like FastAPI.
+
+**Steps:**
+1. Sign in to [Render](https://render.com/) and create a new **Web Service**.
+2. Connect the same GitHub repository.
+3. **Configuration**:
+   - **Name**: tulasi-api
+   - **Root Directory**: `backend`
+   - **Environment**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+4. **Environment Variables**: Add the following vars:
+   - `GROQ_API_KEY`: Your Groq Llama 3 API Key.
+   - `GEMINI_API_KEY`: Your Gemini Flash 1.5 API Key.
+   - `DEEPSEEK_API_KEY`: Your DeepSeek API Key.
+   - `SECRET_KEY`: A secure random string for JWT authentication.
+   - `ALGORITHM`: `HS256`
+   - `ACCESS_TOKEN_EXPIRE_MINUTES`: `30`
+5. Click **Create Web Service**. 
+6. Note: Render free tier spins down after 15 minutes of inactivity, so the initial request might take ~30-50 seconds to boot up.
+
+---
+
+## 🗄️ 3. Database Considerations
+
+- **SQLite**: The current codebase uses SQLite. Because Render instances are ephemeral (they reset state occasionally), SQLite is strictly for development and testing.
+- **Production DB**: For full production stability, use a free **PostgreSQL** database (e.g., Supabase, Neon) and update the `SQLALCHEMY_DATABASE_URL` in `backend/.env`.
+
+- **FAISS Vector Store**: Locally, FAISS saves indices to disk. If hosted ephemerally, indices will vanish on restart. Consider moving to a persistent free cloud Vector DB (like Pinecone free tier) if permanent document retention is necessary in production.
