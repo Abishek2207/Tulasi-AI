@@ -1,0 +1,108 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlmodel import Session, select
+from pydantic import BaseModel
+from typing import Optional
+import uuid
+
+from app.core.database import get_session
+from app.core.security import verify_password, get_password_hash, create_access_token, decode_token
+from app.core.config import settings
+from app.models.models import User
+
+router = APIRouter()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)) -> User:
+    payload = decode_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    user = db.exec(select(User).where(User.email == payload.get("sub"))).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+
+def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.email != settings.ADMIN_EMAIL:
+        raise HTTPException(status_code=403, detail="Admin access only")
+    return current_user
+
+
+@router.post("/register")
+def register(req: RegisterRequest, db: Session = Depends(get_session)):
+    existing = db.exec(select(User).where(User.email == req.email)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    is_admin = req.email == settings.ADMIN_EMAIL
+    user = User(
+        email=req.email,
+        hashed_password=get_password_hash(req.password),
+        name=req.name,
+        role="admin" if is_admin else "student",
+        invite_code=str(uuid.uuid4())[:8].upper(),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    token = create_access_token({"sub": user.email})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "role": user.role,
+            "invite_code": user.invite_code,
+        }
+    }
+
+
+@router.post("/login")
+def login(req: LoginRequest, db: Session = Depends(get_session)):
+    user = db.exec(select(User).where(User.email == req.email)).first()
+    if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    token = create_access_token({"sub": user.email})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "role": user.role,
+            "invite_code": user.invite_code,
+        }
+    }
+
+
+@router.get("/me")
+def get_me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.name,
+        "role": current_user.role,
+        "avatar": current_user.avatar,
+        "streak": current_user.streak,
+        "xp": current_user.xp,
+        "level": current_user.level,
+        "invite_code": current_user.invite_code,
+    }
