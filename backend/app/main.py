@@ -13,10 +13,15 @@ app = FastAPI(
     redoc_url="/api/redoc",
 )
 
-# CORS — allow frontend
+# CORS — allow frontend (localhost dev + all Vercel previews + production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://*.vercel.app", "https://tulasi.ai"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://tulasi-ai-ozu1.vercel.app",
+        "https://*.vercel.app",
+        "https://tulasi.ai",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
