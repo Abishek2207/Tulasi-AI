@@ -1,24 +1,48 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { chatApi, ChatMsg } from "@/lib/api";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState([
-    { role: 'ai', content: 'Hello! I am your AI Tutor. How can I assist you with your studies today?' }
+  const { data: session } = useSession();
+  const token = (session?.user as any)?.accessToken;
+  
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    { role: 'assistant', content: 'Hello! I am your AI Tutor. How can I assist you with your studies today?' }
   ]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
+  const endRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
-    if(!input.trim()) return;
-    setMessages([...messages, { role: 'user', content: input }]);
+  // Auto-scroll
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!input.trim() || !token) return;
+    
+    const userMsg = input;
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setInput('');
-    // Mock AI Response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'ai', content: 'This is a mock response from the Tulasi AI Model Router.' }]);
-    }, 1000);
+    setLoading(true);
+
+    try {
+      const res = await chatApi.send(userMsg, sessionId || undefined, token);
+      if (res.session_id && !sessionId) {
+        setSessionId(res.session_id);
+      }
+      setMessages(prev => [...prev, { role: 'assistant', content: res.response }]);
+    } catch (error: any) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message || 'Failed to connect to backend.'}` }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,8 +53,8 @@ export default function ChatPage() {
             AI
           </div>
           <div>
-            <h2 className="font-semibold text-lg">AI Tutor</h2>
-            <p className="text-xs text-neutral-400">Powered by LLaMa 3 & Gemini</p>
+            <h2 className="font-semibold text-lg">Tulasi AI Tutor</h2>
+            <p className="text-xs text-neutral-400">Powered by Gemini & Llama 3</p>
           </div>
         </div>
         
@@ -42,23 +66,43 @@ export default function ChatPage() {
               key={i} 
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[80%] p-4 rounded-2xl ${msg.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-neutral-800 text-neutral-200 rounded-tl-none'}`}>
+              <div className={`max-w-[80%] p-4 rounded-2xl ${msg.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-neutral-800 text-neutral-200 rounded-tl-none whitespace-pre-wrap'}`}>
                 {msg.content}
               </div>
             </motion.div>
           ))}
+          {loading && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+              <div className="bg-neutral-800 text-neutral-400 p-4 rounded-2xl rounded-tl-none flex gap-1 items-center">
+                <span className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"></span>
+                <span className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                <span className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+              </div>
+            </motion.div>
+          )}
+          <div ref={endRef} />
         </div>
         
         <div className="p-4 bg-neutral-900 border-t border-neutral-800 flex gap-2">
           <Input 
             value={input} 
             onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Ask me anything..." 
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder={token ? "Ask me anything..." : "Please log in to chat..."} 
+            disabled={!token || loading}
             className="flex-grow bg-neutral-800 border-none text-neutral-100 placeholder:text-neutral-500"
           />
-          <Button onClick={handleSend} className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6">
-            Send
+          <Button 
+            onClick={handleSend} 
+            disabled={!token || loading || !input.trim()}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6 disabled:opacity-50"
+          >
+            {loading ? "Thinking..." : "Send"}
           </Button>
         </div>
       </div>
