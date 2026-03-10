@@ -10,13 +10,13 @@ from app.models.models import User
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 router = APIRouter()
 pdf_sessions: dict = {}
 
-# Initialize Local Embedding Model (Runs offline/free)
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+# Initialize Google Generative AI Embeddings (Cloud-based, low memory usage)
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=settings.GEMINI_API_KEY)
 vector_store_dir = "./data/chroma"
 os.makedirs(vector_store_dir, exist_ok=True)
 
@@ -82,8 +82,17 @@ def ask_pdf(req: PDFQuestionRequest, current_user: User = Depends(get_current_us
         
         context = "\n\n".join([doc.page_content for doc in relevant_docs])
         
+        # Use Gemini for LLM Generation (Verified API Key)
+        if settings.GEMINI_API_KEY:
+            import google.generativeai as genai
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel("models/gemini-3.1-flash-lite-preview")
+            prompt = f"Answer the question based STRICTLY on this context:\n{context}\n\nQuestion: {req.question}"
+            response = model.generate_content(prompt)
+            return {"answer": response.text, "source": session["filename"]}
+
         # Use Groq for LLM Generation (Fast & Free)
-        if settings.GROQ_API_KEY:
+        elif settings.GROQ_API_KEY:
             from groq import Groq
             client = Groq(api_key=settings.GROQ_API_KEY)
             completion = client.chat.completions.create(
@@ -95,14 +104,6 @@ def ask_pdf(req: PDFQuestionRequest, current_user: User = Depends(get_current_us
                 max_tokens=1024,
             )
             return {"answer": completion.choices[0].message.content, "source": session["filename"]}
-            
-        elif settings.GEMINI_API_KEY:
-            import google.generativeai as genai
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            prompt = f"Answer the question based STRICTLY on this context:\n{context}\n\nQuestion: {req.question}"
-            response = model.generate_content(prompt)
-            return {"answer": response.text, "source": session["filename"]}
             
         return {"answer": "(No API Key) Found context for you but could not generate response.", "source": session["filename"]}
     except Exception as e:
