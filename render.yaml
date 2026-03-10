@@ -9,16 +9,31 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.13
-      - key: GROQ_API_KEY
+        value: "3.10.13"
+      # Primary Gemini/Google key
+      - key: GOOGLE_API_KEY
         sync: false
+      # Legacy alias (also supported)
       - key: GEMINI_API_KEY
+        sync: false
+      # Other AI providers
+      - key: GROQ_API_KEY
         sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false
+      # Auth
       - key: SECRET_KEY
         sync: false
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: 30
+        value: "10080"
+      # Supabase (optional)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false

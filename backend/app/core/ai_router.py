@@ -26,11 +26,12 @@ def get_ai_response(message: str, history: List[dict] = None, force_model: str =
 You help with: programming, career guidance, interview prep, and CS concepts.
 Be concise, educational, and encouraging. Use markdown formatting for code."""
 
-    # Try Gemini (General tutoring)
-    if model_choice == "gemini" and settings.GEMINI_API_KEY:
+    # Try Gemini (General tutoring) — supports both GOOGLE_API_KEY and GEMINI_API_KEY
+    gemini_key = settings.effective_gemini_key
+    if model_choice == "gemini" and gemini_key:
         try:
             import google.generativeai as genai
-            genai.configure(api_key=settings.GEMINI_API_KEY)
+            genai.configure(api_key=gemini_key)
             model = genai.GenerativeModel("gemini-1.5-flash")
             prompt = f"{system_prompt}\n\nConversation:\n{history_text}\n\nUser: {message}\nAssistant:"
             response = model.generate_content(prompt)
