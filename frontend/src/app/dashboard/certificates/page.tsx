@@ -8,6 +8,7 @@ const CERTS = [
   { id: "ai-prompt", title: "AI Prompt Engineering", date: "Mar 15, 2026", duration: "10 Hours", track: "Artificial Intelligence" },
   { id: "react-adv", title: "Advanced React Patterns", date: "Feb 28, 2026", duration: "25 Hours", track: "Frontend Engineering" },
   { id: "sys-design", title: "System Design Masters", date: "Jan 10, 2026", duration: "40 Hours", track: "Backend Engineering" },
+  { id: "leetcode-100", title: "Problem Solver 100", date: "Locked", duration: "100 Problems", track: "Algorithms", locked: true },
 ];
 
 export default function CertificatesPage() {
@@ -51,13 +52,23 @@ export default function CertificatesPage() {
               <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8, lineHeight: 1.3 }}>{cert.title}</h3>
               <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 24 }}>Track: {cert.track} • {cert.duration}</p>
               
-              <button 
-                onClick={() => setSelectedCert(cert)}
-                className="btn btn-primary" 
-                style={{ width: "100%", background: "linear-gradient(135deg, #FFD93D, #FF6B6B)", color: "#111", fontWeight: 800, padding: 12, borderRadius: 12, border: "none" }}
-              >
-                View Certificate
-              </button>
+              {cert.locked ? (
+                <button 
+                  disabled
+                  className="btn btn-secondary" 
+                  style={{ width: "100%", padding: 12, borderRadius: 12, border: "1px dashed rgba(255,255,255,0.2)", color: "var(--text-muted)", cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                >
+                  🔒 Locked ({cert.duration})
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setSelectedCert(cert)}
+                  className="btn btn-primary" 
+                  style={{ width: "100%", background: "linear-gradient(135deg, #FFD93D, #FF6B6B)", color: "#111", fontWeight: 800, padding: 12, borderRadius: 12, border: "none" }}
+                >
+                  View Certificate
+                </button>
+              )}
             </motion.div>
           ))}
         </div>
