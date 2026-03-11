@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 import json
 from datetime import datetime
+from typing import Any
 
 from app.core.config import settings
 from app.api.auth import get_current_user
@@ -17,16 +18,18 @@ def generate_ai_response(prompt: str, is_json: bool = False):
     if settings.GROQ_API_KEY:
         from groq import Groq
         client = Groq(api_key=settings.GROQ_API_KEY)
-        kwargs = {
+        
+        req_params: dict[str, Any] = {
             "model": "llama-3.3-70b-versatile",
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 2048,
             "temperature": 0.7
         }
+        
         if is_json:
-            kwargs["response_format"] = {"type": "json_object"}
+            req_params["response_format"] = {"type": "json_object"}
             
-        completion = client.chat.completions.create(**kwargs)
+        completion = client.chat.completions.create(**req_params)
         return completion.choices[0].message.content
         
     elif settings.GEMINI_API_KEY:

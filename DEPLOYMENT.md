@@ -1,56 +1,38 @@
-# Tulasi AI - Deployment Guide
+# Tulasi AI Production Deployment Checklist
 
-This document outlines how to deploy the Tulasi AI platform using free-tier services. The frontend is optimized for **Vercel** and the backend for **Render**.
+Everything in the code is fully implemented to run beautifully on Vercel (Frontend) and Render's Free Tier (Backend). We replaced the memory-hungry vector database with a lightweight alternative.
 
----
+## 1. Render Dashboard (Backend)
+Go to [Render Dashboard](https://dashboard.render.com). Find your backend web service.
+In the **Environment** tab, set these variables:
 
-## 🏗️ 1. Frontend Deployment (Vercel)
+| Key | Value (Example) | Required |
+|-----|-----------------|----------|
+| `PYTHON_VERSION` | `3.10.13` | Yes |
+| `GOOGLE_API_KEY` | `AIzaSyDGClF...` *(Your Gemini API key)* | Yes |
+| `GROQ_API_KEY` | `gsk_...` | Optional (Fallback) |
+| `SECRET_KEY` | *(Any long random string)* | Yes (for JWT Auth) |
+| `ALGORITHM` | `HS256` | Yes |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `10080` | Yes |
 
-Vercel is the optimal host for Next.js applications, offering a generous completely free tier.
+*After setting these, go to the **Deploys** tab and click "Manual Deploy -> Deploy latest commit".*
 
-**Steps:**
-1. Push your `tulasi-ai` monorepo to GitHub.
-2. Sign in to [Vercel](https://vercel.com/) and click **Add New Project**.
-3. Import your GitHub repository.
-4. **Important**: Since this is a monorepo, in the "Framework Preset" section, make sure:
-   - **Root Directory**: Select `frontend` (Do not leave it as the root `tulasi-ai`).
-   - Framework Preview: Next.js.
-5. **Environment Variables**: Add the following vars:
-   - `NEXT_PUBLIC_API_URL`: The URL of your Render backend (e.g., `https://tulasi-backend.onrender.com`).
-   - `NEXTAUTH_URL`: The Vercel domain you are deploying to.
-   - `NEXTAUTH_SECRET`: A secure random string (can use `openssl rand -base64 32`).
-6. Click **Deploy**. Vercel will auto-install NPM packages and build your Next.js project.
+## 2. Vercel Dashboard (Frontend)
+Go to [Vercel Dashboard](https://vercel.com). Find the Tulasi AI project. 
+In Settings -> Environment Variables, ensure these are set:
 
----
+| Key | Value | Required |
+|-----|-------|----------|
+| `NEXT_PUBLIC_API_URL` | `https://tulasi-api.onrender.com` | Yes |
+| `NEXT_PUBLIC_BACKEND_URL` | `https://tulasi-api.onrender.com` | Yes |
+| `NEXTAUTH_URL` | `https://frontend-eight-tan-33.vercel.app` (or your domain) | Yes |
+| `NEXTAUTH_SECRET` | *(Any long random string)* | Yes |
+| `GOOGLE_CLIENT_ID` | `6607689850...` | Optional (For Google Auth) |
+| `GOOGLE_CLIENT_SECRET` | `GOCSPX-...` | Optional (For Google Auth) |
 
-## 🚀 2. Backend Deployment (Render)
-
-Render offers free Web Services which can run Python APIs like FastAPI.
-
-**Steps:**
-1. Sign in to [Render](https://render.com/) and create a new **Web Service**.
-2. Connect the same GitHub repository.
-3. **Configuration**:
-   - **Name**: tulasi-api
-   - **Root Directory**: `backend`
-   - **Environment**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. **Environment Variables**: Add the following vars:
-   - `GROQ_API_KEY`: Your Groq Llama 3 API Key.
-   - `GEMINI_API_KEY`: Your Gemini Flash 1.5 API Key.
-   - `DEEPSEEK_API_KEY`: Your DeepSeek API Key.
-   - `SECRET_KEY`: A secure random string for JWT authentication.
-   - `ALGORITHM`: `HS256`
-   - `ACCESS_TOKEN_EXPIRE_MINUTES`: `30`
-5. Click **Create Web Service**. 
-6. Note: Render free tier spins down after 15 minutes of inactivity, so the initial request might take ~30-50 seconds to boot up.
-
----
-
-## 🗄️ 3. Database Considerations
-
-- **SQLite**: The current codebase uses SQLite. Because Render instances are ephemeral (they reset state occasionally), SQLite is strictly for development and testing.
-- **Production DB**: For full production stability, use a free **PostgreSQL** database (e.g., Supabase, Neon) and update the `SQLALCHEMY_DATABASE_URL` in `backend/.env`.
-
-- **FAISS Vector Store**: Locally, FAISS saves indices to disk. If hosted ephemerally, indices will vanish on restart. Consider moving to a persistent free cloud Vector DB (like Pinecone free tier) if permanent document retention is necessary in production.
+## ✅ Completed Fixes
+* **Memory Reduction**: Completely removed `chromadb` (which uses ~300MB RAM) and replaced it with `faiss-cpu` (under 10MB RAM). Render free tier will no longer OOM.
+* **API Standardization**: Backend now strictly checks for `GOOGLE_API_KEY` to run Gemini.
+* **Dependency Fixes**: Pinned all versions to stop pip dependency-resolution timeouts on Render.
+* **NextAuth Google Login Fix**: Re-architected `[...nextauth]/route.ts` to *only* load Google/GitHub providers if the keys exist in the environment. This resolves the `?error=Configuration` loop you were seeing.
+* **Central API Client**: Created `@/lib/api.ts` so the frontend reliably talks to Render. Connected the Chatbot UI to actually use the AI APIs.
