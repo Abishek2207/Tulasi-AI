@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 
 
 class User(SQLModel, table=True):
@@ -16,6 +16,7 @@ class User(SQLModel, table=True):
     streak: int = 0
     xp: int = 0
     level: int = 1
+    last_activity_date: Optional[str] = None  # ISO date string YYYY-MM-DD
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_seen: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
@@ -64,3 +65,33 @@ class DirectMessage(SQLModel, table=True):
     receiver_id: int = Field(foreign_key="user.id", index=True)
     content: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ActivityLog(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    # action_type: code_solved | video_watched | reel_watched | interview_completed | roadmap_step | hackathon_joined | roadmap_completed | course_completed
+    action_type: str
+    title: str = ""  # human readable label, e.g. "Solved: Two Sum"
+    metadata_json: Optional[str] = None  # JSON string for extra data
+    xp_earned: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class UserProgress(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    category: str  # "coding" | "interview" | "roadmap" | "videos"
+    total_items: int = 0
+    completed_items: int = 0
+    progress_pct: int = 0   # 0–100
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SolvedProblem(SQLModel, table=True):
+    """Tracks which coding problems a user has solved."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    problem_id: str = Field(index=True)  # e.g. "ARR-001"
+    solved_at: datetime = Field(default_factory=datetime.utcnow)
+

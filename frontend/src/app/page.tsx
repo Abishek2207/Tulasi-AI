@@ -41,7 +41,16 @@ function TulasILogo({ size = 40 }: { size?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: size * 0.25 }}>
       <div style={{ position: "relative" }}>
-        <img src="/images/logo-transparent.png" alt="Tulasi AI Pro" style={{ width: size * 1.5, height: size * 1.5, objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(78,205,196,0.2))" }} />
+        <img 
+          src="/images/logo-transparent.png" 
+          alt="Tulasi AI Pro" 
+          style={{ width: size * 1.5, height: size * 1.5, objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(78,205,196,0.3))" }} 
+        />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+          style={{ position: "absolute", inset: "-20%", background: "radial-gradient(circle, rgba(108,99,255,0.4) 0%, transparent 70%)", zIndex: -1 }}
+        />
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
         <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: size * 0.55, color: "white", letterSpacing: "-0.5px", lineHeight: 1 }}>
