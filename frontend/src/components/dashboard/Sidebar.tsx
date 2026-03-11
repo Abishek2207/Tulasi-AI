@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { icon: "🏢", name: "Company Prep", href: "/dashboard/company-prep" },
   { icon: "🗺️", name: "Career Roadmaps", href: "/dashboard/career-roadmaps" },
   { icon: "📚", name: "Platform Guides", href: "/dashboard/platform-guides" },
-  { icon: "🎬", name: "Reels", href: "/dashboard/reels" },
   { icon: "▶️", name: "YouTube Hub", href: "/dashboard/youtube-learning" },
   { icon: "🏆", name: "Hackathons", href: "/dashboard/hackathons" },
   { icon: "🎯", name: "Mock Interview", href: "/dashboard/interview" },

@@ -1,136 +1,168 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 
-const CATEGORIES = ["All", "System Design", "Algorithms", "AI & GenAI", "Behavioral"];
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+const CATEGORIES = ["All", "Data Structures", "Algorithms", "System Design", "AI / ML", "Web Development", "Interview Prep", "Communication"];
 
 const VIDEOS = [
-  {
-    id: "SqqBgJvA9Z0",
-    title: "System Design Interview: Design YouTube",
-    channel: "System Design Interview",
-    category: "System Design",
-    duration: "45:12",
-  },
-  {
-    id: "V_Pz-hM-cZ0",
-    title: "Grokking the System Design Interview",
-    channel: "ByteByteGo",
-    category: "System Design",
-    duration: "12:30",
-  },
-  {
-    id: "zWg7U0OEAoE",
-    title: "ChatGPT Architecture Explained",
-    channel: "AI Explained",
-    category: "AI & GenAI",
-    duration: "22:15",
-  },
-  {
-    id: "8hly31xKli0",
-    title: "Algorithms: Graph Search, DFS and BFS",
-    channel: "HackerRank",
-    category: "Algorithms",
-    duration: "16:45",
-  },
-  {
-    id: "pTjQk93_nJk",
-    title: "Amazon Leadership Principles Interview",
-    channel: "Dan Croitor",
-    category: "Behavioral",
-    duration: "30:00",
-  },
-  {
-    id: "q_BmsZJ8XQA",
-    title: "Dynamic Programming - Learn to Solve Algorithmic Problems",
-    channel: "freeCodeCamp",
-    category: "Algorithms",
-    duration: "5:10:00",
-  }
+  // Data Structures
+  { id: "RBSGKlAvoiM", title: "Data Structures Easy to Advanced - Full Course", channel: "freeCodeCamp", category: "Data Structures", duration: "8:01:16" },
+  { id: "pkYVOmU3MgA", title: "Data Structures & Algorithms in Python - Full Course", channel: "freeCodeCamp", category: "Data Structures", duration: "9:31:54" },
+  { id: "t2CEgPsws3U", title: "Binary Trees for Beginners", channel: "mycodeschool", category: "Data Structures", duration: "27:39" },
+  { id: "oBt53YbR9Kk", title: "Dynamic Programming - Learn to Solve Algorithmic Problems", channel: "freeCodeCamp", category: "Data Structures", duration: "5:01:18" },
+  { id: "4r_XR9fUPhQ", title: "Graph Algorithms for Technical Interviews", channel: "freeCodeCamp", category: "Data Structures", duration: "2:02:23" },
+  { id: "jUyQqLvg8Qg", title: "Linked Lists for Technical Interviews", channel: "freeCodeCamp", category: "Data Structures", duration: "1:32:11" },
+  { id: "gNcef-db8tI", title: "Trie Data Structure - Full Course", channel: "freeCodeCamp", category: "Data Structures", duration: "58:12" },
+  // Algorithms
+  { id: "8hly31xKli0", title: "Algorithms: Graph Search, DFS and BFS", channel: "HackerRank", category: "Algorithms", duration: "16:45" },
+  { id: "-LI2x6e7MkY", title: "Binary Search Tutorial for Beginners", channel: "NeetCode", category: "Algorithms", duration: "32:14" },
+  { id: "sLpDvNJxdSk", title: "Sorting Algorithms Full Course", channel: "freeCodeCamp", category: "Algorithms", duration: "3:51:22" },
+  { id: "Tb5oS2TIlBg", title: "Backtracking Full Course - Sudoku, N-Queens", channel: "freeCodeCamp", category: "Algorithms", duration: "4:41:07" },
+  { id: "WbzNRTTrX0g", title: "Two Pointer Technique", channel: "NeetCode", category: "Algorithms", duration: "15:22" },
+  { id: "GjdX3UO2Vc", title: "Sliding Window Technique", channel: "Inside Code", category: "Algorithms", duration: "22:19" },
+  // System Design
+  { id: "SqqBgJvA9Z0", title: "System Design Interview: Design YouTube", channel: "System Design Interview", category: "System Design", duration: "45:12" },
+  { id: "V_Pz-hM-cZ0", title: "System Design Fundamentals - ByteByteGo", channel: "ByteByteGo", category: "System Design", duration: "12:30" },
+  { id: "xpDnVSmNFX0", title: "Design a URL Shortener (Bit.ly)", channel: "System Design Interview", category: "System Design", duration: "35:48" },
+  { id: "iJLL-KPqah0", title: "Design WhatsApp / Messenger Chat System", channel: "Gaurav Sen", category: "System Design", duration: "38:14" },
+  { id: "-W9F__D3oY4", title: "How Databases Work (SQL Indexing)", channel: "Fireship", category: "System Design", duration: "10:52" },
+  { id: "M62-U7YMSro", title: "Microservices Explained in 5 Minutes", channel: "TechWorld with Nana", category: "System Design", duration: "5:44" },
+  { id: "UzLMhqg3_Kc", title: "REST API Crash Course", channel: "Traversy Media", category: "System Design", duration: "1:32:21" },
+  { id: "FNtpPW_7H1k", title: "Redis in 100 Seconds", channel: "Fireship", category: "System Design", duration: "2:40" },
+  // AI / ML
+  { id: "zWg7U0OEAoE", title: "ChatGPT Architecture Explained", channel: "AI Explained", category: "AI / ML", duration: "22:15" },
+  { id: "kCc8FmEb1nY", title: "Build GPT: from scratch, in code", channel: "Andrej Karpathy", category: "AI / ML", duration: "1:56:21" },
+  { id: "aircAruvnKk", title: "But what is a neural network?", channel: "3Blue1Brown", category: "AI / ML", duration: "19:13" },
+  { id: "r-vbh3t7WVI", title: "Transformer Neural Networks - EXPLAINED!", channel: "CodeEmporium", category: "AI / ML", duration: "14:27" },
+  { id: "F5iKb9wnxNw", title: "LangChain Explained in 13 Minutes", channel: "AssemblyAI", category: "AI / ML", duration: "13:27" },
+  { id: "T0GtIm88OmE", title: "Fine-tuning LLMs - Full Course", channel: "freeCodeCamp", category: "AI / ML", duration: "2:43:21" },
+  { id: "pdiJA-jSZgE", title: "RAG from Scratch - Full Tutorial", channel: "LangChain", category: "AI / ML", duration: "1:22:45" },
+  { id: "rfscVS0vtbw", title: "Machine Learning for Beginners", channel: "freeCodeCamp", category: "AI / ML", duration: "9:52:08" },
+  // Web Development
+  { id: "zJSY8tbf_ys", title: "React Full Course for Beginners", channel: "Dave Gray", category: "Web Development", duration: "9:49:14" },
+  { id: "1NM_0ALYP44", title: "Next.js 14 Full Course - App Router", channel: "Traversy Media", category: "Web Development", duration: "1:30:24" },
+  { id: "W6NZfCO5SIk", title: "JavaScript Tutorial Full Course", channel: "Bro Code", category: "Web Development", duration: "12:15:20" },
+  { id: "44fkdLedQpQ", title: "TypeScript Full Course for Beginners", channel: "Dave Gray", category: "Web Development", duration: "8:34:13" },
+  { id: "K__an_SB5k4", title: "Backend Development with FastAPI", channel: "Bitfumes", category: "Web Development", duration: "5:59:31" },
+  { id: "dq_0VumVHr4", title: "PostgreSQL Tutorial for Beginners", channel: "Amigoscode", category: "Web Development", duration: "4:04:47" },
+  { id: "Hm5vQKBkN-U", title: "Docker for Beginners - Full Course", channel: "TechWorld with Nana", category: "Web Development", duration: "3:17:11" },
+  // Interview Prep
+  { id: "pTjQk93_nJk", title: "Amazon Leadership Principles Interview Prep", channel: "Dan Croitor", category: "Interview Prep", duration: "30:00" },
+  { id: "q_BmsZJ8XQA", title: "Google SWE Interview - Must Know Questions", channel: "CS Dojo", category: "Interview Prep", duration: "38:14" },
+  { id: "0bMe_vCZo30", title: "How to Ace System Design Interviews", channel: "Exponent", category: "Interview Prep", duration: "1:06:49" },
+  { id: "xJVPUiEJGe0", title: "Behavioral Interview Tips from Google Engineer", channel: "Jackson Gabbard", category: "Interview Prep", duration: "38:05" },
+  { id: "uQdy914JRKQ", title: "Resume Tips for Software Engineers", channel: "CS Dojo", category: "Interview Prep", duration: "12:22" },
+  { id: "oOmR0hBYJkA", title: "LeetCode Patterns - Complete Guide", channel: "NeetCode", category: "Interview Prep", duration: "1:02:21" },
+  // Communication Skills
+  { id: "HAnw168huqA", title: "Public Speaking Tips for Engineers", channel: "Communication Coach", category: "Communication", duration: "18:45" },
+  { id: "wnv_1S8ZRCI", title: "Technical Communication Skills", channel: "MIT OpenCourseWare", category: "Communication", duration: "1:27:33" },
+  { id: "MoU8_tH0NkA", title: "How to Present Technical Ideas to Non-Tech People", channel: "Stanford eCorner", category: "Communication", duration: "22:11" },
 ];
 
 export default function YouTubeLearningPage() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [search, setSearch] = useState("");
+  const { data: session } = useSession();
 
-  const filteredVideos = VIDEOS.filter(v => activeCategory === "All" || v.category === activeCategory);
+  const filtered = VIDEOS.filter(v => {
+    const matchesCat = activeCategory === "All" || v.category === activeCategory;
+    const matchesSearch = !search || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
+  const logWatch = async (video: typeof VIDEOS[0]) => {
+    if (!session) return;
+    try {
+      const res = await fetch(`${BACKEND}/api/auth/token`, { method: "GET", credentials: "include" });
+      const tokenData = await res.json();
+      await fetch(`${BACKEND}/api/activity/log`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenData.token}` },
+        body: JSON.stringify({ action_type: "video_watched", title: `Watched: ${video.title}` }),
+      });
+    } catch (e) { /* silent */ }
+  };
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 60 }}>
-      {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 40 }}>
-        <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-outfit)", marginBottom: 16 }}>
-          Tech <span className="gradient-text" style={{ background: "linear-gradient(135deg, #FF0000, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Video Hub</span>
+      <div style={{ textAlign: "center", marginBottom: 32 }}>
+        <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-outfit)", marginBottom: 12 }}>
+          YouTube <span style={{ background: "linear-gradient(135deg, #FF0000, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Learning Hub</span>
         </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 16, maxWidth: 600, margin: "0 auto" }}>
-          Curated masterclasses and tutorials to accelerate your interview preparation and engineering skills.
+        <p style={{ color: "var(--text-secondary)", fontSize: 16, maxWidth: 600, margin: "0 auto 24px" }}>
+          {VIDEOS.length}+ curated masterclasses across 7 categories. Every video hand-picked for interview and career prep.
         </p>
+        <input
+          value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="🔍 Search videos or channels..."
+          className="input-field"
+          style={{ maxWidth: 500, margin: "0 auto" }}
+        />
       </div>
 
-      {/* Category Filter */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 40, flexWrap: "wrap" }}>
+      {/* Categories */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 36, flexWrap: "wrap" }}>
         {CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
+          <button key={cat} onClick={() => setActiveCategory(cat)}
             style={{
-              padding: "8px 20px", borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: "pointer",
-              transition: "all 0.2s ease",
+              padding: "7px 18px", borderRadius: 24, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
               background: activeCategory === cat ? "rgba(255,0,0,0.15)" : "transparent",
               color: activeCategory === cat ? "#FFA2A2" : "var(--text-muted)",
-              border: activeCategory === cat ? "1px solid #FF0000" : "1px solid rgba(255,255,255,0.1)"
-            }}
-          >
-            {cat}
-          </button>
+              border: activeCategory === cat ? "1px solid #FF0000" : "1px solid rgba(255,255,255,0.1)",
+            }}>{cat}{activeCategory === cat ? ` (${filtered.length})` : ""}</button>
         ))}
       </div>
 
       {/* Video Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 28 }}>
         <AnimatePresence>
-          {filteredVideos.map(video => (
-            <motion.div
-              key={video.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              layout
+          {filtered.map((video, i) => (
+            <motion.div key={video.id}
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ delay: Math.min(i * 0.03, 0.3) }} layout
               className="dash-card"
-              style={{ overflow: "hidden", padding: 0, display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
+              style={{ padding: 0, display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
             >
-              <div style={{ position: "relative", paddingTop: "56.25%", width: "100%", background: "#000" }}>
-                <iframe
-                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
-                  src={`https://www.youtube.com/embed/${video.id}`}
-                  title={video.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+              <div style={{ position: "relative", paddingTop: "56.25%", background: "#000", cursor: "pointer" }} onClick={() => logWatch(video)}>
+                <img
+                  src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
+                  alt={video.title}
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  onError={e => { (e.target as HTMLImageElement).style.background = "#111" }}
                 />
-              </div>
-              <div style={{ padding: 20, flex: 1, display: "flex", flexDirection: "column" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#FFA2A2", textTransform: "uppercase", letterSpacing: "1px" }}>{video.category}</span>
-                  <span style={{ fontSize: 12, color: "var(--text-muted)", background: "rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: 12 }}>{video.duration}</span>
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)", opacity: 0, transition: "opacity 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = "0")}
+                >
+                  <a href={`https://youtube.com/watch?v=${video.id}`} target="_blank" rel="noopener noreferrer"
+                    style={{ width: 56, height: 56, borderRadius: "50%", background: "#FF0000", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", fontSize: 24 }}>
+                    ▶
+                  </a>
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: "white", marginBottom: 8, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                  {video.title}
-                </h3>
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: "auto" }}>
-                  by {video.channel}
-                </p>
+                <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.8)", color: "white", fontSize: 11, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>
+                  {video.duration}
+                </div>
+              </div>
+              <div style={{ padding: 18, flex: 1, display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#FFA2A2", textTransform: "uppercase", letterSpacing: "1px" }}>{video.category}</span>
+                </div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "white", marginBottom: 8, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{video.title}</h3>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: "auto" }}>by {video.channel}</p>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
-        
-        {filteredVideos.length === 0 && (
+        {filtered.length === 0 && (
           <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 60, color: "var(--text-muted)", fontSize: 16 }}>
-            No videos found for this category.
+            No videos found. Try a different search or category.
           </div>
         )}
       </div>
-
     </div>
   );
 }

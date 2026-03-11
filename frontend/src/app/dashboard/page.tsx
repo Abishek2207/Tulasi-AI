@@ -14,7 +14,6 @@ const MODULES = [
   { id: "resume", title: "Resume Builder", desc: "Craft an ATS-friendly A4 resume on the fly.", icon: "📄", link: "/dashboard/resume", color: "#43E97B", span: 1 },
   { id: "startup", title: "Startup LAB", desc: "Ideate and generate full startup pitch decks.", icon: "🚀", link: "/dashboard/startup-lab", color: "#FF8E53", span: 1 },
   { id: "study", title: "Study Rooms", desc: "Join live Pomodoro focus sessions.", icon: "👥", link: "/dashboard/study-rooms", color: "#FF9A9E", span: 1 },
-  { id: "reels", title: "Education Feed", desc: "TikTok-style 100-second coding tutorials.", icon: "📱", link: "/dashboard/reels", color: "#74EBD5", span: 1 },
   { id: "hackathon", title: "Hackathons", desc: "Find global AI & Web3 competitions.", icon: "🏆", link: "/dashboard/hackathons", color: "#FFD200", span: 1 },
   { id: "certs", title: "Certificates", desc: "Download verified learning credentials.", icon: "🎓", link: "/dashboard/certificates", color: "#84FAB0", span: 2 },
 ];
@@ -23,8 +22,26 @@ export default function DashboardHome() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Student";
   const [mounted, setMounted] = useState(false);
+  const [stats, setStats] = useState({ streak: 0, problems_solved: 0, videos_watched: 0, hackathons_joined: 0 });
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    const fetchStats = async () => {
+      try {
+        const tokenRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/auth/token`, { credentials: "include" });
+        const { token } = await tokenRes.json().catch(() => ({ token: null }));
+        if (!token) return;
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/activity/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (e) { /* silent */ }
+    };
+    fetchStats();
+  }, []);
 
   if (!mounted) return null;
 
@@ -46,12 +63,12 @@ export default function DashboardHome() {
           
           <div style={{ display: "flex", gap: 16 }}>
             <Link href="/dashboard/roadmaps" style={{ textDecoration: "none" }}>
-              <button className="btn btn-primary" style={{ background: "linear-gradient(135deg, #6C63FF, #4ECDC4)", border: "none", padding: "14px 28px", borderRadius: 12, fontSize: 16, fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: 8 }}>
+              <button className="btn btn-primary" style={{ background: "linear-gradient(135deg, #6C63FF, #4ECDC4)", border: "none", padding: "14px 28px", borderRadius: 12, fontSize: 16, fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                 Continue Learning <span style={{ fontSize: 20 }}>→</span>
               </button>
             </Link>
             <Link href="/dashboard/code" style={{ textDecoration: "none" }}>
-              <button className="btn btn-secondary" style={{ padding: "14px 28px", borderRadius: 12, fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+              <button className="btn btn-secondary" style={{ padding: "14px 28px", borderRadius: 12, fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white" }}>
                 Coding Practice <span style={{ fontSize: 20 }}>💻</span>
               </button>
             </Link>
@@ -61,26 +78,34 @@ export default function DashboardHome() {
 
       {/* Activity Overview */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20, marginBottom: 48 }}>
-        <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(255,107,107,0.2)", background: "rgba(255,107,107,0.02)" }}>
-           <div style={{ fontSize: 24, marginBottom: 8 }}>🔥</div>
-           <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>14 Days</div>
-           <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Current Streak</div>
-        </div>
-        <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(78,205,196,0.2)", background: "rgba(78,205,196,0.02)" }}>
-           <div style={{ fontSize: 24, marginBottom: 8 }}>💻</div>
-           <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>128<span style={{ fontSize: 16, color: "var(--text-muted)" }}>/500</span></div>
-           <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Problems Solved</div>
-        </div>
-        <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(108,99,255,0.2)", background: "rgba(108,99,255,0.02)" }}>
-           <div style={{ fontSize: 24, marginBottom: 8 }}>▶️</div>
-           <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>45</div>
-           <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Videos Watched</div>
-        </div>
-        <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(255,217,61,0.2)", background: "rgba(255,217,61,0.02)" }}>
-           <div style={{ fontSize: 24, marginBottom: 8 }}>🏆</div>
-           <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>2</div>
-           <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Hackathons Joined</div>
-        </div>
+        <Link href="/dashboard/streak" style={{ textDecoration: "none" }}>
+          <motion.div whileHover={{ scale: 1.02 }} className="dash-card" style={{ padding: 24, border: "1px solid rgba(255,107,107,0.2)", background: "rgba(255,107,107,0.02)", height: "100%", cursor: "pointer" }}>
+             <div style={{ fontSize: 24, marginBottom: 8 }}>🔥</div>
+             <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>{stats.streak} Days</div>
+             <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Current Streak</div>
+          </motion.div>
+        </Link>
+        <Link href="/dashboard/code" style={{ textDecoration: "none" }}>
+          <motion.div whileHover={{ scale: 1.02 }} className="dash-card" style={{ padding: 24, border: "1px solid rgba(78,205,196,0.2)", background: "rgba(78,205,196,0.02)", height: "100%", cursor: "pointer" }}>
+             <div style={{ fontSize: 24, marginBottom: 8 }}>💻</div>
+             <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>{stats.problems_solved}<span style={{ fontSize: 16, color: "var(--text-muted)", marginLeft: 4 }}>/100</span></div>
+             <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Problems Solved</div>
+          </motion.div>
+        </Link>
+        <Link href="/dashboard/youtube-learning" style={{ textDecoration: "none" }}>
+          <motion.div whileHover={{ scale: 1.02 }} className="dash-card" style={{ padding: 24, border: "1px solid rgba(108,99,255,0.2)", background: "rgba(108,99,255,0.02)", height: "100%", cursor: "pointer" }}>
+             <div style={{ fontSize: 24, marginBottom: 8 }}>▶️</div>
+             <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>{stats.videos_watched}</div>
+             <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Videos Watched</div>
+          </motion.div>
+        </Link>
+        <Link href="/dashboard/hackathons" style={{ textDecoration: "none" }}>
+          <motion.div whileHover={{ scale: 1.02 }} className="dash-card" style={{ padding: 24, border: "1px solid rgba(255,217,61,0.2)", background: "rgba(255,217,61,0.02)", height: "100%", cursor: "pointer" }}>
+             <div style={{ fontSize: 24, marginBottom: 8 }}>🏆</div>
+             <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>{stats.hackathons_joined}</div>
+             <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Hackathons Joined</div>
+          </motion.div>
+        </Link>
       </div>
 
       {/* Grid Quick Access */}
@@ -103,9 +128,9 @@ export default function DashboardHome() {
               </div>
               
               <h3 style={{ fontSize: 22, fontWeight: 800, color: "white", marginBottom: 12, position: "relative", zIndex: 1 }}>{mod.title}</h3>
-              <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5, position: "relative", zIndex: 1 }}>{mod.desc}</p>
+              <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5, position: "relative", zIndex: 1, paddingBottom: 32 }}>{mod.desc}</p>
               
-              <div style={{ marginTop: "auto", paddingTop: 24, position: "relative", zIndex: 1 }}>
+              <div style={{ marginTop: "auto", position: "absolute", bottom: 32, left: 32, zIndex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, color: mod.color, fontSize: 14, fontWeight: 700 }}>
                   Launch App <span>→</span>
                 </div>

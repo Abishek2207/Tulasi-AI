@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from pydantic import BaseModel
 from typing import List
@@ -6,22 +6,72 @@ from datetime import datetime
 
 from app.core.database import get_session
 from app.api.auth import get_current_user
-from app.models.models import User, Certificate
+from app.models.models import User, Certificate, UserProgress
 
 router = APIRouter()
 
-AUTO_CERTIFICATES = [
-    {"milestone": "first_chat", "title": "First Steps with AI", "desc": "Completed your first AI conversation"},
-    {"milestone": "10_chats", "title": "Active Learner", "desc": "Had 10 AI conversations"},
-    {"milestone": "pdf_upload", "title": "Document Master", "desc": "Uploaded and analyzed your first PDF"},
-    {"milestone": "interview_1", "title": "Interview Ready", "desc": "Completed your first mock interview"},
-    {"milestone": "roadmap_start", "title": "On the Path", "desc": "Started a learning roadmap"},
+# Milestones that can generate certificates — each requires 100% progress in a category
+MILESTONE_CERTS = [
+    {
+        "id": "coding_complete",
+        "title": "Coding Arena Master",
+        "desc": "Solved 100+ coding problems across all DSA categories",
+        "category": "coding",
+        "required_pct": 100,
+        "icon": "💻",
+    },
+    {
+        "id": "interview_master",
+        "title": "Interview Champion",
+        "desc": "Completed 10+ AI mock interviews with strong performance",
+        "category": "interview",
+        "required_pct": 100,
+        "icon": "🎯",
+    },
+    {
+        "id": "roadmap_complete",
+        "title": "Career Roadmap Achiever",
+        "desc": "Completed all steps in a career learning roadmap",
+        "category": "roadmap",
+        "required_pct": 100,
+        "icon": "🗺️",
+    },
+    {
+        "id": "video_learner",
+        "title": "YouTube Learning Pro",
+        "desc": "Watched 50+ curated learning videos",
+        "category": "videos",
+        "required_pct": 100,
+        "icon": "▶️",
+    },
 ]
 
 
 @router.get("/my")
-def get_my_certificates(db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+def get_my_certificates(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     certs = db.exec(select(Certificate).where(Certificate.user_id == current_user.id)).all()
+
+    # Get current progress for all categories
+    progress_records = db.exec(
+        select(UserProgress).where(UserProgress.user_id == current_user.id)
+    ).all()
+    progress_map = {p.category: p.progress_pct for p in progress_records}
+
+    earned_ids = {c.title for c in certs}
+
+    milestones_status = []
+    for m in MILESTONE_CERTS:
+        pct = progress_map.get(m["category"], 0)
+        milestones_status.append({
+            **m,
+            "current_pct": pct,
+            "can_generate": pct >= m["required_pct"],
+            "already_earned": m["title"] in earned_ids,
+        })
+
     return {
         "certificates": [
             {
@@ -33,7 +83,7 @@ def get_my_certificates(db: Session = Depends(get_session), current_user: User =
             }
             for c in certs
         ],
-        "available_to_earn": AUTO_CERTIFICATES,
+        "milestones": milestones_status,
     }
 
 
@@ -43,7 +93,11 @@ class CertificateRequest(BaseModel):
 
 
 @router.post("/upload-meta")
-def upload_certificate_meta(req: CertificateRequest, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+def upload_certificate_meta(
+    req: CertificateRequest,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     cert = Certificate(
         user_id=current_user.id,
         title=req.title,
@@ -56,19 +110,59 @@ def upload_certificate_meta(req: CertificateRequest, db: Session = Depends(get_s
     return {"message": "Certificate recorded", "id": cert.id}
 
 
-@router.post("/generate/{milestone}")
-def generate_certificate(milestone: str, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-    milestone_data = next((m for m in AUTO_CERTIFICATES if m["milestone"] == milestone), None)
-    if not milestone_data:
-        return {"error": "Milestone not found"}
-    
+@router.post("/generate/{milestone_id}")
+def generate_certificate(
+    milestone_id: str,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """STRICT: Only generates certificate if user has 100% progress in required category."""
+    milestone = next((m for m in MILESTONE_CERTS if m["id"] == milestone_id), None)
+    if not milestone:
+        raise HTTPException(404, "Milestone not found")
+
+    # === STRICT PROGRESS CHECK ===
+    prog = db.exec(
+        select(UserProgress).where(
+            UserProgress.user_id == current_user.id,
+            UserProgress.category == milestone["category"]
+        )
+    ).first()
+
+    current_pct = prog.progress_pct if prog else 0
+
+    if current_pct < milestone["required_pct"]:
+        raise HTTPException(
+            403,
+            f"Certificate locked! You need {milestone['required_pct']}% progress in {milestone['category']} "
+            f"but you&apos;re at {current_pct}%. Keep going! 🚀"
+        )
+
+    # Check if already earned
+    existing = db.exec(
+        select(Certificate).where(
+            Certificate.user_id == current_user.id,
+            Certificate.title == milestone["title"]
+        )
+    ).first()
+    if existing:
+        return {"message": "Certificate already earned!", "id": existing.id}
+
     cert = Certificate(
         user_id=current_user.id,
-        title=f"Tulasi AI — {milestone_data['title']}",
+        title=milestone["title"],
         issuer="Tulasi AI Platform",
-        cert_type="auto",
+        cert_type="earned",
     )
     db.add(cert)
     db.commit()
     db.refresh(cert)
-    return {"message": "Certificate generated!", "certificate": {"title": cert.title, "id": cert.id}}
+
+    return {
+        "message": "🎉 Certificate unlocked and generated!",
+        "certificate": {
+            "id": cert.id,
+            "title": cert.title,
+            "issued_at": cert.issued_at.isoformat(),
+        }
+    }
