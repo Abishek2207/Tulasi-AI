@@ -7,17 +7,20 @@ import { motion } from "framer-motion";
 
 const NAV_ITEMS = [
   { icon: "🏠", name: "Dashboard", href: "/dashboard" },
+  { icon: "📄", name: "Resume Builder", href: "/dashboard/resume" },
+  { icon: "💻", name: "Code Practice", href: "/dashboard/code" },
+  { icon: "🏢", name: "Company Prep", href: "/dashboard/company-prep" },
+  { icon: "🗺️", name: "Career Roadmaps", href: "/dashboard/career-roadmaps" },
+  { icon: "📚", name: "Platform Guides", href: "/dashboard/platform-guides" },
+  { icon: "🎬", name: "Reels", href: "/dashboard/reels" },
+  { icon: "▶️", name: "YouTube Hub", href: "/dashboard/youtube-learning" },
+  { icon: "🏆", name: "Hackathons", href: "/dashboard/hackathons" },
+  { icon: "🎯", name: "Mock Interview", href: "/dashboard/interview" },
+  { icon: "👥", name: "Study Rooms", href: "/dashboard/study-rooms" },
+  { icon: "🎓", name: "Certificates", href: "/dashboard/certificates" },
   { icon: "💬", name: "AI Chat", href: "/dashboard/chat" },
   { icon: "✉️", name: "Messages", href: "/dashboard/messages" },
-  { icon: "📄", name: "PDF Q&A", href: "/dashboard/pdf" },
-  { icon: "💻", name: "Code Practice", href: "/dashboard/code" },
-  { icon: "🎯", name: "Mock Interview", href: "/dashboard/interview" },
   { icon: "💡", name: "Startup Lab", href: "/dashboard/startup-lab" },
-  { icon: "🗺️", name: "Roadmaps", href: "/dashboard/roadmaps" },
-  { icon: "🎓", name: "Certificates", href: "/dashboard/certificates" },
-  { icon: "🏆", name: "Hackathons", href: "/dashboard/hackathons" },
-  { icon: "🎬", name: "Reels", href: "/dashboard/reels" },
-  { icon: "👥", name: "Study Rooms", href: "/dashboard/study-rooms" },
   { icon: "👤", name: "Profile", href: "/dashboard/profile" },
 ];
 

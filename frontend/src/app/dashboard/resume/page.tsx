@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 
 export default function ResumeBuilderPage() {
   const { data: session } = useSession();
+  
+  // Tabs: 'editor', 'ats', 'ai'
+  const [activeTab, setActiveTab] = useState<'editor' | 'ats' | 'ai'>('editor');
+  
   const [personalInfo, setPersonalInfo] = useState({
     name: "John Doe",
     email: "john@example.com",
@@ -30,60 +34,191 @@ export default function ResumeBuilderPage() {
 
   const [skills, setSkills] = useState("Python, JavaScript, TypeScript, React, Next.js, FastAPI, PostgreSQL, Docker, Git");
 
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [atsScore, setAtsScore] = useState<number | null>(null);
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const runAtsAnalysis = () => {
+    setIsAnalyzing(true);
+    // Mock analysis delay
+    setTimeout(() => {
+      // Basic mock scoring logic based on content length
+      const score = Math.min(100, 40 + (experience.length * 15) + (skills.split(',').length * 2));
+      setAtsScore(score);
+      setIsAnalyzing(false);
+    }, 2000);
   };
 
   return (
     <div style={{ display: "flex", gap: 24, height: "calc(100vh - 120px)" }}>
       
-      {/* Left Pane: Editor */}
-      <div className="dash-card no-print" style={{ width: "40%", overflowY: "auto", display: "flex", flexDirection: "column", gap: 24, padding: "24px" }}>
+      {/* Left Pane: Controls */}
+      <div className="dash-card no-print" style={{ width: "40%", overflowY: "auto", display: "flex", flexDirection: "column", gap: 20, padding: "24px" }}>
         
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, fontFamily: "var(--font-outfit)", marginBottom: 4 }}>📄 Resume Editor</h2>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Fill in your details. The preview updates instantly.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 800, fontFamily: "var(--font-outfit)", marginBottom: 4 }}>📄 Resume Builder</h2>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Build, analyze, and optimize your resume for ATS systems.</p>
         </div>
 
         {/* Action Buttons */}
         <div style={{ display: "flex", gap: 12 }}>
-          <button className="btn btn-secondary" style={{ flex: 1, padding: "10px", fontSize: 13, borderRadius: 8 }}>✨ Auto-fill from Profile</button>
+          <button className="btn btn-secondary" style={{ flex: 1, padding: "10px", fontSize: 13, borderRadius: 8 }}>✨ Auto-fill Profile</button>
           <button onClick={handlePrint} className="btn btn-primary" style={{ flex: 1, padding: "10px", fontSize: 13, borderRadius: 8, background: "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))" }}>📥 Download PDF</button>
         </div>
 
-        {/* Form Sections */}
-        <div>
-          <h3 style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "var(--brand-primary)", marginBottom: 16 }}>Personal Details</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <input className="input-field" placeholder="Full Name" value={personalInfo.name} onChange={e => setPersonalInfo({...personalInfo, name: e.target.value})} />
-            <div style={{ display: "flex", gap: 12 }}>
-              <input className="input-field" placeholder="Email" value={personalInfo.email} onChange={e => setPersonalInfo({...personalInfo, email: e.target.value})} style={{ flex: 1 }} />
-              <input className="input-field" placeholder="Phone" value={personalInfo.phone} onChange={e => setPersonalInfo({...personalInfo, phone: e.target.value})} style={{ flex: 1 }} />
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <input className="input-field" placeholder="LinkedIn URL" value={personalInfo.linkedin} onChange={e => setPersonalInfo({...personalInfo, linkedin: e.target.value})} style={{ flex: 1 }} />
-              <input className="input-field" placeholder="GitHub URL" value={personalInfo.github} onChange={e => setPersonalInfo({...personalInfo, github: e.target.value})} style={{ flex: 1 }} />
-            </div>
-            <textarea className="input-field" placeholder="Professional Summary" value={personalInfo.summary} onChange={e => setPersonalInfo({...personalInfo, summary: e.target.value})} rows={3} style={{ resize: "vertical" }} />
-          </div>
+        {/* Tab Navigation */}
+        <div style={{ display: "flex", background: "var(--background)", padding: 4, borderRadius: 12, border: "1px solid var(--border)" }}>
+          {['editor', 'ats', 'ai'].map(tab => (
+            <button 
+              key={tab}
+              onClick={() => setActiveTab(tab as any)}
+              style={{
+                flex: 1, padding: "8px", fontSize: 13, fontWeight: 600, borderRadius: 8,
+                background: activeTab === tab ? "rgba(108,99,255,0.15)" : "transparent",
+                color: activeTab === tab ? "var(--brand-primary)" : "var(--text-secondary)",
+                border: "none", cursor: "pointer", transition: "all 0.2s"
+              }}
+            >
+              {tab === 'editor' && "✏️ Editor"}
+              {tab === 'ats' && "🎯 ATS Checker"}
+              {tab === 'ai' && "🤖 AI Suggestions"}
+            </button>
+          ))}
         </div>
 
-        <div>
-           <h3 style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "var(--brand-primary)", marginBottom: 16 }}>Education</h3>
-           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-             <input className="input-field" placeholder="Degree" value={education.degree} onChange={e => setEducation({...education, degree: e.target.value})} />
-             <input className="input-field" placeholder="University" value={education.university} onChange={e => setEducation({...education, university: e.target.value})} />
-             <div style={{ display: "flex", gap: 12 }}>
-               <input className="input-field" placeholder="Dates" value={education.dates} onChange={e => setEducation({...education, dates: e.target.value})} style={{ flex: 1 }} />
-               <input className="input-field" placeholder="GPA" value={education.gpa} onChange={e => setEducation({...education, gpa: e.target.value})} style={{ flex: 1 }} />
-             </div>
-             <textarea className="input-field" placeholder="Relevant Coursework" value={education.coursework} onChange={e => setEducation({...education, coursework: e.target.value})} rows={2} style={{ resize: "vertical" }} />
-           </div>
-        </div>
+        {/* Tab Content */}
+        <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
+          <AnimatePresence mode="wait">
+            
+            {/* EDITOR TAB */}
+            {activeTab === 'editor' && (
+              <motion.div key="editor" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                {/* Personal Details */}
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "var(--brand-primary)", marginBottom: 16 }}>Personal Details</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <input className="input-field" placeholder="Full Name" value={personalInfo.name} onChange={e => setPersonalInfo({...personalInfo, name: e.target.value})} />
+                    <div style={{ display: "flex", gap: 12 }}>
+                      <input className="input-field" placeholder="Email" value={personalInfo.email} onChange={e => setPersonalInfo({...personalInfo, email: e.target.value})} style={{ flex: 1 }} />
+                      <input className="input-field" placeholder="Phone" value={personalInfo.phone} onChange={e => setPersonalInfo({...personalInfo, phone: e.target.value})} style={{ flex: 1 }} />
+                    </div>
+                    <div style={{ display: "flex", gap: 12 }}>
+                      <input className="input-field" placeholder="LinkedIn URL" value={personalInfo.linkedin} onChange={e => setPersonalInfo({...personalInfo, linkedin: e.target.value})} style={{ flex: 1 }} />
+                      <input className="input-field" placeholder="GitHub URL" value={personalInfo.github} onChange={e => setPersonalInfo({...personalInfo, github: e.target.value})} style={{ flex: 1 }} />
+                    </div>
+                    <textarea className="input-field" placeholder="Professional Summary" value={personalInfo.summary} onChange={e => setPersonalInfo({...personalInfo, summary: e.target.value})} rows={3} style={{ resize: "vertical" }} />
+                  </div>
+                </div>
 
-        <div>
-          <h3 style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "var(--brand-primary)", marginBottom: 16 }}>Skills</h3>
-          <textarea className="input-field" placeholder="Comma separated skills" value={skills} onChange={e => setSkills(e.target.value)} rows={3} style={{ resize: "vertical" }} />
+                {/* Education */}
+                <div style={{ marginBottom: 24 }}>
+                   <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "var(--brand-primary)", marginBottom: 16 }}>Education</h3>
+                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                     <input className="input-field" placeholder="Degree" value={education.degree} onChange={e => setEducation({...education, degree: e.target.value})} />
+                     <input className="input-field" placeholder="University" value={education.university} onChange={e => setEducation({...education, university: e.target.value})} />
+                     <div style={{ display: "flex", gap: 12 }}>
+                       <input className="input-field" placeholder="Dates" value={education.dates} onChange={e => setEducation({...education, dates: e.target.value})} style={{ flex: 1 }} />
+                       <input className="input-field" placeholder="GPA" value={education.gpa} onChange={e => setEducation({...education, gpa: e.target.value})} style={{ flex: 1 }} />
+                     </div>
+                     <textarea className="input-field" placeholder="Relevant Coursework" value={education.coursework} onChange={e => setEducation({...education, coursework: e.target.value})} rows={2} style={{ resize: "vertical" }} />
+                   </div>
+                </div>
+
+                {/* Skills */}
+                <div>
+                  <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "var(--brand-primary)", marginBottom: 16 }}>Skills</h3>
+                  <textarea className="input-field" placeholder="Comma separated skills" value={skills} onChange={e => setSkills(e.target.value)} rows={3} style={{ resize: "vertical" }} />
+                </div>
+              </motion.div>
+            )}
+
+            {/* ATS CHECKER TAB */}
+            {activeTab === 'ats' && (
+              <motion.div key="ats" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                <div style={{ background: "rgba(108,99,255,0.05)", border: "1px solid rgba(108,99,255,0.2)", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 24 }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>ATS Score Checker</h3>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
+                    See how well your resume matches standard Applicant Tracking Systems. We analyze keywords, formatting, and impact metrics.
+                  </p>
+                  <button 
+                    onClick={runAtsAnalysis}
+                    disabled={isAnalyzing}
+                    className="btn btn-primary" 
+                    style={{ width: "100%", padding: 12, borderRadius: 8, fontWeight: 700 }}
+                  >
+                    {isAnalyzing ? "Analyzing Resume..." : "Analyze Now"}
+                  </button>
+                </div>
+
+                {atsScore !== null && !isAnalyzing && (
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ padding: 20, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600 }}>Overall ATS Score</span>
+                      <span style={{ fontSize: 24, fontWeight: 800, color: atsScore > 75 ? "#4ECDC4" : "#FF6B6B" }}>{atsScore}/100</span>
+                    </div>
+                    {/* Progress Bar */}
+                    <div style={{ height: 8, background: "var(--background)", borderRadius: 4, overflow: "hidden", marginBottom: 20 }}>
+                      <div style={{ height: "100%", width: `${atsScore}%`, background: atsScore > 75 ? "#4ECDC4" : "#FF6B6B", borderRadius: 4, transition: "width 1s ease-out" }} />
+                    </div>
+                    
+                    <h4 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 12 }}>Actionable Feedback</h4>
+                    <ul style={{ display: "flex", flexDirection: "column", gap: 12, padding: 0, margin: 0, listStyle: "none" }}>
+                      <li style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 8 }}>
+                        <span style={{ color: "#4ECDC4" }}>✓</span> Great use of action verbs in experience section.
+                      </li>
+                      <li style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 8 }}>
+                        <span style={{ color: "#FF6B6B" }}>!</span> Missing quantitative metrics (e.g., "%", "$"). Try to quantify your impact.
+                      </li>
+                      <li style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 8 }}>
+                        <span style={{ color: "#FF6B6B" }}>!</span> Skills section could be expanded. Consider adding cloud technologies if applicable.
+                      </li>
+                    </ul>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {/* AI SUGGESTIONS TAB */}
+            {activeTab === 'ai' && (
+              <motion.div key="ai" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                <div style={{ marginBottom: 20 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "var(--brand-primary)" }}>✨</span> Smart Keyword Optimization
+                  </h3>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                    Paste a job description below, and our AI will suggest keywords you should include in your resume to bypass ATS filters.
+                  </p>
+                </div>
+
+                <textarea 
+                  className="input-field" 
+                  placeholder="Paste Job Description here..." 
+                  rows={6} 
+                  style={{ resize: "vertical", marginBottom: 16 }} 
+                />
+                
+                <button className="btn btn-secondary" style={{ width: "100%", padding: 12, borderRadius: 8, marginBottom: 24, fontWeight: 600 }}>
+                  Identify Keywords
+                </button>
+
+                <div>
+                  <h4 style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 12 }}>Suggested Keywords to Add</h4>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {["Kubernetes", "Microservices", "CI/CD", "AWS", "Agile", "System Design"].map(kw => (
+                      <span key={kw} style={{ padding: "4px 12px", background: "rgba(78,205,196,0.1)", color: "#4ECDC4", border: "1px solid rgba(78,205,196,0.2)", borderRadius: 16, fontSize: 12, fontWeight: 600 }}>
+                        + {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
         </div>
 
       </div>
@@ -175,3 +310,4 @@ export default function ResumeBuilderPage() {
     </div>
   );
 }
+
