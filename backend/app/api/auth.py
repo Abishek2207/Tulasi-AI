@@ -106,3 +106,43 @@ def get_me(current_user: User = Depends(get_current_user)):
         "level": current_user.level,
         "invite_code": current_user.invite_code,
     }
+
+
+class OAuthLoginRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
+    provider: str = "google"
+
+
+@router.post("/google-oauth")
+def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
+    """Auto-register or login OAuth users (Google/GitHub) and return a JWT token."""
+    user = db.exec(select(User).where(User.email == req.email)).first()
+
+    if not user:
+        # Auto-register the oauth user
+        is_admin = req.email == settings.ADMIN_EMAIL
+        user = User(
+            email=req.email,
+            hashed_password=None,  # No password for OAuth users
+            name=req.name or req.email.split("@")[0],
+            role="admin" if is_admin else "student",
+            provider=req.provider,
+            invite_code=uuid.uuid4().hex[:8].upper(),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    token = create_access_token({"sub": user.email})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "role": user.role,
+            "invite_code": user.invite_code,
+        }
+    }

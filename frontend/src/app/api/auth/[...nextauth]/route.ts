@@ -71,6 +71,33 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
 export const authOptions: NextAuthOptions = {
   providers,
   callbacks: {
+    async signIn({ user, account }) {
+      // For OAuth providers (Google, GitHub), auto-register/login with our FastAPI backend
+      if (account && account.provider !== "credentials") {
+        try {
+          const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          // Try to login first
+          const loginRes = await fetch(`${BACKEND}/api/auth/google-oauth`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name || user.email?.split("@")[0],
+              provider: account.provider,
+            }),
+          });
+          if (loginRes.ok) {
+            const data = await loginRes.json();
+            (user as any).accessToken = data.access_token;
+            (user as any).inviteCode = data.user?.invite_code;
+          }
+        } catch (e) {
+          console.error("OAuth backend sync failed:", e);
+          // Don't block login if backend is down; chat will just show error
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role || (user.email === ADMIN_EMAIL ? "admin" : "student");
