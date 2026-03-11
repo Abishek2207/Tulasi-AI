@@ -16,7 +16,7 @@ Right now, your Google Cloud Console probably only allows `localhost:3000`.
 5. *(Optional but recommended)* Also add your main production domain if you haven't yet:
    ```text
    https://frontend-eight-tan-33.vercel.app/api/auth/callback/google
-   https://tulasi-ai-ozu1.vercel.app/api/auth/callback/google
+   https://tulasiai.vercel.app/api/auth/callback/google
    ```
 6. Click **Save** at the bottom.
 
