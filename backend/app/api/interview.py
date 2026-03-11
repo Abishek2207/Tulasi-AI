@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import uuid
 import json
 
@@ -11,7 +11,7 @@ from app.models.models import User
 router = APIRouter()
 
 # In-memory session store for interview MVP
-interview_sessions: Dict[str, Any] = {}
+interview_sessions: Dict[str, dict] = {}
 
 class InterviewStartRequest(BaseModel):
     role: str
@@ -26,16 +26,18 @@ def generate_ai_response(prompt: str, is_json: bool = False):
     if settings.GROQ_API_KEY:
         from groq import Groq
         client = Groq(api_key=settings.GROQ_API_KEY)
-        kwargs = {
+        
+        req_params: dict[str, Any] = {
             "model": "llama-3.3-70b-versatile",
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 1024,
             "temperature": 0.7
         }
+        
         if is_json:
-            kwargs["response_format"] = {"type": "json_object"}
+            req_params["response_format"] = {"type": "json_object"}
             
-        completion = client.chat.completions.create(**kwargs)
+        completion = client.chat.completions.create(**req_params)
         return completion.choices[0].message.content
         
     elif settings.GEMINI_API_KEY:
@@ -77,19 +79,21 @@ def start_interview(req: InterviewStartRequest, current_user: User = Depends(get
 @router.post("/answer")
 def answer_interview(req: InterviewAnswerRequest, current_user: User = Depends(get_current_user)):
     session = interview_sessions.get(req.session_id)
-    if not session or session["user_id"] != current_user.id:
+    if not session or not isinstance(session, dict) or session.get("user_id") != current_user.id:
         raise HTTPException(404, "Interview session not found or expired.")
         
     # Append user answer
-    session["history"].append({"role": "user", "content": req.answer})
+    session_history = session.get("history", [])
+    if isinstance(session_history, list):
+        session_history.append({"role": "user", "content": req.answer})
     
     # Check if we should end the interview (e.g. after 3 questions for MVP)
-    if session["questions_asked"] >= 3:
+    if int(session.get("questions_asked", 1)) >= 3:
         # Generate final score and feedback
-        history_text = "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in session["history"]])
+        history_text = "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in session.get("history", [])])
         prompt = f"""You are a hiring manager. The interview is over. Evaluate the candidate's answers.
         
-Context: Interviewing for {session['role']} at {session['company']}.
+Context: Interviewing for {session.get('role')} at {session.get('company')}.
 Transcript:
 {history_text}
 
@@ -103,15 +107,17 @@ Return ONLY raw JSON."""
         
         try:
             feedback_json_str = generate_ai_response(prompt, is_json=True)
-            feedback_data = json.loads(feedback_json_str)
+            feedback_data = json.loads(str(feedback_json_str))
             return {"status": "completed", "feedback": feedback_data}
         except Exception as e:
             # Fallback if AI fails to format
             return {"status": "completed", "feedback": {"score": 75, "feedback_summary": "Good effort but AI failed to parse specific feedback.", "strengths": ["Completed interview"], "improvements": ["Review system error"]}}
             
     # Otherwise, ask the next question
-    session["questions_asked"] += 1
-    history_text = "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in session["history"]])
+    current_questions: int = int(session.get("questions_asked", 1))
+    session["questions_asked"] = current_questions + 1
+    history_text = "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in session.get("history", [])])
+
     
     prompt = f"""You are a technical hiring manager at {session['company']} interviewing for {session['role']}.
 This is the transcript so far:
@@ -121,7 +127,9 @@ Acknowledge their last answer briefly (1 sentence), and then ask the next techni
 
     try:
         next_question = generate_ai_response(prompt)
-        session["history"].append({"role": "ai", "content": next_question})
+        session_history = session.get("history", [])
+        if isinstance(session_history, list):
+            session_history.append({"role": "ai", "content": next_question})
         return {"status": "in_progress", "question": next_question}
     except Exception as e:
          raise HTTPException(500, f"Error generating next question: {str(e)}")

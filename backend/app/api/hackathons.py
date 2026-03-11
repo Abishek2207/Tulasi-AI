@@ -26,11 +26,12 @@ HACKATHONS = [
     {"id": 20, "name": "Docker Container Hack", "organizer": "Docker", "description": "Build tools that improve the developer experience and containerize complex distributed systems efficiently.", "prize": "$8,000 Pool", "deadline": "September 10, 2026", "link": "https://docker.com", "tags": "devops, global"}
 ]
 
+from typing import List, Optional
 
 @router.get("")
-def get_hackathons(tag: str = None):
+def get_hackathons(tag: Optional[str] = None):
     if tag and tag.lower() != "all":
-        filtered = [h for h in HACKATHONS if tag.lower() in h.get("tags", "").lower()]
+        filtered = [h for h in HACKATHONS if tag.lower() in str(h.get("tags", "")).lower()]
         return {"hackathons": filtered, "total": len(filtered)}
     return {"hackathons": HACKATHONS, "total": len(HACKATHONS)}
 
