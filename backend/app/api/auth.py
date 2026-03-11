@@ -53,7 +53,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_session)):
         hashed_password=get_password_hash(req.password),
         name=req.name,
         role="admin" if is_admin else "student",
-        invite_code=str(uuid.uuid4())[:8].upper(),
+        invite_code=uuid.uuid4().hex[:8].upper(),
     )
     db.add(user)
     db.commit()
