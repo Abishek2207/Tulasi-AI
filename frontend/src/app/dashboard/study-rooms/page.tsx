@@ -64,8 +64,8 @@ export default function StudyRoomsPage() {
       <div style={{ display: "flex", gap: 24, height: "calc(100vh - 120px)" }}>
         
         {/* Left: Chat & Activity */}
-        <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden", border: `1px solid ${room.color}40` }}>
-          <div style={{ padding: 20, borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: `linear-gradient(90deg, ${room.color}15, transparent)` }}>
+        <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <div style={{ padding: 20, borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(90deg, rgba(255,255,255,0.05), transparent)" }}>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ color: room.color }}>#</span> {room.name}
@@ -84,14 +84,17 @@ export default function StudyRoomsPage() {
                   <span style={{ fontSize: 13, fontWeight: 700, color: m.user === "You" ? room.color : "white" }}>{m.user}</span>
                   <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{m.time}</span>
                 </div>
-                <div style={{ background: m.user === "You" ? `${room.color}20` : "rgba(255,255,255,0.05)", padding: "10px 16px", borderRadius: 16, borderBottomRightRadius: m.user === "You" ? 4 : 16, borderTopLeftRadius: m.user !== "You" ? 4 : 16, border: `1px solid ${m.user === "You" ? room.color : "var(--border)"}40`, fontSize: 14 }}>
-                  {m.text}
+                <div style={{ background: m.user === "You" ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)", padding: "10px 16px", borderRadius: 16, borderBottomRightRadius: m.user === "You" ? 4 : 16, borderTopLeftRadius: m.user !== "You" ? 4 : 16, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, whiteSpace: "pre-wrap", fontFamily: m.text.includes("```") ? "monospace" : "inherit" }}>
+                  {m.text.replace(/```[a-z]*\n?/g, "")}
                 </div>
               </div>
             ))}
           </div>
 
           <form onSubmit={handleSend} style={{ padding: 16, background: "var(--surface)", borderTop: "1px solid var(--border)", display: "flex", gap: 12 }}>
+            <button type="button" onClick={() => setChatInput("```python\ndef solve(arr):\n    pass\n```")} style={{ padding: "0 16px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: 12, cursor: "pointer", color: "white", fontSize: 18 }} title="Share Code">
+              💻
+            </button>
             <input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder={`Message #${room.name}...`} className="input-field" style={{ flex: 1, padding: "12px 16px", borderRadius: 12 }} />
             <button type="submit" disabled={!chatInput.trim()} className="btn btn-primary" style={{ background: room.color, padding: "0 24px", borderRadius: 12, opacity: !chatInput.trim() ? 0.5 : 1 }}>Send</button>
           </form>
@@ -100,7 +103,7 @@ export default function StudyRoomsPage() {
         {/* Right: Productivity Gadgets */}
         <div style={{ width: 320, display: "flex", flexDirection: "column", gap: 24 }}>
           
-          <div className="dash-card" style={{ padding: 32, textAlign: "center", border: `1px solid ${room.color}40`, boxShadow: `0 10px 30px ${room.color}15` }}>
+          <div className="dash-card" style={{ padding: 32, textAlign: "center", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
             <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-secondary)", fontWeight: 700, marginBottom: 16 }}>Pomodoro Timer</h3>
             <div style={{ fontSize: 56, fontWeight: 900, fontFamily: "var(--font-outfit)", color: room.color, marginBottom: 24 }}>
               {formatTime(timer)}
@@ -113,9 +116,25 @@ export default function StudyRoomsPage() {
             </div>
           </div>
 
-          <div className="dash-card" style={{ flex: 1 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Online Members</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>🎙️ Voice Channel</span>
+                <button style={{ background: "rgba(67,233,123,0.2)", color: "#43E97B", border: "none", padding: "4px 12px", borderRadius: 12, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Join</button>
+              </h3>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 12 }}>
+                 <div style={{ width: 32, height: 32, borderRadius: 16, background: "var(--brand-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👨‍💻</div>
+                 <div style={{ flex: 1 }}>
+                   <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>AlexP</div>
+                   <div style={{ fontSize: 11, color: "#43E97B" }}>Speaking...</div>
+                 </div>
+                 <div style={{ fontSize: 16 }}>🔊</div>
+              </div>
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Online Members</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>👤</div>
@@ -127,6 +146,7 @@ export default function StudyRoomsPage() {
               ))}
               <div style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", marginTop: 8 }}>+ {room.active - 5} more</div>
             </div>
+          </div>
           </div>
 
         </div>
@@ -152,11 +172,11 @@ export default function StudyRoomsPage() {
             key={room.id}
             whileHover={{ y: -5, scale: 1.02 }}
             className="dash-card"
-            style={{ padding: 24, cursor: "pointer", border: `1px solid ${room.color}40`, transition: "all 0.2s" }}
+            style={{ padding: 24, cursor: "pointer", border: "1px solid rgba(255,255,255,0.1)", transition: "all 0.2s" }}
             onClick={() => setActiveRoom(room.id)}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-              <div style={{ background: `${room.color}20`, color: room.color, padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+              <div style={{ background: "rgba(255,255,255,0.1)", color: room.color, padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
                 {room.tag}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
@@ -178,6 +198,18 @@ export default function StudyRoomsPage() {
             </div>
           </motion.div>
         ))}
+
+        <motion.div
+           whileHover={{ y: -5, scale: 1.02 }}
+           className="dash-card"
+           style={{ padding: 24, cursor: "pointer", border: "1px dashed rgba(255,255,255,0.2)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", background: "transparent" }}
+        >
+          <div style={{ width: 64, height: 64, borderRadius: 32, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 16 }}>
+            ➕
+          </div>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>Create Room</h2>
+          <p style={{ fontSize: 14, color: "var(--text-muted)" }}>Start a public or private study session.</p>
+        </motion.div>
       </div>
     </div>
   );

@@ -59,6 +59,30 @@ export default function DashboardHome() {
         </div>
       </div>
 
+      {/* Activity Overview */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20, marginBottom: 48 }}>
+        <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(255,107,107,0.2)", background: "rgba(255,107,107,0.02)" }}>
+           <div style={{ fontSize: 24, marginBottom: 8 }}>🔥</div>
+           <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>14 Days</div>
+           <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Current Streak</div>
+        </div>
+        <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(78,205,196,0.2)", background: "rgba(78,205,196,0.02)" }}>
+           <div style={{ fontSize: 24, marginBottom: 8 }}>💻</div>
+           <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>128<span style={{ fontSize: 16, color: "var(--text-muted)" }}>/500</span></div>
+           <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Problems Solved</div>
+        </div>
+        <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(108,99,255,0.2)", background: "rgba(108,99,255,0.02)" }}>
+           <div style={{ fontSize: 24, marginBottom: 8 }}>▶️</div>
+           <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>45</div>
+           <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Videos Watched</div>
+        </div>
+        <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(255,217,61,0.2)", background: "rgba(255,217,61,0.02)" }}>
+           <div style={{ fontSize: 24, marginBottom: 8 }}>🏆</div>
+           <div style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 4 }}>2</div>
+           <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>Hackathons Joined</div>
+        </div>
+      </div>
+
       {/* Grid Quick Access */}
       <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ color: "#6C63FF" }}>❖</span> Explore Modules
@@ -66,15 +90,15 @@ export default function DashboardHome() {
       
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24 }}>
         {MODULES.map((mod, i) => (
-          <Link href={mod.link} key={mod.id} style={{ textDecoration: "none", gridColumn: `span ${mod.span > 1 ? 2 : 1}` }}>
+          <Link href={mod.link} key={mod.id} style={{ textDecoration: "none", gridColumn: mod.span > 1 ? "span 2" : "span 1" }}>
             <motion.div 
               whileHover={{ y: -5, scale: 1.02 }}
               className="dash-card"
-              style={{ padding: 32, height: "100%", display: "flex", flexDirection: "column", border: `1px solid ${mod.color}30`, background: `linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%)`, position: "relative", overflow: "hidden" }}
+              style={{ padding: 32, height: "100%", display: "flex", flexDirection: "column", border: "1px solid rgba(255,255,255,0.1)", background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%)", position: "relative", overflow: "hidden" }}
             >
-              <div style={{ position: "absolute", top: 0, right: 0, width: 150, height: 150, background: `radial-gradient(circle at top right, ${mod.color}30, transparent 70%)` }} />
+              <div style={{ position: "absolute", top: 0, right: 0, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "0 0 0 100%" }} />
               
-              <div style={{ width: 64, height: 64, borderRadius: 20, background: `${mod.color}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 24, border: `1px solid ${mod.color}30`, position: "relative", zIndex: 1 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 20, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 24, border: "1px solid rgba(255,255,255,0.1)", position: "relative", zIndex: 1 }}>
                 {mod.icon}
               </div>
               

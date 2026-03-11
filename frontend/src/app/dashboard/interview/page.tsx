@@ -20,6 +20,7 @@ export default function InterviewPage() {
   const { data: session } = useSession();
   const [role, setRole] = useState("");
   const [company, setCompany] = useState("");
+  const [interviewType, setInterviewType] = useState("behavioral");
   const [sessionId, setSessionId] = useState<string | null>(null);
   
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -43,7 +44,7 @@ export default function InterviewPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${(session as any)?.user?.accessToken}`
         },
-        body: JSON.stringify({ role, company })
+        body: JSON.stringify({ role, company, type: interviewType })
       });
       const data = await res.json();
       if (res.ok) {
@@ -88,32 +89,60 @@ export default function InterviewPage() {
     setIsLoading(false);
   };
 
+  const INTERVIEW_TYPES = [
+    { id: "behavioral", icon: "🤝", title: "Behavioral & HR", desc: "Culture fit and past experiences." },
+    { id: "technical", icon: "💻", title: "Technical Coding", desc: "DSA and problem-solving." },
+    { id: "system_design", icon: "🏗️", title: "System Design", desc: "Architecture and scalability." },
+  ];
+
   if (!sessionId && !feedback) {
     return (
-      <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center", paddingTop: 60 }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center", paddingBottom: 60 }}>
         <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-outfit)", marginBottom: 16 }}>
           🎯 AI Mock <span className="gradient-text" style={{ background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Interviews</span>
         </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 15, marginBottom: 40 }}>Practice your behavioral and technical answers with an AI Hiring Manager.</p>
+        <p style={{ color: "var(--text-secondary)", fontSize: 16, marginBottom: 40, maxWidth: 600, margin: "0 auto 40px" }}>Configure your ideal interview scenario and practice with an AI Hiring Manager tailored to your target company.</p>
         
-        <div className="dash-card" style={{ maxWidth: 600, margin: "0 auto", padding: 40, border: "1px solid rgba(255,107,107,0.3)" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div>
-              <label style={{ display: "block", textAlign: "left", fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>Desired Role</label>
-              <input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. Frontend Engineer, Product Manager" className="input-field" style={{ width: "100%", padding: 16, fontSize: 15 }} />
-            </div>
-            <div>
-              <label style={{ display: "block", textAlign: "left", fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>Target Company</label>
-              <input value={company} onChange={e => setCompany(e.target.value)} placeholder="e.g. Google, Stripe, Startup" className="input-field" style={{ width: "100%", padding: 16, fontSize: 15 }} />
-            </div>
-            <motion.button 
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={startInterview} disabled={isLoading || !role || !company}
-              style={{ background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", color: "white", border: "none", padding: 16, borderRadius: 12, fontSize: 16, fontWeight: 700, marginTop: 12, cursor: isLoading ? "not-allowed" : "pointer", opacity: isLoading ? 0.7 : 1 }}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 32 }}>
+          {INTERVIEW_TYPES.map(type => (
+            <motion.div
+              key={type.id}
+              whileHover={{ y: -4 }}
+              onClick={() => setInterviewType(type.id)}
+              className="dash-card"
+              style={{
+                cursor: "pointer",
+                border: interviewType === type.id ? "2px solid #FF6B6B" : "1px solid rgba(255,255,255,0.05)",
+                background: interviewType === type.id ? "rgba(255,107,107,0.05)" : "rgba(255,255,255,0.02)",
+                padding: "24px 20px"
+              }}
             >
-              {isLoading ? "Preparing Virtual Room..." : "Start Interview"}
-            </motion.button>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>{type.icon}</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 8 }}>{type.title}</h3>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.4 }}>{type.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="dash-card" style={{ padding: 32, border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, textAlign: "left", marginBottom: 24 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "white", marginBottom: 8 }}>Target Role</label>
+              <input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. Frontend Engineer, Product Manager" className="input-field" style={{ width: "100%", padding: 16, fontSize: 15, background: "rgba(0,0,0,0.3)" }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "white", marginBottom: 8 }}>Target Company</label>
+              <input value={company} onChange={e => setCompany(e.target.value)} placeholder="e.g. Google, Stripe, Startup" className="input-field" style={{ width: "100%", padding: 16, fontSize: 15, background: "rgba(0,0,0,0.3)" }} />
+            </div>
           </div>
+          
+          <motion.button 
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            onClick={startInterview} disabled={isLoading || !role || !company}
+            style={{ width: "100%", background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", color: "white", border: "none", padding: 16, borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: isLoading ? "not-allowed" : "pointer", opacity: (!role || !company || isLoading) ? 0.5 : 1 }}
+          >
+            {isLoading ? "Preparing Virtual Room..." : "Start Interview Connection"}
+          </motion.button>
         </div>
       </div>
     );
