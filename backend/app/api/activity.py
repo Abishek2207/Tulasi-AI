@@ -186,12 +186,44 @@ def get_history(
     }
 
 
+@router.get("/achievements")
+def get_achievements(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    from app.models.models import UserBadge
+    badges = db.exec(select(UserBadge).where(UserBadge.user_id == current_user.id)).all()
+    return {"badges": badges}
+
+
+@router.get("/rewards")
+def get_rewards(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    from app.models.models import Reward
+    rewards = db.exec(select(Reward)).all()
+    # If empty, seed some default rewards
+    if not rewards:
+        default_rewards = [
+            Reward(name="Neon Profile Theme", description="Glow up your dashboard with a neon theme.", cost_xp=500, category="customization"),
+            Reward(name="AI Resume Builder Pro", description="Unlock advanced AI templates for your resume.", cost_xp=1000, category="feature"),
+            Reward(name="Interview Pass", description="Get 5 extra high-intensity mock interviews.", cost_xp=1500, category="perk"),
+        ]
+        for r in default_rewards:
+            db.add(r)
+        db.commit()
+        rewards = db.exec(select(Reward)).all()
+    
+    return {"rewards": rewards}
+
+
 @router.get("/stats")
 def get_stats(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    from app.models.models import SolvedProblem
+    from app.models.models import SolvedProblem, UserBadge
     from sqlmodel import func
 
     logs = db.exec(
@@ -200,6 +232,10 @@ def get_stats(
 
     problems_solved = db.exec(
         select(SolvedProblem).where(SolvedProblem.user_id == current_user.id)
+    ).all()
+
+    badges = db.exec(
+        select(UserBadge).where(UserBadge.user_id == current_user.id)
     ).all()
 
     videos_watched = sum(1 for l in logs if l.action_type == "video_watched")
@@ -226,4 +262,5 @@ def get_stats(
         "hackathons_joined": hackathons_joined,
         "roadmap_steps": roadmap_steps,
         "progress": progress_map,
+        "badges": badges,
     }
