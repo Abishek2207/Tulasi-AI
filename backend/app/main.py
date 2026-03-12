@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity
+from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume
 from app.core.database import init_db
 
 app = FastAPI(
@@ -41,6 +41,7 @@ app.include_router(messages.router,     prefix="/api/messages",     tags=["Messa
 app.include_router(startup.router,      prefix="/api/startup",      tags=["Startup Lab"])
 app.include_router(admin.router,        prefix="/api/admin",        tags=["Admin"])
 app.include_router(activity.router,     prefix="/api/activity",     tags=["Activity & Streaks"])
+app.include_router(resume.router,       prefix="/api/resume",       tags=["Resume Builder"])
 
 # Startup event
 @app.on_event("startup")
