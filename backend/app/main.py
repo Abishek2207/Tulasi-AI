@@ -67,6 +67,10 @@ def health():
         "version": "3.0.0"
     }
 
+@app.get("/ping")
+def ping():
+    return "pong"
+
 # Local run
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=10000)
