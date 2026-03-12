@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 const VIDEOS = [
   // Data Structures
   { id: "RBSGKlAvoiM", title: "Data Structures Easy to Advanced - Full Course", channel: "freeCodeCamp", category: "Data Structures", duration: "8:01:16" },
@@ -93,14 +93,17 @@ export default function YouTubeLearningPage() {
   });
 
   const logWatch = async (video: typeof ALL_VIDEOS[0]) => {
-    if (!session) return;
+    const token = (session?.user as any)?.accessToken;
+    if (!token) return;
     try {
-      const res = await fetch(`${BACKEND}/api/auth/token`, { method: "GET", credentials: "include" });
-      const tokenData = await res.json();
       await fetch(`${BACKEND}/api/activity/log`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenData.token}` },
-        body: JSON.stringify({ action_type: "video_watched", title: `Watched: ${video.title}` }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ 
+          action_type: "video_watched", 
+          title: `Watched: ${video.title}`,
+          metadata_json: JSON.stringify({ video_id: video.id, category: video.category })
+        }),
       });
     } catch (e) { /* silent */ }
   };

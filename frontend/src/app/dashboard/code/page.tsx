@@ -67,14 +67,30 @@ export default function CodePracticePage() {
     setIsRunning(false);
   };
 
-  const explainCode = () => {
+  const explainCode = async () => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token) {
+      setAiExplanation("Please log in to use AI Help.");
+      return;
+    }
     setActiveConsoleTab('ai');
     setIsExplaining(true);
-    // Mock AI explanation
-    setTimeout(() => {
-      setAiExplanation(`Based on your current code for **${activeProblem.title}**:\n\nThe approach you're taking is O(N) time complexity assuming you iterate through the elements. To optimize this further for space, consider the ${activeProblem.category} properties.\n\nAre you stuck? Try focusing on the constraint: 'assume exactly one solution'.`);
-      setIsExplaining(false);
-    }, 1500);
+    setAiExplanation("");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/code/explain`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ code: code, language: "python" })
+      });
+      const data = await res.json();
+      setAiExplanation(data.explanation || "AI could not generate an explanation at this time.");
+    } catch (err) {
+      setAiExplanation("Network Error: Could not connect to AI server.");
+    }
+    setIsExplaining(false);
   };
 
   return (

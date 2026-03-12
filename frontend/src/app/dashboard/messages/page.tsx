@@ -28,8 +28,10 @@ export default function MessagesPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchDirectory();
-  }, []);
+    if (session) {
+      fetchDirectory();
+    }
+  }, [session]);
 
   useEffect(() => {
     if (activeUser) {
@@ -44,8 +46,10 @@ export default function MessagesPage() {
   }, [messages]);
 
   const fetchDirectory = async () => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/users/directory`, {
-      headers: { Authorization: `Bearer ${(session?.user as any)?.accessToken}` }
+      headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) {
       const data = await res.json();
@@ -56,8 +60,10 @@ export default function MessagesPage() {
   };
 
   const fetchMessages = async (userId: number) => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/${userId}`, {
-      headers: { Authorization: `Bearer ${(session?.user as any)?.accessToken}` }
+      headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) {
       const data = await res.json();
@@ -82,11 +88,14 @@ export default function MessagesPage() {
     };
     setMessages(prev => [...prev, tempMsg]);
 
+    const token = (session?.user as any)?.accessToken;
+    if (!token) return;
+
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${(session?.user as any)?.accessToken}`
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({ receiver_id: activeUser.id, content: currentInput })
     });

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
 const TYPE_FILTERS = [
   { id: "all", label: "All", icon: "🕐" },
@@ -34,14 +34,13 @@ export default function HistoryPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchHistory();
-  }, [filter, page]);
+    if (session) fetchHistory();
+  }, [filter, page, session]);
 
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const tokenRes = await fetch(`${BACKEND}/api/auth/token`, { credentials: "include" });
-      const { token } = await tokenRes.json().catch(() => ({ token: null }));
+      const token = (session?.user as any)?.accessToken;
       if (!token) { setLoading(false); return; }
 
       const params = new URLSearchParams({ page: String(page), limit: "20" });

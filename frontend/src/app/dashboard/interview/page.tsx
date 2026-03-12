@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
 const ROLES = [
   "Software Engineer", "AI Engineer", "Data Scientist", "Backend Developer",
@@ -44,18 +44,11 @@ export default function InterviewPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const getToken = async () => {
-    try {
-      const res = await fetch(`${BACKEND}/api/auth/token`, { credentials: "include" });
-      const data = await res.json();
-      return data.token;
-    } catch { return null; }
-  };
 
   const startInterview = async () => {
     setLoading(true); setError("");
     try {
-      const token = await getToken();
+      const token = (session?.user as any)?.accessToken;
       if (!token) { setError("Please log in to start an interview."); setLoading(false); return; }
       const res = await fetch(`${BACKEND}/api/interview/start`, {
         method: "POST",
@@ -77,7 +70,7 @@ export default function InterviewPage() {
     if (!answer.trim()) return;
     setLoading(true); setError("");
     try {
-      const token = await getToken();
+      const token = (session?.user as any)?.accessToken;
       const res = await fetch(`${BACKEND}/api/interview/answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

@@ -33,10 +33,16 @@ export default function PDFQaPage() {
     formData.append("file", uploadedFile);
 
     try {
+      const token = (session?.user as any)?.accessToken;
+      if (!token) {
+        setMessages([{ role: "ai", content: "Auth Error: Please log in to upload files." }]);
+        setIsUploading(false);
+        return;
+      }
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pdf/upload`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${(session as any)?.user?.accessToken}`
+          Authorization: `Bearer ${token}`
         },
         body: formData
       });
@@ -63,11 +69,17 @@ export default function PDFQaPage() {
     setIsAsking(true);
 
     try {
+      const token = (session?.user as any)?.accessToken;
+      if (!token) {
+        setMessages(prev => [...prev, { role: "ai", content: "Auth Error: Please log in." }]);
+        setIsAsking(false);
+        return;
+      }
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pdf/ask`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${(session as any)?.user?.accessToken}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ question: userQ, session_id: sessionId })
       });

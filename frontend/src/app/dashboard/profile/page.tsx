@@ -2,17 +2,35 @@
 
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ProfilePage() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<"overview" | "settings">("overview");
 
-  const STATS = [
-    { label: "Highest ATS Score", value: "88%", icon: "📄", color: "#43E97B" },
-    { label: "Completed Tracks", value: "3", icon: "🎓", color: "#FFD93D" },
-    { label: "Coding Challenges", value: "42", icon: "💻", color: "#6C63FF" },
-    { label: "Startup Ideas", value: "14", icon: "💡", color: "#FF6B6B" },
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    if (session) fetchStats();
+  }, [session]);
+
+  const fetchStats = async () => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setStats(data);
+    } catch (e) { /* silent */ }
+  };
+
+  const UI_STATS = [
+    { label: "XP Points", value: stats?.xp || 0, icon: "⚡", color: "#6C63FF" },
+    { label: "Current Level", value: stats?.level || 1, icon: "🏆", color: "#FFD93D" },
+    { label: "Coding Challenges", value: stats?.problems_solved || 0, icon: "💻", color: "#43E97B" },
+    { label: "Interviews Done", value: stats?.interviews_completed || 0, icon: "🎯", color: "#FF6B6B" },
   ];
 
   const BADGES = [
@@ -42,6 +60,11 @@ export default function ProfilePage() {
                 <span>{b.icon}</span> {b.name}
               </div>
             ))}
+            {stats?.level > 1 && (
+              <div style={{ padding: "6px 12px", background: "rgba(108,99,255,0.1)", color: "#6C63FF", borderRadius: 20, fontSize: 13, fontWeight: 700, border: "1px solid #6C63FF40" }}>
+                ⭐ Level {stats.level} Achiever
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -67,9 +90,8 @@ export default function ProfilePage() {
       {activeTab === "overview" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", flexDirection: "column", gap: 32 }}>
           
-          {/* Stats Grid */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24 }}>
-            {STATS.map((stat, i) => (
+            {UI_STATS.map((stat, i) => (
               <div key={i} className="dash-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 12, border: "1px solid rgba(255,255,255,0.05)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 24 }}>{stat.icon}</span>
