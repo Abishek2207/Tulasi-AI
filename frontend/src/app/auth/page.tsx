@@ -43,6 +43,7 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [oAuthLoading, setOAuthLoading] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,20 +127,30 @@ export default function AuthPage() {
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* OAuth Buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
-              <button type="button" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
-                onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
+              <button type="button" onClick={() => { setOAuthLoading("google"); signIn("google", { callbackUrl: "/dashboard" }); }}
+                disabled={oAuthLoading !== null}
+                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading !== null ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => { if(oAuthLoading === null) e.currentTarget.style.background = "#23252E"}}
+                onMouseLeave={e => { if(oAuthLoading === null) e.currentTarget.style.background = "#1A1C23"}}
               >
-                <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
+                {oAuthLoading === "google" ? (
+                  <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                ) : (
+                  <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
+                )}
                 Google
               </button>
-              <button type="button" onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
-                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
-                onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
+              <button type="button" onClick={() => { setOAuthLoading("github"); signIn("github", { callbackUrl: "/dashboard" }); }}
+                disabled={oAuthLoading !== null}
+                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading !== null ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => { if(oAuthLoading === null) e.currentTarget.style.background = "#23252E"}}
+                onMouseLeave={e => { if(oAuthLoading === null) e.currentTarget.style.background = "#1A1C23"}}
               >
-                <img src="https://authjs.dev/img/providers/github.svg" width={18} height={18} alt="GitHub" style={{ filter: "invert(1)" }} />
+                {oAuthLoading === "github" ? (
+                  <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                ) : (
+                  <img src="https://authjs.dev/img/providers/github.svg" width={18} height={18} alt="GitHub" style={{ filter: "invert(1)" }} />
+                )}
                 GitHub
               </button>
             </div>

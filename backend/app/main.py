@@ -16,12 +16,7 @@ app = FastAPI(
 # CORS — allow frontend (localhost dev + all Vercel previews + production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://tulasiai.vercel.app",
-        "https://*.vercel.app",
-        "https://tulasi.ai",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
