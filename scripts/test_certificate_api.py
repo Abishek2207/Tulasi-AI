@@ -3,13 +3,15 @@ import uuid
 import time
 import sys
 
-BACKEND_URL = "http://localhost:8001"
+BACKEND_URL = "http://localhost:10000"
 
 def test_api():
     print("--- Testing Certificates via API ---")
     
     # 1. Register a user
-    email = f"apitest_{uuid.uuid4().hex[:6]}@example.com"
+    import random
+    unique_id = random.randint(1000, 9999)
+    email = f"apitest_{unique_id}@example.com"
     pwd = "testpassword123"
     print(f"\n[1] Registering user {email}...")
     res = requests.post(f"{BACKEND_URL}/api/auth/register", json={

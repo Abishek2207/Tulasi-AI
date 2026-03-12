@@ -95,3 +95,24 @@ class SolvedProblem(SQLModel, table=True):
     problem_id: str = Field(index=True)  # e.g. "ARR-001"
     solved_at: datetime = Field(default_factory=datetime.utcnow)
 
+
+class Roadmap(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    goal: str
+    title: str
+    description: str
+    estimated_months: int = 6
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class RoadmapStep(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    roadmap_id: int = Field(foreign_key="roadmap.id", index=True)
+    phase: str
+    title: str
+    duration: str
+    topics_json: str  # Comma-separated or JSON list
+    project_idea: str
+    resources_json: str  # JSON list of {name, url}
+
