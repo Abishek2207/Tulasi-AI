@@ -19,7 +19,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     session_id: str
-    model_used: str
+    ai_model: str
 
 @router.post("", response_model=ChatResponse)
 def chat(req: ChatRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
@@ -57,7 +57,7 @@ def chat(req: ChatRequest, current_user: User = Depends(get_current_user), db: S
     
     db.commit()
     
-    return ChatResponse(response=response_text, session_id=session_id, model_used="tulasi-ai")
+    return ChatResponse(response=response_text, session_id=session_id, ai_model="tulasi-ai")
 
 @router.get("/history/{session_id}")
 def get_history(session_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
