@@ -116,3 +116,18 @@ class RoadmapStep(SQLModel, table=True):
     project_idea: str
     resources_json: str  # JSON list of {name, url}
 
+class UserBadge(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    badge_name: str
+    badge_icon: str
+    earned_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Reward(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    description: str
+    cost_xp: int
+    image_url: Optional[str] = None
+    category: str = "customization"  # "customization" | "feature" | "perk"
