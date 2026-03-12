@@ -72,37 +72,33 @@ export const authOptions: NextAuthOptions = {
   providers,
   callbacks: {
     async signIn({ user, account }) {
-      // For OAuth providers (Google, GitHub), auto-register/login with our FastAPI backend
+      // For OAuth providers, auto-register/login with FastAPI backend via fire-and-forget
       if (account && account.provider !== "credentials") {
-        try {
-          const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-          // Try to login first
-          const loginRes = await fetch(`${BACKEND}/api/auth/google-oauth`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name || user.email?.split("@")[0],
-              provider: account.provider,
-            }),
-          });
-          if (loginRes.ok) {
-            const data = await loginRes.json();
-            (user as any).accessToken = data.access_token;
-            (user as any).inviteCode = data.user?.invite_code;
-          }
-        } catch (e) {
-          console.error("OAuth backend sync failed:", e);
-          // Don't block login if backend is down; chat will just show error
-        }
+        const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        fetch(`${BACKEND}/api/auth/google-oauth`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.name || user.email?.split("@")[0],
+            provider: account.provider,
+          }),
+        }).catch(e => console.error("OAuth backend sync failed:", e));
+        
+        // Don't wait for backend response or store access token to speed up login
       }
       return true;
     },
     async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role || (user.email === ADMIN_EMAIL ? "admin" : "student");
-        token.accessToken = (user as any).accessToken;
-        token.inviteCode = (user as any).inviteCode;
+        // Keep accessToken and inviteCode if logged in via credentials
+        if ((user as any).accessToken) {
+            token.accessToken = (user as any).accessToken;
+        }
+        if ((user as any).inviteCode) {
+            token.inviteCode = (user as any).inviteCode;
+        }
       }
       // OAuth providers — auto-assign role
       if (account && account.provider !== "credentials") {
@@ -113,11 +109,22 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).role = token.role;
-        (session.user as any).accessToken = token.accessToken;
+        (session.user as any).accessToken = token.accessToken; // Might be undefined for OAuth, but login is instant
         (session.user as any).inviteCode = token.inviteCode;
       }
       return session;
     },
+  },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production" ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true
+      }
+    }
   },
   pages: {
     signIn: "/auth",
