@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
 interface Milestone {
   id: string; title: string; desc: string; icon: string; category: string;
@@ -24,18 +24,11 @@ export default function CertificatesPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const getToken = async () => {
-    try {
-      const res = await fetch(`${BACKEND}/api/auth/token`, { credentials: "include" });
-      const data = await res.json();
-      return data.token;
-    } catch { return null; }
-  };
 
   const fetchCertificates = async () => {
     setLoading(true);
     try {
-      const token = await getToken();
+      const token = (session?.user as any)?.accessToken;
       if (!token) { setLoading(false); return; }
       const res = await fetch(`${BACKEND}/api/certificates/my`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -53,7 +46,7 @@ export default function CertificatesPage() {
   const generateCertificate = async (milestoneId: string) => {
     setGenerating(milestoneId); setError(""); setSuccess("");
     try {
-      const token = await getToken();
+      const token = (session?.user as any)?.accessToken;
       const res = await fetch(`${BACKEND}/api/certificates/generate/${milestoneId}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
@@ -67,7 +60,9 @@ export default function CertificatesPage() {
     } finally { setGenerating(null); }
   };
 
-  useEffect(() => { fetchCertificates(); }, []);
+  useEffect(() => { 
+    if (session) fetchCertificates(); 
+  }, [session]);
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 

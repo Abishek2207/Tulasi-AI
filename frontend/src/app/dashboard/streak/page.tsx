@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 const streakData = Array.from({ length: 52 }, (_, week) =>
   Array.from({ length: 7 }, (_, day) => {
@@ -22,6 +24,24 @@ const rewards = [
 ];
 
 export default function StreakPage() {
+  const { data: session } = useSession();
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    if (session) fetchStats();
+  }, [session]);
+
+  const fetchStats = async () => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setStats(data);
+    } catch (e) { /* silent */ }
+  };
   const getColor = (val: number) => {
     if (val === 0) return "rgba(255,255,255,0.05)";
     if (val === 1) return "rgba(108,99,255,0.3)";
@@ -37,13 +57,12 @@ export default function StreakPage() {
         <p style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 4 }}>Your daily learning progress and achievement rewards</p>
       </div>
 
-      {/* Streak Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 }}>
         {[
-          { label: "Current Streak", value: "7 🔥", color: "#FFD93D" },
-          { label: "Longest Streak", value: "21 💪", color: "#43E97B" },
-          { label: "Total XP", value: "2,450 ⚡", color: "#6C63FF" },
-          { label: "Rank", value: "Gold 🥇", color: "#FF6B9D" },
+          { label: "Current Streak", value: `${stats?.streak || 0} 🔥`, color: "#FFD93D" },
+          { label: "Longest Streak", value: `${stats?.streak || 0} 💪`, color: "#43E97B" },
+          { label: "Total XP", value: `${stats?.xp || 0} ⚡`, color: "#6C63FF" },
+          { label: "Rank", value: stats?.xp > 2000 ? "Gold 🥇" : stats?.xp > 500 ? "Silver 🥈" : "Bronze 🥉", color: "#FF6B9D" },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="stat-card">
             <div style={{ fontSize: 22, fontWeight: 800, color: s.color, fontFamily: "Outfit" }}>{s.value}</div>

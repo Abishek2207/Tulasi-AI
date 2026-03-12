@@ -298,3 +298,33 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
         return {"output": "Error: Timed out (3s limit). Check for infinite loops.", "status": "error"}
     except Exception as e:
         return {"output": f"Execution Error: {str(e)}", "status": "error"}
+@router.post("/explain")
+def explain_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
+    """Use AI to explain the code or provide hints without giving the full solution."""
+    gemini_key = os.getenv("GEMINI_API_KEY", "")
+    if not gemini_key:
+        return {"explanation": "AI Explanation is unavailable (No API Key).", "status": "error"}
+
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=gemini_key)
+        model = genai.GenerativeModel("gemini-pro")
+        
+        prompt = f"""You are an elite coding tutor. Analyze this user's Python code and provide a helpful, encouraging explanation.
+        
+Guidelines:
+- Explain what the current code is doing.
+- Point out potential bugs or inefficiencies.
+- Provide a HINT or a PATH towards the solution, but DO NOT provide the full corrected code.
+- Keep the response concise (max 3-4 paragraphs).
+- Format with markdown.
+
+User's Code:
+```python
+{req.code}
+```
+"""
+        response = model.generate_content(prompt)
+        return {"explanation": response.text, "status": "success"}
+    except Exception as e:
+        return {"explanation": f"AI Error: {str(e)}", "status": "error"}

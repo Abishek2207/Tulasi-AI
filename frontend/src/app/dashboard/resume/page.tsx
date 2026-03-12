@@ -41,15 +41,35 @@ export default function ResumeBuilderPage() {
     window.print();
   };
 
-  const runAtsAnalysis = () => {
+  const runAtsAnalysis = async () => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token) return;
     setIsAnalyzing(true);
-    // Mock analysis delay
-    setTimeout(() => {
-      // Basic mock scoring logic based on content length
-      const score = Math.min(100, 40 + (experience.length * 15) + (skills.split(',').length * 2));
-      setAtsScore(score);
-      setIsAnalyzing(false);
-    }, 2000);
+    setAtsScore(null);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/resume/analyze-ats`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: personalInfo.name,
+          email: personalInfo.email,
+          phone: personalInfo.phone,
+          summary: personalInfo.summary,
+          skills: skills,
+          experience: JSON.stringify(experience),
+          education: JSON.stringify(education)
+        })
+      });
+      const data = await res.json();
+      setAtsScore(data.score || 0);
+      // We can also store feedback if we had a state for it
+    } catch (err) {
+      console.error("ATS Analysis failed", err);
+    }
+    setIsAnalyzing(false);
   };
 
   return (

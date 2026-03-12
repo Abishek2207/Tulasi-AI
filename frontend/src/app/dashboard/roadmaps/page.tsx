@@ -28,14 +28,19 @@ export default function RoadmapsPage() {
 
   const generateRoadmap = async () => {
     if (!goal.trim()) return;
-    setLoading(true);
+    const token = (session?.user as any)?.accessToken;
+    if (!token) {
+       console.error("No access token found. Please log in.");
+       setLoading(false);
+       return;
+    }
     setRoadmap(null);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roadmap/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${(session as any)?.user?.accessToken}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ goal })
       });
