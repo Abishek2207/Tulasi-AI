@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { icon: "✉️", name: "Messages", href: "/dashboard/messages" },
   { icon: "💡", name: "Startup Lab", href: "/dashboard/startup-lab" },
   { icon: "👤", name: "Profile", href: "/dashboard/profile" },
+  { icon: "⚡", name: "API Status", href: "/dashboard/api-status" },
 ];
 
 export default function Sidebar() {
