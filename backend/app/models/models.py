@@ -42,13 +42,19 @@ class Certificate(SQLModel, table=True):
 
 class Hackathon(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    # title / name are stored as 'name' in DB for back-compat
     name: str
     organizer: str
     description: str
-    prize: str = ""
+    prize: str = ""           # kept for back-compat
+    prize_pool: str = ""      # new frontend field
     deadline: str
-    link: str
-    tags: str = ""  # comma-separated
+    link: str                 # kept for back-compat
+    registration_link: str = ""  # new frontend field
+    tags: str = ""            # comma-separated
+    image_url: str = ""
+    participants_count: int = 0
+    status: str = "Open"      # Open | Upcoming | Past
     is_active: bool = True
 
 class ChatMessage(SQLModel, table=True):
@@ -131,3 +137,36 @@ class Reward(SQLModel, table=True):
     cost_xp: int
     image_url: Optional[str] = None
     category: str = "customization"  # "customization" | "feature" | "perk"
+
+
+class StudyRoom(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    description: str = ""
+    tag: str = "General"
+    color: str = "#6C63FF"
+    created_by: int = Field(foreign_key="user.id")
+    is_public: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class StudyRoomMessage(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    room_id: int = Field(foreign_key="studyroom.id", index=True)
+    user_id: int = Field(foreign_key="user.id")
+    user_name: str = ""
+    content: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SavedStartupIdea(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    name: str
+    problem: str = ""
+    solution: str = ""
+    market_opportunity: str = ""
+    tech_stack: str = ""   # JSON string
+    monetization: str = ""
+    domain: str = ""
+    created_at: datetime = Field(default_factory=datetime.utcnow)

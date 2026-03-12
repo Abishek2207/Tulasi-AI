@@ -184,8 +184,47 @@ export default function CertificatesPage() {
                     </motion.button>
                   )}
                   {earned && (
-                    <button style={{ width: "100%", padding: "10px", borderRadius: 10, background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.3)", color: "#FFD700", fontWeight: 700, cursor: "pointer" }}>
-                      📥 Download PDF
+                    <button
+                      onClick={() => {
+                        const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Certificate – ${m.title}</title>
+  <style>
+    body { margin: 0; font-family: Georgia, serif; background: #0a0a0a; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .cert { width: 760px; border: 6px solid #FFD700; padding: 60px; text-align: center; background: linear-gradient(135deg, #0d0d1a, #12122a); border-radius: 16px; }
+    .logo { font-size: 40px; margin-bottom: 8px; }
+    .issuer { font-size: 14px; letter-spacing: 4px; color: #FFD700; text-transform: uppercase; margin-bottom: 40px; }
+    .label { font-size: 13px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .name { font-size: 28px; font-weight: bold; color: #FFD700; border-bottom: 1px solid #FFD70040; padding-bottom: 16px; margin-bottom: 24px; }
+    .title { font-size: 38px; font-weight: bold; color: white; margin-bottom: 16px; }
+    .desc { font-size: 14px; color: #ccc; line-height: 1.6; max-width: 540px; margin: 0 auto 40px; }
+    .date { font-size: 13px; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="cert">
+    <div class="logo">🎓</div>
+    <div class="issuer">Tulasi AI Platform</div>
+    <div class="label">This certifies that</div>
+    <div class="name">Tulasi AI Student</div>
+    <div class="label">has successfully earned</div>
+    <div class="title">${m.title}</div>
+    <div class="desc">${m.desc}</div>
+    <div class="date">Issued by Tulasi AI Platform · ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
+  </div>
+</body>
+</html>`;
+                        const blob = new Blob([html], { type: "text/html" });
+                        const a = document.createElement("a");
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `${m.title.replace(/\s+/g, "_")}_Certificate.html`;
+                        a.click();
+                      }}
+                      style={{ width: "100%", padding: "10px", borderRadius: 10, background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.3)", color: "#FFD700", fontWeight: 700, cursor: "pointer" }}
+                    >
+                      📥 Download Certificate
                     </button>
                   )}
                 </motion.div>
