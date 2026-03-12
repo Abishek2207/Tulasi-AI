@@ -68,48 +68,49 @@ export default function ChatPage() {
       <div className="orb orb-purple" style={{ width: 350, height: 350, top: "10%", right: "-5%", opacity: 0.12 }} />
 
       {/* Header */}
-      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+      <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
-          <h1 style={{ fontSize: 30, fontWeight: 800, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>
+          <h1 style={{ fontSize: 32, fontWeight: 800, fontFamily: "var(--font-display)", letterSpacing: "-0.5px" }}>
             🤖 AI <span className="gradient-text">Chat Assistant</span>
           </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 5 }}>Context-aware RAG tutor with conversation memory</p>
+          <p style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 5, fontWeight: 500 }}>Context-aware RAG tutor with high-performance memory</p>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <span className="badge badge-green" style={{ padding: "5px 14px" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#43E97B", display: "inline-block" }} /> Online
-          </span>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="badge badge-green" style={{ padding: "6px 16px", boxShadow: "0 0 15px rgba(16,185,129,0.2)" }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", display: "inline-block", boxShadow: "0 0 5px #10B981" }} /> Online
+          </motion.div>
           {messages.length > 0 && (
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => dispatch(clearChat())}
-              className="btn-ghost" style={{ padding: "7px 14px", fontSize: 12, borderRadius: 10 }}>
-              Clear Chat
+            <motion.button whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.08)" }} whileTap={{ scale: 0.95 }} onClick={() => dispatch(clearChat())}
+              className="btn-ghost" style={{ padding: "8px 16px", fontSize: 12, borderRadius: 12, borderWidth: 1 }}>
+              Clear History
             </motion.button>
           )}
         </div>
       </div>
 
       {/* Chat area */}
-      <div className="glass-card" style={{ flex: 1, overflowY: "auto", padding: "28px", display: "flex", flexDirection: "column", gap: 20, marginBottom: 16, position: "relative", zIndex: 1 }}>
-        <AnimatePresence>
+      <div className="glass-card" style={{ flex: 1, overflowY: "auto", padding: "32px", display: "flex", flexDirection: "column", gap: 24, marginBottom: 20, position: "relative", zIndex: 1, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+        <AnimatePresence mode="popLayout">
           {messages.length === 0 && (
-            <motion.div key="empty" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
-              style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}
+            <motion.div key="empty" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+              style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}
             >
-              <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                style={{ width: 80, height: 80, borderRadius: 24, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42, boxShadow: "0 20px 40px rgba(108,99,255,0.35)" }}>
+              <motion.div animate={{ y: [0, -12, 0], rotate: [0, 5, -5, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                style={{ width: 90, height: 90, borderRadius: 28, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, boxShadow: "0 25px 50px rgba(124,58,237,0.3)" }}>
                 🤖
               </motion.div>
-              <div style={{ fontFamily: "var(--font-outfit)", fontSize: 22, fontWeight: 700, textAlign: "center" }}>
+              <div style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, textAlign: "center" }}>
                 Welcome to <span className="gradient-text">Tulasi AI</span>
               </div>
-              <p style={{ color: "var(--text-secondary)", textAlign: "center", maxWidth: 420, lineHeight: 1.65, fontSize: 15 }}>
-                Your intelligent learning companion. Ask anything about programming, algorithms, career paths, and more.
+              <p style={{ color: "var(--text-secondary)", textAlign: "center", maxWidth: 450, lineHeight: 1.7, fontSize: 15, fontWeight: 400 }}>
+                Your highly advanced research companion. Upload images, ask for roadmaps, or debug your most complex projects.
               </p>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-                {SUGGESTIONS.map(s => (
-                  <motion.button key={s} whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", maxWidth: 600 }}>
+                {SUGGESTIONS.map((s, idx) => (
+                  <motion.button key={s} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: idx * 0.1 } }}
+                    whileHover={{ scale: 1.05, y: -2, background: "rgba(124,58,237,0.15)", borderColor: "rgba(124,58,237,0.3)" }} whileTap={{ scale: 0.95 }}
                     onClick={() => setInput(s)}
-                    style={{ padding: "9px 16px", borderRadius: 12, border: "1px solid rgba(108,99,255,0.2)", background: "rgba(108,99,255,0.05)", color: "white", fontSize: 12, cursor: "pointer", fontWeight: 500, fontFamily: "var(--font-sans)", transition: "all 0.2s" }}
+                    style={{ padding: "10px 18px", borderRadius: 14, border: "1px solid rgba(124,58,237,0.2)", background: "rgba(124,58,237,0.06)", color: "white", fontSize: 13, cursor: "pointer", fontWeight: 500, fontFamily: "var(--font-sans)", transition: "all 0.25s" }}
                   >{s}</motion.button>
                 ))}
               </div>
@@ -117,27 +118,27 @@ export default function ChatPage() {
           )}
 
           {messages.map((msg, i) => (
-            <motion.div key={msg.id} initial={{ opacity: 0, y: 10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.4, ease: [0.16,1,0.3,1] }}>
+            <motion.div key={msg.id} layout initial={{ opacity: 0, y: 20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.5, ease: [0.16,1,0.3,1] }}>
               {msg.role === "user" ? (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, paddingLeft: "15%" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, paddingLeft: "15%" }}>
                   {msg.image && (
-                    <img src={msg.image} alt="Selected" style={{ maxWidth: 300, borderRadius: 12, border: "2px solid rgba(255,255,255,0.1)", marginBottom: 4 }} />
+                    <motion.img layoutId={`img-${msg.id}`} src={msg.image} alt="Selected" style={{ maxWidth: 320, borderRadius: 16, border: "2px solid rgba(255,255,255,0.1)", marginBottom: 4, boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }} />
                   )}
-                  {msg.content && <div className="chat-bubble-user">{msg.content}</div>}
+                  {msg.content && <div className="chat-bubble-user" style={{ background: "var(--gradient-primary)", boxShadow: "0 10px 25px rgba(124,58,237,0.25)" }}>{msg.content}</div>}
                 </div>
               ) : (
-                <div style={{ display: "flex", gap: 14, alignItems: "flex-start", paddingRight: "10%" }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0, boxShadow: "0 4px 12px rgba(108,99,255,0.3)" }}>🤖</div>
-                  <div className="chat-bubble-ai">{msg.content}</div>
+                <div style={{ display: "flex", gap: 16, alignItems: "flex-start", paddingRight: "10%" }}>
+                  <motion.div whileHover={{ rotate: 15 }} style={{ width: 38, height: 38, borderRadius: 12, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, boxShadow: "0 6px 15px rgba(124,58,237,0.3)" }}>🤖</motion.div>
+                  <div className="chat-bubble-ai" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>{msg.content}</div>
                 </div>
               )}
             </motion.div>
           ))}
 
           {isLoading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🤖</div>
-              <div style={{ padding: "14px 18px", background: "rgba(255,255,255,0.04)", borderRadius: "4px 16px 16px 16px", border: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: 6 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              <div style={{ width: 38, height: 38, borderRadius: 12, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🤖</div>
+              <div style={{ padding: "16px 20px", background: "rgba(255,255,255,0.03)", borderRadius: "4px 20px 20px 20px", border: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
                 <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
               </div>
             </motion.div>
@@ -148,32 +149,34 @@ export default function ChatPage() {
 
       <div style={{ position: "relative", zIndex: 10 }}>
         {selectedImage && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{ position: "absolute", bottom: "100%", left: 0, marginBottom: 12, padding: 8, background: "rgba(20,20,30,0.9)", backdropFilter: "blur(10px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", gap: 12 }}>
-            <img src={selectedImage} alt="Preview" style={{ width: 60, height: 60, borderRadius: 10, objectFit: "cover" }} />
-            <button onClick={() => setSelectedImage(null)} style={{ background: "rgba(255,59,48,0.2)", color: "#FF3B30", border: "none", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontSize: 12 }}>✕</button>
+          <motion.div initial={{ opacity: 0, y: 15, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            style={{ position: "absolute", bottom: "100%", left: 0, marginBottom: 16, padding: "10px", background: "rgba(15,23,42,0.85)", backdropFilter: "blur(20px)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", gap: 16, boxShadow: "0 20px 40px rgba(0,0,0,0.4)" }}>
+            <img src={selectedImage} alt="Preview" style={{ width: 70, height: 70, borderRadius: 12, objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }} />
+            <motion.button whileHover={{ scale: 1.1, background: "rgba(244,63,94,0.3)" }} whileTap={{ scale: 0.9 }} onClick={() => setSelectedImage(null)} style={{ background: "rgba(244,63,94,0.15)", color: "#F43F5E", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</motion.button>
           </motion.div>
         )}
-        <div className="glass-card" style={{ padding: "8px", borderRadius: 18, display: "flex", gap: 10, alignItems: "flex-end", boxShadow: "0 16px 40px rgba(0,0,0,0.3)" }}>
+        <div className="glass-card" style={{ padding: "10px", borderRadius: 24, display: "flex", gap: 12, alignItems: "flex-end", boxShadow: "0 25px 60px rgba(0,0,0,0.4)" }}>
           <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleImageSelect} />
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => fileInputRef.current?.click()}
-            style={{ background: "rgba(255,255,255,0.05)", border: "none", borderRadius: 13, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, margin: "4px 0 4px 4px" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <motion.button whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.08)" }} whileTap={{ scale: 0.95 }} onClick={() => fileInputRef.current?.click()}
+            style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, margin: "4px 0 4px 4px", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </motion.button>
           <textarea value={input} onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-            placeholder="Ask or upload image..." rows={1}
-            style={{ flex: 1, background: "transparent", border: "none", borderRadius: 12, padding: "14px 18px", color: "white", fontSize: 15, resize: "none", outline: "none", fontFamily: "var(--font-sans)", maxHeight: 180 }}
+            placeholder="Ask anything or upload images..." rows={1}
+            style={{ flex: 1, background: "transparent", border: "none", borderRadius: 16, padding: "16px 20px", color: "white", fontSize: 16, resize: "none", outline: "none", fontFamily: "var(--font-sans)", maxHeight: 200 }}
           />
-          <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }} onClick={sendMessage}
+          <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} onClick={sendMessage}
             disabled={isLoading || (!input.trim() && !selectedImage)}
-            style={{ background: (input.trim() || selectedImage) ? "var(--gradient-primary)" : "rgba(255,255,255,0.07)", border: "none", borderRadius: 13, width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", cursor: (input.trim() || selectedImage) ? "pointer" : "not-allowed", flexShrink: 0, margin: "4px 4px 4px 0", transition: "all 0.25s" }}
+            style={{ background: (input.trim() || selectedImage) ? "var(--gradient-primary)" : "rgba(255,255,255,0.06)", border: "none", borderRadius: 16, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", cursor: (input.trim() || selectedImage) ? "pointer" : "not-allowed", flexShrink: 0, margin: "4px 4px 4px 0", transition: "all 0.3s", boxShadow: (input.trim() || selectedImage) ? "0 8px 20px rgba(124,58,237,0.3)" : "none" }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </motion.button>
         </div>
       </div>
-      <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 11, marginTop: 8 }}>Powered by Gemini Flash · Groq Llama 3 · DeepSeek Coder</p>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 1 } }} style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 11, marginTop: 12, letterSpacing: "0.05em", fontWeight: 600, textTransform: "uppercase" }}>
+        Engineered with Gemini 1.5 · Llama 3.3 · DeepSeek v3
+      </motion.p>
     </div>
   );
 }
