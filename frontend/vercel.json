@@ -3,11 +3,5 @@
     "app/api/auth/[...nextauth]/route.ts": {
       "maxDuration": 30
     }
-  },
-  "crons": [
-    {
-      "path": "/api/cron/keep-alive",
-      "schedule": "*/14 * * * *"
-    }
-  ]
+  }
 }
