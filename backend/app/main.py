@@ -20,6 +20,7 @@ app.add_middleware(
         "http://localhost:3000",
         "https://tulasiai.vercel.app",
         "https://frontend-eight-tan-33.vercel.app",
+        "https://tulasi-frontend.onrender.com",
     ],
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
