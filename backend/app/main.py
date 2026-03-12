@@ -13,7 +13,7 @@ app = FastAPI(
     redoc_url="/api/redoc",
 )
 
-# CORS — allow frontend (localhost dev + all Vercel previews + production)
+# CORS — allow frontend (localhost dev + Vercel deployments)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -40,23 +40,33 @@ app.include_router(startup.router,      prefix="/api/startup",      tags=["Start
 app.include_router(admin.router,        prefix="/api/admin",        tags=["Admin"])
 app.include_router(activity.router,     prefix="/api/activity",     tags=["Activity & Streaks"])
 
-
+# Startup event
 @app.on_event("startup")
 async def startup():
-    init_db()
-    print("✅ Tulasi AI v3.0 — Backend started!")
-    print("📖 API Docs: http://localhost:8000/api/docs")
+    try:
+        init_db()
+        print("✅ Tulasi AI v3.0 — Backend started!")
+        print("📖 API Docs: /api/docs")
+    except Exception as e:
+        print("❌ Database init failed:", e)
 
-
+# Root endpoint
 @app.get("/")
 def root():
-    return {"name": "Tulasi AI API", "version": "3.0.0", "status": "running"}
+    return {
+        "name": "Tulasi AI API",
+        "version": "3.0.0",
+        "status": "running"
+    }
 
-
+# Health check (important for Render)
 @app.get("/health")
 def health():
-    return {"status": "healthy", "version": "3.0.0"}
+    return {
+        "status": "healthy",
+        "version": "3.0.0"
+    }
 
-
+# Local run
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=10000)
