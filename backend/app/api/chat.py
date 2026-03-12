@@ -14,6 +14,7 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
+    image_base64: Optional[str] = None
 
 class ChatResponse(BaseModel):
     response: str
@@ -29,8 +30,22 @@ def chat(req: ChatRequest, current_user: User = Depends(get_current_user), db: S
     db_messages = db.exec(statement).all()
     history = [{"role": m.role, "content": m.content} for m in db_messages]
     
+    # Decode image if present
+    image_data = None
+    if req.image_base64:
+        import base64
+        try:
+            # Handle data:image/png;base64,... format
+            if "," in req.image_base64:
+                header, encoded = req.image_base64.split(",", 1)
+            else:
+                encoded = req.image_base64
+            image_data = base64.b64decode(encoded)
+        except Exception as e:
+            print(f"Error decoding image: {e}")
+
     # Generate AI Response
-    response_text = get_ai_response(req.message, history)
+    response_text = get_ai_response(req.message, history, image_data=image_data)
     
     # Save User message
     user_msg = ChatMessage(session_id=session_id, user_id=current_user.id, role="user", content=req.message)
