@@ -43,6 +43,53 @@ export default function InterviewPage() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes per question
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+
+  // Timer logic
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (phase === "active" && timeLeft > 0 && !loading) {
+      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    } else if (timeLeft === 0 && phase === "active") {
+      submitAnswer(); // Auto-submit when time's up
+    }
+    return () => clearInterval(timer);
+  }, [phase, timeLeft, loading]);
+
+  // Reset timer on new question
+  useEffect(() => {
+    if (currentQuestion) {
+      setTimeLeft(120);
+      if (voiceEnabled) speakQuestion(currentQuestion);
+    }
+  }, [currentQuestion]);
+
+  const speakQuestion = (text: string) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setAnswer(prev => prev + (prev ? " " : "") + transcript);
+    };
+    recognition.start();
+  };
 
 
   const startInterview = async () => {
@@ -196,9 +243,25 @@ export default function InterviewPage() {
               </div>
             </div>
 
-            {/* Progress bar */}
-            <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 4, marginBottom: 28 }}>
+            <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 4, marginBottom: 12 }}>
               <div style={{ height: "100%", width: `${(questionNum / numQuestions) * 100}%`, background: "linear-gradient(90deg, #6C63FF, #4ECDC4)", borderRadius: 4, transition: "width 0.5s ease" }} />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <button 
+                    onClick={() => setVoiceEnabled(!voiceEnabled)}
+                    style={{ background: voiceEnabled ? "rgba(78,205,196,0.2)" : "rgba(255,255,255,0.05)", border: `1px solid ${voiceEnabled ? "#4ECDC4" : "rgba(255,255,255,0.1)"}`, color: voiceEnabled ? "#4ECDC4" : "var(--text-muted)", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    {voiceEnabled ? "🔊 Voice On" : "📁 Voice Off"}
+                  </button>
+                  {voiceEnabled && (
+                    <button onClick={() => speakQuestion(currentQuestion)} style={{ background: "none", border: "none", color: "#6C63FF", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Replay Audio</button>
+                  )}
+               </div>
+               <div style={{ fontSize: 14, fontWeight: 800, color: timeLeft < 30 ? "#FF6B6B" : "#FFD93D", display: "flex", alignItems: "center", gap: 6 }}>
+                  ⏱️ {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+               </div>
             </div>
 
             <div className="dash-card" style={{ padding: 32, marginBottom: 20, background: "rgba(108,99,255,0.05)", border: "1px solid rgba(108,99,255,0.2)" }}>
@@ -211,17 +274,30 @@ export default function InterviewPage() {
               </div>
             </div>
 
-            <textarea
-              value={answer} onChange={e => setAnswer(e.target.value)}
-              placeholder="Type your answer here... Take your time and be thorough."
-              style={{
-                width: "100%", minHeight: 160, padding: "16px", borderRadius: 14, resize: "vertical",
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)",
-                color: "white", fontSize: 15, lineHeight: 1.6, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
-              }}
-              onFocus={e => e.target.style.borderColor = "rgba(108,99,255,0.4)"}
-              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
-            />
+            <div style={{ position: "relative" }}>
+              <textarea
+                value={answer} onChange={e => setAnswer(e.target.value)}
+                placeholder="Type your answer here... Take your time and be thorough."
+                style={{
+                  width: "100%", minHeight: 160, padding: "16px", borderRadius: 14, resize: "vertical",
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)",
+                  color: "white", fontSize: 15, lineHeight: 1.6, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+                }}
+                onFocus={e => e.target.style.borderColor = "rgba(108,99,255,0.4)"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
+              />
+              <button 
+                onClick={startListening}
+                style={{ 
+                  position: "absolute", bottom: 16, right: 16, width: 40, height: 40, borderRadius: 20, 
+                  background: isListening ? "#FF6B6B" : "rgba(108,99,255,0.2)", border: "none", color: "white", 
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+                  boxShadow: isListening ? "0 0 15px rgba(255,107,107,0.5)" : "none"
+                }}
+              >
+                {isListening ? "🔴" : "🎤"}
+              </button>
+            </div>
 
             <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={submitAnswer} disabled={loading || !answer.trim()}
