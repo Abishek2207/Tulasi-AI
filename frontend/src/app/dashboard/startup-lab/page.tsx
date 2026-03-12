@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
 interface StartupIdea {
   name: string;
@@ -13,6 +15,12 @@ interface StartupIdea {
   monetization: string;
 }
 
+interface SavedIdea extends StartupIdea {
+  id: number;
+  domain: string;
+  created_at: string;
+}
+
 export default function StartupLabPage() {
   const { data: session } = useSession();
   const [domain, setDomain] = useState("");
@@ -20,6 +28,10 @@ export default function StartupLabPage() {
   const [loading, setLoading] = useState(false);
   const [idea, setIdea] = useState<StartupIdea | null>(null);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [savedIdeas, setSavedIdeas] = useState<SavedIdea[]>([]);
+  const [showSaved, setShowSaved] = useState(false);
 
   const domains = [
     "Artificial Intelligence", "EdTech", "FinTech", "HealthTech", 
@@ -33,6 +45,33 @@ export default function StartupLabPage() {
     "Event Organizers", "Content Creators"
   ];
 
+  const token = (session?.user as any)?.accessToken;
+
+  const fetchSavedIdeas = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/api/startup/ideas`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setSavedIdeas(data.ideas || []);
+    } catch (e) {}
+  };
+
+  useEffect(() => { if (session) fetchSavedIdeas(); }, [session]);
+
+  const saveIdea = async () => {
+    if (!idea || !token) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API}/api/startup/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ...idea, domain }),
+      });
+      if (res.ok) { setSaved(true); fetchSavedIdeas(); }
+    } catch (e) {}
+    setSaving(false);
+  };
+
   const handleGenerate = async () => {
     if (!domain || !audience) {
       setError("Please select both a domain and a target audience.");
@@ -43,17 +82,18 @@ export default function StartupLabPage() {
     setIdea(null);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/startup/generate`, {
+      const res = await fetch(`${API}/api/startup/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${(session as any)?.user?.accessToken}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ domain, target_audience: audience })
       });
       const data = await res.json();
       if (res.ok) {
         setIdea(data.idea);
+        setSaved(false);
       } else {
         setError(data.detail || "Failed to generate idea.");
       }
@@ -193,9 +233,47 @@ export default function StartupLabPage() {
               </div>
 
             </div>
+            {/* Save Button */}
+            {!saved ? (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={saveIdea}
+                disabled={saving || !token}
+                style={{ margin: "0 40px 24px", padding: "12px", borderRadius: 14, border: "1px solid rgba(255,215,0,0.4)", background: "rgba(255,215,0,0.08)", color: "#FFD700", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              >
+                {saving ? "Saving..." : "💾 Save This Idea"}
+              </motion.button>
+            ) : (
+              <div style={{ margin: "0 40px 24px", padding: "12px", borderRadius: 14, background: "rgba(67,233,123,0.1)", color: "#43E97B", fontWeight: 700, textAlign: "center" }}>✅ Idea Saved!</div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Saved Ideas */}
+      {savedIdeas.length > 0 && (
+        <div style={{ marginTop: 40 }}>
+          <button onClick={() => setShowSaved(!showSaved)} style={{ background: "transparent", border: "1px solid var(--border)", color: "white", padding: "10px 20px", borderRadius: 12, cursor: "pointer", fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
+            {showSaved ? "▲" : "▼"} 💾 My Saved Ideas ({savedIdeas.length})
+          </button>
+          <AnimatePresence>
+            {showSaved && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                {savedIdeas.map(s => (
+                  <motion.div key={s.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                    style={{ background: "linear-gradient(135deg, rgba(255,107,107,0.08), rgba(255,142,83,0.05))", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 16, padding: 20 }}
+                  >
+                    <div style={{ fontSize: 11, color: "#FF8E53", fontWeight: 700, textTransform: "uppercase", marginBottom: 6 }}>{s.domain}</div>
+                    <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>{s.name}</h3>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>{s.problem.slice(0, 100)}...</p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
       <style>{`
         @keyframes spin { 100% { transform: rotate(360deg); } }
       `}</style>

@@ -1,156 +1,222 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 
-const ROOMS = [
-  { id: "dsa", name: "DSA & LeetCode Prep", active: 142, tag: "Interview", color: "#FF6B6B" },
-  { id: "web3", name: "Web3 Builders", active: 56, tag: "Blockchain", color: "#4ECDC4" },
-  { id: "ai", name: "AI/ML Researchers", active: 204, tag: "Machine Learning", color: "#6C63FF" },
-  { id: "startup", name: "Indie Hackers", active: 89, tag: "Startups", color: "#FFD93D" },
-];
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+
+interface Room {
+  id: number;
+  name: string;
+  description: string;
+  tag: string;
+  color: string;
+  active?: number;
+}
+
+interface Message {
+  id: number;
+  user_name: string;
+  content: string;
+  created_at: string;
+}
 
 export default function StudyRoomsPage() {
-  const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [activeRoom, setActiveRoom] = useState<Room | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<{user: string, text: string, time: string}[]>([
-    { user: "AlexP", text: "Anyone struggling with DP today?", time: "10:42 AM" },
-    { user: "CodeNinja", text: "Yeah, the knapsack problem is brutal.", time: "10:44 AM" }
-  ]);
-  
-  const [timer, setTimer] = useState(25 * 60); // 25 mins
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newRoomName, setNewRoomName] = useState("");
+  const [newRoomDesc, setNewRoomDesc] = useState("");
+  const [newRoomTag, setNewRoomTag] = useState("General");
+  const [timer, setTimer] = useState(25 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<any>(null);
+
+  const token = (session?.user as any)?.accessToken;
+  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+
+  const fetchRooms = async () => {
+    try {
+      const res = await fetch(`${API}/api/study/rooms`);
+      const data = await res.json();
+      setRooms(data.rooms || []);
+    } catch (e) { console.error("Rooms fetch failed:", e); }
+    finally { setLoading(false); }
+  };
+
+  const fetchMessages = async (roomId: number) => {
+    try {
+      const res = await fetch(`${API}/api/study/${roomId}/messages`, { headers });
+      const data = await res.json();
+      setMessages(data.messages || []);
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } catch (e) {}
+  };
+
+  useEffect(() => { fetchRooms(); }, []);
+
+  useEffect(() => {
+    if (activeRoom) {
+      fetchMessages(activeRoom.id);
+      pollRef.current = setInterval(() => fetchMessages(activeRoom.id), 5000);
+    }
+    return () => clearInterval(pollRef.current);
+  }, [activeRoom]);
 
   useEffect(() => {
     let interval: any;
-    if (isTimerRunning && timer > 0) {
-      interval = setInterval(() => setTimer(t => t - 1), 1000);
-    } else if (timer === 0) {
-      setIsTimerRunning(false);
-    }
+    if (isTimerRunning && timer > 0) interval = setInterval(() => setTimer(t => t - 1), 1000);
+    else if (timer === 0) setIsTimerRunning(false);
     return () => clearInterval(interval);
   }, [isTimerRunning, timer]);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
+
+  const joinRoom = (room: Room) => {
+    setActiveRoom(room);
+    setMessages([]);
+    fetch(`${API}/api/study/join/${room.id}`, { method: "POST", headers });
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
-    const now = new Date();
-    setMessages([...messages, { 
-      user: "You", 
-      text: chatInput, 
-      time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-    }]);
-    setChatInput("");
-    
-    // Simulate others typing
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        user: "System",
-        text: "User joined the room.",
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-    }, 5000 + Math.random() * 10000);
+    if (!chatInput.trim() || !activeRoom || !token) return;
+    setSending(true);
+    try {
+      const res = await fetch(`${API}/api/study/${activeRoom.id}/messages`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ content: chatInput.trim() }),
+      });
+      if (res.ok) {
+        setChatInput("");
+        fetchMessages(activeRoom.id);
+      }
+    } catch (e) {}
+    setSending(false);
   };
+
+  const createRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRoomName.trim() || !token) return;
+    try {
+      const res = await fetch(`${API}/api/study/create`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ name: newRoomName, description: newRoomDesc, tag: newRoomTag }),
+      });
+      if (res.ok) {
+        setShowCreate(false);
+        setNewRoomName(""); setNewRoomDesc(""); setNewRoomTag("General");
+        fetchRooms();
+      }
+    } catch (e) {}
+  };
+
+  const COLORS = ["#FF6B6B", "#4ECDC4", "#6C63FF", "#FFD93D", "#43E97B", "#F7971E"];
 
   if (activeRoom) {
-    const room = ROOMS.find(r => r.id === activeRoom)!;
     return (
       <div style={{ display: "flex", gap: 24, height: "calc(100vh - 120px)" }}>
-        
-        {/* Left: Chat & Activity */}
-        <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <div style={{ padding: 20, borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(90deg, rgba(255,255,255,0.05), transparent)" }}>
+        <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden" }}>
+          {/* Header */}
+          <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: `linear-gradient(90deg, ${activeRoom.color}15, transparent)` }}>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ color: room.color }}>#</span> {room.name}
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>
+                <span style={{ color: activeRoom.color }}>#</span> {activeRoom.name}
               </h2>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
-                🟢 {room.active} online right now
-              </div>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{activeRoom.description}</div>
             </div>
-            <button onClick={() => setActiveRoom(null)} className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: 13, borderRadius: 8 }}>Leave Room</button>
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.user === "You" ? "flex-end" : "flex-start" }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: m.user === "You" ? room.color : "white" }}>{m.user}</span>
-                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{m.time}</span>
-                </div>
-                <div style={{ background: m.user === "You" ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)", padding: "10px 16px", borderRadius: 16, borderBottomRightRadius: m.user === "You" ? 4 : 16, borderTopLeftRadius: m.user !== "You" ? 4 : 16, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, whiteSpace: "pre-wrap", fontFamily: m.text.includes("```") ? "monospace" : "inherit" }}>
-                  {m.text.replace(/```[a-z]*\n?/g, "")}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <form onSubmit={handleSend} style={{ padding: 16, background: "var(--surface)", borderTop: "1px solid var(--border)", display: "flex", gap: 12 }}>
-            <button type="button" onClick={() => setChatInput("```python\ndef solve(arr):\n    pass\n```")} style={{ padding: "0 16px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: 12, cursor: "pointer", color: "white", fontSize: 18 }} title="Share Code">
-              💻
+            <button onClick={() => { setActiveRoom(null); clearInterval(pollRef.current); }} className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: 13, borderRadius: 8 }}>
+              Leave Room
             </button>
-            <input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder={`Message #${room.name}...`} className="input-field" style={{ flex: 1, padding: "12px 16px", borderRadius: 12 }} />
-            <button type="submit" disabled={!chatInput.trim()} className="btn btn-primary" style={{ background: room.color, padding: "0 24px", borderRadius: 12, opacity: !chatInput.trim() ? 0.5 : 1 }}>Send</button>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column", gap: 12 }}>
+            {messages.length === 0 && (
+              <div style={{ textAlign: "center", color: "var(--text-muted)", marginTop: 60 }}>
+                <div style={{ fontSize: 40, marginBottom: 8 }}>💬</div>
+                <div>No messages yet. Be the first to say hi!</div>
+              </div>
+            )}
+            {messages.map((m) => {
+              const isMe = m.user_name === (session?.user?.name || (session?.user as any)?.email?.split("@")[0]);
+              return (
+                <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700, color: isMe ? activeRoom.color : "white" }}>{m.user_name}</span>
+                    {" · "}
+                    {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                  <div style={{
+                    background: isMe ? `${activeRoom.color}20` : "rgba(255,255,255,0.05)",
+                    border: `1px solid ${isMe ? activeRoom.color + "40" : "rgba(255,255,255,0.08)"}`,
+                    padding: "10px 16px", borderRadius: 16,
+                    borderBottomRightRadius: isMe ? 4 : 16,
+                    borderTopLeftRadius: isMe ? 16 : 4,
+                    fontSize: 14, maxWidth: "80%",
+                  }}>
+                    {m.content}
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <form onSubmit={handleSend} style={{ padding: 16, borderTop: "1px solid var(--border)", display: "flex", gap: 12 }}>
+            {!token && <div style={{ flex: 1, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Sign in to send messages</div>}
+            {token && <>
+              <input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                placeholder={`Message #${activeRoom.name}...`}
+                className="input-field"
+                style={{ flex: 1, padding: "12px 16px", borderRadius: 12 }}
+              />
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                disabled={!chatInput.trim() || sending}
+                style={{ background: activeRoom.color, color: "white", padding: "0 24px", borderRadius: 12, border: "none", fontWeight: 700, cursor: "pointer", opacity: !chatInput.trim() ? 0.5 : 1 }}
+              >
+                {sending ? "..." : "Send"}
+              </motion.button>
+            </>}
           </form>
         </div>
 
-        {/* Right: Productivity Gadgets */}
-        <div style={{ width: 320, display: "flex", flexDirection: "column", gap: 24 }}>
-          
-          <div className="dash-card" style={{ padding: 32, textAlign: "center", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
-            <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-secondary)", fontWeight: 700, marginBottom: 16 }}>Pomodoro Timer</h3>
-            <div style={{ fontSize: 56, fontWeight: 900, fontFamily: "var(--font-outfit)", color: room.color, marginBottom: 24 }}>
-              {formatTime(timer)}
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="btn btn-primary" style={{ flex: 1, background: isTimerRunning ? "rgba(255,255,255,0.1)" : room.color, color: "white", padding: 12, borderRadius: 12 }}>
+        {/* Right sidebar */}
+        <div style={{ width: 280, display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Pomodoro */}
+          <div className="dash-card" style={{ padding: 24, textAlign: "center" }}>
+            <h3 style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)", fontWeight: 700, marginBottom: 12 }}>⏱ Pomodoro</h3>
+            <div style={{ fontSize: 48, fontWeight: 900, color: activeRoom.color, marginBottom: 16 }}>{formatTime(timer)}</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => setIsTimerRunning(!isTimerRunning)} style={{ flex: 1, padding: 10, background: isTimerRunning ? "rgba(255,255,255,0.1)" : activeRoom.color, color: "white", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer" }}>
                 {isTimerRunning ? "Pause" : "Start"}
               </button>
-              <button onClick={() => { setIsTimerRunning(false); setTimer(25 * 60); }} className="btn btn-secondary" style={{ padding: "12px 20px", borderRadius: 12 }}>Reset</button>
+              <button onClick={() => { setIsTimerRunning(false); setTimer(25 * 60); }} style={{ padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: 10, color: "white", cursor: "pointer" }}>↺</button>
             </div>
           </div>
-
-          <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
-            <div>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>🎙️ Voice Channel</span>
-                <button style={{ background: "rgba(67,233,123,0.2)", color: "#43E97B", border: "none", padding: "4px 12px", borderRadius: 12, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Join</button>
-              </h3>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 12 }}>
-                 <div style={{ width: 32, height: 32, borderRadius: 16, background: "var(--brand-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👨‍💻</div>
-                 <div style={{ flex: 1 }}>
-                   <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>AlexP</div>
-                   <div style={{ fontSize: 11, color: "#43E97B" }}>Speaking...</div>
-                 </div>
-                 <div style={{ fontSize: 16 }}>🔊</div>
-              </div>
-            </div>
-
-            <div>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Online Members</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>👤</div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Student {Math.floor(Math.random() * 1000)}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Studying React.js</div>
-                  </div>
-                </div>
-              ))}
-              <div style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", marginTop: 8 }}>+ {room.active - 5} more</div>
+          {/* Room info */}
+          <div className="dash-card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)", marginBottom: 12 }}>Room</div>
+            <div style={{ background: `${activeRoom.color}15`, border: `1px solid ${activeRoom.color}40`, borderRadius: 10, padding: "10px 14px" }}>
+              <div style={{ fontWeight: 700, color: activeRoom.color }}>{activeRoom.tag}</div>
+              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>{activeRoom.description || "Public study room"}</div>
             </div>
           </div>
-          </div>
-
         </div>
-
       </div>
     );
   }
@@ -166,49 +232,72 @@ export default function StudyRoomsPage() {
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
-        {ROOMS.map((room) => (
-          <motion.div 
-            key={room.id}
+      {/* Create Room Modal */}
+      <AnimatePresence>
+        {showCreate && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
+            onClick={e => { if (e.target === e.currentTarget) setShowCreate(false); }}
+          >
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 24, padding: 36, width: 440, maxWidth: "90vw" }}>
+              <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Create Study Room</h2>
+              <form onSubmit={createRoom} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div>
+                  <label style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600, display: "block", marginBottom: 8 }}>Room Name *</label>
+                  <input value={newRoomName} onChange={e => setNewRoomName(e.target.value)} placeholder="e.g. React Study Group" className="input-field" style={{ width: "100%", padding: "12px 16px", borderRadius: 10 }} required />
+                </div>
+                <div>
+                  <label style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600, display: "block", marginBottom: 8 }}>Description</label>
+                  <input value={newRoomDesc} onChange={e => setNewRoomDesc(e.target.value)} placeholder="What will you be studying?" className="input-field" style={{ width: "100%", padding: "12px 16px", borderRadius: 10 }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600, display: "block", marginBottom: 8 }}>Category</label>
+                  <select value={newRoomTag} onChange={e => setNewRoomTag(e.target.value)} className="input-field" style={{ width: "100%", padding: "12px 16px", borderRadius: 10 }}>
+                    {["General", "Interview", "Machine Learning", "Blockchain", "Startups", "Frontend", "Backend", "Data Science"].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                  <button type="button" onClick={() => setShowCreate(false)} style={{ flex: 1, padding: 12, borderRadius: 10, background: "transparent", border: "1px solid var(--border)", color: "white", cursor: "pointer" }}>Cancel</button>
+                  <button type="submit" className="btn-primary" style={{ flex: 2, padding: 12, borderRadius: 10, fontWeight: 700 }}>Create Room</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24 }}>
+        {loading && [1, 2, 3, 4].map(i => <div key={i} className="dash-card" style={{ height: 200, opacity: 0.3 }} />)}
+
+        {rooms.map((room, i) => (
+          <motion.div key={room.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
             whileHover={{ y: -5, scale: 1.02 }}
             className="dash-card"
-            style={{ padding: 24, cursor: "pointer", border: "1px solid rgba(255,255,255,0.1)", transition: "all 0.2s" }}
-            onClick={() => setActiveRoom(room.id)}
+            style={{ padding: 24, cursor: "pointer", border: `1px solid ${room.color}30` }}
+            onClick={() => joinRoom(room)}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-              <div style={{ background: "rgba(255,255,255,0.1)", color: room.color, padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                {room.tag}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 4, background: "#43E97B", boxShadow: "0 0 10px #43E97B" }} />
-                {room.active}
-              </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div style={{ background: `${room.color}20`, color: room.color, padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{room.tag}</div>
+              <div style={{ width: 10, height: 10, borderRadius: 5, background: "#43E97B", boxShadow: "0 0 8px #43E97B" }} />
             </div>
-            
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 8 }}>{room.name}</h2>
-            <p style={{ fontSize: 14, color: "var(--text-muted)" }}>Join the active session and start focusing with peers.</p>
-            
-            <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: -8 }}>
-              {[1,2,3].map(i => (
-                <div key={i} style={{ width: 32, height: 32, borderRadius: 16, background: "var(--background-alt)", border: "2px solid var(--surface)", zIndex: 4-i, marginLeft: i>1 ? -12 : 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
-                  👾
-                </div>
-              ))}
-              <span style={{ fontSize: 12, color: "var(--text-secondary)", marginLeft: 16, fontWeight: 600 }}>Click to enter →</span>
-            </div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>{room.name}</h2>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 20 }}>{room.description || "Join the active session."}</p>
+            <button className="btn-primary" style={{ width: "100%", padding: "10px", borderRadius: 10, fontWeight: 700, background: room.color }}>
+              Enter Room →
+            </button>
           </motion.div>
         ))}
 
-        <motion.div
-           whileHover={{ y: -5, scale: 1.02 }}
-           className="dash-card"
-           style={{ padding: 24, cursor: "pointer", border: "1px dashed rgba(255,255,255,0.2)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", background: "transparent" }}
+        {/* Create Room Card */}
+        <motion.div whileHover={{ y: -5, scale: 1.02 }}
+          className="dash-card"
+          style={{ padding: 24, cursor: "pointer", border: "1px dashed rgba(255,255,255,0.2)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", background: "transparent", minHeight: 200 }}
+          onClick={() => setShowCreate(true)}
         >
-          <div style={{ width: 64, height: 64, borderRadius: 32, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 16 }}>
-            ➕
-          </div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>Create Room</h2>
-          <p style={{ fontSize: 14, color: "var(--text-muted)" }}>Start a public or private study session.</p>
+          <div style={{ width: 56, height: 56, borderRadius: 28, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 16 }}>➕</div>
+          <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>Create Room</h2>
+          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Start a public study session.</p>
         </motion.div>
       </div>
     </div>
