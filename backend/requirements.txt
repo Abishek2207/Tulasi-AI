@@ -13,6 +13,8 @@ pydantic-settings==2.6.0
 google-generativeai==0.8.3
 groq==0.11.0
 pypdf==5.1.0
-numpy==1.26.4
-faiss-cpu==1.8.0
+numpy
+faiss-cpu>=1.9.0
 tiktoken==0.7.0
+requests==2.32.3
+Pillow==10.4.0

@@ -5,8 +5,10 @@ from datetime import datetime
 from typing import Any
 
 from app.core.config import settings
+from app.core.database import get_session
 from app.api.auth import get_current_user
-from app.models.models import User
+from app.models.models import User, Roadmap, RoadmapStep
+from sqlmodel import Session
 
 router = APIRouter()
 
@@ -47,7 +49,11 @@ def generate_ai_response(prompt: str, is_json: bool = False):
 
 
 @router.post("/generate")
-def generate_roadmap(req: RoadmapRequest, current_user: User = Depends(get_current_user)):
+def generate_roadmap(
+    req: RoadmapRequest, 
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
     
     prompt = f"""You are an elite career technical advisor. A student wants to become a "{req.goal}". 
 Create a detailed, step-by-step learning roadmap divided into exactly 5 logical phases/milestones.
@@ -76,11 +82,38 @@ Return ONLY raw JSON, nothing else."""
 
     try:
         response_str = generate_ai_response(prompt, is_json=True)
-        # Parse the JSON right here to ensure it's valid before sending to frontend
         roadmap_data = json.loads(response_str)
-        # In the future, this is where we would save `roadmap_data` to a Database for the user
-        return {"roadmap": roadmap_data}
+        
+        # Save to DB
+        new_roadmap = Roadmap(
+            user_id=current_user.id,
+            goal=req.goal,
+            title=roadmap_data.get("title", f"Roadmap for {req.goal}"),
+            description=roadmap_data.get("description", ""),
+            estimated_months=roadmap_data.get("estimated_months", 6)
+        )
+        session.add(new_roadmap)
+        session.commit()
+        session.refresh(new_roadmap)
+        
+        # Save steps
+        for m in roadmap_data.get("milestones", []):
+            step = RoadmapStep(
+                roadmap_id=new_roadmap.id,
+                phase=str(m.get("phase", "")),
+                title=m.get("title", ""),
+                duration=m.get("duration", ""),
+                topics_json=json.dumps(m.get("topics", [])),
+                project_idea=m.get("project_idea", ""),
+                resources_json=json.dumps(m.get("resources", []))
+            )
+            session.add(step)
+        
+        session.commit()
+        
+        return {"roadmap": roadmap_data, "id": new_roadmap.id}
     except json.JSONDecodeError:
         raise HTTPException(500, "AI failed to generate valid JSON format.")
     except Exception as e:
+        session.rollback()
         raise HTTPException(500, f"Error generating roadmap: {str(e)}")
