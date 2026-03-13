@@ -12,6 +12,7 @@ from app.models.models import User, Roadmap, RoadmapStep, ActivityLog, UserProgr
 from sqlmodel import Session, select
 from app.api.roadmap_data import ROADMAPS
 from app.api.activity import log_activity_internal
+from app.core.ai_router import get_ai_response
 
 router = APIRouter()
 
@@ -22,37 +23,7 @@ class MilestoneProgressRequest(BaseModel):
     roadmap_id: str
     milestone_id: str
 
-def generate_ai_response(prompt: str, is_json: bool = False):
-    """Helper to query Groq (preferred) or Gemini."""
-    if settings.GROQ_API_KEY:
-        from groq import Groq
-        client = Groq(api_key=settings.GROQ_API_KEY)
-        
-        req_params: dict[str, Any] = {
-            "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 2048,
-            "temperature": 0.7
-        }
-        
-        if is_json:
-            req_params["response_format"] = {"type": "json_object"}
-            
-        completion = client.chat.completions.create(**req_params)
-        return completion.choices[0].message.content
-        
-    elif settings.GEMINI_API_KEY:
-        import google.generativeai as genai
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        if is_json:
-            if text.startswith("```json"): text = text[7:-3]
-            elif text.startswith("```"): text = text[3:-3]
-        return text
-    else:
-        raise HTTPException(500, "No AI API keys configured.")
+
 
 
 @router.post("/generate")
@@ -88,7 +59,10 @@ Output strictly as a valid JSON object matching this exact schema:
 Return ONLY raw JSON, nothing else."""
 
     try:
-        response_str = generate_ai_response(prompt, is_json=True)
+        response_str = get_ai_response(prompt, force_model="complex_reasoning")
+        # Handle potential markdown wrappers if AI didn't return raw JSON
+        if response_str.startswith("```json"): response_str = response_str[7:].strip()
+        if response_str.endswith("```"): response_str = response_str[:-3].strip()
         roadmap_data = json.loads(response_str)
         
         # Save to DB
