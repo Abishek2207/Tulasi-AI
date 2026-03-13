@@ -60,9 +60,11 @@ Return ONLY raw JSON, nothing else."""
 
     try:
         response_str = get_ai_response(prompt, force_model="complex_reasoning")
-        # Handle potential markdown wrappers if AI didn't return raw JSON
-        if response_str.startswith("```json"): response_str = response_str[7:].strip()
-        if response_str.endswith("```"): response_str = response_str[:-3].strip()
+        import re
+        match = re.search(r'\{.*\}', response_str, re.DOTALL)
+        if match:
+            response_str = match.group()
+        
         roadmap_data = json.loads(response_str)
         
         # Save to DB
