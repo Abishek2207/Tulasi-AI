@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-import os
+from app.core.ai_router import get_ai_response
 
 router = APIRouter()
 
@@ -16,8 +16,6 @@ class ResumeData(BaseModel):
 
 @router.post("/analyze-ats")
 def analyze_ats(data: ResumeData):
-    gemini_key = os.getenv("GEMINI_API_KEY", "")
-    
     resume_text = f"""
 Name: {data.name}
 Email: {data.email}
@@ -29,27 +27,25 @@ Experience: {data.experience}
 Education: {data.education}
 """.strip()
     
-    if gemini_key:
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel("gemini-pro")
-            prompt = f"""Analyze this resume for ATS compatibility and give a score from 0-100.
+    prompt = f"""Analyze this resume for ATS compatibility and give a score from 0-100.
             
 Resume:
 {resume_text}
 
-Respond in JSON format:
+Respond STRICTLY in JSON format:
 {{"score": 82, "feedback": ["✅ Good contact info", "⚠️ Add quantified achievements", "✅ Strong skills section", "⚠️ Include LinkedIn URL"]}}"""
-            
-            response = model.generate_content(prompt)
+    
+    response_text = get_ai_response(prompt, force_model="complex_reasoning")
+    
+    if "API key" not in response_text:
+        try:
             import json, re
-            match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if match:
                 result = json.loads(match.group())
                 return result
         except Exception as e:
-            print(f"Gemini error: {e}")
+            print(f"JSON Parsing error in resume analysis: {e}")
     
     # Fallback scoring
     score = 50

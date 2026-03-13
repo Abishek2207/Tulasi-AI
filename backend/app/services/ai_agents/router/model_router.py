@@ -1,5 +1,7 @@
 import os
 
+from app.core.config import settings
+
 class ModelRouter:
     def __init__(self):
         self._groq_model = None
@@ -11,7 +13,8 @@ class ModelRouter:
         if self._groq_model is None:
             try:
                 from langchain_community.chat_models import ChatGroq
-                self._groq_model = ChatGroq(temperature=0.7, model_name="llama3-70b-8192", api_key=os.environ.get("GROQ_API_KEY"))
+                if settings.GROQ_API_KEY:
+                    self._groq_model = ChatGroq(temperature=0.7, model_name="llama-3.3-70b-versatile", api_key=settings.GROQ_API_KEY)
             except:
                 pass
         return self._groq_model
@@ -21,7 +24,9 @@ class ModelRouter:
         if self._gemini_model is None:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
-                self._gemini_model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=os.environ.get("GEMINI_API_KEY"))
+                gemini_key = settings.effective_gemini_key
+                if gemini_key:
+                    self._gemini_model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=gemini_key)
             except:
                 pass
         return self._gemini_model

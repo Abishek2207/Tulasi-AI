@@ -12,6 +12,7 @@ from app.models.models import User, ActivityLog, UserProgress
 from app.core.database import get_session
 from app.core.rate_limit import limiter
 from app.api.activity import log_activity_internal
+from app.core.ai_router import get_ai_response
 
 router = APIRouter()
 
@@ -44,39 +45,7 @@ class InterviewAnswerRequest(BaseModel):
     answer: str
 
 
-def generate_ai_response(prompt: str, is_json: bool = False):
-    """Helper to query Groq (preferred) or Gemini."""
-    if settings.GROQ_API_KEY:
-        from groq import Groq
-        client = Groq(api_key=settings.GROQ_API_KEY)
-        req_params: Dict[str, Any] = {
-            "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 1024,
-            "temperature": 0.7,
-        }
-        if is_json:
-            req_params["response_format"] = {"type": "json_object"}
-        completion = client.chat.completions.create(**req_params)
-        return completion.choices[0].message.content
-    elif settings.GEMINI_API_KEY:
-        import google.generativeai as genai
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        if is_json:
-            if text.startswith("```json"):
-                text = text[7:]
-                if text.endswith("```"):
-                    text = text[:-3]
-            elif text.startswith("```"):
-                text = text[3:]
-                if text.endswith("```"):
-                    text = text[:-3]
-        return text
-    else:
-        raise HTTPException(500, "No AI API keys configured.")
+
 
 
 @router.get("/config")
@@ -121,7 +90,7 @@ def start_interview(
     )
 
     try:
-        question = generate_ai_response(prompt)
+        question = get_ai_response(prompt, force_model="complex_reasoning")
         interview_sessions[session_id] = {
             "role": req.role,
             "company": req.company,
@@ -184,7 +153,7 @@ Provide structured evaluation as JSON with EXACTLY these keys:
 Return ONLY valid JSON, no markdown."""
 
         try:
-            fb_str = generate_ai_response(prompt, is_json=True)
+            fb_str = get_ai_response(prompt, force_model="complex_reasoning")
             feedback = json.loads(str(fb_str))
         except Exception:
             feedback = {
@@ -250,7 +219,7 @@ Briefly acknowledge their answer (1 brief sentence), then ask the next question.
 Do not break character. Keep it professional."""
 
     try:
-        next_q = generate_ai_response(prompt)
+        next_q = get_ai_response(prompt, force_model="complex_reasoning")
         history.append({"role": "ai", "content": next_q})
         return {
             "status": "in_progress",

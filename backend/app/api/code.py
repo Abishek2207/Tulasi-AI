@@ -7,6 +7,7 @@ from app.api.auth import get_current_user
 from app.models.models import User, SolvedProblem, ActivityLog, UserProgress
 from app.core.database import get_session
 from app.api.activity import log_activity_internal
+from app.core.ai_router import get_ai_response
 
 router = APIRouter()
 
@@ -295,16 +296,7 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
 @router.post("/explain")
 def explain_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
     """Use AI to explain the code or provide hints without giving the full solution."""
-    gemini_key = os.getenv("GEMINI_API_KEY", "")
-    if not gemini_key:
-        return {"explanation": "AI Explanation is unavailable (No API Key).", "status": "error"}
-
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel("gemini-pro")
-        
-        prompt = f"""You are an elite coding tutor. Analyze this user's {req.language} code and provide a helpful, encouraging explanation.
+    prompt = f"""You are an elite coding tutor. Analyze this user's {req.language} code and provide a helpful, encouraging explanation.
         
 Guidelines:
 - Explain what the current code is doing.
@@ -318,7 +310,6 @@ User's Code:
 {req.code}
 ```
 """
-        response = model.generate_content(prompt)
-        return {"explanation": response.text, "status": "success"}
-    except Exception as e:
-        return {"explanation": f"AI Error: {str(e)}", "status": "error"}
+    explanation = get_ai_response(prompt, force_model="complex_reasoning")
+    status = "success" if "API key" not in explanation else "error"
+    return {"explanation": explanation, "status": status}
