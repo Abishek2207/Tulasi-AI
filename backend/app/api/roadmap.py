@@ -3,17 +3,24 @@ from pydantic import BaseModel
 import json
 from datetime import datetime
 from typing import Any
+from functools import lru_cache
 
 from app.core.config import settings
 from app.core.database import get_session
 from app.api.auth import get_current_user
-from app.models.models import User, Roadmap, RoadmapStep
-from sqlmodel import Session
+from app.models.models import User, Roadmap, RoadmapStep, ActivityLog
+from sqlmodel import Session, select
+from app.api.roadmap_data import ROADMAPS
+from app.api.activity import _update_progress, _update_streak
 
 router = APIRouter()
 
 class RoadmapRequest(BaseModel):
     goal: str
+
+class MilestoneProgressRequest(BaseModel):
+    roadmap_id: str
+    milestone_id: str
 
 def generate_ai_response(prompt: str, is_json: bool = False):
     """Helper to query Groq (preferred) or Gemini."""
@@ -117,3 +124,101 @@ Return ONLY raw JSON, nothing else."""
     except Exception as e:
         session.rollback()
         raise HTTPException(500, f"Error generating roadmap: {str(e)}")
+
+@router.get("/")
+def get_roadmaps(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session)
+):
+    # Fetch user's completed milestones
+    completed_logs = db.exec(
+        select(ActivityLog).where(
+            ActivityLog.user_id == current_user.id,
+            ActivityLog.action_type == "roadmap_step"
+        )
+    ).all()
+    completed = [log.metadata_json for log in completed_logs if log.metadata_json]
+
+    return {
+        "roadmaps": ROADMAPS,
+        "completed_milestones": completed
+    }
+
+@lru_cache(maxsize=32)
+def _get_static_roadmap(id: str):
+    return next((r for r in ROADMAPS if r["id"] == id), None)
+
+@router.get("/{id}")
+def get_roadmap(id: str, current_user: User = Depends(get_current_user)):
+    roadmap = _get_static_roadmap(id)
+    if not roadmap:
+        raise HTTPException(404, "Roadmap not found")
+    return roadmap
+
+@router.post("/progress")
+def log_progress(
+    req: MilestoneProgressRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session)
+):
+    roadmap = next((r for r in ROADMAPS if r["id"] == req.roadmap_id), None)
+    if not roadmap:
+        raise HTTPException(404, "Roadmap not found")
+    
+    milestone = next((m for m in roadmap["milestones"] if m["id"] == req.milestone_id), None)
+    if not milestone:
+        raise HTTPException(404, "Milestone not found")
+
+    # Check if already logged
+    existing_log = db.exec(
+        select(ActivityLog).where(
+            ActivityLog.user_id == current_user.id,
+            ActivityLog.action_type == "roadmap_step",
+            ActivityLog.metadata_json == req.milestone_id
+        )
+    ).first()
+
+    if existing_log:
+        return {"message": "Milestone already completed"}
+
+    # Add activity log
+    xp = 30
+    log = ActivityLog(
+        user_id=current_user.id,
+        action_type="roadmap_step",
+        title=f"Completed {roadmap['title']} milestone: {milestone['name']}",
+        metadata_json=req.milestone_id,
+        xp_earned=xp
+    )
+    db.add(log)
+    current_user.xp = (current_user.xp or 0) + xp
+    current_user.level = max(1, (current_user.xp or 0) // 500 + 1)
+    
+    # Check if roadmap is fully completed (count existing logs + this new one)
+    existing_milestones = db.exec(
+        select(ActivityLog).where(
+            ActivityLog.user_id == current_user.id,
+            ActivityLog.action_type == "roadmap_step",
+            ActivityLog.title.like(f"%{roadmap['title']}%")
+        )
+    ).all()
+    
+    if len(existing_milestones) + 1 >= len(roadmap["milestones"]):
+        completion_xp = 200
+        comp_log = ActivityLog(
+            user_id=current_user.id,
+            action_type="roadmap_completed",
+            title=f"Completed Roadmap: {roadmap['title']}",
+            xp_earned=completion_xp
+        )
+        db.add(comp_log)
+        current_user.xp += completion_xp
+    
+    _update_streak(current_user, db)
+    db.commit()
+    
+    # Needs to be after commit to query correctly
+    _update_progress(current_user.id, "roadmap", db, total=100) # Assuming 100 max or similar, keeping arbitrary for now
+    db.commit()
+
+    return {"message": "Progress saved", "xp_earned": xp}

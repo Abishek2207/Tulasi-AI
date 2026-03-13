@@ -1,20 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Editor from "@monaco-editor/react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const PROBLEMS = [
-  { id: 1, title: "Two Sum", difficulty: "Easy", category: "Arrays", company: "Google", desc: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.", starter: "def two_sum(nums, target):\n    # Write your code here\n    pass\n\nprint(two_sum([2, 7, 11, 15], 9))" },
-  { id: 2, title: "Reverse String", difficulty: "Easy", category: "Strings", company: "Amazon", desc: "Write a function that reverses a string. The input string is given as an array of characters s.\n\nYou must do this by modifying the input array in-place with O(1) extra memory.", starter: "def reverse_string(s):\n    # Write your code here\n    pass\n\ns = ['h','e','l','l','o']\nreverse_string(s)\nprint(s)" },
-  { id: 3, title: "Fibonacci Sequence", difficulty: "Medium", category: "DP", company: "Microsoft", desc: "The Fibonacci numbers, commonly denoted F(n) form a sequence, called the Fibonacci sequence, such that each number is the sum of the two preceding ones, starting from 0 and 1.\n\nGiven n, calculate F(n).", starter: "def fib(n):\n    # Write your code here\n    pass\n\nprint(fib(4))" },
-  { id: 4, title: "LRU Cache", difficulty: "Hard", category: "System Design", company: "Meta", desc: "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.\n\nImplement the LRUCache class:\n- LRUCache(int capacity) Initialize the LRU cache with positive size capacity.\n- int get(int key) Return the value of the key if the key exists, otherwise return -1.", starter: "class LRUCache:\n    def __init__(self, capacity: int):\n        pass\n\n    def get(self, key: int) -> int:\n        pass\n\n    def put(self, key: int, value: int) -> None:\n        pass" }
-];
+import { codeApi } from "@/lib/api";
 
 export default function CodePracticePage() {
   const { data: session } = useSession();
-  const [activeProblem, setActiveProblem] = useState(PROBLEMS[0]);
+  const [problems, setProblems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeProblem, setActiveProblem] = useState<any>(null);
   const [code, setCode] = useState(activeProblem.starter);
   
   // Console state
@@ -28,41 +24,58 @@ export default function CodePracticePage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
   const [contestMode, setContestMode] = useState(false);
+  const [language, setLanguage] = useState("python");
 
-  const categories = ["All", ...Array.from(new Set(PROBLEMS.map(p => p.category)))];
+  useEffect(() => {
+    const fetchProblems = async () => {
+      try {
+        const data = await codeApi.problems();
+        setProblems(data.problems || []);
+        if (data.problems && data.problems.length > 0) {
+          setActiveProblem(data.problems[0]);
+          setCode(`def solve(x):\n    # Starter code for ${data.problems[0].title}\n    pass\n`);
+        }
+      } catch (err) {
+        console.error("Failed to fetch problems", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProblems();
+  }, []);
+
+  const categories = ["All", ...Array.from(new Set(problems.map(p => p.category)))];
   const difficulties = ["All", "Easy", "Medium", "Hard"];
 
-  const filteredProblems = PROBLEMS.filter(p => {
+  const filteredProblems = problems.filter(p => {
     if (selectedCategory !== "All" && p.category !== selectedCategory) return false;
     if (selectedDifficulty !== "All" && p.difficulty !== selectedDifficulty) return false;
     return true;
   });
 
-  const handleProblemChange = (p: typeof PROBLEMS[0]) => {
+  const handleProblemChange = (p: any) => {
     setActiveProblem(p);
-    setCode(p.starter);
+    setCode(`def solve(x):\n    # Starter code for ${p.title}\n    pass\n`);
     setOutput("");
     setAiExplanation("");
     setActiveConsoleTab('output');
   };
 
   const handleRunCode = async () => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token) return setOutput("Please log in to run code.");
     setActiveConsoleTab('output');
     setIsRunning(true);
     setOutput("Running code...");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/code/run`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`
-        },
-        body: JSON.stringify({ code: code, language: "python" })
-      });
-      const data = await res.json();
-      setOutput(data.output || "No output returned.");
+      const data = await codeApi.run(code, language, token);
+      let outText = data.output || "No output returned.";
+      if (data.execution_time_ms !== undefined) {
+        outText += `\n\n[Finished in ${data.execution_time_ms}ms]`;
+      }
+      setOutput(outText);
     } catch (err) {
-      setOutput("Network Error: Could not connect to execution server.\n(Render Free Tier might be waking up, please try again in 30s)");
+      setOutput("Network Error: Could not connect to execution server.\n(Render Free Tier might be waking up, please try again soon)");
     }
     setIsRunning(false);
   };
@@ -77,15 +90,7 @@ export default function CodePracticePage() {
     setIsExplaining(true);
     setAiExplanation("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/code/explain`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ code: code, language: "python" })
-      });
-      const data = await res.json();
+      const data = await codeApi.explain(code, language, token);
       setAiExplanation(data.explanation || "AI could not generate an explanation at this time.");
     } catch (err) {
       setAiExplanation("Network Error: Could not connect to AI server.");
@@ -131,8 +136,8 @@ export default function CodePracticePage() {
                 padding: "16px 20px",
                 borderBottom: "1px solid var(--border)",
                 cursor: "pointer",
-                background: activeProblem.id === p.id ? "rgba(108,99,255,0.1)" : "transparent",
-                borderLeft: activeProblem.id === p.id ? "3px solid var(--brand-primary)" : "3px solid transparent",
+                background: activeProblem?.id === p.id ? "rgba(108,99,255,0.1)" : "transparent",
+                borderLeft: activeProblem?.id === p.id ? "3px solid var(--brand-primary)" : "3px solid transparent",
                 transition: "all 0.2s"
               }}
             >
@@ -142,8 +147,8 @@ export default function CodePracticePage() {
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <span style={{ fontSize: 10, background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: 4, color: "var(--text-secondary)" }}>{p.category}</span>
-                {p.company && (
-                  <span style={{ fontSize: 10, background: "rgba(108,99,255,0.15)", color: "#A78BFA", padding: "2px 6px", borderRadius: 4 }}>🏢 {p.company}</span>
+                {p.companies && p.companies[0] && (
+                  <span style={{ fontSize: 10, background: "rgba(108,99,255,0.15)", color: "#A78BFA", padding: "2px 6px", borderRadius: 4 }}>🏢 {p.companies[0]}</span>
                 )}
               </div>
             </div>
@@ -154,15 +159,39 @@ export default function CodePracticePage() {
         </div>
 
         {/* Description Area */}
-        <div style={{ flex: 1.5, borderTop: "1px solid var(--border)", padding: 20, overflowY: "auto", background: "var(--background)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700 }}>{activeProblem.title}</h3>
-            {contestMode && <span style={{ color: "#FF6B6B", fontWeight: 700, fontSize: 14 }}>⏳ 45:00</span>}
+        {activeProblem ? (
+          <div style={{ flex: 1.5, borderTop: "1px solid var(--border)", padding: 20, overflowY: "auto", background: "var(--background)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700 }}>{activeProblem.title}</h3>
+              {contestMode && <span style={{ color: "#FF6B6B", fontWeight: 700, fontSize: 14 }}>⏳ 45:00</span>}
+            </div>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+              {activeProblem.description}
+            </p>
+            {activeProblem.sample_input && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>Sample Input</div>
+                <div style={{ background: "rgba(0,0,0,0.3)", padding: "8px 12px", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--brand-primary)" }}>{activeProblem.sample_input}</div>
+              </div>
+            )}
+            {activeProblem.sample_output && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>Sample Output</div>
+                <div style={{ background: "rgba(0,0,0,0.3)", padding: "8px 12px", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--brand-primary)" }}>{activeProblem.sample_output}</div>
+              </div>
+            )}
+            {activeProblem.hint && (
+              <div style={{ marginTop: 24, padding: "12px", border: "1px solid rgba(167, 139, 250, 0.2)", borderRadius: 8, background: "rgba(167, 139, 250, 0.05)" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#A78BFA", marginBottom: 4 }}>💡 HINT</div>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{activeProblem.hint}</div>
+              </div>
+            )}
           </div>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-            {activeProblem.desc}
-          </p>
-        </div>
+        ) : (
+           <div style={{ flex: 1.5, borderTop: "1px solid var(--border)", padding: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 14 }}>
+             {loading ? "Loading problems..." : "Select a problem to view details."}
+           </div>
+        )}
       </div>
 
       {/* Right Pane: Editor & Console */}
@@ -172,8 +201,10 @@ export default function CodePracticePage() {
         <div className="dash-card" style={{ flex: 2, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", border: contestMode ? "1px solid #FF6B6B" : "1px solid var(--border)" }}>
           <div style={{ padding: "10px 20px", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", gap: 8 }}>
-              <select style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "white", padding: "4px 12px", borderRadius: 6, fontSize: 12 }}>
-                <option>Python 3</option>
+              <select value={language} onChange={e => setLanguage(e.target.value)} style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "white", padding: "4px 12px", borderRadius: 6, fontSize: 12 }}>
+                <option value="python">Python 3</option>
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
               </select>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -200,7 +231,7 @@ export default function CodePracticePage() {
             <Editor
               height="100%"
               theme="vs-dark"
-              language="python"
+              language={language === "python" ? "python" : language === "cpp" ? "cpp" : "java"}
               value={code}
               onChange={(val) => setCode(val || "")}
               options={{

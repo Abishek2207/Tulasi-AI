@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Optional
 import uuid
@@ -8,6 +8,7 @@ from app.core.ai_router import get_ai_response
 from app.api.auth import get_current_user
 from app.models.models import User, ChatMessage
 from app.core.database import get_session
+from app.core.rate_limit import limiter
 
 router = APIRouter()
 
@@ -22,7 +23,8 @@ class ChatResponse(BaseModel):
     ai_model: str
 
 @router.post("", response_model=ChatResponse)
-def chat(req: ChatRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+@limiter.limit("20/minute")
+def chat(request: Request, req: ChatRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
     session_id = req.session_id or str(uuid.uuid4())
     
     # Fetch history

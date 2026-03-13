@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from app.core.database import get_session
 from app.models.models import Hackathon
-from app.api.auth import get_current_user
+from app.api.auth import get_current_user, get_admin_user
 from app.models.models import User
 
 router = APIRouter()
@@ -91,3 +91,12 @@ def create_hackathon(
     session.commit()
     session.refresh(h)
     return hackathon_to_dict(h)
+
+@router.post("/seed")
+def seed_hackathons_endpoint(
+    session: Session = Depends(get_session),
+    admin: User = Depends(get_admin_user)
+):
+    from scripts.seed_hackathons import seed
+    added_count = seed(session)
+    return {"message": f"Successfully seeded {added_count} hackathons", "added_count": added_count}
