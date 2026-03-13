@@ -35,6 +35,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 
+async def get_user_from_token(token: str, db: Session) -> Optional[User]:
+    payload = decode_token(token)
+    if not payload:
+        return None
+    user = db.exec(select(User).where(User.email == payload.get("sub"))).first()
+    return user
+
+
 def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
     if current_user.email != settings.ADMIN_EMAIL:
         raise HTTPException(status_code=403, detail="Admin access only")
