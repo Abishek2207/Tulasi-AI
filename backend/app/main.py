@@ -4,6 +4,8 @@ import uvicorn
 
 from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study
 from app.core.database import init_db
+from slowapi.errors import RateLimitExceeded
+from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
 
 app = FastAPI(
     title="Tulasi AI API",
@@ -12,6 +14,9 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS — allow frontend (localhost dev + Vercel deployments)
 app.add_middleware(

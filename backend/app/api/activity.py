@@ -218,6 +218,86 @@ def get_rewards(
     return {"rewards": rewards}
 
 
+class RedeemRewardRequest(BaseModel):
+    reward_id: int
+
+@router.post("/rewards/redeem")
+def redeem_reward(
+    req: RedeemRewardRequest,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    from app.models.models import Reward, UserBadge
+    reward = db.exec(select(Reward).where(Reward.id == req.reward_id)).first()
+    if not reward:
+        raise HTTPException(404, "Reward not found")
+        
+    if (current_user.xp or 0) < reward.cost_xp:
+        raise HTTPException(400, "Not enough XP to redeem this reward")
+        
+    # Check if already owned
+    existing = db.exec(select(UserBadge).where(UserBadge.user_id == current_user.id, UserBadge.name == reward.name)).first()
+    if existing:
+        raise HTTPException(400, "You already own this reward")
+        
+    current_user.xp -= reward.cost_xp
+    
+    # Save as UserBadge or ActivityLog depending on mapping
+    badge = UserBadge(user_id=current_user.id, name=reward.name, description=reward.description, icon="✨")
+    db.add(badge)
+    
+    db.commit()
+    return {"message": "Reward redeemed successfully!", "remaining_xp": current_user.xp}
+
+
+@router.get("/analytics")
+def get_analytics(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Return time-series data for the last 30 days of activity."""
+    from datetime import datetime, timedelta
+    
+    # Get logs from the last 30 days
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    
+    logs = db.exec(
+        select(ActivityLog).where(
+            ActivityLog.user_id == current_user.id,
+            ActivityLog.created_at >= thirty_days_ago
+        )
+    ).all()
+    
+    # Aggregate by day
+    daily_stats = {}
+    
+    # Pre-fill last 30 days with 0s to ensure a continuous chart
+    for i in range(29, -1, -1):
+        day = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+        daily_stats[day] = {"date": day, "xp": 0, "problems": 0, "interviews": 0, "videos": 0}
+        
+    for log in logs:
+        if not log.created_at: 
+            continue
+        day = log.created_at.strftime("%Y-%m-%d")
+        if day in daily_stats:
+            daily_stats[day]["xp"] += (log.xp_earned or 0)
+            if log.action_type == "code_solved":
+                daily_stats[day]["problems"] += 1
+            elif log.action_type == "interview_completed":
+                daily_stats[day]["interviews"] += 1
+            elif log.action_type == "video_watched":
+                daily_stats[day]["videos"] += 1
+                
+    time_series = [daily_stats[k] for k in sorted(daily_stats.keys())]
+    
+    return {
+        "time_series": time_series,
+        "total_period_xp": sum(d["xp"] for d in time_series),
+        "total_period_problems": sum(d["problems"] for d in time_series)
+    }
+
+
 @router.get("/stats")
 def get_stats(
     db: Session = Depends(get_session),
@@ -263,4 +343,24 @@ def get_stats(
         "roadmap_steps": roadmap_steps,
         "progress": progress_map,
         "badges": badges,
+    }
+
+
+@router.get("/leaderboard")
+def get_leaderboard(db: Session = Depends(get_session)):
+    """Returns the top 10 players globally sorted by XP."""
+    top_users = db.exec(
+        select(User).order_by(User.xp.desc()).limit(10)
+    ).all()
+    
+    return {
+        "leaderboard": [
+            {
+                "id": u.id,
+                "name": u.name,
+                "xp": u.xp or 0,
+                "level": u.level or 1,
+                "avatar": u.avatar
+            } for u in top_users
+        ]
     }

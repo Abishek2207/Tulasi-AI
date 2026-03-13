@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+import { studyApi } from "@/lib/api";
 
 interface Room {
   id: number;
@@ -40,21 +39,19 @@ export default function StudyRoomsPage() {
   const pollRef = useRef<any>(null);
 
   const token = (session?.user as any)?.accessToken;
-  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const fetchRooms = async () => {
     try {
-      const res = await fetch(`${API}/api/study/rooms`);
-      const data = await res.json();
+      const data = await studyApi.rooms();
       setRooms(data.rooms || []);
     } catch (e) { console.error("Rooms fetch failed:", e); }
     finally { setLoading(false); }
   };
 
   const fetchMessages = async (roomId: number) => {
+    if (!token) return;
     try {
-      const res = await fetch(`${API}/api/study/${roomId}/messages`, { headers });
-      const data = await res.json();
+      const data = await studyApi.messages(roomId.toString(), token);
       setMessages(data.messages || []);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (e) {}
@@ -79,10 +76,14 @@ export default function StudyRoomsPage() {
 
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const joinRoom = (room: Room) => {
+  const joinRoom = async (room: Room) => {
     setActiveRoom(room);
     setMessages([]);
-    fetch(`${API}/api/study/join/${room.id}`, { method: "POST", headers });
+    if (token) {
+       try {
+         await studyApi.join(room.id.toString(), token);
+       } catch (e) {}
+    }
   };
 
   const handleSend = async (e: React.FormEvent) => {
@@ -90,15 +91,9 @@ export default function StudyRoomsPage() {
     if (!chatInput.trim() || !activeRoom || !token) return;
     setSending(true);
     try {
-      const res = await fetch(`${API}/api/study/${activeRoom.id}/messages`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ content: chatInput.trim() }),
-      });
-      if (res.ok) {
-        setChatInput("");
-        fetchMessages(activeRoom.id);
-      }
+      await studyApi.sendMessage(activeRoom.id.toString(), chatInput.trim(), token);
+      setChatInput("");
+      fetchMessages(activeRoom.id);
     } catch (e) {}
     setSending(false);
   };
@@ -107,9 +102,11 @@ export default function StudyRoomsPage() {
     e.preventDefault();
     if (!newRoomName.trim() || !token) return;
     try {
+      // Create room logic uses direct fetch for now since it's not in studyApi yet
+      const API = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com";
       const res = await fetch(`${API}/api/study/create`, {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: newRoomName, description: newRoomDesc, tag: newRoomTag }),
       });
       if (res.ok) {

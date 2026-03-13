@@ -97,19 +97,22 @@ export default function InterviewPage() {
     try {
       const token = (session?.user as any)?.accessToken;
       if (!token) { setError("Please log in to start an interview."); setLoading(false); return; }
+      
       const res = await fetch(`${BACKEND}/api/interview/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ role, company, interview_type: interviewType, num_questions: numQuestions }),
       });
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Failed to start");
+      
       setSessionId(data.session_id);
       setCurrentQuestion(data.question);
       setQuestionNum(1);
       setPhase("active");
     } catch (e: any) {
-      setError(e.message || "Failed to start interview. Please check your backend connection.");
+      setError(e.message || "Failed to start interview. The backend might be sleeping (takes ~50s to wake up). Please try again.");
     } finally { setLoading(false); }
   };
 
@@ -134,7 +137,7 @@ export default function InterviewPage() {
         setQuestionNum(data.question_number || questionNum + 1);
       }
     } catch (e: any) {
-      setError(e.message || "Error submitting answer.");
+      setError(e.message || "Error submitting answer. The backend might be sleeping. Please try again.");
     } finally { setLoading(false); }
   };
 

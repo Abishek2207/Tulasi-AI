@@ -58,18 +58,30 @@ export default function HackathonsPage() {
   const [filter, setFilter] = useState("All");
   const [hackathons, setHackathons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFallback, setIsFallback] = useState(false);
 
   useEffect(() => {
     const fetchHackathons = async () => {
       setLoading(true);
+      setIsFallback(false);
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000"}/api/hackathons?tag=${filter}`);
         if (res.ok) {
           const data = await res.json();
-          setHackathons(data.hackathons || []);
+          if (data.hackathons && data.hackathons.length > 0) {
+            setHackathons(data.hackathons);
+          } else {
+             // If DB is empty, use fallback array temporarily
+             setHackathons(HACKATHONS);
+             setIsFallback(true);
+          }
+        } else {
+           throw new Error("API not ok");
         }
       } catch (e) {
         console.error("Failed to fetch hackathons:", e);
+        setHackathons(HACKATHONS);
+        setIsFallback(true);
       } finally {
         setLoading(false);
       }
@@ -88,6 +100,12 @@ export default function HackathonsPage() {
           Build projects, win prizes, and get hired. Browse the top vetted hackathons occurring globally this season.
         </p>
       </div>
+
+      {isFallback && !loading && (
+        <div style={{ background: "rgba(255, 107, 107, 0.1)", border: "1px solid rgba(255, 107, 107, 0.2)", borderRadius: 12, padding: "12px 24px", marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+          <span style={{ color: "#FF6B6B" }}>⚠️ Could not connect to backend. Showing cached offline data.</span>
+        </div>
+      )}
 
       {/* Filters */}
       <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 40 }}>
