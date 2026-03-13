@@ -1,16 +1,22 @@
 import os
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-FAISS_INDEX_DIR = os.path.join(os.path.dirname(__file__), '../../database/faiss')
+# Database folder is moved into backend/
+FAISS_INDEX_DIR = os.path.join(os.path.dirname(__file__), '../../../../database/faiss')
 
 class VectorStoreManager:
     def __init__(self):
-        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        self._embeddings = None
         self.index_path = os.path.join(FAISS_INDEX_DIR, "index")
+    
+    @property
+    def embeddings(self):
+        if self._embeddings is None:
+            from langchain_huggingface import HuggingFaceEmbeddings
+            self._embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        return self._embeddings
         
     def get_or_create_vector_store(self):
+        from langchain_community.vectorstores import FAISS
         if os.path.exists(self.index_path) and os.listdir(self.index_path):
             return FAISS.load_local(self.index_path, self.embeddings, allow_dangerous_deserialization=True)
         else:
@@ -26,6 +32,7 @@ class VectorStoreManager:
         store.save_local(self.index_path)
         
     def process_document(self, text, metadata=None):
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -35,4 +42,5 @@ class VectorStoreManager:
         metadatas = [metadata] * len(chunks) if metadata else None
         self.add_texts(chunks, metadatas)
 
+# Singleton instance
 vector_store_manager = VectorStoreManager()

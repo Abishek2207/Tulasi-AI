@@ -11,6 +11,7 @@ from app.api.auth import get_current_user
 from app.models.models import User, ActivityLog, UserProgress
 from app.core.database import get_session
 from app.core.rate_limit import limiter
+from app.api.activity import log_activity_internal
 
 router = APIRouter()
 
@@ -152,20 +153,22 @@ def answer_interview(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    session = interview_sessions.get(req.session_id)
-    if not session or session.get("user_id") != current_user.id:
+    interview_session = interview_sessions.get(req.session_id)
+    if not interview_session:
         raise HTTPException(404, "Interview session not found or expired.")
+    if interview_session.get("user_id") != current_user.id:
+        raise HTTPException(403, "Not authorized for this session.")
 
-    history = session.get("history", [])
+    history = interview_session.get("history", [])
     history.append({"role": "user", "content": req.answer})
 
-    num_q = session.get("num_questions", 5)
-    questions_asked = int(session.get("questions_asked", 1))
+    num_q = interview_session.get("num_questions", 5)
+    questions_asked = int(interview_session.get("questions_asked", 1))
 
     # Final evaluation
     if questions_asked >= num_q:
         history_text = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history])
-        prompt = f"""You are an expert interviewer evaluating a {session['interview_type']} interview for {session['role']} at {session['company']}.
+        prompt = f"""You are an expert interviewer evaluating a {interview_session['interview_type']} interview for {interview_session['role']} at {interview_session['company']}.
 
 Interview Transcript:
 {history_text}
@@ -193,57 +196,23 @@ Return ONLY valid JSON, no markdown."""
                 "recommendation": "Hire"
             }
 
-        # Log activity & update progress
-        log_entry = ActivityLog(
-            user_id=current_user.id,
-            action_type="interview_completed",
-            title=f"Mock Interview: {session['role']} @ {session['company']} ({session['interview_type']})",
-            xp_earned=100,
+        # Use centralized activity logging
+        log_activity_internal(
+            current_user, db, "interview_completed", 
+            f"Mock Interview: {interview_session['role']} @ {interview_session['company']} ({interview_session['interview_type']})",
+            req.session_id
         )
-        db.add(log_entry)
-        current_user.xp = (current_user.xp or 0) + 100
+        db.commit()
 
-        # Update streak
-        from datetime import date as dt_date
-        today = dt_date.today().isoformat()
-        if current_user.last_activity_date != today:
-            if current_user.last_activity_date:
-                gap = (dt_date.today() - dt_date.fromisoformat(current_user.last_activity_date)).days
-                current_user.streak = (current_user.streak or 0) + 1 if gap == 1 else 1
-            else:
-                current_user.streak = 1
-            current_user.last_activity_date = today
-        db.add(current_user)
-
-        # Update interview progress
+        # Get updated count for the return
         completed_count = len(db.exec(
             select(ActivityLog).where(
                 ActivityLog.user_id == current_user.id,
                 ActivityLog.action_type == "interview_completed"
             )
-        ).all()) + 1  # +1 for this one (not committed yet)
+        ).all())
         TARGET = 10
         pct = min(100, int((completed_count / TARGET) * 100))
-        prog = db.exec(
-            select(UserProgress).where(
-                UserProgress.user_id == current_user.id,
-                UserProgress.category == "interview"
-            )
-        ).first()
-        if prog:
-            prog.completed_items = completed_count
-            prog.total_items = TARGET
-            prog.progress_pct = pct
-            db.add(prog)
-        else:
-            db.add(UserProgress(
-                user_id=current_user.id,
-                category="interview",
-                total_items=TARGET,
-                completed_items=completed_count,
-                progress_pct=pct,
-            ))
-        db.commit()
 
         # Clean up session
         interview_sessions.pop(req.session_id, None)
@@ -257,7 +226,7 @@ Return ONLY valid JSON, no markdown."""
         }
 
     # Next question
-    session["questions_asked"] = questions_asked + 1
+    interview_session["questions_asked"] = questions_asked + 1
     history_text = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history])
     remaining = num_q - questions_asked - 1
 
@@ -269,9 +238,9 @@ Return ONLY valid JSON, no markdown."""
         "Full Stack Developer": "Focus on frontend/backend communication, state management, REST/GraphQL design, and deployment pipelines.",
         "DevOps Engineer": "Focus on CI/CD, Kubernetes, Docker, Infrastructure as Code, and monitoring/logging."
     }
-    role_focus = role_instructions.get(session.get('role', ''), '')
+    role_focus = role_instructions.get(interview_session.get('role', ''), '')
 
-    prompt = f"""You are a {session['interview_type']} interviewer at {session['company']} for {session['role']}.
+    prompt = f"""You are a {interview_session['interview_type']} interviewer at {interview_session['company']} for {interview_session['role']}.
 {role_focus}
 Transcript so far:
 {history_text}

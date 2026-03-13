@@ -4,8 +4,9 @@ from sqlmodel import Session, select
 from typing import Optional, List
 
 from app.api.auth import get_current_user
-from app.models.models import User, SolvedProblem, ActivityLog
+from app.models.models import User, SolvedProblem, ActivityLog, UserProgress
 from app.core.database import get_session
+from app.api.activity import log_activity_internal
 
 router = APIRouter()
 
@@ -125,7 +126,10 @@ def get_problems(
         problems = [p for p in problems if p["difficulty"] == difficulty]
     if search:
         q = search.lower()
-        problems = [p for p in problems if q in p["title"].lower() or q in p["description"].lower()]
+        problems = [
+            p for p in problems 
+            if q in str(p.get("title", "")).lower() or q in str(p.get("description", "")).lower()
+        ]
 
     # Get solved problem IDs for this user
     solved_records = db.exec(
@@ -189,56 +193,10 @@ def mark_problem_solved(
         db.add(SolvedProblem(user_id=current_user.id, problem_id=problem_id))
         newly_solved = True
 
-        # Log activity
-        log_entry = ActivityLog(
-            user_id=current_user.id,
-            action_type="code_solved",
-            title=f"Solved: {problem['title']}",
-            xp_earned=50,
+        # Use centralized activity logging (this handles XP, Level, Streak, and Progress)
+        log_activity_internal(
+            current_user, db, "code_solved", f"Solved: {problem['title']}", problem_id
         )
-        db.add(log_entry)
-        current_user.xp = (current_user.xp or 0) + 50
-
-        # Update streak
-        from datetime import date as dt_date
-        today = dt_date.today().isoformat()
-        if current_user.last_activity_date != today:
-            if current_user.last_activity_date:
-                from datetime import date as d
-                gap = (d.today() - d.fromisoformat(current_user.last_activity_date)).days
-                current_user.streak = (current_user.streak or 0) + 1 if gap == 1 else 1
-            else:
-                current_user.streak = 1
-            current_user.last_activity_date = today
-        db.add(current_user)
-        db.commit()
-
-        # Update progress
-        solved_count = len(db.exec(
-            select(SolvedProblem).where(SolvedProblem.user_id == current_user.id)
-        ).all())
-
-        from app.models.models import UserProgress
-        prog = db.exec(
-            select(UserProgress).where(
-                UserProgress.user_id == current_user.id,
-                UserProgress.category == "coding"
-            )
-        ).first()
-        pct = min(100, int((solved_count / TOTAL_PROBLEMS) * 100))
-        if prog:
-            prog.completed_items = solved_count
-            prog.total_items = TOTAL_PROBLEMS
-            prog.progress_pct = pct
-            db.add(prog)
-        else:
-            db.add(UserProgress(
-                user_id=current_user.id,
-                category="coding",
-                total_items=TOTAL_PROBLEMS,
-                completed_items=solved_count,
-                progress_pct=pct
-            ))
         db.commit()
     else:
         db.commit()

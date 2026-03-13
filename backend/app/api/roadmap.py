@@ -8,10 +8,10 @@ from functools import lru_cache
 from app.core.config import settings
 from app.core.database import get_session
 from app.api.auth import get_current_user
-from app.models.models import User, Roadmap, RoadmapStep, ActivityLog
+from app.models.models import User, Roadmap, RoadmapStep, ActivityLog, UserProgress
 from sqlmodel import Session, select
 from app.api.roadmap_data import ROADMAPS
-from app.api.activity import _update_progress, _update_streak
+from app.api.activity import log_activity_internal
 
 router = APIRouter()
 
@@ -181,19 +181,13 @@ def log_progress(
     if existing_log:
         return {"message": "Milestone already completed"}
 
-    # Add activity log
-    xp = 30
-    log = ActivityLog(
-        user_id=current_user.id,
-        action_type="roadmap_step",
-        title=f"Completed {roadmap['title']} milestone: {milestone['name']}",
-        metadata_json=req.milestone_id,
-        xp_earned=xp
+    # Use centralized activity logging
+    log_activity_internal(
+        current_user, db, "roadmap_step", 
+        f"Completed {roadmap['title']} milestone: {milestone['name']}",
+        req.milestone_id
     )
-    db.add(log)
-    current_user.xp = (current_user.xp or 0) + xp
-    current_user.level = max(1, (current_user.xp or 0) // 500 + 1)
-    
+
     # Check if roadmap is fully completed (count existing logs + this new one)
     existing_milestones = db.exec(
         select(ActivityLog).where(
@@ -203,22 +197,13 @@ def log_progress(
         )
     ).all()
     
-    if len(existing_milestones) + 1 >= len(roadmap["milestones"]):
-        completion_xp = 200
-        comp_log = ActivityLog(
-            user_id=current_user.id,
-            action_type="roadmap_completed",
-            title=f"Completed Roadmap: {roadmap['title']}",
-            xp_earned=completion_xp
+    if len(existing_milestones) >= len(roadmap["milestones"]):
+        log_activity_internal(
+            current_user, db, "roadmap_completed",
+            f"Completed Roadmap: {roadmap['title']}",
+            req.roadmap_id
         )
-        db.add(comp_log)
-        current_user.xp += completion_xp
     
-    _update_streak(current_user, db)
-    db.commit()
-    
-    # Needs to be after commit to query correctly
-    _update_progress(current_user.id, "roadmap", db, total=100) # Assuming 100 max or similar, keeping arbitrary for now
     db.commit()
 
-    return {"message": "Progress saved", "xp_earned": xp}
+    return {"message": "Progress saved", "xp_earned": 30}
