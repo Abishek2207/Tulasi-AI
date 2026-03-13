@@ -9,22 +9,31 @@ const API_URL = isBrowser && !isLocal ? "/api" : (process.env.NEXT_PUBLIC_API_UR
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-// Retry utility with exponential backoff
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+// Retry utility with exponential backoff and jitter
+async function fetchWithRetry(url: string, options: RequestInit, retries = 5): Promise<Response> {
   let attempt = 0;
   while (attempt < retries) {
     try {
       const res = await fetch(url, options);
-      // Wait and retry if backend is 502/503 (Render cold start)
-      if (!res.ok && res.status >= 500) {
-        throw new Error(`Server returned ${res.status}`);
+      
+      // Specifically handle Render's "Service Waking Up" scenarios
+      // Usually Render returns 502, 503, or 504 during boot
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        throw new Error(`Backend waking up (Status ${res.status})`);
       }
+      
       return res;
-    } catch (err) {
+    } catch (err: any) {
       attempt++;
-      if (attempt >= retries) throw err;
-      // Wait 1s, 2s, 3s
-      await new Promise(r => setTimeout(r, attempt * 1000 + 500));
+      if (attempt >= retries) {
+        console.error(`Final API failure after ${retries} attempts:`, err);
+        throw err;
+      }
+      
+      // Exponential backoff: 2s, 4s, 8s, 16s... with random jitter
+      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+      console.warn(`API Attempt ${attempt} failed. Retrying in ${Math.round(delay)}ms...`, err.message);
+      await new Promise(r => setTimeout(r, delay));
     }
   }
   throw new Error("Max retries reached");
@@ -99,7 +108,7 @@ export const pdfApi = {
   upload: async (file: File, token: string) => {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetchWithRetry(`${API_URL}/api/pdf/upload`, {
+    const res = await fetchWithRetry(`${API_URL}/pdf/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: form,
