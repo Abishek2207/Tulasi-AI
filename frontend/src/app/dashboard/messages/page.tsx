@@ -26,6 +26,7 @@ export default function MessagesPage() {
   const [inputObj, setInputObj] = useState("");
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     if (session) {
@@ -33,11 +34,56 @@ export default function MessagesPage() {
     }
   }, [session]);
 
+  const connectWebSocket = () => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token || socketRef.current?.readyState === WebSocket.OPEN) return;
+
+    // Use absolute WSS URL for Render backend
+    const wsUrl = `wss://tulasi-api.onrender.com/api/messages/ws/${token}`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => console.log("✅ WebSocket Connected");
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "new_message") {
+          const newMsg = data.message;
+          // Add to messages if it's from current active user or to current active user
+          if (activeUser && (newMsg.sender_id === activeUser.id || newMsg.receiver_id === activeUser.id)) {
+            setMessages(prev => {
+              // Avoid duplicates (if we sent it and already added optimistically)
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
+          }
+        }
+      } catch (err) {
+        console.error("WebSocket message error:", err);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("❌ WebSocket Disconnected. Retrying in 3s...");
+      setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onerror = (err) => console.error("WebSocket Error:", err);
+    socketRef.current = ws;
+  };
+
+  useEffect(() => {
+    if (session) {
+      connectWebSocket();
+    }
+    return () => {
+      socketRef.current?.close();
+    };
+  }, [session, activeUser]);
+
   useEffect(() => {
     if (activeUser) {
       fetchMessages(activeUser.id);
-      const interval = setInterval(() => fetchMessages(activeUser.id), 3000); // Simple polling for pseudo-realtime
-      return () => clearInterval(interval);
     }
   }, [activeUser]);
 
@@ -48,13 +94,17 @@ export default function MessagesPage() {
   const fetchDirectory = async () => {
     const token = (session?.user as any)?.accessToken;
     if (!token) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/users/directory`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setUsers(data.users);
-      if (data.users.length > 0) setActiveUser(data.users[0]);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com"}/api/messages/users/directory`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data.users);
+        if (data.users.length > 0 && !activeUser) setActiveUser(data.users[0]);
+      }
+    } catch (err) {
+      console.error("Directory fetch failed:", err);
     }
     setLoading(false);
   };
@@ -62,12 +112,16 @@ export default function MessagesPage() {
   const fetchMessages = async (userId: number) => {
     const token = (session?.user as any)?.accessToken;
     if (!token) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setMessages(data.messages);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com"}/api/messages/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data.messages);
+      }
+    } catch (err) {
+      console.error("Message fetch failed:", err);
     }
   };
 
@@ -78,28 +132,27 @@ export default function MessagesPage() {
     const currentInput = inputObj;
     setInputObj("");
 
-    // Optimistic UI update
-    const tempMsg: Message = {
-      id: Date.now(),
-      sender_id: (session?.user as any)?.id || 0,
-      receiver_id: activeUser.id,
-      content: currentInput,
-      created_at: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, tempMsg]);
-
     const token = (session?.user as any)?.accessToken;
     if (!token) return;
 
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ receiver_id: activeUser.id, content: currentInput })
-    });
-    // Will re-fetch on next poll
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com"}/api/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ receiver_id: activeUser.id, content: currentInput })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // The REST call will also trigger the receiver's WS, but we add it locally too
+        setMessages(prev => [...prev, data.message]);
+      }
+    } catch (err) {
+      console.error("Send failed:", err);
+    }
   };
 
   return (
