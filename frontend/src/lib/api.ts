@@ -3,7 +3,9 @@
  * Usage: import { api } from "@/lib/api"
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "https://tulasi-api.onrender.com";
+const isBrowser = typeof window !== "undefined";
+const isLocal = isBrowser && window.location.hostname === "localhost";
+const API_URL = isBrowser && !isLocal ? "/api" : (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com");
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
