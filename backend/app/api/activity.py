@@ -58,8 +58,17 @@ def _update_streak(user: User, db: Session):
     db.add(user)
 
 
-def _update_progress(user_id: int, category: str, db: Session, total: int):
+def _update_progress(user_id: int, category: str, db: Session):
     """Recalculate progress_pct for a category based on solved count."""
+    # Target totals based on Certificate requirements
+    TOTALS = {
+        "coding": 100,
+        "interview": 10,
+        "videos": 50,
+        "roadmap": 20
+    }
+    total = TOTALS.get(category, 20)
+
     prog = db.exec(
         select(UserProgress).where(
             UserProgress.user_id == user_id,
@@ -70,11 +79,9 @@ def _update_progress(user_id: int, category: str, db: Session, total: int):
     # Count completed items for this category
     from app.models.models import SolvedProblem, ActivityLog as AL
     if category == "coding":
-        from sqlmodel import func
-        count = db.exec(
+        completed = len(db.exec(
             select(SolvedProblem).where(SolvedProblem.user_id == user_id)
-        ).all()
-        completed = len(count)
+        ).all())
     elif category == "interview":
         completed = len(db.exec(
             select(AL).where(AL.user_id == user_id, AL.action_type == "interview_completed")
@@ -84,6 +91,7 @@ def _update_progress(user_id: int, category: str, db: Session, total: int):
             select(AL).where(AL.user_id == user_id, AL.action_type == "video_watched")
         ).all())
     else:
+        # Default for roadmaps or other
         completed = len(db.exec(
             select(AL).where(AL.user_id == user_id, AL.action_type == "roadmap_step")
         ).all())
@@ -107,41 +115,64 @@ def _update_progress(user_id: int, category: str, db: Session, total: int):
         db.add(new_prog)
 
 
+def log_activity_internal(user: User, db: Session, action_type: str, title: str, metadata_json: Optional[str] = None):
+    """Centralized logic to log activity, update XP, streak, and progress."""
+    if action_type not in XP_TABLE:
+        return None
+
+    xp = XP_TABLE[action_type]
+
+    log_entry = ActivityLog(
+        user_id=user.id,
+        action_type=action_type,
+        title=title,
+        metadata_json=metadata_json,
+        xp_earned=xp,
+    )
+    db.add(log_entry)
+
+    # Update XP on user
+    user.xp = (user.xp or 0) + xp
+
+    # Level up every 500 XP
+    user.level = max(1, (user.xp or 0) // 500 + 1)
+
+    # Update streak
+    _update_streak(user, db)
+
+    # Automatic Progress Update
+    CATEGORY_MAPPING = {
+        "code_solved": "coding",
+        "interview_completed": "interview",
+        "video_watched": "videos",
+        "roadmap_step": "roadmap",
+        "roadmap_completed": "roadmap"
+    }
+    category = CATEGORY_MAPPING.get(action_type)
+    if category:
+        _update_progress(user.id, category, db)
+
+    return log_entry
+
+
 @router.post("/log")
 def log_activity(
     req: LogActivityRequest,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    if req.action_type not in XP_TABLE:
-        raise HTTPException(400, f"Unknown action_type: {req.action_type}")
-
-    xp = XP_TABLE[req.action_type]
-
-    log_entry = ActivityLog(
-        user_id=current_user.id,
-        action_type=req.action_type,
-        title=req.title,
-        metadata_json=req.metadata_json,
-        xp_earned=xp,
+    log_entry = log_activity_internal(
+        current_user, db, req.action_type, req.title, req.metadata_json
     )
-    db.add(log_entry)
-
-    # Update XP on user
-    current_user.xp = (current_user.xp or 0) + xp
-
-    # Level up every 500 XP
-    current_user.level = max(1, (current_user.xp or 0) // 500 + 1)
-
-    # Update streak
-    _update_streak(current_user, db)
+    if not log_entry:
+        raise HTTPException(400, f"Unknown action_type: {req.action_type}")
 
     db.commit()
     db.refresh(log_entry)
 
     return {
         "success": True,
-        "xp_earned": xp,
+        "xp_earned": log_entry.xp_earned,
         "total_xp": current_user.xp,
         "streak": current_user.streak,
         "level": current_user.level,
@@ -281,13 +312,13 @@ def get_analytics(
             continue
         day = log.created_at.strftime("%Y-%m-%d")
         if day in daily_stats:
-            daily_stats[day]["xp"] += (log.xp_earned or 0)
+            daily_stats[day]["xp"] = int(daily_stats[day]["xp"]) + (log.xp_earned or 0)
             if log.action_type == "code_solved":
-                daily_stats[day]["problems"] += 1
+                daily_stats[day]["problems"] = int(daily_stats[day]["problems"]) + 1
             elif log.action_type == "interview_completed":
-                daily_stats[day]["interviews"] += 1
+                daily_stats[day]["interviews"] = int(daily_stats[day]["interviews"]) + 1
             elif log.action_type == "video_watched":
-                daily_stats[day]["videos"] += 1
+                daily_stats[day]["videos"] = int(daily_stats[day]["videos"]) + 1
                 
     time_series = [daily_stats[k] for k in sorted(daily_stats.keys())]
     

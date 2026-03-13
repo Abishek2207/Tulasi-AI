@@ -7,22 +7,31 @@ except ImportError:
     Image = None
 
 def get_latest_image():
-    # Use environment variable or relative path if possible, but fallback to known pattern
-    # The user's path was C:\Users\Admin\.gemini\antigravity
-    # We can try to find images in the common parent or provide a clearer mechanism
-    base_dir = os.path.join(os.path.expanduser("~"), ".gemini", "antigravity")
-    if not os.path.exists(base_dir):
-        # Fallback to current project public images if trying to clean existing
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        
+    # Priority 1: Specific logo in frontend
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    logo_path = os.path.abspath(os.path.join(script_dir, "..", "frontend", "public", "images", "logo.jpg"))
+    if os.path.exists(logo_path):
+        print(f"Found logo at: {logo_path}")
+        return logo_path
+
+    # Priority 2: Artifacts or temp location
+    base_dirs = [
+        os.path.join(os.path.expanduser("~"), ".gemini", "antigravity"),
+        os.path.dirname(os.path.abspath(__file__))
+    ]
+    
     files = []
-    for ext in ("*.webp", "*.jpeg", "*.jpg", "*.png"):
-        files.extend(glob.glob(os.path.join(base_dir, "**", ext), recursive=True))
+    for base_dir in base_dirs:
+        if os.path.exists(base_dir):
+            for ext in ("*.webp", "*.jpeg", "*.jpg", "*.png"):
+                files.extend(glob.glob(os.path.join(base_dir, "**", ext), recursive=True))
+    
     if not files:
-        print(f"No images found in {base_dir}")
+        print("No images found for processing.")
         return None
+        
     latest = max(files, key=os.path.getmtime)
-    print(f"Latest image: {latest}")
+    print(f"Latest image found: {latest}")
     return latest
 
 def remove_white_bg(img_path, out_path):

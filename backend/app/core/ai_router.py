@@ -1,7 +1,5 @@
-import os
 from typing import List, Optional
-from app.core.config import settings
-
+from app.services.ai_agents.router.model_router import ai_router
 
 def classify_query(message: str) -> str:
     """Classify query to route to best model."""
@@ -10,69 +8,45 @@ def classify_query(message: str) -> str:
     
     msg_lower = message.lower()
     if any(kw in msg_lower for kw in code_keywords):
-        return "deepseek"
+        return "coding"
     elif any(kw in msg_lower for kw in interview_keywords):
-        return "groq"
-    return "gemini"
+        return "complex_reasoning"
+    return "fast_chat"
 
-
-def get_ai_response(message: str, history: List[dict] = None, force_model: str = None, image_data: Optional[bytes] = None) -> str:
+def get_ai_response(message: str, history: Optional[List[dict]] = None, force_model: Optional[str] = None, image_data: Optional[bytes] = None) -> str:
     """Route to best AI model and return response."""
-    history = history or []
-    model_choice = force_model or classify_query(message)
-    gemini_key = settings.effective_gemini_key
+    history_list = history or []
+    task_type = force_model or classify_query(message)
     
-    # Force Gemini if an image is provided
-    if image_data:
-        model_choice = "gemini"
+    # Use the unified ai_router
+    llm = ai_router.get_best_model(task_type)
+    
+    if not llm:
+        return "I need an AI API key to respond. Please configure `GOOGLE_API_KEY` or `GROQ_API_KEY`."
 
-    history_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in history[-8:]])
-    system_prompt = """You are Tulasi AI — an expert, friendly learning assistant for students.
+    try:
+        # Construct messages for LangChain
+        from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+        
+        system_prompt = """You are Tulasi AI — an expert, friendly learning assistant for students.
 You help with: programming, career guidance, interview prep, and CS concepts.
 Be concise, educational, and encouraging. Use markdown formatting for code."""
-
-    # Try Gemini (General tutoring + Vision)
-    if (model_choice in ["gemini", "deepseek"]) and gemini_key:
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            
-            contents = [f"{system_prompt}\n\nConversation:\n{history_text}\n\nUser: {message}"]
-            
-            if image_data:
-                from PIL import Image
-                import io
-                image = Image.open(io.BytesIO(image_data))
-                contents.append(image)
-                
-            response = model.generate_content(contents)
-            if response and response.text:
-                return response.text
-            print(f"Gemini returned empty response for {model_choice}")
-        except Exception as e:
-            print(f"Gemini error: {e}")
-
-    # Try Groq Llama (Interview/Reasoning/Fallback)
-    if settings.GROQ_API_KEY:
-        try:
-            from groq import Groq
-            client = Groq(api_key=settings.GROQ_API_KEY)
-            messages_list = [{"role": "system", "content": system_prompt}]
-            messages_list.extend([{"role": m["role"], "content": m["content"]} for m in history[-8:]])
-            messages_list.append({"role": "user", "content": message})
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=messages_list,
-                max_tokens=1500,
-                temperature=0.7,
-            )
-            if completion.choices[0].message.content:
-                return completion.choices[0].message.content
-        except Exception as e:
-            print(f"Groq error: {e}")
-
-    # Final Fallback
-    msg = f"I need an AI API key to respond. Please configure `GOOGLE_API_KEY` or `GROQ_API_KEY` in your backend `.env` file.\n\n(Current Model Choice: {model_choice})"
-    print(f"DEBUG: No AI key found. Returning fallback message.")
-    return msg
+        
+        messages = [SystemMessage(content=system_prompt)]
+        
+        # history_list is a list of dicts: [{"role": "user", "content": "..."}, ...]
+        for m in history_list[-8:]:
+            role = str(m.get("role", "user"))
+            content = str(m.get("content", ""))
+            if role == "user":
+                messages.append(HumanMessage(content=content))
+            else:
+                messages.append(AIMessage(content=content))
+        
+        messages.append(HumanMessage(content=message))
+        
+        response = llm.invoke(messages)
+        return response.content
+    except Exception as e:
+        print(f"AI Error: {e}")
+        return f"Sorry, I encountered an error: {str(e)}"

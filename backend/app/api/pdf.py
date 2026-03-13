@@ -26,7 +26,7 @@ async def upload_pdf(file: UploadFile = File(...), current_user: User = Depends(
     content = await file.read()
 
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, mode="wb", suffix=".pdf") as tmp:
             tmp.write(content)
             tmp_path = tmp.name
 
@@ -41,11 +41,15 @@ async def upload_pdf(file: UploadFile = File(...), current_user: User = Depends(
 
         full_text = "\n\n".join(pages_text)
 
+        # Store in RAG vector store for indexed retrieval
+        from app.services.ai_agents.vector_store.faiss_store import vector_store_manager
+        vector_store_manager.process_document(full_text, metadata={"session_id": session_id, "user_id": current_user.id, "filename": file.filename})
+
         pdf_sessions[session_id] = {
             "filename": file.filename,
             "pages": len(reader.pages),
             "user_id": current_user.id,
-            "text": full_text,
+            "text": full_text, # Still keeping text for fallback
         }
         return {"session_id": session_id, "pages": len(reader.pages), "filename": file.filename, "status": "ready"}
     except HTTPException:
@@ -65,33 +69,11 @@ def ask_pdf(req: PDFQuestionRequest, current_user: User = Depends(get_current_us
     if not session:
         raise HTTPException(404, "PDF session not found. Please upload a PDF first.")
 
-    # Use first 8000 chars as context to stay within token limits
-    context = session["text"][:8000]
-
     try:
-        gemini_key = settings.effective_gemini_key
-        if gemini_key:
-            import google.generativeai as genai
-            genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            prompt = f"Answer the question based STRICTLY on this context:\n{context}\n\nQuestion: {req.question}"
-            response = model.generate_content(prompt)
-            return {"answer": response.text, "source": session["filename"]}
-
-        if settings.GROQ_API_KEY:
-            from groq import Groq
-            client = Groq(api_key=settings.GROQ_API_KEY)
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": f"Answer from context only.\n\nCONTEXT:\n{context}"},
-                    {"role": "user", "content": req.question},
-                ],
-                max_tokens=1024,
-            )
-            return {"answer": completion.choices[0].message.content, "source": session["filename"]}
-
-        return {"answer": "No AI API key configured.", "source": session["filename"]}
+        from app.services.ai_agents.agents.rag_agent import rag_agent
+        # RAG agent will automatically use the vector store we populated during upload
+        answer = rag_agent.get_answer(req.question)
+        return {"answer": answer, "source": session["filename"]}
     except Exception as e:
         return {"answer": f"Error: {str(e)}", "source": session["filename"]}
 

@@ -70,6 +70,7 @@ def root():
 
 # Health check (important for Render)
 @app.get("/health")
+@app.get("/api/health")
 def health():
     return {
         "status": "healthy",
@@ -77,6 +78,7 @@ def health():
     }
 
 @app.get("/ping")
+@app.get("/api/ping")
 def ping():
     return "pong"
 
