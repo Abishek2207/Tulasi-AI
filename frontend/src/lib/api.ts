@@ -5,7 +5,7 @@
 
 const isBrowser = typeof window !== "undefined";
 const isLocal = isBrowser && window.location.hostname === "localhost";
-const API_URL = isBrowser && !isLocal ? "/api" : (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com");
+const API_URL = isBrowser && !isLocal ? "" : (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com");
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ export const pdfApi = {
   upload: async (file: File, token: string) => {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetchWithRetry(`${API_URL}/pdf/upload`, {
+    const res = await fetchWithRetry(`${API_URL}/api/pdf/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: form,
@@ -145,10 +145,10 @@ export const roadmapApi = {
 // ─── Interview ───────────────────────────────────────────────────────────────
 
 export const interviewApi = {
-  start: (role: string, token: string) =>
-    request<{ question: string; session_id: string }>("/api/interview/start", {
+  start: (role: string, company: string = "Any Company", interview_type: string = "Technical", token: string) =>
+    request<{ question: string; session_id: string; total_questions: number; question_number: number }>("/api/interview/start", {
       method: "POST",
-      body: JSON.stringify({ role }),
+      body: JSON.stringify({ role, company, interview_type }),
     }, token),
 
   answer: (answer: string, session_id: string, token: string) =>

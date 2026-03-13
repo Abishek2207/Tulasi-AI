@@ -154,7 +154,12 @@ Return ONLY valid JSON, no markdown."""
 
         try:
             fb_str = get_ai_response(prompt, force_model="complex_reasoning")
-            feedback = json.loads(str(fb_str))
+            import re
+            match = re.search(r'\{.*\}', fb_str, re.DOTALL)
+            if match:
+                feedback = json.loads(match.group())
+            else:
+                feedback = json.loads(fb_str)
         except Exception:
             feedback = {
                 "score": 72,
