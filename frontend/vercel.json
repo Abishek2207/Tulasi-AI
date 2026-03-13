@@ -3,5 +3,11 @@
     "app/api/auth/[...nextauth]/route.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://tulasi-api.onrender.com/api/:path*"
+    }
+  ]
 }
