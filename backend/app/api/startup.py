@@ -8,6 +8,7 @@ from app.models.models import User, SavedStartupIdea
 from app.core.database import get_session
 from app.core.rate_limit import limiter
 from sqlmodel import Session, select
+from app.core.ai_router import get_ai_response
 
 router = APIRouter()
 
@@ -46,34 +47,11 @@ Output the idea strictly as a valid JSON object with the following keys:
 Return ONLY the raw JSON object, no markdown, no backticks, no introduction."""
 
     try:
-        # Try Groq first for speed
-        if settings.GROQ_API_KEY:
-            from groq import Groq
-            client = Groq(api_key=settings.GROQ_API_KEY)
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=1024,
-                temperature=0.7,
-                response_format={"type": "json_object"}
-            )
-            response_text = completion.choices[0].message.content
-
-        # Fallback to Gemini
-        elif settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY:
-            import google.generativeai as genai
-            key = settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY
-            genai.configure(api_key=key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = model.generate_content(prompt)
-            response_text = response.text.strip()
-            if response_text.startswith("```json"):
-                response_text = response_text[7:-3]
-            elif response_text.startswith("```"):
-                response_text = response_text[3:-3]
-
-        else:
-            raise HTTPException(500, "No AI configured. Please set GROQ_API_KEY or GOOGLE_API_KEY in Render env vars.")
+        response_text = get_ai_response(prompt, force_model="complex_reasoning")
+        
+        # Handle potential markdown wrappers
+        if response_text.startswith("```json"): response_text = response_text[7:].strip()
+        if response_text.endswith("```"): response_text = response_text[:-3].strip()
 
         data = json.loads(response_text)
         return {"status": "success", "idea": data}
