@@ -1,20 +1,34 @@
 import os
 import glob
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    print("Error: Pillow library is not installed. Run 'pip install Pillow'")
+    Image = None
 
 def get_latest_image():
-    base_dir = r"C:\Users\Admin\.gemini\antigravity"
+    # Use environment variable or relative path if possible, but fallback to known pattern
+    # The user's path was C:\Users\Admin\.gemini\antigravity
+    # We can try to find images in the common parent or provide a clearer mechanism
+    base_dir = os.path.join(os.path.expanduser("~"), ".gemini", "antigravity")
+    if not os.path.exists(base_dir):
+        # Fallback to current project public images if trying to clean existing
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        
     files = []
     for ext in ("*.webp", "*.jpeg", "*.jpg", "*.png"):
         files.extend(glob.glob(os.path.join(base_dir, "**", ext), recursive=True))
     if not files:
-        print("No images found.")
+        print(f"No images found in {base_dir}")
         return None
     latest = max(files, key=os.path.getmtime)
     print(f"Latest image: {latest}")
     return latest
 
 def remove_white_bg(img_path, out_path):
+    if Image is None:
+        print("Error: Image logic cannot run without Pillow.")
+        return
     img = Image.open(img_path).convert("RGBA")
     datas = img.getdata()
     
@@ -45,7 +59,11 @@ def remove_white_bg(img_path, out_path):
     print(f"Saved cleaned logo to {out_path}")
 
 if __name__ == "__main__":
+    if Image is None:
+        exit(1)
     latest_img = get_latest_image()
     if latest_img:
-        out_path = r"c:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\public\images\logo-transparent.png"
+        # Resolve path relative to script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        out_path = os.path.abspath(os.path.join(script_dir, "..", "frontend", "public", "images", "logo-transparent.png"))
         remove_white_bg(latest_img, out_path)
