@@ -18,3 +18,5 @@ faiss-cpu>=1.9.0
 tiktoken==0.7.0
 requests==2.32.3
 Pillow==10.4.0
+slowapi>=0.1.9
+limits>=3.7.0

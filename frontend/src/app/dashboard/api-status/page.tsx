@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAdminGuard } from "@/hooks/useAdminGuard";
 
 const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 const FRONTEND = typeof window !== "undefined" ? window.location.origin : "";
@@ -49,12 +50,20 @@ function StatusBadge({ st }: { st: TestResult | undefined }) {
 }
 
 export default function ApiStatusPage() {
+  const { isAdmin, isLoading } = useAdminGuard();
   const [bStatuses, setBStatuses] = useState<Record<string, TestResult>>({});
   const [fStatuses, setFStatuses] = useState<Record<string, TestResult>>({});
   const [backendPing, setBackendPing] = useState<"unknown" | "alive" | "waking" | "down">("unknown");
   const [frontendPing, setFrontendPing] = useState<"unknown" | "alive" | "down">("unknown");
   const [pingMs, setPingMs] = useState<number | null>(null);
   const [tab, setTab] = useState<"backend" | "frontend" | "combined">("combined");
+
+  useEffect(() => {
+    if (isAdmin && !isLoading) {
+      pingBackend(); 
+      pingFrontend(); 
+    }
+  }, [isAdmin, isLoading]);
 
   const pingBackend = async () => {
     setBackendPing("waking");
@@ -132,6 +141,14 @@ export default function ApiStatusPage() {
       </div>
     );
   };
+
+  if (isLoading || !isAdmin) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <div style={{ color: "var(--text-muted)" }}>Initializing Security Protocol...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 950, margin: "0 auto", paddingBottom: 60 }}>

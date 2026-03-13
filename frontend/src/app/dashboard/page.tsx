@@ -22,7 +22,8 @@ export default function DashboardHome() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Student";
   const [mounted, setMounted] = useState(false);
-  const [stats, setStats] = useState({ streak: 0, problems_solved: 0, videos_watched: 0, hackathons_joined: 0 });
+  const [stats, setStats] = useState({ streak: 0, xp: 0, level: 1, problems_solved: 0, videos_watched: 0, hackathons_joined: 0 });
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -30,13 +31,14 @@ export default function DashboardHome() {
       try {
         const token = (session?.user as any)?.accessToken;
         if (!token) return;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000"}/api/activity/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
+        
+        const [statsRes, lbRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000"}/api/activity/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000"}/api/activity/leaderboard`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+        
+        if (statsRes.ok) setStats(await statsRes.json());
+        if (lbRes.ok) setLeaderboard((await lbRes.json()).leaderboard || []);
       } catch (e) { /* silent */ }
     };
     fetchStats();
@@ -88,22 +90,92 @@ export default function DashboardHome() {
         </div>
       </motion.div>
 
-      {/* Activity Overview */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 24, marginBottom: 54 }}>
-        {[
-          { icon: "🔥", val: `${stats.streak} Days`, label: "Current Streak", link: "/dashboard/streak", border: "rgba(244,63,94,0.2)" },
-          { icon: "💻", val: `${stats.problems_solved}/100`, label: "Problems Solved", link: "/dashboard/code", border: "rgba(6,182,212,0.2)" },
-          { icon: "▶️", val: stats.videos_watched, label: "Videos Watched", link: "/dashboard/youtube-learning", border: "rgba(124,58,237,0.2)" },
-          { icon: "🏆", val: stats.hackathons_joined, label: "Competitions", link: "/dashboard/hackathons", border: "rgba(251,191,36,0.2)" }
-        ].map((stat, i) => (
-          <motion.div key={i} variants={item} whileHover={{ y: -6, scale: 1.02 }} className="glass-card" style={{ padding: 28, borderColor: stat.border, background: "rgba(255,255,255,0.02)", height: "100%", cursor: "pointer" }}>
-             <Link href={stat.link} style={{ textDecoration: "none" }}>
-               <div style={{ fontSize: 28, marginBottom: 12 }}>{stat.icon}</div>
-               <div style={{ fontSize: 34, fontWeight: 900, color: "white", marginBottom: 6, fontFamily: "var(--font-display)" }}>{stat.val}</div>
-               <div style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{stat.label}</div>
-             </Link>
+      {/* Dashboard Grid Container */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 32, marginBottom: 54, alignItems: "start" }}>
+        
+        {/* Left Column: Progress & Activity */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+          {/* Gamification XP Bar */}
+          <motion.div variants={item} className="glass-card" style={{ padding: 28, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B, #4ECDC4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800 }}>
+                  {stats.level}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Level {stats.level}</h3>
+                  <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{stats.xp} Total XP</div>
+                </div>
+              </div>
+              <div style={{ color: "var(--brand-primary)", fontWeight: 700, fontSize: 15 }}>
+                {(stats.xp % 500)} / 500 XP to Level {stats.level + 1}
+              </div>
+            </div>
+            
+            <div style={{ width: "100%", height: 12, borderRadius: 10, background: "rgba(0,0,0,0.3)", overflow: "hidden" }}>
+              <motion.div 
+                initial={{ width: 0 }} 
+                animate={{ width: `${((stats.xp % 500) / 500) * 100}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                style={{ height: "100%", background: "linear-gradient(90deg, #4ECDC4, #FF6B6B)", borderRadius: 10 }}
+              />
+            </div>
           </motion.div>
-        ))}
+
+          {/* Activity Overview */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 20 }}>
+            {[
+              { icon: "🔥", val: `${stats.streak} Days`, label: "Current Streak", link: "/dashboard/streak", border: "rgba(244,63,94,0.2)" },
+              { icon: "💻", val: stats.problems_solved, label: "Problems Solved", link: "/dashboard/code", border: "rgba(6,182,212,0.2)" },
+              { icon: "▶️", val: stats.videos_watched, label: "Videos Watched", link: "/dashboard/youtube-learning", border: "rgba(124,58,237,0.2)" },
+              { icon: "🏆", val: stats.hackathons_joined, label: "Competitions", link: "/dashboard/hackathons", border: "rgba(251,191,36,0.2)" }
+            ].map((stat, i) => (
+              <motion.div key={i} variants={item} whileHover={{ y: -4, scale: 1.02 }} className="glass-card" style={{ padding: 24, paddingBottom: 20, borderColor: stat.border, background: "rgba(255,255,255,0.02)", cursor: "pointer", borderRadius: 20 }}>
+                <Link href={stat.link} style={{ textDecoration: "none" }}>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>{stat.icon}</div>
+                  <div style={{ fontSize: 28, fontWeight: 900, color: "white", marginBottom: 4, fontFamily: "var(--font-display)" }}>{stat.val}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{stat.label}</div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column: Leaderboard */}
+        <motion.div variants={item} className="glass-card" style={{ padding: 24, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.06)", height: "100%" }}>
+          <h3 style={{ margin: "0 0 20px 0", fontSize: 18, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}>
+            🏆 Global Leaderboard
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {leaderboard.slice(0, 5).map((user, idx) => (
+              <div key={user.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 28, fontWeight: 800, color: idx < 3 ? "var(--brand-primary)" : "var(--text-secondary)", fontSize: 15 }}>
+                    #{idx + 1}
+                  </div>
+                  {user.avatar ? (
+                    <img src={user.avatar} style={{ width: 34, height: 34, borderRadius: "50%", background: "#222" }} />
+                  ) : (
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg, #7C3AED, #3B82F6)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{user.name}</div>
+                </div>
+                <div style={{ fontSize: 13, color: "var(--brand-primary)", fontWeight: 700 }}>
+                  {user.xp} XP
+                </div>
+              </div>
+            ))}
+            {leaderboard.length === 0 && <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13, padding: 20 }}>Loading Rank...</div>}
+            
+            <Link href="/dashboard/leaderboard" style={{ textDecoration: "none", marginTop: 8 }}>
+              <button style={{ width: "100%", padding: "10px", background: "rgba(255,255,255,0.05)", border: "none", borderRadius: 12, color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                View Full Rankings
+              </button>
+            </Link>
+          </div>
+        </motion.div>
       </div>
 
       {/* Grid Quick Access */}

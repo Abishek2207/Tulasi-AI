@@ -14,16 +14,16 @@ router = APIRouter()
 # ============================================================
 PROBLEMS = [
     # ── ARRAYS ──────────────────────────────────────────────
-    {"id": "ARR-001", "category": "Arrays", "difficulty": "Easy", "title": "Two Sum", "description": "Given an array of integers nums and integer target, return indices of two numbers that add up to target.", "hint": "Use a hash map to store each number's index as you iterate.", "solution": "Use HashMap: store num→index as you go. For each num, check if target-num exists in map.", "companies": ["Google", "Amazon", "Microsoft"]},
-    {"id": "ARR-002", "category": "Arrays", "difficulty": "Easy", "title": "Best Time to Buy and Sell Stock", "description": "Given array prices where prices[i] is price of stock on day i, find max profit from a single buy-sell.", "hint": "Track min price seen so far and compare profit.", "solution": "Track minPrice = Inf, maxProfit = 0. For each price: update minPrice, compute profit = price - minPrice, update maxProfit.", "companies": ["Amazon", "Facebook"]},
-    {"id": "ARR-003", "category": "Arrays", "difficulty": "Easy", "title": "Contains Duplicate", "description": "Given integer array, return true if any value appears at least twice.", "hint": "Use a set to track seen numbers.", "solution": "Add each element to a HashSet. If size doesn't increase, it's a duplicate.", "companies": ["Amazon"]},
-    {"id": "ARR-004", "category": "Arrays", "difficulty": "Easy", "title": "Product of Array Except Self", "description": "Return array output such that output[i] is equal to product of all elements except nums[i]. No division allowed.", "hint": "Use prefix and suffix product arrays.", "solution": "Two-pass approach: compute prefix products left→right, then suffix products right→left. Multiply prefix[i] * suffix[i].", "companies": ["Amazon", "Microsoft", "Apple"]},
-    {"id": "ARR-005", "category": "Arrays", "difficulty": "Medium", "title": "Maximum Subarray (Kadane's)", "description": "Find the contiguous subarray with the largest sum.", "hint": "Kadane's algorithm: extend or restart subarray at each step.", "solution": "maxCurrent = maxGlobal = nums[0]. For each num: maxCurrent = max(num, maxCurrent+num). Update maxGlobal.", "companies": ["Amazon", "Google", "Microsoft"]},
-    {"id": "ARR-006", "category": "Arrays", "difficulty": "Medium", "title": "3Sum", "description": "Find all unique triplets in array that give sum zero.", "hint": "Sort first, then use two pointers.", "solution": "Sort array. For each i, use lo/hi pointers. Adjust based on sum. Skip duplicates.", "companies": ["Facebook", "Google"]},
-    {"id": "ARR-007", "category": "Arrays", "difficulty": "Medium", "title": "Container With Most Water", "description": "Given heights array, find two lines that form container with most water.", "hint": "Two pointers from both ends, always move shorter side.", "solution": "Start lo=0, hi=n-1. area = min(h[lo],h[hi]) * (hi-lo). Move smaller pointer inward.", "companies": ["Amazon", "Google"]},
-    {"id": "ARR-008", "category": "Arrays", "difficulty": "Medium", "title": "Merge Intervals", "description": "Given array of intervals, merge all overlapping intervals.", "hint": "Sort by start time, then iteratively merge.", "solution": "Sort intervals by start. Iterate: if current start <= prev end, merge. Else add new interval.", "companies": ["Google", "Facebook", "Microsoft"]},
-    {"id": "ARR-009", "category": "Arrays", "difficulty": "Medium", "title": "Find Minimum in Rotated Sorted Array", "description": "Given rotated sorted array with unique elements, find minimum element.", "hint": "Binary search: compare mid with right to determine which half is sorted.", "solution": "Binary search: if mid > right, minimum is in right half. Else in left half.", "companies": ["Microsoft", "Amazon"]},
-    {"id": "ARR-010", "category": "Arrays", "difficulty": "Hard", "title": "Trapping Rain Water", "description": "Given heights, compute how much water it can trap after raining.", "hint": "Two-pointer approach tracking max from left and right.", "solution": "Track leftMax, rightMax. Water at i = min(leftMax, rightMax) - height[i]. Two pointer: process smaller side.", "companies": ["Google", "Amazon", "Apple"]},
+    {"id": "ARR-001", "category": "Arrays", "difficulty": "Easy", "title": "Two Sum", "description": "Given an array of integers nums and integer target, return indices of two numbers that add up to target.", "hint": "Use a hash map to store each number's index as you iterate.", "solution": "Use HashMap: store num→index as you go. For each num, check if target-num exists in map.", "companies": ["Google", "Amazon", "Microsoft"], "sample_input": "nums = [2,7,11,15], target = 9", "sample_output": "[0,1]"},
+    {"id": "ARR-002", "category": "Arrays", "difficulty": "Easy", "title": "Best Time to Buy and Sell Stock", "description": "Given array prices where prices[i] is price of stock on day i, find max profit from a single buy-sell.", "hint": "Track min price seen so far and compare profit.", "solution": "Track minPrice = Inf, maxProfit = 0. For each price: update minPrice, compute profit = price - minPrice, update maxProfit.", "companies": ["Amazon", "Facebook"], "sample_input": "prices = [7,1,5,3,6,4]", "sample_output": "5"},
+    {"id": "ARR-003", "category": "Arrays", "difficulty": "Easy", "title": "Contains Duplicate", "description": "Given integer array, return true if any value appears at least twice.", "hint": "Use a set to track seen numbers.", "solution": "Add each element to a HashSet. If size doesn't increase, it's a duplicate.", "companies": ["Amazon"], "sample_input": "nums = [1,2,3,1]", "sample_output": "true"},
+    {"id": "ARR-004", "category": "Arrays", "difficulty": "Easy", "title": "Product of Array Except Self", "description": "Return array output such that output[i] is equal to product of all elements except nums[i]. No division allowed.", "hint": "Use prefix and suffix product arrays.", "solution": "Two-pass approach: compute prefix products left→right, then suffix products right→left. Multiply prefix[i] * suffix[i].", "companies": ["Amazon", "Microsoft", "Apple"], "sample_input": "nums = [1,2,3,4]", "sample_output": "[24,12,8,6]"},
+    {"id": "ARR-005", "category": "Arrays", "difficulty": "Medium", "title": "Maximum Subarray (Kadane's)", "description": "Find the contiguous subarray with the largest sum.", "hint": "Kadane's algorithm: extend or restart subarray at each step.", "solution": "maxCurrent = maxGlobal = nums[0]. For each num: maxCurrent = max(num, maxCurrent+num). Update maxGlobal.", "companies": ["Amazon", "Google", "Microsoft"], "sample_input": "nums = [-2,1,-3,4,-1,2,1,-5,4]", "sample_output": "6"},
+    {"id": "ARR-006", "category": "Arrays", "difficulty": "Medium", "title": "3Sum", "description": "Find all unique triplets in array that give sum zero.", "hint": "Sort first, then use two pointers.", "solution": "Sort array. For each i, use lo/hi pointers. Adjust based on sum. Skip duplicates.", "companies": ["Facebook", "Google"], "sample_input": "nums = [-1,0,1,2,-1,-4]", "sample_output": "[[-1,-1,2],[-1,0,1]]"},
+    {"id": "ARR-007", "category": "Arrays", "difficulty": "Medium", "title": "Container With Most Water", "description": "Given heights array, find two lines that form container with most water.", "hint": "Two pointers from both ends, always move shorter side.", "solution": "Start lo=0, hi=n-1. area = min(h[lo],h[hi]) * (hi-lo). Move smaller pointer inward.", "companies": ["Amazon", "Google"], "sample_input": "height = [1,8,6,2,5,4,8,3,7]", "sample_output": "49"},
+    {"id": "ARR-008", "category": "Arrays", "difficulty": "Medium", "title": "Merge Intervals", "description": "Given array of intervals, merge all overlapping intervals.", "hint": "Sort by start time, then iteratively merge.", "solution": "Sort intervals by start. Iterate: if current start <= prev end, merge. Else add new interval.", "companies": ["Google", "Facebook", "Microsoft"], "sample_input": "intervals = [[1,3],[2,6],[8,10],[15,18]]", "sample_output": "[[1,6],[8,10],[15,18]]"},
+    {"id": "ARR-009", "category": "Arrays", "difficulty": "Medium", "title": "Find Minimum in Rotated Sorted Array", "description": "Given rotated sorted array with unique elements, find minimum element.", "hint": "Binary search: compare mid with right to determine which half is sorted.", "solution": "Binary search: if mid > right, minimum is in right half. Else in left half.", "companies": ["Microsoft", "Amazon"], "sample_input": "nums = [3,4,5,1,2]", "sample_output": "1"},
+    {"id": "ARR-010", "category": "Arrays", "difficulty": "Hard", "title": "Trapping Rain Water", "description": "Given heights, compute how much water it can trap after raining.", "hint": "Two-pointer approach tracking max from left and right.", "solution": "Track leftMax, rightMax. Water at i = min(leftMax, rightMax) - height[i]. Two pointer: process smaller side.", "companies": ["Google", "Amazon", "Apple"], "sample_input": "height = [0,1,0,2,1,0,1,3,2,1,2,1]", "sample_output": "6"},
     {"id": "ARR-011", "category": "Arrays", "difficulty": "Hard", "title": "Sliding Window Maximum", "description": "Given array and window size k, return max of each window.", "hint": "Use a monotonic deque to maintain window max.", "solution": "Use deque storing indices in decreasing height order. Pop those outside window. Front = max.", "companies": ["Google", "Amazon"]},
     {"id": "ARR-012", "category": "Arrays", "difficulty": "Medium", "title": "Rotate Array", "description": "Rotate array to right by k steps in-place.", "hint": "Reverse entire array, then reverse first k, then rest.", "solution": "Three reverses: reverse all, reverse [0..k-1], reverse [k..n-1].", "companies": ["Microsoft"]},
     {"id": "ARR-013", "category": "Arrays", "difficulty": "Easy", "title": "Move Zeroes", "description": "Move all zeros to end while maintaining order of non-zeros.", "hint": "Use two pointers — slow for next non-zero position.", "solution": "left pointer tracks next non-zero position. Swap nums[left] and nums[i] when nums[i] != 0.", "companies": ["Facebook"]},
@@ -274,27 +274,63 @@ def get_resources():
 import subprocess
 import os
 import tempfile
+import time
 
 @router.post("/run")
 def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
-    if req.language != "python":
+    if req.language not in ["python", "cpp", "java"]:
         return {"output": f"Language {req.language} is not supported yet.", "status": "error"}
+    
+    start_time = time.time()
     try:
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(req.code)
-            temp_path = f.name
-        result = subprocess.run(
-            ["python3", temp_path],
-            capture_output=True, text=True, timeout=3.0
-        )
-        os.remove(temp_path)
-        output = result.stdout
-        if result.stderr:
-            output += f"\nError:\n{result.stderr}"
-        return {"output": output or "Executed (no output)", "status": "success"}
+        with tempfile.TemporaryDirectory() as temp_dir:
+            if req.language == "python":
+                src_path = os.path.join(temp_dir, "script.py")
+                with open(src_path, "w") as f:
+                    f.write(req.code)
+                
+                result = subprocess.run(
+                    ["python", src_path] if os.name == 'nt' else ["python3", src_path],
+                    capture_output=True, text=True, timeout=3.0
+                )
+            elif req.language == "cpp":
+                src_path = os.path.join(temp_dir, "main.cpp")
+                out_path = os.path.join(temp_dir, "a.exe" if os.name == 'nt' else "a.out")
+                with open(src_path, "w") as f:
+                    f.write(req.code)
+                
+                compile_res = subprocess.run(["g++", src_path, "-o", out_path], capture_output=True, text=True)
+                if compile_res.returncode != 0:
+                    return {"output": f"Compilation Error:\n{compile_res.stderr}", "status": "error"}
+                
+                result = subprocess.run(
+                    [out_path], capture_output=True, text=True, timeout=3.0
+                )
+            elif req.language == "java":
+                src_path = os.path.join(temp_dir, "Main.java")
+                with open(src_path, "w") as f:
+                    f.write(req.code)
+                
+                compile_res = subprocess.run(["javac", src_path], capture_output=True, text=True)
+                if compile_res.returncode != 0:
+                    return {"output": f"Compilation Error:\n{compile_res.stderr}", "status": "error"}
+                
+                result = subprocess.run(
+                    ["java", "-cp", temp_dir, "Main"], capture_output=True, text=True, timeout=3.0
+                )
+
+            execution_time = time.time() - start_time
+            output = result.stdout
+            if result.stderr:
+                output += f"\nError:\n{result.stderr}"
+                
+            return {
+                "output": output or "Executed (no output)", 
+                "status": "success",
+                "execution_time_ms": int(execution_time * 1000)
+            }
+            
     except subprocess.TimeoutExpired:
-        if 'temp_path' in locals() and os.path.exists(temp_path):
-            os.remove(temp_path)
         return {"output": "Error: Timed out (3s limit). Check for infinite loops.", "status": "error"}
     except Exception as e:
         return {"output": f"Execution Error: {str(e)}", "status": "error"}
@@ -310,7 +346,7 @@ def explain_code(req: CodeRequest, current_user: User = Depends(get_current_user
         genai.configure(api_key=gemini_key)
         model = genai.GenerativeModel("gemini-pro")
         
-        prompt = f"""You are an elite coding tutor. Analyze this user's Python code and provide a helpful, encouraging explanation.
+        prompt = f"""You are an elite coding tutor. Analyze this user's {req.language} code and provide a helpful, encouraging explanation.
         
 Guidelines:
 - Explain what the current code is doing.
@@ -320,7 +356,7 @@ Guidelines:
 - Format with markdown.
 
 User's Code:
-```python
+```{req.language}
 {req.code}
 ```
 """

@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+import { certificateApi } from "@/lib/api";
 
 interface Milestone {
   id: string; title: string; desc: string; icon: string; category: string;
@@ -30,16 +29,11 @@ export default function CertificatesPage() {
     try {
       const token = (session?.user as any)?.accessToken;
       if (!token) { setLoading(false); return; }
-      const res = await fetch(`${BACKEND}/api/certificates/my`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCertificates(data.certificates || []);
-        setMilestones(data.milestones || []);
-      }
+      const data = await certificateApi.list(token);
+      setCertificates(data.certificates || []);
+      setMilestones(data.milestones || []);
     } catch (e) {
-      setError("Could not load certificates. Please make sure you're logged in.");
+      setError("Could not load certificates. The backend might be sleeping (takes ~50s to wake up). Please try again.");
     } finally { setLoading(false); }
   };
 
@@ -47,12 +41,7 @@ export default function CertificatesPage() {
     setGenerating(milestoneId); setError(""); setSuccess("");
     try {
       const token = (session?.user as any)?.accessToken;
-      const res = await fetch(`${BACKEND}/api/certificates/generate/${milestoneId}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed");
+      const data = await certificateApi.generate(milestoneId, token);
       setSuccess(data.message || "🎉 Certificate generated!");
       fetchCertificates();
     } catch (e: any) {

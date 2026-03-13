@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlmodel import Session, select
 from typing import Dict, Any, List, Optional
@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.api.auth import get_current_user
 from app.models.models import User, ActivityLog, UserProgress
 from app.core.database import get_session
+from app.core.rate_limit import limiter
 
 router = APIRouter()
 
@@ -83,7 +84,9 @@ def get_config():
 
 
 @router.post("/start")
+@limiter.limit("10/minute")
 def start_interview(
+    request: Request,
     req: InterviewStartRequest,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
@@ -92,18 +95,28 @@ def start_interview(
     num_q = min(max(req.num_questions, 3), 10)  # Clamp between 3-10
 
     type_instructions = {
-        "Technical": "focus on technical skills, problem-solving, and programming concepts",
-        "HR / Behavioral": "use STAR method behavioral questions about teamwork, leadership, and past experiences",
-        "System Design": "ask about architecture decisions, scalability, and system components",
-        "Coding": "present a coding problem and walk through solution approach",
+        "Technical": "focus on deep domain knowledge, language-specific nuances, and framework expertise",
+        "HR / Behavioral": "use STAR method behavioral questions about teamwork, leadership, conflict resolution, and past experiences",
+        "System Design": "ask about architecture decisions, scalability tradeoffs, database design, and distributed systems components",
+        "Coding": "present a hands-on algorithmic or data structure coding problem and ask the candidate to talk through their solution approach",
     }
     focus = type_instructions.get(req.interview_type, type_instructions["Technical"])
+    
+    role_instructions = {
+        "Frontend Developer": "Specifically ask about React, Next.js, CSS architecture, performance optimization, and browser APIs.",
+        "Backend Developer": "Specifically ask about database design, building scalable APIs, caching (Redis), background jobs, and concurrency.",
+        "AI Engineer": "Specifically ask about model training workflows, LLMs, Retrieval-Augmented Generation (RAG), deploying ML models, and data pipelines.",
+        "ML Engineer": "Specifically ask about model training workflows, LLMs, Retrieval-Augmented Generation (RAG), deploying ML models, and data pipelines.",
+        "Full Stack Developer": "Specifically ask about frontend/backend communication, state management, REST/GraphQL design, and deployment pipelines.",
+        "DevOps Engineer": "Specifically ask about CI/CD, Kubernetes, Docker, Infrastructure as Code, and monitoring/logging."
+    }
+    role_focus = role_instructions.get(req.role, "")
 
     prompt = (
-        f"You are a senior {req.interview_type} interviewer at {req.company} hiring for a {req.role} position. "
-        f"Your questions should {focus}. "
-        f"Ask the first interview question. Be crisp, professional, and challenging. "
-        f"Don't include pleasantries — just ask the question directly."
+        f"You are a senior {req.interview_type} interviewer at {req.company} hiring for a {req.role} position.\n"
+        f"Your questions should {focus}. {role_focus}\n"
+        f"Ask the first interview question. Be crisp, professional, and challenging.\n"
+        f"Do NOT include pleasantries or conversational filler — just ask the question directly."
     )
 
     try:
@@ -132,7 +145,9 @@ def start_interview(
 
 
 @router.post("/answer")
+@limiter.limit("10/minute")
 def answer_interview(
+    request: Request,
     req: InterviewAnswerRequest,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
@@ -246,7 +261,18 @@ Return ONLY valid JSON, no markdown."""
     history_text = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history])
     remaining = num_q - questions_asked - 1
 
+    role_instructions = {
+        "Frontend Developer": "Focus on React, Next.js, CSS architecture, performance optimization, and browser APIs.",
+        "Backend Developer": "Focus on database design, building scalable APIs, caching (Redis), background jobs, and concurrency.",
+        "AI Engineer": "Focus on model training workflows, LLMs, Retrieval-Augmented Generation (RAG), deploying ML models, and data pipelines.",
+        "ML Engineer": "Focus on model training workflows, LLMs, Retrieval-Augmented Generation (RAG), deploying ML models, and data pipelines.",
+        "Full Stack Developer": "Focus on frontend/backend communication, state management, REST/GraphQL design, and deployment pipelines.",
+        "DevOps Engineer": "Focus on CI/CD, Kubernetes, Docker, Infrastructure as Code, and monitoring/logging."
+    }
+    role_focus = role_instructions.get(session.get('role', ''), '')
+
     prompt = f"""You are a {session['interview_type']} interviewer at {session['company']} for {session['role']}.
+{role_focus}
 Transcript so far:
 {history_text}
 
