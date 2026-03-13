@@ -48,11 +48,11 @@ Return ONLY the raw JSON object, no markdown, no backticks, no introduction."""
 
     try:
         response_text = get_ai_response(prompt, force_model="complex_reasoning")
+        import re
+        match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        if match:
+            response_text = match.group()
         
-        # Handle potential markdown wrappers
-        if response_text.startswith("```json"): response_text = response_text[7:].strip()
-        if response_text.endswith("```"): response_text = response_text[:-3].strip()
-
         data = json.loads(response_text)
         return {"status": "success", "idea": data}
 
