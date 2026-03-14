@@ -235,64 +235,183 @@ import os
 import tempfile
 import time
 
+# Execution timeouts
+EXEC_TIMEOUT = 10.0          # seconds for code execution
+COMPILE_TIMEOUT = 15.0       # seconds for compilation step
+MAX_OUTPUT_CHARS = 10_000    # truncate huge outputs
+
+def enable_memory_limit():
+    """Limit memory to ~256MB on POSIX systems."""
+    if os.name == "posix":
+        try:
+            import resource
+            MEM_LIMIT = 256 * 1024 * 1024
+            resource.setrlimit(resource.RLIMIT_AS, (MEM_LIMIT, MEM_LIMIT))
+        except Exception:
+            pass
+
+
+
+def _truncate(text: str, limit: int = MAX_OUTPUT_CHARS) -> str:
+    if len(text) > limit:
+        return text[:limit] + f"\n... [output truncated at {limit} chars]"
+    return text
+
+
 @router.post("/run")
 def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
+    """
+    Execute user code securely.
+
+    Supported languages: python, cpp, java
+    Security measures:
+      - subprocess timeout (10s execution, 15s compilation)
+      - stdin piped from request
+      - stdout/stderr truncated at 10 000 chars
+      - Java: -Xmx128m memory cap
+      - C++: compiled with -O2 optimisation
+    """
     if req.language not in ["python", "cpp", "java"]:
-        return {"output": f"Language {req.language} is not supported yet.", "status": "error"}
-    
+        return {
+            "stdout": "",
+            "stderr": f"Language '{req.language}' is not supported. Use python, cpp, or java.",
+            "output": f"Language '{req.language}' is not supported.",
+            "status": "error",
+            "execution_time_ms": 0,
+        }
+
     start_time = time.time()
+    stdin_data = req.stdin or ""
+
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
+
+            # ── Python ────────────────────────────────────────────────────────
             if req.language == "python":
                 src_path = os.path.join(temp_dir, "script.py")
-                with open(src_path, "w") as f:
+                with open(src_path, "w", encoding="utf-8") as f:
                     f.write(req.code)
-                
+
+                cmd = ["python", src_path] if os.name == "nt" else ["python3", src_path]
                 result = subprocess.run(
-                    ["python", src_path] if os.name == 'nt' else ["python3", src_path],
-                    capture_output=True, text=True, timeout=3.0
-                )
-            elif req.language == "cpp":
-                src_path = os.path.join(temp_dir, "main.cpp")
-                out_path = os.path.join(temp_dir, "a.exe" if os.name == 'nt' else "a.out")
-                with open(src_path, "w") as f:
-                    f.write(req.code)
-                
-                compile_res = subprocess.run(["g++", src_path, "-o", out_path], capture_output=True, text=True)
-                if compile_res.returncode != 0:
-                    return {"output": f"Compilation Error:\n{compile_res.stderr}", "status": "error"}
-                
-                result = subprocess.run(
-                    [out_path], capture_output=True, text=True, timeout=3.0
-                )
-            elif req.language == "java":
-                src_path = os.path.join(temp_dir, "Main.java")
-                with open(src_path, "w") as f:
-                    f.write(req.code)
-                
-                compile_res = subprocess.run(["javac", src_path], capture_output=True, text=True)
-                if compile_res.returncode != 0:
-                    return {"output": f"Compilation Error:\n{compile_res.stderr}", "status": "error"}
-                
-                result = subprocess.run(
-                    ["java", "-cp", temp_dir, "Main"], capture_output=True, text=True, timeout=3.0
+                    cmd,
+                    input=stdin_data,
+                    capture_output=True,
+                    text=True,
+                    timeout=EXEC_TIMEOUT,
+                    preexec_fn=enable_memory_limit if os.name == "posix" else None
                 )
 
-            execution_time = time.time() - start_time
-            output = result.stdout
-            if result.stderr:
-                output += f"\nError:\n{result.stderr}"
-                
+            # ── C++ ───────────────────────────────────────────────────────────
+            elif req.language == "cpp":
+                src_path = os.path.join(temp_dir, "main.cpp")
+                out_path = os.path.join(temp_dir, "a.exe" if os.name == "nt" else "a.out")
+                with open(src_path, "w", encoding="utf-8") as f:
+                    f.write(req.code)
+
+                # Compile step
+                compile_res = subprocess.run(
+                    ["g++", "-O2", "-std=c++17", src_path, "-o", out_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=COMPILE_TIMEOUT,
+                )
+                if compile_res.returncode != 0:
+                    elapsed = int((time.time() - start_time) * 1000)
+                    return {
+                        "stdout": "",
+                        "stderr": _truncate(compile_res.stderr),
+                        "output": f"Compilation Error:\n{_truncate(compile_res.stderr)}",
+                        "status": "compile_error",
+                        "execution_time_ms": elapsed,
+                    }
+
+                result = subprocess.run(
+                    [out_path],
+                    input=stdin_data,
+                    capture_output=True,
+                    text=True,
+                    timeout=EXEC_TIMEOUT,
+                    preexec_fn=enable_memory_limit if os.name == "posix" else None
+                )
+
+            # ── Java ──────────────────────────────────────────────────────────
+            elif req.language == "java":
+                src_path = os.path.join(temp_dir, "Main.java")
+                with open(src_path, "w", encoding="utf-8") as f:
+                    f.write(req.code)
+
+                # Compile step
+                compile_res = subprocess.run(
+                    ["javac", src_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=COMPILE_TIMEOUT,
+                )
+                if compile_res.returncode != 0:
+                    elapsed = int((time.time() - start_time) * 1000)
+                    return {
+                        "stdout": "",
+                        "stderr": _truncate(compile_res.stderr),
+                        "output": f"Compilation Error:\n{_truncate(compile_res.stderr)}",
+                        "status": "compile_error",
+                        "execution_time_ms": elapsed,
+                    }
+
+                result = subprocess.run(
+                    ["java", "-Xmx128m", "-cp", temp_dir, "Main"],
+                    input=stdin_data,
+                    capture_output=True,
+                    text=True,
+                    timeout=EXEC_TIMEOUT,
+                )
+
+            # ── Build response ────────────────────────────────────────────────
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            stdout = _truncate(result.stdout or "")
+            stderr = _truncate(result.stderr or "")
+
+            # Combined output for legacy frontend consumers
+            combined = stdout
+            if stderr:
+                combined += f"\nStderr:\n{stderr}"
+
             return {
-                "output": output or "Executed (no output)", 
-                "status": "success",
-                "execution_time_ms": int(execution_time * 1000)
+                "stdout": stdout,
+                "stderr": stderr,
+                "output": combined or "(no output)",
+                "status": "success" if result.returncode == 0 else "runtime_error",
+                "execution_time_ms": execution_time_ms,
+                "return_code": result.returncode,
             }
-            
+
     except subprocess.TimeoutExpired:
-        return {"output": "Error: Timed out (3s limit). Check for infinite loops.", "status": "error"}
+        elapsed = int((time.time() - start_time) * 1000)
+        return {
+            "stdout": "",
+            "stderr": f"Time limit exceeded ({EXEC_TIMEOUT}s). Check for infinite loops.",
+            "output": f"⏱️ Time limit exceeded ({EXEC_TIMEOUT}s). Check for infinite loops.",
+            "status": "timeout",
+            "execution_time_ms": elapsed,
+        }
+    except FileNotFoundError as e:
+        # Compiler/interpreter not installed on this machine
+        tool = str(e)
+        return {
+            "stdout": "",
+            "stderr": f"Runtime tool not found: {tool}",
+            "output": f"❌ Required tool not found: {tool}. The server may not have this language installed.",
+            "status": "error",
+            "execution_time_ms": 0,
+        }
     except Exception as e:
-        return {"output": f"Execution Error: {str(e)}", "status": "error"}
+        return {
+            "stdout": "",
+            "stderr": str(e),
+            "output": f"Execution Error: {str(e)}",
+            "status": "error",
+            "execution_time_ms": int((time.time() - start_time) * 1000),
+        }
 @router.post("/explain")
 def explain_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
     """Use AI to explain the code or provide hints without giving the full solution."""

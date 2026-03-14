@@ -1,7 +1,15 @@
 from sqlmodel import SQLModel, create_engine, Session, select
+from sqlalchemy.pool import QueuePool
 from app.core.config import settings
 
-engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    settings.DATABASE_URL, 
+    connect_args={"check_same_thread": False},
+    poolclass=QueuePool,
+    pool_size=10,
+    max_overflow=20,
+    pool_timeout=30
+)
 
 def init_db():
     from app.models.models import Hackathon, StudyRoom  # Local import to avoid circular dependencies

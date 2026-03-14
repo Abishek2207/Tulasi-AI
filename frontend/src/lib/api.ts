@@ -5,33 +5,54 @@
 
 const isBrowser = typeof window !== "undefined";
 const isLocal = isBrowser && window.location.hostname === "localhost";
+// In production, use empty string to trigger `/api/...` so Vercel rewrites intercept it.
 const API_URL = isBrowser && !isLocal ? "" : (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com");
+
+/** Build a WebSocket URL pointing at the correct host (wss in production, ws locally) */
+export function websocketUrl(path: string): string {
+  if (!isBrowser) return "";
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  
+  if (!isLocal) {
+     // In production, the backend is on render directly for WS, because Vercel Serverless Functions
+     // do not support WebSockets. We must connect directly to the render WebSocket URL.
+     const backendHost = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com").host;
+     return `${protocol}//${backendHost}${path}`;
+  }
+  
+  const host = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com").host;
+  return `${protocol}//${host}${path}`;
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-// Retry utility with exponential backoff and jitter
-async function fetchWithRetry(url: string, options: RequestInit, retries = 5): Promise<Response> {
+const FETCH_TIMEOUT_MS = 15_000; // 15 second timeout per request attempt
+
+// Retry utility with exponential backoff, jitter, and AbortController timeout
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
   let attempt = 0;
   while (attempt < retries) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
-      const res = await fetch(url, options);
-      
-      // Specifically handle Render's "Service Waking Up" scenarios
-      // Usually Render returns 502, 503, or 504 during boot
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      // Handle Render's "Service Waking Up" 502/503/504 during cold start
       if (res.status === 502 || res.status === 503 || res.status === 504) {
         throw new Error(`Backend waking up (Status ${res.status})`);
       }
-      
+
       return res;
     } catch (err: any) {
+      clearTimeout(timeoutId);
       attempt++;
       if (attempt >= retries) {
         console.error(`Final API failure after ${retries} attempts:`, err);
         throw err;
       }
-      
-      // Exponential backoff: 2s, 4s, 8s, 16s... with random jitter
-      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+      // Exponential backoff: 2s, 4s, 8s with random jitter
+      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
       console.warn(`API Attempt ${attempt} failed. Retrying in ${Math.round(delay)}ms...`, err.message);
       await new Promise(r => setTimeout(r, delay));
     }
@@ -228,8 +249,9 @@ export const certificateApi = {
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 
+/** Health check — uses the correct /api/health path (NOT /health) */
 export const healthCheck = () =>
-  request<{ status: string; version: string }>("/health");
+  request<{ status: string; server: string; version: string; services: string[]; uptime_seconds: number }>("/api/health");
 
 // ─── Gamification & Activity ─────────────────────────────────────────────────
 
