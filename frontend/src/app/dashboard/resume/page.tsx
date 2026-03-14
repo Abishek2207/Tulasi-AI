@@ -47,7 +47,7 @@ export default function ResumeBuilderPage() {
     setIsAnalyzing(true);
     setAtsScore(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/resume/analyze-ats`, {
+      const res = await fetch(`/api/resume/analyze-ats`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

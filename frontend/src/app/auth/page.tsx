@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { authApi } from "@/lib/api";
 
 // TulasILogo Pro - with the leaf/circuit design and Pro badge
 function TulasiLogoPro() {
@@ -60,18 +61,12 @@ export default function AuthPage() {
       }
     } else {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, name }),
-        });
-        if (!res.ok) {
-          const data = await res.json();
-          setError(data.detail || "Registration failed");
-        } else {
-          await signIn("credentials", { email, password, redirect: false });
-          router.push("/dashboard");
-        }
-      } catch {
-        setError("Connection failed. Make sure the backend is running.");
+        const res = await authApi.register(email, password, name);
+        // If the request succeeds, it returns the token and user. If it fails, our fetchWithRetry helper throws an Error.
+        await signIn("credentials", { email, password, redirect: false });
+        router.push("/dashboard");
+      } catch (err: any) {
+        setError(err.message || "Registration failed");
       }
     }
     setLoading(false);

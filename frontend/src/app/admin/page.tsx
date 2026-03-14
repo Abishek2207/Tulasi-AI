@@ -22,13 +22,13 @@ export default function AdminPage() {
   useEffect(() => {
     if (!token || user?.role !== "admin") return;
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`/api/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
     ]).then(([s, u]) => { setStats(s); setUsers(u.users || []); }).catch(() => {}).finally(() => setLoading(false));
   }, [token, user]);
 
   const toggleUser = async (userId: number, isActive: boolean) => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/toggle-user`, {
+    await fetch(`/api/admin/toggle-user`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ user_id: userId, is_active: !isActive }),

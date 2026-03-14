@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { activityApi } from "@/lib/api";
 
 export default function ProfilePage() {
   const { data: session } = useSession();
@@ -18,10 +19,7 @@ export default function ProfilePage() {
     const token = (session?.user as any)?.accessToken;
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await activityApi.getStats(token);
       setStats(data);
     } catch (e) { /* silent */ }
   };

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { rewardApi, activityApi } from "@/lib/api";
 
 const streakData = Array.from({ length: 52 }, (_, week) =>
   Array.from({ length: 7 }, (_, day) => {
@@ -39,10 +40,7 @@ export default function StreakPage() {
     const token = (session?.user as any)?.accessToken;
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity/rewards`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await rewardApi.getRewards(token);
       setStoreRewards(data.rewards || []);
     } catch (e) { /* silent */ }
   };
@@ -55,10 +53,7 @@ export default function StreakPage() {
     const token = (session?.user as any)?.accessToken;
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await activityApi.getStats(token);
       setStats(data);
     } catch (e) { /* silent */ }
   };
