@@ -325,7 +325,9 @@ def get_analytics(
     return {
         "time_series": time_series,
         "total_period_xp": sum(d["xp"] for d in time_series),
-        "total_period_problems": sum(d["problems"] for d in time_series)
+        "total_period_problems": sum(d["problems"] for d in time_series),
+        "total_period_interviews": sum(d["interviews"] for d in time_series),
+        "total_period_videos": sum(d["videos"] for d in time_series),
     }
 
 
