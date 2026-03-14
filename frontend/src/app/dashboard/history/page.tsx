@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com";
 
 const TYPE_FILTERS = [
   { id: "all", label: "All", icon: "🕐" },

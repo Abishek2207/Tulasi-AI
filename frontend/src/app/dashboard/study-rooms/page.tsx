@@ -103,7 +103,7 @@ export default function StudyRoomsPage() {
     if (!newRoomName.trim() || !token) return;
     try {
       // Create room logic uses direct fetch for now since it's not in studyApi yet
-      const API = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com";
+      const API = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com";
       const res = await fetch(`${API}/api/study/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

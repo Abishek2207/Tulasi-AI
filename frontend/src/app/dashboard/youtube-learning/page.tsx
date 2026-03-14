@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com";
 const VIDEOS = [
   // Data Structures
   { id: "RBSGKlAvoiM", title: "Data Structures Easy to Advanced - Full Course", channel: "freeCodeCamp", category: "Data Structures", duration: "8:01:16" },

@@ -95,7 +95,7 @@ export default function MessagesPage() {
     const token = (session?.user as any)?.accessToken;
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com"}/api/messages/users/directory`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com"}/api/messages/users/directory`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -113,7 +113,7 @@ export default function MessagesPage() {
     const token = (session?.user as any)?.accessToken;
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com"}/api/messages/${userId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com"}/api/messages/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -136,7 +136,7 @@ export default function MessagesPage() {
     if (!token) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com"}/api/messages`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com"}/api/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

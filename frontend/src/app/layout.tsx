@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
         <Providers>
           {children}
-          {/* Keep-alive banner: pings /api/health every 4min & alerts when backend is down */}
+          {/* Silent keep-alive: pings /api/health every 4 min to prevent Render cold starts */}
           <BackendBanner />
         </Providers>
       </body>
