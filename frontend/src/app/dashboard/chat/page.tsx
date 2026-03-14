@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { addMessage, setLoading, setSessionId, clearChat } from "@/store/slices/chatSlice";
+import { chatApi } from "@/lib/api";
 import { RootState } from "@/store";
 import { useSession } from "next-auth/react";
 
@@ -46,16 +47,11 @@ export default function ChatPage() {
     setSelectedImage(null);
     dispatch(setLoading(true));
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ 
-          message: text || (imgData ? "Analyze this image" : ""), 
-          session_id: sessionId,
-          image_base64: imgData 
-        }),
-      });
-      const data = await res.json();
+      const data = await chatApi.send(
+        text || (imgData ? "Analyze this image" : ""),
+        sessionId || undefined,
+        token
+      );
       if (data.session_id) dispatch(setSessionId(data.session_id));
       dispatch(addMessage({ id: (Date.now()+1).toString(), role: "assistant", content: data.response || "Error.", timestamp: Date.now() }));
     } catch {

@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { activityApi } from "@/lib/api";
 
 const MODULES = [
   { id: "chat", title: "AI Learning Chat", desc: "Have a conversation with Tulasi AI to learn new concepts.", icon: "💬", link: "/dashboard/chat", color: "#7C3AED", span: 2 },
@@ -32,13 +33,13 @@ export default function DashboardHome() {
         const token = (session?.user as any)?.accessToken;
         if (!token) return;
         
-        const [statsRes, lbRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com"}/api/activity/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com"}/api/activity/leaderboard`, { headers: { Authorization: `Bearer ${token}` } })
+        const [statsData, lbData] = await Promise.all([
+          activityApi.getStats(token).catch(() => null),
+          activityApi.getLeaderboard(token).catch(() => null)
         ]);
         
-        if (statsRes.ok) setStats(await statsRes.json());
-        if (lbRes.ok) setLeaderboard((await lbRes.json()).leaderboard || []);
+        if (statsData) setStats(statsData);
+        if (lbData) setLeaderboard(lbData.leaderboard || []);
       } catch (e) { /* silent */ }
     };
     fetchStats();
