@@ -1,0 +1,29 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\abish\anaconda3\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\backend
+plugins: anyio-4.10.0, langsmith-0.4.16
+collecting ... collected 0 items / 1 error
+
+=================================== ERRORS ====================================
+_____________________ ERROR collecting tests/test_api.py ______________________
+ImportError while importing test module 'C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\backend\tests\test_api.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\abish\anaconda3\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests\test_api.py:20: in <module>
+    from fastapi.testclient import TestClient
+C:\Users\abish\anaconda3\Lib\site-packages\fastapi\__init__.py:7: in <module>
+    from .applications import FastAPI as FastAPI
+C:\Users\abish\anaconda3\Lib\site-packages\fastapi\applications.py:16: in <module>
+    from fastapi import routing
+C:\Users\abish\anaconda3\Lib\site-packages\fastapi\routing.py:22: in <module>
+    from fastapi import params
+C:\Users\abish\anaconda3\Lib\site-packages\fastapi\params.py:5: in <module>
+    from pydantic.fields import FieldInfo, Undefined
+E   ImportError: cannot import name 'Undefined' from 'pydantic.fields' (C:\Users\abish\anaconda3\Lib\site-packages\pydantic\fields.py)
+=========================== short test summary info ===========================
+ERROR tests/test_api.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+============================== 1 error in 0.32s ===============================

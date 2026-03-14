@@ -125,8 +125,9 @@ class RoadmapStep(SQLModel, table=True):
 class UserBadge(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
-    badge_name: str
-    badge_icon: str
+    name: str
+    description: str = ""
+    icon: str
     earned_at: datetime = Field(default_factory=datetime.utcnow)
 
 

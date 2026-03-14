@@ -6,6 +6,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/auth/:path*",
+      "destination": "/api/auth/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://tulasi-api.onrender.com/api/:path*"
     }

@@ -97,6 +97,13 @@ def seed_hackathons_endpoint(
     session: Session = Depends(get_session),
     admin: User = Depends(get_admin_user)
 ):
-    from scripts.seed_hackathons import seed
+    import sys
+    import os
+    script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    script_path = os.path.join(script_dir, "scripts")
+    if script_path not in sys.path:
+        sys.path.append(script_path)
+    
+    from seed_hackathons import seed
     added_count = seed(session)
     return {"message": f"Successfully seeded {added_count} hackathons", "added_count": added_count}
