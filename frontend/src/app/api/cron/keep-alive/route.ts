@@ -4,7 +4,7 @@ export const runtime = 'edge';
 
 export async function GET() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tulasi-api.onrender.com';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tulasi-api-ldcw.onrender.com';
     
     // Ping the backend's root or health endpoint
     const response = await fetch(`${backendUrl}/health`, {

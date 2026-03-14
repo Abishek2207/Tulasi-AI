@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com";
 const FRONTEND = typeof window !== "undefined" ? window.location.origin : "";
 
 const BACKEND_ENDPOINTS = [

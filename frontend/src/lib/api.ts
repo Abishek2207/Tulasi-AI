@@ -6,7 +6,7 @@
 const isBrowser = typeof window !== "undefined";
 const isLocal = isBrowser && window.location.hostname === "localhost";
 // In production, use empty string to trigger `/api/...` so Vercel rewrites intercept it.
-const API_URL = isBrowser && !isLocal ? "" : (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com");
+const API_URL = isBrowser && !isLocal ? "" : (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com");
 
 /** Build a WebSocket URL pointing at the correct host (wss in production, ws locally) */
 export function websocketUrl(path: string): string {
@@ -16,17 +16,17 @@ export function websocketUrl(path: string): string {
   if (!isLocal) {
      // In production, the backend is on render directly for WS, because Vercel Serverless Functions
      // do not support WebSockets. We must connect directly to the render WebSocket URL.
-     const backendHost = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com").host;
+     const backendHost = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com").host;
      return `${protocol}//${backendHost}${path}`;
   }
   
-  const host = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api.onrender.com").host;
+  const host = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com").host;
   return `${protocol}//${host}${path}`;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const FETCH_TIMEOUT_MS = 15_000; // 15 second timeout per request attempt
+const FETCH_TIMEOUT_MS = 5_000; // 5 second timeout per request attempt
 
 // Retry utility with exponential backoff, jitter, and AbortController timeout
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
@@ -40,20 +40,16 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3): P
 
       // Handle Render's "Service Waking Up" 502/503/504 during cold start
       if (res.status === 502 || res.status === 503 || res.status === 504) {
-        throw new Error(`Backend waking up (Status ${res.status})`);
+        throw new Error(`Retrying (${res.status})`);
       }
 
       return res;
     } catch (err: any) {
       clearTimeout(timeoutId);
       attempt++;
-      if (attempt >= retries) {
-        console.error(`Final API failure after ${retries} attempts:`, err);
-        throw err;
-      }
-      // Exponential backoff: 2s, 4s, 8s with random jitter
-      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
-      console.warn(`API Attempt ${attempt} failed. Retrying in ${Math.round(delay)}ms...`, err.message);
+      if (attempt >= retries) throw err;
+      // Exponential backoff: 2s, 4s with jitter
+      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 300;
       await new Promise(r => setTimeout(r, delay));
     }
   }
