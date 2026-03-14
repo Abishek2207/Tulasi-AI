@@ -102,14 +102,8 @@ export default function StudyRoomsPage() {
     e.preventDefault();
     if (!newRoomName.trim() || !token) return;
     try {
-      // Create room logic uses direct fetch for now since it's not in studyApi yet
-      const API = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com";
-      const res = await fetch(`${API}/api/study/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: newRoomName, description: newRoomDesc, tag: newRoomTag }),
-      });
-      if (res.ok) {
+      const res = await studyApi.create({ name: newRoomName, description: newRoomDesc, tag: newRoomTag }, token);
+      if (res) {
         setShowCreate(false);
         setNewRoomName(""); setNewRoomDesc(""); setNewRoomTag("General");
         fetchRooms();

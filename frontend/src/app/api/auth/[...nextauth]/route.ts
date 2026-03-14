@@ -74,7 +74,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       // For OAuth providers, auto-register/login with FastAPI backend via fire-and-forget
       if (account && account.provider !== "credentials") {
-        const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com";
         fetch(`${BACKEND}/api/auth/google-oauth`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

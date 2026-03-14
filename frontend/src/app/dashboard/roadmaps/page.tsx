@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { roadmapApi } from "@/lib/api";
 
 interface Milestone {
   phase: string;
@@ -36,16 +37,8 @@ export default function RoadmapsPage() {
     }
     setRoadmap(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roadmap/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ goal })
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const data = await roadmapApi.generate(goal, token);
+      if (data && data.roadmap) {
         setRoadmap(data.roadmap);
       }
     } catch (err) {

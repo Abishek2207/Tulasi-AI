@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { pdfApi } from "@/lib/api";
 
 interface ChatMsg {
   role: "user" | "ai";
@@ -39,22 +40,11 @@ export default function PDFQaPage() {
         setIsUploading(false);
         return;
       }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pdf/upload`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: formData
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSessionId(data.session_id);
-        setMessages([{ role: "ai", content: `Successfully parsed ${data.pages} pages of ${data.filename}. Ask me anything about it!` }]);
-      } else {
-        setMessages([{ role: "ai", content: `Error: ${data.detail}` }]);
-      }
-    } catch (err) {
-      setMessages([{ role: "ai", content: "Network Error: Could not upload file." }]);
+      const data = await pdfApi.upload(uploadedFile, token);
+      setSessionId(data.session_id);
+      setMessages([{ role: "ai", content: `Successfully parsed ${data.pages} pages of ${data.filename}. Ask me anything about it!` }]);
+    } catch (err: any) {
+      setMessages([{ role: "ai", content: `Error: ${err.message || "Could not upload file"}` }]);
     }
     setIsUploading(false);
   };
@@ -75,22 +65,10 @@ export default function PDFQaPage() {
         setIsAsking(false);
         return;
       }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pdf/ask`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ question: userQ, session_id: sessionId })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessages(prev => [...prev, { role: "ai", content: data.answer }]);
-      } else {
-        setMessages(prev => [...prev, { role: "ai", content: `Error: ${data.detail}` }]);
-      }
-    } catch (err) {
-      setMessages(prev => [...prev, { role: "ai", content: "An error occurred while fetching the answer." }]);
+      const data = await pdfApi.ask(userQ, sessionId, token);
+      setMessages(prev => [...prev, { role: "ai", content: data.answer }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: "ai", content: `Error: ${err.message || "An error occurred while fetching the answer."}` }]);
     }
     setIsAsking(false);
   };
