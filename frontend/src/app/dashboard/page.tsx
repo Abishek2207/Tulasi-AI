@@ -33,8 +33,8 @@ export default function DashboardHome() {
         if (!token) return;
         
         const [statsRes, lbRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000"}/api/activity/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000"}/api/activity/leaderboard`, { headers: { Authorization: `Bearer ${token}` } })
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com"}/api/activity/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com"}/api/activity/leaderboard`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
         
         if (statsRes.ok) setStats(await statsRes.json());

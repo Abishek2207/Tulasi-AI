@@ -11,7 +11,7 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://tulasi-api.onrender.com/api/:path*"
+      "destination": "https://tulasi-api-ldcw.onrender.com/api/:path*"
     }
   ]
 }
