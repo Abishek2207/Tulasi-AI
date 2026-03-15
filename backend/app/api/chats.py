@@ -26,14 +26,15 @@ class ChatResponse(BaseModel):
 @limiter.limit("20/minute")
 def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session)):
     
+    # ✅ Generate session_id if not provided
     session_id = req.session_id or str(uuid.uuid4())
 
-    # Fetch chat history
+    # ✅ Fetch chat history for session
     statement = select(ChatMessage).where(ChatMessage.session_id == session_id).order_by(ChatMessage.created_at)
     db_messages = db.exec(statement).all()
     history = [{"role": m.role, "content": m.content} for m in db_messages]
 
-    # Decode image if sent
+    # ✅ Decode image if sent
     image_data = None
     if req.image_base64:
         import base64
@@ -46,10 +47,10 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session))
         except Exception as e:
             print(f"Error decoding image: {e}")
 
-    # Generate AI response
+    # ✅ Generate AI response
     response_text = get_ai_response(req.message, history, image_data=image_data)
 
-    # Save messages in DB
+    # ✅ Save messages in DB (anonymous mode)
     user_msg = ChatMessage(session_id=session_id, user_id=None, role="user", content=req.message)
     ai_msg   = ChatMessage(session_id=session_id, user_id=None, role="assistant", content=response_text)
     db.add(user_msg)
@@ -75,3 +76,8 @@ def clear_history(session_id: str, db: Session = Depends(get_session)):
         db.delete(m)
     db.commit()
     return {"message": "Cleared"}
+
+# ✅ Optional: simple health endpoint for this router
+@router.get("/ping")
+def ping():
+    return {"ping": "pong"}
