@@ -11,43 +11,37 @@ from app.core.database import init_db
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
 
-# ── Track startup time for uptime reporting ─────────────────────────────────
+# ── Track startup time ─────────────────────────────────────────────
 _START_TIME = time.time()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Modern FastAPI lifespan context manager.
-    Runs startup tasks before yielding, then shutdown tasks after.
-    """
-    # ── STARTUP ──────────────────────────────────────────────────────────────
+
     print("🚀 Tulasi AI v3.0 — Starting up...")
+
     try:
         init_db()
         print("✅ Database initialised")
     except Exception as e:
         print(f"❌ Database init failed: {e}")
 
-    # Warm machine learning models and FAISS vector index
     print("⏳ Warming up FAISS vector store...")
-    time.sleep(0.5) # Simulate warming
+    time.sleep(0.5)
     print("✅ FAISS indexes ready")
 
-    # Warm WebSocket manager
     from app.websockets.manager import manager as ws_manager
     print(f"✅ WebSocket manager ready ({ws_manager.__class__.__name__})")
 
     print("✅ Tulasi AI v3.0 — Backend ready!")
     print("📖 API Docs: /api/docs")
 
-    yield  # ── Application runs here ─────────────────────────────────────────
+    yield
 
-    # ── SHUTDOWN ─────────────────────────────────────────────────────────────
-    print("🛑 Tulasi AI — Shutting down gracefully...")
+    print("🛑 Tulasi AI — Shutting down...")
 
 
-# ── App factory ──────────────────────────────────────────────────────────────
+# ── FastAPI App ────────────────────────────────────────────────────
 app = FastAPI(
     title="Tulasi AI API",
     description="Production-grade AI learning platform backend",
@@ -61,11 +55,10 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
-# ── Global exception handlers ────────────────────────────────────────────────
+# ── Global Error Handlers ──────────────────────────────────────────
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Return 422 with structured error details instead of a raw 422."""
     return JSONResponse(
         status_code=422,
         content={
@@ -77,34 +70,42 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    """Catch-all handler — prevents raw 500 stack traces leaking to clients."""
-    print(f"❌ Unhandled exception on {request.method} {request.url}: {exc}")
+    print(f"❌ Error on {request.method} {request.url}: {exc}")
     return JSONResponse(
         status_code=500,
         content={
             "detail": "Internal server error",
-            "message": str(exc) if app.debug else "An unexpected error occurred.",
+            "message": str(exc),
         },
     )
 
 
-# ── CORS ─────────────────────────────────────────────────────────────────────
+# ── CORS ───────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://tulasiai.vercel.app",
-        "https://frontend-eight-tan-33.vercel.app",
-        "https://tulasi-frontend.onrender.com",
-    ],
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# ── Routers ───────────────────────────────────────────────────────────────────
+# ── Request Logger (helps debugging) ───────────────────────────────
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.time()
+    response = await call_next(request)
+    duration = round((time.time() - start) * 1000, 2)
+
+    print(
+        f"📡 {request.method} {request.url.path} "
+        f"→ {response.status_code} ({duration} ms)"
+    )
+
+    return response
+
+
+# ── Routers ────────────────────────────────────────────────────────
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
 app.include_router(pdf.router,          prefix="/api/pdf",          tags=["PDF Q&A"])
@@ -120,13 +121,13 @@ app.include_router(activity.router,     prefix="/api/activity",     tags=["Activ
 app.include_router(resume.router,       prefix="/api/resume",       tags=["Resume Builder"])
 app.include_router(study.router,        prefix="/api/study",        tags=["Study Rooms"])
 
-# WebSocket chat router
+
+# ── WebSocket Router ───────────────────────────────────────────────
 from app.api import ws as ws_router
 app.include_router(ws_router.router, tags=["WebSocket Chat"])
 
 
-# ── Health & Root ─────────────────────────────────────────────────────────────
-
+# ── Root Endpoint ──────────────────────────────────────────────────
 @app.get("/")
 def root():
     return {
@@ -137,20 +138,37 @@ def root():
     }
 
 
+# ── API Root ───────────────────────────────────────────────────────
+@app.get("/api")
+def api_root():
+    return {
+        "message": "Tulasi AI API running",
+        "docs": "/api/docs",
+        "health": "/api/health"
+    }
+
+
+# ── Health Check ───────────────────────────────────────────────────
 @app.get("/api/health")
 @app.get("/health")
 def health():
-    """
-    Health check endpoint.
-    Called every 4 minutes by the frontend keep-alive hook to prevent Render cold starts.
-    """
     uptime = int(time.time() - _START_TIME)
+
     return {
         "status": "ok",
         "server": "Tulasi AI backend",
         "version": "3.0.0",
         "uptime_seconds": uptime,
-        "services": ["chat", "code", "roadmaps", "rewards", "analytics", "interview", "hackathons", "websocket"],
+        "services": [
+            "chat",
+            "code",
+            "roadmaps",
+            "rewards",
+            "analytics",
+            "interview",
+            "hackathons",
+            "websocket",
+        ],
     }
 
 
@@ -160,7 +178,7 @@ def ping():
     return {"ping": "pong", "uptime_seconds": int(time.time() - _START_TIME)}
 
 
-# ── Local dev entry point ─────────────────────────────────────────────────────
+# ── Local Development ──────────────────────────────────────────────
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 10000))

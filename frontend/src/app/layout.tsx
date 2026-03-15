@@ -20,11 +20,14 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Tulasi AI", description: "Free AI Learning Platform" },
 };
 
+import { ConnectionStatus } from "@/components/ConnectionStatus";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
         <Providers>
+          <ConnectionStatus />
           {children}
         </Providers>
       </body>
