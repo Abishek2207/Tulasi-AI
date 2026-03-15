@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
-from datetime import datetime, date
+from datetime import datetime
 
 
 class User(SQLModel, table=True):
@@ -9,14 +9,14 @@ class User(SQLModel, table=True):
     hashed_password: Optional[str] = None
     name: str = ""
     avatar: Optional[str] = None
-    role: str = "student"  # "student" | "admin"
-    provider: str = "email"  # "email" | "google" | "github"
+    role: str = "student"
+    provider: str = "email"
     invite_code: Optional[str] = None
     referred_by: Optional[str] = None
     streak: int = 0
     xp: int = 0
     level: int = 1
-    last_activity_date: Optional[str] = None  # ISO date string YYYY-MM-DD
+    last_activity_date: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_seen: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
@@ -35,35 +35,37 @@ class Certificate(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     title: str
     issuer: str = "Tulasi AI"
-    cert_type: str = "upload"  # "upload" | "auto"
+    cert_type: str = "upload"
     file_path: Optional[str] = None
     issued_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class Hackathon(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    # title / name are stored as 'name' in DB for back-compat
     name: str
     organizer: str
     description: str
-    prize: str = ""           # kept for back-compat
-    prize_pool: str = ""      # new frontend field
+    prize: str = ""
+    prize_pool: str = ""
     deadline: str
-    link: str                 # kept for back-compat
-    registration_link: str = ""  # new frontend field
-    tags: str = ""            # comma-separated
+    link: str
+    registration_link: str = ""
+    tags: str = ""
     image_url: str = ""
     participants_count: int = 0
-    status: str = "Open"      # Open | Upcoming | Past
+    status: str = "Open"
     is_active: bool = True
 
+
+# IMPORTANT FIX
 class ChatMessage(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     session_id: str = Field(index=True)
-    user_id: int = Field(foreign_key="user.id")
-    role: str  # "user" or "model"
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", nullable=True)
+    role: str
     content: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
 
 class DirectMessage(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -76,10 +78,9 @@ class DirectMessage(SQLModel, table=True):
 class ActivityLog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
-    # action_type: code_solved | video_watched | reel_watched | interview_completed | roadmap_step | hackathon_joined | roadmap_completed | course_completed
     action_type: str
-    title: str = ""  # human readable label, e.g. "Solved: Two Sum"
-    metadata_json: Optional[str] = None  # JSON string for extra data
+    title: str = ""
+    metadata_json: Optional[str] = None
     xp_earned: int = 0
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -87,18 +88,17 @@ class ActivityLog(SQLModel, table=True):
 class UserProgress(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
-    category: str  # "coding" | "interview" | "roadmap" | "videos"
+    category: str
     total_items: int = 0
     completed_items: int = 0
-    progress_pct: int = 0   # 0–100
+    progress_pct: int = 0
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class SolvedProblem(SQLModel, table=True):
-    """Tracks which coding problems a user has solved."""
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
-    problem_id: str = Field(index=True)  # e.g. "ARR-001"
+    problem_id: str = Field(index=True)
     solved_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -118,9 +118,10 @@ class RoadmapStep(SQLModel, table=True):
     phase: str
     title: str
     duration: str
-    topics_json: str  # Comma-separated or JSON list
+    topics_json: str
     project_idea: str
-    resources_json: str  # JSON list of {name, url}
+    resources_json: str
+
 
 class UserBadge(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -137,7 +138,7 @@ class Reward(SQLModel, table=True):
     description: str
     cost_xp: int
     image_url: Optional[str] = None
-    category: str = "customization"  # "customization" | "feature" | "perk"
+    category: str = "customization"
 
 
 class StudyRoom(SQLModel, table=True):
@@ -167,7 +168,7 @@ class SavedStartupIdea(SQLModel, table=True):
     problem: str = ""
     solution: str = ""
     market_opportunity: str = ""
-    tech_stack: str = ""   # JSON string
+    tech_stack: str = ""
     monetization: str = ""
     domain: str = ""
     created_at: datetime = Field(default_factory=datetime.utcnow)
