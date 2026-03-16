@@ -41,18 +41,17 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session))
     if req.image_base64:
         import base64
         try:
-            if "," in req.image_base64:
-                header, encoded = req.image_base64.split(",", 1)
-            else:
-                encoded = req.image_base64
-
+            encoded = req.image_base64.split(",")[-1]
             image_data = base64.b64decode(encoded)
-
         except Exception as e:
             print(f"Error decoding image: {e}")
 
     # Generate AI Response
-    response_text = get_ai_response(req.message, history, image_data=image_data)
+    try:
+        response_text = get_ai_response(req.message, history, image_data=image_data)
+    except Exception as e:
+        print(f"Error generating AI response: {e}")
+        response_text = "Sorry, I encountered an AI processing error."
 
     # Save User message
     user_msg = ChatMessage(
