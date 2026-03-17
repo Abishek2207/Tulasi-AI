@@ -20,12 +20,15 @@ GOOGLE_API_KEY = (
 
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
-    print(f"✅ Gemini configured (key: {GOOGLE_API_KEY[:8]}...)")
+    print(f"✅ Gemini configured with gemini-2.5-flash (key: {GOOGLE_API_KEY[:8]}...)")
 else:
-    print("⚠️  WARNING: No Gemini API key found. Set GOOGLE_API_KEY in .env")
+    print("⚠️  WARNING: No GOOGLE_API_KEY found. Set it in .env or Render environment.")
 
 # ── Model name ─────────────────────────────────────────────────────
-GEMINI_MODEL = "gemini-1.5-flash"
+# NOTE: Your API keys are Google preview/experimental keys.
+# These keys have access to gemini-2.5-flash (NOT gemini-1.5-flash).
+# To use gemini-1.5-flash, get a standard key from: aistudio.google.com/app/apikey
+GEMINI_MODEL = "gemini-2.5-flash"
 
 
 # ── Core response function ─────────────────────────────────────────
