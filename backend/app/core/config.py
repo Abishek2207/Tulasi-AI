@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
     YOUTUBE_API_KEY: str = os.getenv("YOUTUBE_API_KEY", "")
+    LANGFLOW_API_URL: str = os.getenv("LANGFLOW_API_URL", "")  # Optional: set to enable Langflow pipeline
 
     # Supabase (optional)
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")

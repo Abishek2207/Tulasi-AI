@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_URL } from "@/lib/api";
 
 export function ConnectionStatus() {
   const [status, setStatus] = useState<"connected" | "reconnecting">("connected");
@@ -12,8 +13,7 @@ export function ConnectionStatus() {
     
     const checkHealth = async () => {
       try {
-        // Use relative path since rewrites proxy /api to backend
-        const res = await fetch("/api/health");
+        const res = await fetch(`${API_URL}/api/health`);
         if (res.ok) {
           if (status === "reconnecting") {
             setStatus("connected");

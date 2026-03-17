@@ -151,6 +151,7 @@ def api_root():
 # ── Health Check ───────────────────────────────────────────────────
 @app.get("/api/health")
 @app.get("/health")
+@app.get("/api/status")
 def health():
     uptime = int(time.time() - _START_TIME)
 

@@ -26,9 +26,13 @@ class ModelRouter:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 gemini_key = settings.effective_gemini_key
                 if gemini_key:
-                    self._gemini_model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=gemini_key)
-            except:
-                pass
+                    self._gemini_model = ChatGoogleGenerativeAI(
+                        model="gemini-2.0-flash",
+                        google_api_key=gemini_key,
+                        temperature=0.7,
+                    )
+            except Exception as e:
+                print(f"⚠️  Could not init Gemini model: {e}")
         return self._gemini_model
 
     def get_best_model(self, task_type: str):
