@@ -4,23 +4,28 @@
  */
 
 const isBrowser = typeof window !== "undefined";
-const isLocal = isBrowser && window.location.hostname === "localhost";
+const isDev = process.env.NODE_ENV === "development";
+
+const DEFAULT_BACKEND_URL = "http://localhost:10000";
 // In production, use empty string to trigger `/api/...` so Vercel rewrites intercept it.
-const API_URL = isBrowser && !isLocal ? "" : (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com");
+// In development, force the local backend URL so it doesn't accidentally hit Render from .env.local
+export const API_URL = isDev
+  ? DEFAULT_BACKEND_URL
+  : (isBrowser ? "" : (process.env.NEXT_PUBLIC_API_URL || DEFAULT_BACKEND_URL));
 
 /** Build a WebSocket URL pointing at the correct host (wss in production, ws locally) */
 export function websocketUrl(path: string): string {
   if (!isBrowser) return "";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   
-  if (!isLocal) {
+  if (!isDev) {
      // In production, the backend is on render directly for WS, because Vercel Serverless Functions
      // do not support WebSockets. We must connect directly to the render WebSocket URL.
      const backendHost = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com").host;
      return `${protocol}//${backendHost}${path}`;
   }
   
-  const host = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com").host;
+  const host = new URL(process.env.NEXT_PUBLIC_API_URL || DEFAULT_BACKEND_URL).host;
   return `${protocol}//${host}${path}`;
 }
 

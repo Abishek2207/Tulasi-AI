@@ -25,9 +25,9 @@ export default function ChatPage() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || !token) return;
+    if (!input.trim() || !token || loading) return;
     
-    const userMsg = input;
+    const userMsg = input.trim();
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setInput('');
     setLoading(true);
@@ -37,9 +37,10 @@ export default function ChatPage() {
       if (res.session_id && !sessionId) {
         setSessionId(res.session_id);
       }
-      setMessages(prev => [...prev, { role: 'assistant', content: res.response }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: res.response || "No response received." }]);
     } catch (error: any) {
-      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message || 'Failed to connect to backend.'}` }]);
+      console.error("Chat Error:", error);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Sorry, I encountered an error: ${error.message || 'Failed to connect to backend.'}` }]);
     } finally {
       setLoading(false);
     }

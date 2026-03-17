@@ -43,7 +43,9 @@ async def upload_pdf(file: UploadFile = File(...), current_user: User = Depends(
 
         # Store in RAG vector store for indexed retrieval
         from app.services.ai_agents.vector_store.faiss_store import vector_store_manager
+        from app.services.ai_agents.agents.rag_agent import rag_agent
         vector_store_manager.process_document(full_text, metadata={"session_id": session_id, "user_id": current_user.id, "filename": file.filename})
+        rag_agent.reset_retriever()  # Refresh retriever so new docs are available immediately
 
         pdf_sessions[session_id] = {
             "filename": file.filename,
