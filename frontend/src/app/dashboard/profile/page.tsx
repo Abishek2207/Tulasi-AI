@@ -95,7 +95,7 @@ export default function ProfilePage() {
             </div>
           )}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {BADGES.slice(0, 4).map((b, i) => (
+            {BADGES.slice(0, 4).map((b: any, i: number) => (
               <div key={i} style={{ padding: "5px 12px", background: b.bg, color: b.color, borderRadius: 20, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, border: `1px solid ${b.color}40` }}>
                 <span>{b.icon}</span> {b.name}
               </div>
