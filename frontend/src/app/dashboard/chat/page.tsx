@@ -15,6 +15,7 @@ export default function ChatPage() {
   const { messages, isLoading, sessionId } = useSelector((s: RootState) => s.chat);
   const [input, setInput] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isWakingUp, setIsWakingUp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
@@ -46,6 +47,8 @@ export default function ChatPage() {
     setInput("");
     setSelectedImage(null);
     dispatch(setLoading(true));
+    setIsWakingUp(false);
+    const wakeTimer = setTimeout(() => setIsWakingUp(true), 4000); // Show wake up message if request takes over 4s
     try {
       const data = await chatApi.send(
         text || (imgData ? "Analyze this image" : ""),
@@ -55,8 +58,12 @@ export default function ChatPage() {
       if (data.session_id) dispatch(setSessionId(data.session_id));
       dispatch(addMessage({ id: (Date.now()+1).toString(), role: "assistant", content: data.response || "Error.", timestamp: Date.now() }));
     } catch {
-      dispatch(addMessage({ id: (Date.now()+1).toString(), role: "assistant", content: "Connection failed. Is the backend running?", timestamp: Date.now() }));
-    } finally { dispatch(setLoading(false)); }
+      dispatch(addMessage({ id: (Date.now()+1).toString(), role: "assistant", content: "Failed to connect after Retries. Is the backend running?", timestamp: Date.now() }));
+    } finally { 
+      clearTimeout(wakeTimer);
+      setIsWakingUp(false);
+      dispatch(setLoading(false)); 
+    }
   };
 
   return (
@@ -134,8 +141,12 @@ export default function ChatPage() {
           {isLoading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", gap: 16, alignItems: "center" }}>
               <div style={{ width: 38, height: 38, borderRadius: 12, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🤖</div>
-              <div style={{ padding: "16px 20px", background: "rgba(255,255,255,0.03)", borderRadius: "4px 20px 20px 20px", border: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
-                <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+              <div style={{ padding: "16px 20px", background: "rgba(255,255,255,0.03)", borderRadius: "4px 20px 20px 20px", border: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8, color: "var(--text-secondary)", fontSize: "14px", alignItems: "center" }}>
+                {isWakingUp ? (
+                  <span>⚡ Waking up AI server...</span>
+                ) : (
+                  <><div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" /></>
+                )}
               </div>
             </motion.div>
           )}
