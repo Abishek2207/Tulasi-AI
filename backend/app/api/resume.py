@@ -1,13 +1,12 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-from app.core.ai_router import get_ai_response
-
-router = APIRouter()
-
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List
 from app.core.ai_router import get_ai_response
+from app.core.database import get_session
+from sqlmodel import Session
+from app.models.models import SavedResume
+import json
+import re
 
 router = APIRouter()
 
@@ -98,8 +97,34 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
         match = re.search(r'\{.*\}', response_text, re.DOTALL)
         if match:
             result = json.loads(match.group())
+            # ── 💾 Auto-Save to Database ──
+            try:
+                # We try to get session from FastAPI dependency in real life, 
+                # but here we'll use a standalone session for simplicity in the API route.
+                from app.core.database import engine
+                with Session(engine) as db:
+                    saved = SavedResume(
+                        user_id=1, # Default to user 1 for now, will dynamic with JWT later
+                        document_type=data.document_type,
+                        mode=data.mode,
+                        original_resume=data.resume_text,
+                        job_description=data.job_description,
+                        improved_resume=result.get("improved_resume", ""),
+                        ats_score=result.get("ats_score", 0),
+                        readability_score=result.get("readability_score", 0),
+                        keyword_match_percent=result.get("keyword_match_percent", 0),
+                        feedback_json=json.dumps(result.get("feedback", [])),
+                        missing_keywords_json=json.dumps(result.get("missing_keywords", []))
+                    )
+                    db.add(saved)
+                    db.commit()
+            except Exception as e:
+                print(f"Failed to save resume to history: {e}")
+
             return {
                 "ats_score": result.get("ats_score", 50),
+                "readability_score": result.get("readability_score", 0),
+                "keyword_match_percent": result.get("keyword_match_percent", 0),
                 "feedback": result.get("feedback", ["Consider adding more metrics."]),
                 "missing_keywords": result.get("missing_keywords", []),
                 "improved_resume": result.get("improved_resume", data.resume_text),
@@ -114,3 +139,31 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
         "missing_keywords": ["Error parsing keywords"],
         "improved_resume": data.resume_text
     }
+
+@router.get("/history")
+def get_resume_history():
+    from app.core.database import engine
+    with Session(engine) as db:
+        from sqlmodel import select
+        # Use user_id=1 as the current placeholder for the 'main' user
+        statement = select(SavedResume).where(SavedResume.user_id == 1).order_by(SavedResume.created_at.desc())
+        results = db.exec(statement).all()
+        
+        # Convert JSON strings back to lists
+        history = []
+        for r in results:
+            history.append({
+                "id": r.id,
+                "document_type": r.document_type,
+                "mode": r.mode,
+                "original_resume": r.original_resume,
+                "job_description": r.job_description,
+                "improved_resume": r.improved_resume,
+                "ats_score": r.ats_score,
+                "readability_score": r.readability_score,
+                "keyword_match_percent": r.keyword_match_percent,
+                "feedback": json.loads(r.feedback_json),
+                "missing_keywords": json.loads(r.missing_keywords_json),
+                "created_at": r.created_at.isoformat()
+            })
+        return history

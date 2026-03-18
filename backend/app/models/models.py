@@ -208,3 +208,19 @@ class HackathonBookmark(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", index=True)
     hackathon_id: int = Field(foreign_key="hackathon.id", index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SavedResume(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    document_type: str = "Resume"  # Resume or Cover Letter
+    mode: str = "ATS-Optimized"
+    original_resume: str
+    job_description: str
+    improved_resume: str
+    ats_score: int = 0
+    readability_score: int = 0
+    keyword_match_percent: int = 0
+    feedback_json: str = "[]"
+    missing_keywords_json: str = "[]"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
