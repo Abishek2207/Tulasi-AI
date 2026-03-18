@@ -1,36 +1,56 @@
 'use client';
-
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { UploadCloud, FileText, Loader2 } from "lucide-react";
+import { pdfApi } from "@/lib/api";
 
 export default function PDFPage() {
+  const { data: session } = useSession();
+  const token = (session?.user as any)?.accessToken;
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState("");
   const [asking, setAsking] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
 
-  const handleUpload = () => {
-    if (!file) return;
+  const handleUpload = async () => {
+    if (!file || !token) {
+      if(!token) alert("Please log in to upload PDFs.");
+      return;
+    }
     setUploading(true);
-    // Mock API call to FastAPI
-    setTimeout(() => {
+    setAnswer("");
+    try {
+      const res = await pdfApi.upload(file, token);
+      setSessionId(res.session_id);
+      alert("PDF Uploaded and Processed successfully!");
+    } catch (e: any) {
+      console.error(e);
+      alert(`Upload failed: ${e.message}`);
+    } finally {
       setUploading(false);
-      alert("PDF Uploaded and Processed by FAISS vector store successfully!");
-    }, 2000);
+    }
   };
 
-  const handleQuery = () => {
-    if (!query.trim()) return;
+  const handleQuery = async () => {
+    if (!query.trim() || !token || !sessionId) {
+      if(!sessionId) alert("Please upload a PDF first.");
+      return;
+    }
     setAsking(true);
-    // Mock API call to FastAPI RAG
-    setTimeout(() => {
-      setAnswer("Based on the uploaded document context, the AI platform uses FastAPI, LangChain, and Next.js 14 for its core operations, allowing scalable AI functionalities.");
+    try {
+      const res = await pdfApi.ask(query, sessionId, token);
+      setAnswer(res.answer);
+    } catch (e: any) {
+      console.error(e);
+      setAnswer(`Error: ${e.message}`);
+    } finally {
       setAsking(false);
-    }, 1500);
+    }
   };
 
   return (
