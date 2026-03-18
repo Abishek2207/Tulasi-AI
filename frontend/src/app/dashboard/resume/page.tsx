@@ -12,6 +12,7 @@ export default function ResumeBuilderPage() {
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [mode, setMode] = useState("ATS-Optimized");
+  const [documentType, setDocumentType] = useState("Resume");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ 
     ats_score: number; 
@@ -41,7 +42,8 @@ export default function ResumeBuilderPage() {
       const data = await resumeApi.improve({ 
         resume_text: resumeText, 
         job_description: jobDescription,
-        mode: mode
+        mode: mode,
+        document_type: documentType
       }, token);
       
       setResult(data);
@@ -100,6 +102,23 @@ export default function ResumeBuilderPage() {
         {/* Left Column - Inputs */}
         <div style={{ flex: "1 1 450px", display: "flex", flexDirection: "column", gap: 20 }}>
           
+          <div style={{ display: "flex", background: "rgba(0,0,0,0.3)", padding: 6, borderRadius: 12, gap: 8 }}>
+            {["Resume", "Cover Letter"].map((type) => (
+              <button
+                key={type}
+                onClick={() => setDocumentType(type)}
+                style={{
+                  flex: 1, padding: "12px", fontSize: 14, fontWeight: 700, borderRadius: 8,
+                  background: documentType === type ? "var(--brand-primary)" : "transparent",
+                  color: documentType === type ? "white" : "var(--text-secondary)",
+                  border: "none", cursor: "pointer", transition: "all 0.2s ease"
+                }}
+              >
+                {type === "Resume" ? "📄 Optimize Resume" : "✉️ Write Cover Letter"}
+              </button>
+            ))}
+          </div>
+
           <div className="dash-card" style={{ flex: 0, display: "flex", flexDirection: "column", padding: 24 }}>
             <label style={{ fontSize: 14, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 12, display: "block", textTransform: "uppercase", letterSpacing: 1 }}>
               Target AI Tone
@@ -165,9 +184,9 @@ export default function ResumeBuilderPage() {
             {loading ? (
               <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%" }} />
-                Optimizing with Google Gemini...
+                Generating {documentType} with Gemini...
               </span>
-            ) : "✨ Improve My Resume"}
+            ) : documentType === "Resume" ? "✨ Improve My Resume" : "✨ Write Cover Letter"}
           </button>
 
         </div>
@@ -293,10 +312,10 @@ export default function ResumeBuilderPage() {
                 </div>
               </div>
 
-              {/* Fully Rewritten Resume */}
+              {/* Fully Rewritten Resume / Cover Letter */}
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 800, color: "#4ECDC4", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span>✨</span> Fully Rewritten Resume
+                  <span>✨</span> {documentType === "Resume" ? "Fully Rewritten Resume" : "Generated Cover Letter"}
                 </h3>
                 <textarea 
                   id="print-section"
