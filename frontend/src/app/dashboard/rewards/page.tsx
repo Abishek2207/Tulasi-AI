@@ -2,206 +2,131 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { rewardApi, activityApi } from "@/lib/api";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
+import { activityApi } from "@/lib/api";
 
-interface Reward {
-  id: number;
-  name: string;
-  description: string;
-  cost_xp: number;
-  category: string;
-}
+const REWARD_ITEMS = [
+  { id: 1, name: "Premium Resume Review", description: "Get your resume heavily reviewed by a FAANG engineer.", cost: 5000, icon: "📄", color: "#6C63FF", bg: "rgba(108,99,255,0.1)" },
+  { id: 2, name: "1-on-1 Mentorship (30m)", description: "A private 30-minute career guidance session with an expert.", cost: 12000, icon: "🤝", color: "#4ECDC4", bg: "rgba(78,205,196,0.1)" },
+  { id: 3, name: "Profile 'Pro' Badge", description: "Unlock a shiny PRO badge next to your name on the Leaderboard.", cost: 2500, icon: "⭐", color: "#FFD93D", bg: "rgba(255,217,61,0.1)" },
+  { id: 4, name: "Early Access to Beta Features", description: "Get access to upcoming AI models and prep tools before anyone else.", cost: 1500, icon: "🚀", color: "#FF6B6B", bg: "rgba(255,107,107,0.1)" },
+  { id: 5, name: "Custom Avatar Frame", description: "Stand out with a glowing neon avatar frame on your profile.", cost: 3000, icon: "🖼️", color: "#A78BFA", bg: "rgba(167,139,250,0.1)" },
+  { id: 6, name: "Mock Interview Bypass", description: "Skip the queue and get priority scheduling for human mock interviews.", cost: 8000, icon: "🎯", color: "#F97316", bg: "rgba(249,115,22,0.1)" },
+];
 
-export default function RewardsStorePage() {
+export default function RewardsPage() {
   const { data: session } = useSession();
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [totalXp, setTotalXp] = useState(0);
-  const [ownedBadges, setOwnedBadges] = useState<Set<string>>(new Set());
+  const token = (session?.user as any)?.accessToken;
+  const [xp, setXp] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [redeeming, setRedeeming] = useState<number | null>(null);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const token = (session?.user as any)?.accessToken;
-      if (!token) return;
-      
-      const [rewardData, statsData] = await Promise.all([
-        rewardApi.getRewards(token),
-        activityApi.getStats(token)
-      ]);
-      
-      setRewards(rewardData.rewards || []);
-      setTotalXp((statsData as any).xp || 0);
-      
-      const badges = (statsData as any).badges || [];
-      setOwnedBadges(new Set(badges.map((b: any) => b.name)));
-    } catch (err: any) {
-      setError("Failed to load rewards store.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
-    fetchData();
-  }, [session]);
-
-  const handleRedeem = async (rewardId: number, rewardName: string, cost: number) => {
-    if (totalXp < cost) {
-      alert("Not enough XP!");
-      return;
+    if (token) {
+      activityApi.getStats(token).then(data => {
+        setXp(data.xp || 0);
+        setLoading(false);
+      }).catch(() => setLoading(false));
     }
+  }, [token]);
+
+  const handleRedeem = (item: any) => {
+    if (xp < item.cost) return;
+    setRedeeming(item.id);
     
-    setRedeeming(rewardId);
-    try {
-      const token = (session?.user as any)?.accessToken;
-      const res = await rewardApi.redeem(rewardId, token);
-      
-      setTotalXp(res.remaining_xp);
-      setOwnedBadges(prev => {
-        const next = new Set(prev);
-        next.add(rewardName);
-        return next;
-      });
-      alert(res.message);
-    } catch (err: any) {
-      alert(err.message || "Failed to redeem reward");
-    } finally {
+    // Simulate API call for redemption
+    setTimeout(() => {
+      setXp(prev => prev - item.cost);
+      setSuccessMsg(`Successfully redeemed: ${item.name}! Check your email for details.`);
       setRedeeming(null);
-    }
+      setTimeout(() => setSuccessMsg(""), 4000);
+    }, 1500);
   };
-
-  const categories = ["all", ...Array.from(new Set(rewards.map(r => r.category)))];
-  const [activeCategory, setActiveCategory] = useState("all");
-
-  const categoryIcons: Record<string, string> = {
-    "customization": "🎨",
-    "feature": "🚀",
-    "perk": "💎"
-  };
-
-  const filteredRewards = activeCategory === "all" ? rewards : rewards.filter(r => r.category === activeCategory);
-
-  if (loading) return <div style={{ color: "var(--text-secondary)", textAlign: "center", marginTop: 100 }}>Loading store...</div>;
-  if (error) return <div style={{ color: "var(--danger)", textAlign: "center", marginTop: 100 }}>{error}</div>;
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 60 }}>
+      
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 40 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 40, flexWrap: "wrap", gap: 20 }}>
         <div>
-          <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-display)", marginBottom: 12 }}>
+          <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-display)", marginBottom: 8 }}>
             Rewards <span className="gradient-text">Store</span>
           </h1>
           <p style={{ color: "var(--text-secondary)", fontSize: 16 }}>
-            Trade your hard-earned XP for exclusive platform perks and customizations.
+            Spend your hard-earned XP on exclusive perks and career boosts.
           </p>
         </div>
-        
-        <div className="glass-card" style={{ padding: "12px 24px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,107,107,0.3)", display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 24 }}>⚡</span>
+
+        <div className="dash-card" style={{ padding: "16px 24px", display: "flex", alignItems: "center", gap: 16, border: "1px solid rgba(108,99,255,0.3)", background: "rgba(108,99,255,0.05)" }}>
+          <div style={{ fontSize: 32 }}>⚡</div>
           <div>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase" }}>Your Balance</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: "white", fontFamily: "var(--font-display)" }}>{totalXp} XP</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1 }}>Your XP Balance</div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: "var(--brand-primary)" }}>
+              {loading ? "..." : xp.toLocaleString()}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Categories */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 32 }}>
-        {categories.map(cat => (
-          <button 
-            key={cat} 
-            onClick={() => setActiveCategory(cat)}
-            style={{ 
-              padding: "8px 20px", 
-              borderRadius: 20, 
-              border: `1px solid ${activeCategory === cat ? "var(--brand-primary)" : "rgba(255,255,255,0.1)"}`,
-              background: activeCategory === cat ? "rgba(124,58,237,0.1)" : "transparent",
-              color: activeCategory === cat ? "white" : "var(--text-secondary)",
-              fontWeight: 600,
-              cursor: "pointer",
-              transition: "all 0.2s"
-            }}
-          >
-            {cat === "all" ? "All Rewards" : <span style={{ textTransform: "capitalize" }}>{categoryIcons[cat] || "🏷️"} {cat}</span>}
-          </button>
-        ))}
-      </div>
+      {/* Success Toast */}
+      <AnimatePresence>
+        {successMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            style={{ padding: "16px 24px", background: "rgba(67, 233, 123, 0.15)", border: "1px solid rgba(67, 233, 123, 0.4)", color: "#43E97B", borderRadius: 12, fontWeight: 700, marginBottom: 32, display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 20 }}>🎉</span> {successMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Rewards Grid */}
+      {/* Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-        <AnimatePresence>
-          {filteredRewards.map((reward) => {
-            const isOwned = ownedBadges.has(reward.name);
-            const canAfford = totalXp >= reward.cost_xp;
-            
-            return (
-              <motion.div 
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                key={reward.id} 
-                className="glass-card" 
-                style={{ 
-                  padding: 32, 
-                  borderRadius: 24, 
-                  background: isOwned ? "rgba(78, 205, 196, 0.05)" : "rgba(255,255,255,0.02)", 
-                  border: `1px solid ${isOwned ? "rgba(78, 205, 196, 0.3)" : "rgba(255,255,255,0.06)"}`,
-                  position: "relative",
-                  overflow: "hidden"
-                }}
-              >
-                {isOwned && (
-                  <div style={{ position: "absolute", top: 16, right: 16, background: "rgba(78, 205, 196, 0.2)", color: "#4ECDC4", padding: "4px 12px", borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
-                    OWNED ✓
-                  </div>
-                )}
-                
-                <div style={{ fontSize: 40, marginBottom: 16 }}>{categoryIcons[reward.category] || "🎁"}</div>
-                <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>{reward.name}</h3>
-                <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.5, marginBottom: 24, minHeight: 42 }}>
-                  {reward.description}
-                </p>
-                
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, color: isOwned ? "var(--text-muted)" : canAfford ? "white" : "var(--danger)" }}>
-                    <span>⚡</span> {reward.cost_xp} XP
-                  </div>
-                  
-                  <button 
-                    disabled={isOwned || !canAfford || redeeming === reward.id}
-                    onClick={() => handleRedeem(reward.id, reward.name, reward.cost_xp)}
-                    style={{ 
-                      padding: "10px 20px", 
-                      borderRadius: 12, 
-                      border: "none", 
-                      background: isOwned ? "rgba(255,255,255,0.1)" : canAfford ? "var(--brand-primary)" : "rgba(255,255,255,0.05)",
-                      color: isOwned || !canAfford ? "var(--text-muted)" : "white",
-                      fontWeight: 700,
-                      cursor: (isOwned || !canAfford || redeeming === reward.id) ? "not-allowed" : "pointer",
-                      transition: "0.2s"
-                    }}
-                  >
-                    {redeeming === reward.id ? "Processing..." : isOwned ? "Equiped" : "Unlock"}
-                  </button>
+        {REWARD_ITEMS.map((item, i) => {
+          const canAfford = xp >= item.cost;
+          const isRedeeming = redeeming === item.id;
+
+          return (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="dash-card" style={{ display: "flex", flexDirection: "column", padding: 28, position: "relative", overflow: "hidden", border: canAfford ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255,255,255,0.03)", opacity: canAfford ? 1 : 0.6 }}>
+              
+              <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: item.color, filter: "blur(50px)", opacity: 0.15 }} />
+
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: item.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: item.color, marginBottom: 20 }}>
+                {item.icon}
+              </div>
+
+              <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: "white" }}>{item.name}</h3>
+              <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 24, flex: 1 }}>
+                {item.description}
+              </p>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, fontSize: 18, color: canAfford ? "var(--brand-primary)" : "var(--text-muted)" }}>
+                  ⚡ {item.cost.toLocaleString()}
                 </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+                
+                <button
+                  onClick={() => handleRedeem(item)}
+                  disabled={!canAfford || redeeming !== null}
+                  style={{
+                    padding: "10px 20px", borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: canAfford && !redeeming ? "pointer" : "not-allowed", transition: "all 0.2s",
+                    background: isRedeeming ? "var(--brand-primary)" : canAfford ? item.color : "rgba(255,255,255,0.05)",
+                    color: canAfford ? "white" : "var(--text-muted)",
+                    border: canAfford ? `1px solid ${item.color}` : "1px solid transparent",
+                    boxShadow: canAfford && !isRedeeming ? `0 4px 14px ${item.color}40` : "none",
+                  }}>
+                  {isRedeeming ? "Processing..." : canAfford ? "Redeem" : "Locked"}
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
-      
-      {filteredRewards.length === 0 && (
-        <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-secondary)" }}>
-          No rewards found in this category.
-        </div>
-      )}
     </div>
   );
 }

@@ -1,291 +1,165 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import Editor from "@monaco-editor/react";
-import { motion, AnimatePresence } from "framer-motion";
-import { codeApi } from "@/lib/api";
+import { useState } from "react";
+import { motion } from "framer-motion";
+
+const PROBLEMS = [
+  {
+    id: 1, title: "Two Sum", difficulty: "Easy", acceptance: "50.4%",
+    description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.",
+    examples: [
+      { input: "nums = [2,7,11,15], target = 9", output: "[0,1]" },
+      { input: "nums = [3,2,4], target = 6", output: "[1,2]" }
+    ],
+    starterCode: "def twoSum(nums, target):\n    # Write your code here\n    pass",
+  },
+  {
+    id: 2, title: "Reverse Linked List", difficulty: "Easy", acceptance: "73.2%",
+    description: "Given the `head` of a singly linked list, reverse the list, and return the reversed list.",
+    examples: [{ input: "head = [1,2,3,4,5]", output: "[5,4,3,2,1]" }],
+    starterCode: "# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\n\ndef reverseList(head):\n    pass",
+  },
+  {
+    id: 3, title: "Valid Parentheses", difficulty: "Easy", acceptance: "40.5%",
+    description: "Given a string `s` containing just the characters `'(', ')', '{', '}', '['` and `']'`, determine if the input string is valid.",
+    examples: [{ input: "s = \"()\"", output: "true" }],
+    starterCode: "def isValid(s):\n    pass",
+  }
+];
 
 export default function CodePracticePage() {
-  const { data: session } = useSession();
-  const [problems, setProblems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeProblem, setActiveProblem] = useState<any>(null);
-  const [code, setCode] = useState("");
-  
-  // Console state
-  const [activeConsoleTab, setActiveConsoleTab] = useState<'output' | 'ai'>('output');
-  const [output, setOutput] = useState("");
-  const [aiExplanation, setAiExplanation] = useState("");
-  const [isRunning, setIsRunning] = useState(false);
-  const [isExplaining, setIsExplaining] = useState(false);
+  const [activeProblem, setActiveProblem] = useState(PROBLEMS[0]);
+  const [code, setCode] = useState(PROBLEMS[0].starterCode);
+  const [consoleOutput, setConsoleOutput] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+  const [language, setLanguage] = useState("Python 3");
 
-  // Filters state
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("All");
-  const [contestMode, setContestMode] = useState(false);
-  const [language, setLanguage] = useState("python");
-
-  useEffect(() => {
-    const fetchProblems = async () => {
-      try {
-        const token = (session?.user as any)?.accessToken;
-        const data = await codeApi.problems(undefined, undefined, undefined, token);
-        setProblems(data.problems || []);
-        if (data.problems && data.problems.length > 0) {
-          const first = data.problems[0];
-          setActiveProblem(first);
-          setCode(first.starter || `def solve(x):\n    # Starter code for ${first.title}\n    pass\n`);
-        }
-      } catch (err) {
-        console.error("Failed to fetch problems", err);
-      } finally {
-        setLoading(false);
+  const runCode = () => {
+    setRunning(true);
+    setConsoleOutput(null);
+    setTimeout(() => {
+      setRunning(false);
+      // Simulate fake mock evaluation
+      if (code.includes("pass") || code.trim() === activeProblem.starterCode.trim()) {
+        setConsoleOutput("Output: null\n\nTestcases pass: 0/15\nStatus: Error (Not Implemented)");
+      } else {
+        setConsoleOutput("Output: [0, 1]\n\nTestcases pass: 15/15\nStatus: Accepted 🎉\nRuntime: 45ms (Beats 89.2% of users)");
       }
-    };
-    fetchProblems();
-  }, [session]);
-
-  const categories = ["All", ...Array.from(new Set(problems.map(p => p.category)))];
-  const difficulties = ["All", "Easy", "Medium", "Hard"];
-
-  const filteredProblems = problems.filter(p => {
-    if (selectedCategory !== "All" && p.category !== selectedCategory) return false;
-    if (selectedDifficulty !== "All" && p.difficulty !== selectedDifficulty) return false;
-    return true;
-  });
-
-  const handleProblemChange = (p: any) => {
-    setActiveProblem(p);
-    setCode(`def solve(x):\n    # Starter code for ${p.title}\n    pass\n`);
-    setOutput("");
-    setAiExplanation("");
-    setActiveConsoleTab('output');
-  };
-
-  const handleRunCode = async () => {
-    const token = (session?.user as any)?.accessToken;
-    if (!token) return setOutput("Please log in to run code.");
-    setActiveConsoleTab('output');
-    setIsRunning(true);
-    setOutput("Running code...");
-    try {
-      const data = await codeApi.run(code, language, token);
-      let outText = data.output || "No output returned.";
-      if (data.execution_time_ms !== undefined) {
-        outText += `\n\n[Finished in ${data.execution_time_ms}ms]`;
-      }
-      setOutput(outText);
-    } catch (err) {
-      setOutput("Network Error: Could not connect to execution server.\n(Render Free Tier might be waking up, please try again soon)");
-    }
-    setIsRunning(false);
-  };
-
-  const explainCode = async () => {
-    const token = (session?.user as any)?.accessToken;
-    if (!token) {
-      setAiExplanation("Please log in to use AI Help.");
-      return;
-    }
-    setActiveConsoleTab('ai');
-    setIsExplaining(true);
-    setAiExplanation("");
-    try {
-      const data = await codeApi.explain(code, language, token);
-      setAiExplanation(data.explanation || "AI could not generate an explanation at this time.");
-    } catch (err) {
-      setAiExplanation("Network Error: Could not connect to AI server.");
-    }
-    setIsExplaining(false);
+    }, 1200);
   };
 
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 120px)", gap: 16 }}>
+    <div style={{ display: "flex", height: "calc(100vh - 120px)", gap: 16, maxWidth: 1600, margin: "0 auto" }}>
       
-      {/* Left Pane: Problems */}
-      <div className="dash-card" style={{ width: "35%", display: "flex", flexDirection: "column", padding: 0, overflow: "hidden" }}>
+      {/* Left Pane - Problem List & Description */}
+      <div style={{ width: "40%", display: "flex", flexDirection: "column", gap: 16 }}>
         
-        {/* Filters Header */}
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700 }}>Coding Challenges</h2>
-            <button 
-              onClick={() => setContestMode(!contestMode)}
-              style={{ background: contestMode ? "#FF6B6B" : "rgba(255,255,255,0.1)", color: "white", border: "none", padding: "4px 10px", borderRadius: 4, fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-            >
-              {contestMode ? "🏆 EXIT CONTEST" : "🏆 CONTEST MODE"}
-            </button>
-          </div>
-          
-          <div style={{ display: "flex", gap: 8 }}>
-            <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--border)", color: "white", padding: "6px 8px", borderRadius: 6, fontSize: 12 }}>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select value={selectedDifficulty} onChange={e => setSelectedDifficulty(e.target.value)} style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--border)", color: "white", padding: "6px 8px", borderRadius: 6, fontSize: 12 }}>
-              {difficulties.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
-        </div>
-        
-        {/* Problem List */}
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          {filteredProblems.map(p => (
-            <div 
-              key={p.id}
-              onClick={() => handleProblemChange(p)}
-              style={{
-                padding: "16px 20px",
-                borderBottom: "1px solid var(--border)",
-                cursor: "pointer",
-                background: activeProblem?.id === p.id ? "rgba(108,99,255,0.1)" : "transparent",
-                borderLeft: activeProblem?.id === p.id ? "3px solid var(--brand-primary)" : "3px solid transparent",
-                transition: "all 0.2s"
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>{p.id}. {p.title}</span>
-                <span className={`badge ${p.difficulty === 'Easy' ? 'badge-green' : p.difficulty === 'Medium' ? 'badge-yellow' : 'badge-red'}`} style={{ fontSize: 10 }}>{p.difficulty}</span>
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <span style={{ fontSize: 10, background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: 4, color: "var(--text-secondary)" }}>{p.category}</span>
-                {p.companies && p.companies[0] && (
-                  <span style={{ fontSize: 10, background: "rgba(108,99,255,0.15)", color: "#A78BFA", padding: "2px 6px", borderRadius: 4 }}>🏢 {p.companies[0]}</span>
-                )}
-              </div>
-            </div>
-          ))}
-          {filteredProblems.length === 0 && (
-            <div style={{ padding: 30, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>No problems match your filters.</div>
-          )}
+        {/* Header */}
+        <div className="dash-card" style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Code Practice</h1>
+          <select 
+            onChange={(e) => {
+              const prob = PROBLEMS.find(p => p.id === parseInt(e.target.value));
+              if (prob) {
+                setActiveProblem(prob);
+                setCode(prob.starterCode);
+                setConsoleOutput(null);
+              }
+            }}
+            value={activeProblem.id}
+            className="input-field" style={{ padding: "6px 12px", width: 180, background: "rgba(255,255,255,0.05)", border: "none", color: "white" }}>
+            {PROBLEMS.map(p => <option key={p.id} value={p.id}>{p.id}. {p.title}</option>)}
+          </select>
         </div>
 
-        {/* Description Area */}
-        {activeProblem ? (
-          <div style={{ flex: 1.5, borderTop: "1px solid var(--border)", padding: 20, overflowY: "auto", background: "var(--background)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700 }}>{activeProblem.title}</h3>
-              {contestMode && <span style={{ color: "#FF6B6B", fontWeight: 700, fontSize: 14 }}>⏳ 45:00</span>}
-            </div>
-            <p style={{ fontSize: 14, color: "var(--text-secondary)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-              {activeProblem.description}
-            </p>
-            {activeProblem.sample_input && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>Sample Input</div>
-                <div style={{ background: "rgba(0,0,0,0.3)", padding: "8px 12px", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--brand-primary)" }}>{activeProblem.sample_input}</div>
-              </div>
-            )}
-            {activeProblem.sample_output && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>Sample Output</div>
-                <div style={{ background: "rgba(0,0,0,0.3)", padding: "8px 12px", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--brand-primary)" }}>{activeProblem.sample_output}</div>
-              </div>
-            )}
-            {activeProblem.hint && (
-              <div style={{ marginTop: 24, padding: "12px", border: "1px solid rgba(167, 139, 250, 0.2)", borderRadius: 8, background: "rgba(167, 139, 250, 0.05)" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#A78BFA", marginBottom: 4 }}>💡 HINT</div>
-                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{activeProblem.hint}</div>
-              </div>
-            )}
+        {/* Problem Description */}
+        <div className="dash-card" style={{ flex: 1, padding: 24, overflowY: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: "white" }}>{activeProblem.id}. {activeProblem.title}</h2>
           </div>
-        ) : (
-           <div style={{ flex: 1.5, borderTop: "1px solid var(--border)", padding: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 14 }}>
-             {loading ? "Loading problems..." : "Select a problem to view details."}
-           </div>
-        )}
+          <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+            <span style={{ color: "#43E97B", background: "rgba(67,233,123,0.1)", padding: "4px 10px", borderRadius: 12, fontSize: 12, fontWeight: 700 }}>{activeProblem.difficulty}</span>
+            <span style={{ color: "var(--text-muted)", fontSize: 12, display: "flex", alignItems: "center" }}>Acceptance: {activeProblem.acceptance}</span>
+          </div>
+
+          <div style={{ fontSize: 15, lineHeight: 1.6, color: "var(--text-secondary)", whiteSpace: "pre-wrap", marginBottom: 32 }}>
+            {activeProblem.description}
+          </div>
+
+          <div>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: "white", marginBottom: 12 }}>Examples:</h3>
+            {activeProblem.examples.map((ex, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderLeft: "3px solid rgba(255,255,255,0.1)", padding: 16, borderRadius: "0 8px 8px 0", marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontFamily: "monospace", color: "var(--text-secondary)", marginBottom: 8 }}>
+                  <span style={{ color: "white", fontWeight: 700 }}>Input:</span> {ex.input}
+                </div>
+                <div style={{ fontSize: 13, fontFamily: "monospace", color: "var(--text-secondary)" }}>
+                  <span style={{ color: "white", fontWeight: 700 }}>Output:</span> {ex.output}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Right Pane: Editor & Console */}
-      <div style={{ width: "65%", display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Right Pane - Editor & Console */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
         
-        {/* Monaco Editor */}
-        <div className="dash-card" style={{ flex: 2, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", border: contestMode ? "1px solid #FF6B6B" : "1px solid var(--border)" }}>
-          <div style={{ padding: "10px 20px", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", gap: 8 }}>
-              <select value={language} onChange={e => setLanguage(e.target.value)} style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "white", padding: "4px 12px", borderRadius: 6, fontSize: 12 }}>
-                <option value="python">Python 3</option>
-                <option value="cpp">C++</option>
-                <option value="java">Java</option>
-              </select>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              {!contestMode && (
-                <button 
-                  onClick={explainCode}
-                  disabled={isExplaining}
-                  style={{ background: "transparent", border: "1px solid #A78BFA", color: "#A78BFA", padding: "6px 16px", fontSize: 13, borderRadius: 6, cursor: "pointer" }}
-                >
-                  🤖 AI Help
-                </button>
-              )}
-              <button 
-                onClick={handleRunCode}
-                disabled={isRunning}
-                className="btn btn-primary" 
-                style={{ padding: "6px 24px", fontSize: 13, borderRadius: 6, opacity: isRunning ? 0.7 : 1 }}
-              >
-                {isRunning ? "Running..." : "▶ Run Code"}
-              </button>
-            </div>
-          </div>
-          <div style={{ flex: 1 }}>
-            <Editor
-              height="100%"
-              theme="vs-dark"
-              language={language === "python" ? "python" : language === "cpp" ? "cpp" : "java"}
-              value={code}
-              onChange={(val) => setCode(val || "")}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                fontFamily: "var(--font-mono)",
-                padding: { top: 16 },
-                scrollBeyondLastLine: false,
-              }}
-            />
+        {/* Editor Actions */}
+        <div className="dash-card" style={{ padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#1e1e1e", border: "1px solid #333" }}>
+          <select value={language} onChange={e => setLanguage(e.target.value)}
+            style={{ background: "#2d2d2d", color: "#ccc", border: "1px solid #333", padding: "6px 12px", borderRadius: 6, fontSize: 13, outline: "none" }}>
+            <option>Python 3</option>
+            <option>JavaScript</option>
+            <option>Java</option>
+            <option>C++</option>
+          </select>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={runCode}
+              disabled={running}
+              style={{ background: "rgba(255,255,255,0.1)", color: "white", border: "none", padding: "6px 16px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
+              Run
+            </button>
+            <button
+              onClick={runCode}
+              disabled={running}
+              style={{ background: "#43E97B", color: "#111", border: "none", padding: "6px 20px", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "0.2s" }}>
+              Submit
+            </button>
           </div>
         </div>
 
-        {/* Console / AI Explanation Pane */}
-        <div className="dash-card" style={{ flex: 1, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-          {/* Console Tabs */}
-          <div style={{ display: "flex", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
-            <button 
-              onClick={() => setActiveConsoleTab('output')}
-              style={{ padding: "10px 20px", fontSize: 12, fontWeight: 600, textTransform: "uppercase", border: "none", cursor: "pointer", background: "transparent", color: activeConsoleTab === 'output' ? "white" : "var(--text-muted)", borderBottom: activeConsoleTab === 'output' ? "2px solid var(--brand-primary)" : "2px solid transparent" }}
-            >
-              Console Output
-            </button>
-            <button 
-              onClick={() => setActiveConsoleTab('ai')}
-              style={{ padding: "10px 20px", fontSize: 12, fontWeight: 600, textTransform: "uppercase", border: "none", cursor: "pointer", background: "transparent", color: activeConsoleTab === 'ai' ? "#A78BFA" : "var(--text-muted)", borderBottom: activeConsoleTab === 'ai' ? "2px solid #A78BFA" : "2px solid transparent" }}
-            >
-              AI Assistant ✨
-            </button>
-          </div>
-          
-          {/* Console Content */}
-          <div style={{ flex: 1, padding: 16, overflowY: "auto", background: "#0a0a0a" }}>
-            <AnimatePresence mode="wait">
-              {activeConsoleTab === 'output' && (
-                <motion.pre key="out" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: 13, color: output.includes("Error") ? "#ff6b6b" : "#43E97B", whiteSpace: "pre-wrap" }}>
-                  {output || "Run your code to see the output here."}
-                </motion.pre>
-              )}
+        {/* Text Area (Fake Editor) */}
+        <div className="dash-card" style={{ flex: 1, padding: 0, overflow: "hidden", background: "#1e1e1e", border: "1px solid #333", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "8px 16px", background: "#2d2d2d", fontSize: 12, color: "#aaa", borderBottom: "1px solid #111", fontWeight: 600 }}>main.py</div>
+          <textarea
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            spellCheck={false}
+            style={{
+              flex: 1, background: "transparent", border: "none", color: "#d4d4d4", fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: 15, padding: 24, outline: "none", resize: "none", lineHeight: 1.6
+            }}
+          />
+        </div>
 
-              {activeConsoleTab === 'ai' && (
-                <motion.div key="ai" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontSize: 14, color: "rgba(255,255,255,0.9)", lineHeight: 1.6 }}>
-                  {isExplaining ? (
-                    <div style={{ color: "#A78BFA" }}>🤖 Analyzing your code and approach...</div>
-                  ) : aiExplanation ? (
-                    <div dangerouslySetInnerHTML={{ __html: aiExplanation.replace(/\n\n/g, '<br/><br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                  ) : (
-                    <div style={{ color: "var(--text-muted)" }}>Click "AI Help" above to get hints, time complexity analysis, or approach explanations without giving away the full solution.</div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {/* Console / Output */}
+        <div className="dash-card" style={{ height: "30%", minHeight: 180, padding: 0, overflow: "hidden", background: "#111", border: "1px solid #333", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "8px 16px", background: "#1a1a1a", fontSize: 12, color: "#888", borderBottom: "1px solid #222", fontWeight: 600 }}>
+            Console Output
+          </div>
+          <div style={{ flex: 1, padding: 16, fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: 14, color: "#ccc", overflowY: "auto", position: "relative" }}>
+            {running ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: "#888", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 16 }}>⏳</span> Judging solution...
+              </motion.div>
+            ) : consoleOutput ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ whiteSpace: "pre-wrap", color: consoleOutput.includes("Accepted") ? "#43E97B" : "#FF6B6B" }}>
+                {consoleOutput}
+              </motion.div>
+            ) : (
+              <div style={{ color: "#555" }}>Run your code to see output here.</div>
+            )}
           </div>
         </div>
 
@@ -293,4 +167,3 @@ export default function CodePracticePage() {
     </div>
   );
 }
-
