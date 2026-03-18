@@ -8,12 +8,15 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     hashed_password: Optional[str] = None
     name: str = ""
+    bio: Optional[str] = None
+    skills: Optional[str] = None  # comma-separated
     avatar: Optional[str] = None
     role: str = "student"
     provider: str = "email"
     invite_code: Optional[str] = None
     referred_by: Optional[str] = None
     streak: int = 0
+    longest_streak: int = 0
     xp: int = 0
     level: int = 1
     last_activity_date: Optional[str] = None
@@ -171,4 +174,37 @@ class SavedStartupIdea(SQLModel, table=True):
     tech_stack: str = ""
     monetization: str = ""
     domain: str = ""
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Group(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    description: str = ""
+    join_code: str = Field(unique=True, index=True)
+    created_by: int = Field(foreign_key="user.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class GroupMember(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    group_id: int = Field(foreign_key="group.id", index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    user_name: str = ""
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class GroupMessage(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    group_id: int = Field(foreign_key="group.id", index=True)
+    user_id: int = Field(foreign_key="user.id")
+    user_name: str = ""
+    content: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class HackathonBookmark(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    hackathon_id: int = Field(foreign_key="hackathon.id", index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)

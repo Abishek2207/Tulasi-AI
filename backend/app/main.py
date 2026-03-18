@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 import time
 
-from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study
+from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups
 from app.core.database import init_db
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
@@ -120,6 +120,7 @@ app.include_router(admin.router,        prefix="/api/admin",        tags=["Admin
 app.include_router(activity.router,     prefix="/api/activity",     tags=["Activity & Streaks"])
 app.include_router(resume.router,       prefix="/api/resume",       tags=["Resume Builder"])
 app.include_router(study.router,        prefix="/api/study",        tags=["Study Rooms"])
+app.include_router(groups.router,       prefix="/api/groups",       tags=["Group Chat"])
 
 
 # ── WebSocket Router ───────────────────────────────────────────────

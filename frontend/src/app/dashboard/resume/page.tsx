@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { resumeApi } from "@/lib/api";
 
 export default function ResumeBuilderPage() {
   const { data: session } = useSession();
@@ -47,25 +48,17 @@ export default function ResumeBuilderPage() {
     setIsAnalyzing(true);
     setAtsScore(null);
     try {
-      const res = await fetch(`/api/resume/analyze-ats`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: personalInfo.name,
-          email: personalInfo.email,
-          phone: personalInfo.phone,
-          summary: personalInfo.summary,
-          skills: skills,
-          experience: JSON.stringify(experience),
-          education: JSON.stringify(education)
-        })
-      });
-      const data = await res.json();
+      const data = await resumeApi.analyze({
+        name: personalInfo.name,
+        email: personalInfo.email,
+        phone: personalInfo.phone,
+        location: "", // or personalInfo.location if added
+        summary: personalInfo.summary,
+        skills: skills,
+        experience: JSON.stringify(experience),
+        education: JSON.stringify(education)
+      }, token);
       setAtsScore(data.score || 0);
-      // We can also store feedback if we had a state for it
     } catch (err) {
       console.error("ATS Analysis failed", err);
     }

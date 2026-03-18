@@ -178,18 +178,24 @@ export const interviewApi = {
 // ─── Hackathons ──────────────────────────────────────────────────────────────
 
 export const hackathonApi = {
-  list: (tag?: string, status?: string) => {
+  list: (tag?: string, status?: string, token?: string) => {
     const params = new URLSearchParams();
     if (tag) params.append("tag", tag);
     if (status) params.append("status", status);
-    return request<{ hackathons: any[]; total: number }>(`/api/hackathons?${params.toString()}`);
+    return request<{ hackathons: any[]; total: number }>(`/api/hackathons?${params.toString()}`, {}, token);
   },
-  get: (id: number) => request<any>(`/api/hackathons/${id}`),
+  get: (id: number, token?: string) => request<any>(`/api/hackathons/${id}`, {}, token),
   create: (data: any, token: string) =>
     request<any>("/api/hackathons", {
       method: "POST",
       body: JSON.stringify(data),
     }, token),
+  bookmark: (id: number, token: string) =>
+    request<any>(`/api/hackathons/${id}/bookmark`, { method: "POST" }, token),
+  unbookmark: (id: number, token: string) =>
+    request<any>(`/api/hackathons/${id}/bookmark`, { method: "DELETE" }, token),
+  bookmarked: (token: string) =>
+    request<{ hackathons: any[] }>("/api/hackathons/bookmarked", {}, token),
 };
 
 // ─── Study Rooms ─────────────────────────────────────────────────────────────
@@ -239,7 +245,29 @@ export const startupApi = {
 
 export const certificateApi = {
   list: (token: string) => request<{ certificates: any[], milestones: any[] }>("/api/certificates/my", {}, token),
-  generate: (milestoneId: string, token: string) => request<{ message: string }>(`/api/certificates/generate/${milestoneId}`, { method: "POST" }, token)
+  generate: (milestoneId: string, token: string) => request<{ message: string }>(`/api/certificates/generate/${milestoneId}`, { method: "POST" }, token),
+  uploadFile: async (file: File, title: string, token: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("title", title);
+    const res = await fetchWithRetry(`${API_URL}/api/certificates/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Upload failed");
+    return res.json() as Promise<{ id: number; title: string; file_path: string }>;
+  },
+};
+
+// ─── Resume Builder ──────────────────────────────────────────────────────────
+
+export const resumeApi = {
+  analyze: (data: any, token: string) =>
+    request<{ score: number; feedback: string[] }>("/api/resume/analyze-ats", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token),
 };
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
@@ -252,8 +280,41 @@ export const healthCheck = () =>
 
 export const activityApi = {
   getStats: (token: string) => request<any>("/api/activity/stats", {}, token),
-  getLeaderboard: (token: string) => request<{ leaderboard: any[] }>("/api/activity/leaderboard", {}, token),
+  getLeaderboard: (token?: string) => request<{ leaderboard: any[] }>("/api/activity/leaderboard", {}, token),
   getAnalytics: (token: string) => request<{ time_series: any[], total_period_xp: number, total_period_problems: number }>("/api/activity/analytics", {}, token)
+};
+
+// ─── Profile ─────────────────────────────────────────────────────────────────
+
+export const profileApi = {
+  update: (data: { name?: string; bio?: string; skills?: string }, token: string) =>
+    request<{ message: string; user: any }>("/api/auth/profile", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token),
+};
+
+// ─── Group Chat ───────────────────────────────────────────────────────────────
+
+export const groupApi = {
+  list: (token: string) => request<{ groups: any[] }>("/api/groups", {}, token),
+  create: (name: string, description: string, token: string) =>
+    request<any>("/api/groups/create", {
+      method: "POST",
+      body: JSON.stringify({ name, description }),
+    }, token),
+  join: (join_code: string, token: string) =>
+    request<{ message: string; group: any }>("/api/groups/join", {
+      method: "POST",
+      body: JSON.stringify({ join_code }),
+    }, token),
+  getMessages: (groupId: number, token: string) =>
+    request<{ group_id: number; messages: any[] }>(`/api/groups/${groupId}/messages`, {}, token),
+  sendMessage: (groupId: number, content: string, token: string) =>
+    request<any>(`/api/groups/${groupId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    }, token),
 };
 
 // ─── Rewards ─────────────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 
-const BACKEND = "";
+import { interviewApi } from "@/lib/api";
 
 const ROLES = [
   "Software Engineer", "AI Engineer", "Data Scientist", "Backend Developer",
@@ -98,21 +98,14 @@ export default function InterviewPage() {
       const token = (session?.user as any)?.accessToken;
       if (!token) { setError("Please log in to start an interview."); setLoading(false); return; }
       
-      const res = await fetch(`${BACKEND}/api/interview/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ role, company, interview_type: interviewType, num_questions: numQuestions }),
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed to start");
+      const data = await interviewApi.start(role, company, interviewType, token);
       
       setSessionId(data.session_id);
       setCurrentQuestion(data.question);
       setQuestionNum(1);
       setPhase("active");
     } catch (e: any) {
-      setError(e.message || "Failed to start interview. The backend might be sleeping (takes ~50s to wake up). Please try again.");
+      setError(e.message || "Failed to start interview. The backend might be sleeping. Please try again.");
     } finally { setLoading(false); }
   };
 
@@ -121,20 +114,21 @@ export default function InterviewPage() {
     setLoading(true); setError("");
     try {
       const token = (session?.user as any)?.accessToken;
-      const res = await fetch(`${BACKEND}/api/interview/answer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ session_id: sessionId, answer }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Error");
+      if (!token) throw new Error("Please log in.");
+      const data = await interviewApi.answer(answer, sessionId, token);
+      
       setAnswer("");
-      if (data.status === "completed") {
-        setFeedback(data.feedback);
+      if ((data as any).status === "completed") {
+        setFeedback((data as any).feedback);
         setPhase("feedback");
       } else {
-        setCurrentQuestion(data.question);
-        setQuestionNum(data.question_number || questionNum + 1);
+        setCurrentQuestion(data.next_question || "End of Interview");
+        if (data.next_question) {
+           setQuestionNum(prev => prev + 1);
+        } else {
+           // Handle end of interview if next_question is missing
+           setPhase("feedback");
+        }
       }
     } catch (e: any) {
       setError(e.message || "Error submitting answer. The backend might be sleeping. Please try again.");

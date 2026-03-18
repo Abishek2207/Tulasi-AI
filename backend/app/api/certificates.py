@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import Session, select
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime
+import os
+import shutil
+import uuid
 
 from app.core.database import get_session
 from app.api.auth import get_current_user
@@ -108,6 +111,50 @@ def upload_certificate_meta(
     db.commit()
     db.refresh(cert)
     return {"message": "Certificate recorded", "id": cert.id}
+
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "certificates")
+
+@router.post("/upload")
+async def upload_certificate_file(
+    file: UploadFile = File(...),
+    title: str = "",
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload a PDF or image certificate file."""
+    allowed_types = {
+        "application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"
+    }
+    if file.content_type not in allowed_types:
+        raise HTTPException(400, f"Unsupported file type: {file.content_type}. Allowed: PDF, PNG, JPG, WEBP")
+
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "pdf"
+    filename = f"{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    cert_title = title.strip() or file.filename or "Uploaded Certificate"
+    cert = Certificate(
+        user_id=current_user.id,
+        title=cert_title,
+        issuer="External / Uploaded",
+        cert_type="upload",
+        file_path=f"data/certificates/{filename}",
+    )
+    db.add(cert)
+    db.commit()
+    db.refresh(cert)
+
+    return {
+        "message": "Certificate uploaded successfully!",
+        "id": cert.id,
+        "title": cert.title,
+        "file_path": cert.file_path,
+    }
 
 
 @router.post("/generate/{milestone_id}")
