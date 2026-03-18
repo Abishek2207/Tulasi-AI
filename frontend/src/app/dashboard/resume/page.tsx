@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { resumeApi } from "@/lib/api";
+import Link from "next/link";
 
 export default function ResumeBuilderPage() {
   const { data: session } = useSession();
@@ -158,13 +159,20 @@ export default function ResumeBuilderPage() {
       `}} />
 
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-display)", marginBottom: 8 }}>
-          AI Resume <span className="gradient-text">Optimizer</span>
-        </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 16 }}>
-          Paste your resume and target job description. Our AI will extract missing keywords and fully rewrite your resume to beat ATS systems.
-        </p>
+      <div style={{ marginBottom: 32, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-display)", marginBottom: 8 }}>
+            AI Resume <span className="gradient-text">Optimizer</span>
+          </h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: 16 }}>
+            Paste your resume and target job description. Our AI will extract missing keywords and fully rewrite your resume to beat ATS systems.
+          </p>
+        </div>
+        <Link href="/dashboard/resume/history" style={{ textDecoration: "none" }}>
+          <button className="btn-secondary" style={{ padding: "10px 20px", display: "flex", alignItems: "center", gap: 8 }}>
+            📜 View History
+          </button>
+        </Link>
       </div>
 
       <AnimatePresence>

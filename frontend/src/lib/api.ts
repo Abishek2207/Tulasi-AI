@@ -268,6 +268,11 @@ export const resumeApi = {
       method: "POST",
       body: JSON.stringify(data),
     }, token),
+  
+  getHistory: (token: string) =>
+    request<any[]>("/api/resume/history", {
+      method: "GET",
+    }, token),
 };
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
