@@ -50,9 +50,9 @@ services:
     healthCheckPath: /
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://tulasi-api.onrender.com
+        value: https://tulasi-ai-soda.onrender.com
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://tulasi-api.onrender.com
+        value: https://tulasi-ai-soda.onrender.com
       - key: NEXTAUTH_URL
         sync: false
       - key: NEXTAUTH_SECRET
