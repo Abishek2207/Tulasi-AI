@@ -96,6 +96,32 @@ export default function ResumeBuilderPage() {
     }
   };
 
+  const parseSections = (text: string) => {
+    const sectionHeaders = ["SUMMARY", "EXPERIENCE", "SKILLS", "PROJECTS", "EDUCATION", "CERTIFICATIONS"];
+    const lines = text.split("\n");
+    const sections: { title: string; lines: string[] }[] = [];
+    let current: { title: string; lines: string[] } | null = null;
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const isHeader = sectionHeaders.some(h => trimmed.toUpperCase().startsWith(h));
+      if (isHeader) {
+        if (current) sections.push(current);
+        current = { title: trimmed, lines: [] };
+      } else if (current) {
+        if (trimmed) current.lines.push(trimmed);
+      } else {
+        // Lines before first header (candidate name etc)
+        if (!sections.length) {
+          if (!current) current = { title: "", lines: [] };
+          if (trimmed) current.lines.push(trimmed);
+        }
+      }
+    }
+    if (current) sections.push(current);
+    return sections;
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -103,13 +129,22 @@ export default function ResumeBuilderPage() {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto", paddingBottom: 60, height: "100%", display: "flex", flexDirection: "column" }}>
       
-      {/* Hide elements during print */}
+      {/* Print / PDF Styles */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          body * { visibility: hidden; }
-          #print-section, #print-section * { visibility: visible; }
-          #print-section { position: absolute; left: 0; top: 0; width: 100%; white-space: pre-wrap; font-family: serif; color: black; background: white; padding: 40px; }
+          @page { size: A4; margin: 18mm 20mm; }
+          body * { visibility: hidden !important; }
+          #pdf-preview, #pdf-preview * { visibility: visible !important; }
+          #pdf-preview {
+            position: fixed; inset: 0;
+            background: white !important;
+            padding: 0 !important;
+            font-family: 'Georgia', serif !important;
+            color: #1a1a1a !important;
+          }
         }
+        #pdf-preview { display: none; }
+        @media print { #pdf-preview { display: block !important; } }
       `}} />
 
       {/* Header */}
@@ -390,7 +425,6 @@ export default function ResumeBuilderPage() {
                   <span>✨</span> {documentType === "Resume" ? "Fully Rewritten Resume" : "Generated Cover Letter"}
                 </h3>
                 <textarea 
-                  id="print-section"
                   value={result.improved_resume}
                   onChange={(e) => setResult({ ...result, improved_resume: e.target.value })}
                   className="input-field"
@@ -403,6 +437,57 @@ export default function ResumeBuilderPage() {
 
         </div>
       </div>
+
+      {/* ─── Hidden PDF Preview (only visible on print) ─────────────────── */}
+      {result && (
+        <div id="pdf-preview" style={{
+          position: "fixed", top: 0, left: 0,
+          width: "100%", height: "100%",
+          background: "white",
+          fontFamily: "'Georgia', serif",
+          color: "#1a1a1a",
+          padding: "36px 48px",
+          boxSizing: "border-box",
+        }}>
+          {/* Document Title */}
+          <div style={{ borderBottom: "3px solid #1a1a1a", paddingBottom: 16, marginBottom: 24 }}>
+            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: -0.5 }}>
+              {documentType === "Cover Letter" ? "✉ Cover Letter" : "📄 Resume"}
+            </div>
+            <div style={{ fontSize: 13, color: "#555", marginTop: 4 }}>Generated with TulasiAI · ATS Score: {result.ats_score}%</div>
+          </div>
+
+          {/* Sections */}
+          {parseSections(result.improved_resume).map((section, i) => (
+            <div key={i} style={{ marginBottom: 20 }}>
+              {section.title && (
+                <div style={{
+                  fontSize: 13, fontWeight: 700, letterSpacing: 2,
+                  textTransform: "uppercase", color: "#333",
+                  borderBottom: "1px solid #ccc", paddingBottom: 4, marginBottom: 10
+                }}>
+                  {section.title}
+                </div>
+              )}
+              {section.lines.map((line, j) => (
+                <div key={j} style={{ fontSize: 12, lineHeight: 1.8, color: "#222", marginBottom: 2 }}>
+                  {line.startsWith("-") || line.startsWith("•") ? (
+                    <span style={{ display: "flex", gap: 6 }}>
+                      <span style={{ minWidth: 12 }}>•</span>
+                      <span>{line.replace(/^[-•]\s*/, "")}</span>
+                    </span>
+                  ) : line}
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {/* Footer */}
+          <div style={{ marginTop: 40, borderTop: "1px solid #eee", paddingTop: 12, fontSize: 10, color: "#aaa", textAlign: "center" }}>
+            Generated by TulasiAI · {new Date().toLocaleDateString()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
