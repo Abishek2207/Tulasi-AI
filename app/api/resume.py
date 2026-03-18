@@ -4,63 +4,61 @@ from app.core.ai_router import get_ai_response
 
 router = APIRouter()
 
-class ResumeData(BaseModel):
-    name: str = ""
-    email: str = ""
-    phone: str = ""
-    location: str = ""
-    summary: str = ""
-    skills: str = ""
-    experience: str = ""
-    education: str = ""
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import List
+from app.core.ai_router import get_ai_response
 
-@router.post("/analyze-ats")
-def analyze_ats(data: ResumeData):
-    resume_text = f"""
-Name: {data.name}
-Email: {data.email}
-Phone: {data.phone}
-Location: {data.location}
-Summary: {data.summary}
-Skills: {data.skills}
-Experience: {data.experience}
-Education: {data.education}
-""".strip()
-    
-    prompt = f"""Analyze this resume for ATS compatibility and give a score from 0-100.
-            
-Resume:
-{resume_text}
+router = APIRouter()
 
-Respond STRICTLY in JSON format:
-{{"score": 82, "feedback": ["✅ Good contact info", "⚠️ Add quantified achievements", "✅ Strong skills section", "⚠️ Include LinkedIn URL"]}}"""
+class ImproveRequest(BaseModel):
+    resume_text: str
+    job_description: str
+
+@router.post("/improve")
+def improve_resume(data: ImproveRequest):
+    if not data.resume_text.strip() or not data.job_description.strip():
+        raise HTTPException(status_code=400, detail="Missing resume text or job description")
+
+    prompt = f"""You are an elite Tech Recruiter and ATS Optimization Expert.
     
-    response_text = get_ai_response(prompt, force_model="complex_reasoning")
+Analyze this resume against the target job description. Generate a highly optimized, fully rewritten version of the resume that bypasses ATS filters while remaining truthful. Extract missing keywords, calculate a match score (0-100), and give actionable feedback.
+
+TARGET JOB DESCRIPTION:
+{data.job_description}
+
+CURRENT RESUME:
+{data.resume_text}
+
+Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
+{{
+  "ats_score": 85,
+  "feedback": ["Use stronger action verbs", "Quantify revenue impact"],
+  "missing_keywords": ["Python", "AWS", "Agile"],
+  "improved_resume": "YOUR FULLY REWRITTEN AND WELL-FORMATTED RESUME TEXT HERE. Use neat bullet points, strong action verbs, and quantifiable metrics where appropriate."
+}}"""
+
+    response_text = get_ai_response(prompt, force_model="gemini-2.5-flash")
     
-    if "API key" not in response_text:
-        try:
-            import json, re
-            match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if match:
-                result = json.loads(match.group())
-                return result
-        except Exception as e:
-            print(f"JSON Parsing error in resume analysis: {e}")
-    
-    # Fallback scoring
-    score = 50
-    feedback = []
-    
-    if data.name: score += 5; feedback.append("✅ Name included")
-    if data.email: score += 5; feedback.append("✅ Email included")
-    if data.phone: score += 3; feedback.append("✅ Phone included")
-    if data.summary and len(data.summary) > 50: score += 10; feedback.append("✅ Professional summary present")
-    else: feedback.append("⚠️ Add a strong professional summary")
-    if data.skills: score += 10; feedback.append("✅ Skills section present")
-    if data.experience: score += 12; feedback.append("✅ Work experience included")
-    if data.education: score += 5; feedback.append("✅ Education included")
-    if not data.phone: feedback.append("⚠️ Add phone number")
-    feedback.append("⚠️ Consider adding LinkedIn/GitHub URLs")
-    feedback.append("💡 Use action verbs: 'Developed', 'Led', 'Improved'")
-    
-    return {"score": min(score, 95), "feedback": feedback}
+    # Try to parse JSON from the AI response
+    try:
+        import json, re
+        match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        if match:
+            result = json.loads(match.group())
+            return {
+                "ats_score": result.get("ats_score", 50),
+                "feedback": result.get("feedback", ["Consider adding more metrics."]),
+                "missing_keywords": result.get("missing_keywords", []),
+                "improved_resume": result.get("improved_resume", data.resume_text),
+            }
+    except Exception as e:
+        print(f"JSON Parsing error in resume analysis: {e}")
+        
+    # Fallback response if the AI fails or returns malformed text
+    return {
+        "ats_score": 55,
+        "feedback": ["The AI encountered an error returning feedback. Please try formatting your resume text more clearly.", "Ensure your API key is correctly configured."],
+        "missing_keywords": ["Error parsing keywords"],
+        "improved_resume": data.resume_text
+    }
