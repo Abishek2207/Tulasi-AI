@@ -11,6 +11,7 @@ export default function ResumeBuilderPage() {
 
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [mode, setMode] = useState("ATS-Optimized");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ 
     ats_score: number; 
@@ -37,7 +38,8 @@ export default function ResumeBuilderPage() {
       if (!token) throw new Error("Unauthorized");
       const data = await resumeApi.improve({ 
         resume_text: resumeText, 
-        job_description: jobDescription 
+        job_description: jobDescription,
+        mode: mode
       }, token);
       
       setResult(data);
@@ -96,6 +98,37 @@ export default function ResumeBuilderPage() {
         {/* Left Column - Inputs */}
         <div style={{ flex: "1 1 450px", display: "flex", flexDirection: "column", gap: 20 }}>
           
+          <div className="dash-card" style={{ flex: 0, display: "flex", flexDirection: "column", padding: 24 }}>
+            <label style={{ fontSize: 14, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 12, display: "block", textTransform: "uppercase", letterSpacing: 1 }}>
+              Target AI Tone
+            </label>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", background: "rgba(0,0,0,0.3)", padding: 6, borderRadius: 12 }}>
+              {["ATS-Optimized", "Professional", "Creative"].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  style={{
+                    flex: 1, 
+                    padding: "10px", 
+                    fontSize: 13, 
+                    fontWeight: 600, 
+                    borderRadius: 8, 
+                    background: mode === m ? "var(--brand-primary)" : "transparent",
+                    color: mode === m ? "white" : "var(--text-secondary)",
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  {m === "ATS-Optimized" && "🤖 "}
+                  {m === "Professional" && "👔 "}
+                  {m === "Creative" && "🎨 "}
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 24 }}>
             <label style={{ fontSize: 14, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 8, display: "block", textTransform: "uppercase", letterSpacing: 1 }}>
               Your Resume (Text format)
