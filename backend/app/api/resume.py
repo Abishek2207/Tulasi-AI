@@ -15,6 +15,7 @@ class ImproveRequest(BaseModel):
     resume_text: str
     job_description: str
     mode: str = "ATS-Optimized"
+    document_type: str = "Resume"
 
 @router.post("/improve")
 def improve_resume(data: ImproveRequest):
@@ -30,7 +31,37 @@ def improve_resume(data: ImproveRequest):
     
     selected_instruction = mode_instructions.get(data.mode, mode_instructions["ATS-Optimized"])
 
-    prompt = f"""You are an elite Tech Recruiter and ATS Optimization Expert.
+    if data.document_type == "Cover Letter":
+        prompt = f"""You are an elite Tech Recruiter and Expert Copywriter.
+    
+Analyze this resume against the target job description. Generate a highly personalized, compelling COVER LETTER that aligns with the following stylistic tone:
+[TONE RULE]: {selected_instruction}
+
+[STRICT QUALITY RULES]:
+1. Format properly as a standard Cover Letter with narrative paragraphs.
+2. Introduce the candidate compellingly, explicitly connect their past experience to the target Job Description, and close strongly.
+3. EXPLICITLY BAN generic buzzwords such as "hardworking", "team player", "detail-oriented", or "synergy".
+4. Ensure zero fluff. Every sentence must justify candidate value.
+
+Extract missing keywords that the candidate should add, calculate a match score (0-100) of how well their experience fits the JD, evaluate readability and keyword match percentage, and give actionable feedback.
+
+TARGET JOB DESCRIPTION:
+{data.job_description}
+
+CURRENT RESUME:
+{data.resume_text}
+
+Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
+{{
+  "ats_score": 85,
+  "readability_score": 90,
+  "keyword_match_percent": 75,
+  "feedback": ["Great match for leadership", "Highlighted AWS perfectly"],
+  "missing_keywords": ["Python", "Agile"],
+  "improved_resume": "YOUR GENERATED COVER LETTER TEXT HERE"
+}}"""
+    else:
+        prompt = f"""You are an elite Tech Recruiter and ATS Optimization Expert.
     
 Analyze this resume against the target job description. Generate a highly optimized, fully rewritten version of the resume that aligns with the following stylistic tone:
 [TONE RULE]: {selected_instruction}
