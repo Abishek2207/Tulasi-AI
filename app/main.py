@@ -1,3 +1,8 @@
+import sys
+import os
+# Auto fix PYTHONPATH so 'app.main' and 'app.core' resolve when running from project root
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
