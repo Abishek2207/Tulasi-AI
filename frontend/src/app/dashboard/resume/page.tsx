@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { resumeApi } from "@/lib/api";
@@ -23,8 +23,43 @@ export default function ResumeBuilderPage() {
     improved_resume: string;
   } | null>(null);
   const [error, setError] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [inputStrength, setInputStrength] = useState(0);
   
   const printRef = useRef<HTMLDivElement>(null);
+
+  // ── Smart Suggestions Engine (client-side, zero latency) ─────────────────
+  const analyzeInput = (text: string) => {
+    const hints: string[] = [];
+    let score = 0;
+
+    if (text.length > 100) score += 20;
+    if (text.length > 300) score += 20;
+
+    const hasNumbers = /\d+/.test(text);
+    const hasPercents = /%/.test(text);
+    if (hasNumbers || hasPercents) { score += 20; }
+    else { hints.push("📊 Add metrics (e.g. \"improved speed by 40%\""); }
+
+    const actionVerbs = ["led", "built", "designed", "developed", "implemented", "architected", "deployed", "optimized", "created", "managed", "launched", "drove", "delivered"];
+    const hasVerbs = actionVerbs.some(v => text.toLowerCase().includes(v));
+    if (hasVerbs) { score += 20; }
+    else { hints.push("💪 Start bullets with action verbs (Led, Built, Designed)"); }
+
+    const skills = ["python", "react", "typescript", "aws", "docker", "node", "sql", "kubernetes", "tensorflow", "fastapi", "git"];
+    const hasSkills = skills.some(s => text.toLowerCase().includes(s));
+    if (hasSkills) { score += 20; }
+    else { hints.push("🛠️ List your tools & technologies (Python, AWS, React...)"); }
+
+    setSuggestions(hints);
+    setInputStrength(Math.min(score, 100));
+  };
+
+  useEffect(() => {
+    if (!resumeText.trim()) { setSuggestions([]); setInputStrength(0); return; }
+    const timer = setTimeout(() => analyzeInput(resumeText), 600);
+    return () => clearTimeout(timer);
+  }, [resumeText]);
 
   const handleImprove = async () => {
     if (!resumeText.trim() || !jobDescription.trim()) {
@@ -161,6 +196,43 @@ export default function ResumeBuilderPage() {
               className="input-field"
               style={{ flex: 1, resize: "vertical", padding: 16, fontFamily: "inherit", fontSize: 14, lineHeight: 1.6, minHeight: 250 }}
             />
+
+            {/* ── Resume Strength Meter ── */}
+            {resumeText.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1 }}>Resume Strength</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: inputStrength >= 80 ? "#43E97B" : inputStrength >= 40 ? "#FFD93D" : "#FF6B6B" }}>
+                    {inputStrength >= 80 ? "Strong 💪" : inputStrength >= 40 ? "Fair ⚠️" : "Weak ❌"} ({inputStrength}%)
+                  </span>
+                </div>
+                <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 4, overflow: "hidden" }}>
+                  <motion.div
+                    animate={{ width: `${inputStrength}%` }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    style={{
+                      height: "100%", borderRadius: 4,
+                      background: inputStrength >= 80 ? "linear-gradient(90deg,#43E97B,#38F9D7)" : inputStrength >= 40 ? "linear-gradient(90deg,#FFD93D,#F09819)" : "linear-gradient(90deg,#FF6B6B,#EE0979)"
+                    }}
+                  />
+                </div>
+
+                {/* ── Inline Hint Chips ── */}
+                {suggestions.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+                    {suggestions.map((hint, i) => (
+                      <motion.span
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }}
+                        style={{ background: "rgba(255,217,61,0.1)", color: "#FFD93D", border: "1px solid rgba(255,217,61,0.3)", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600 }}
+                      >
+                        {hint}
+                      </motion.span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 24 }}>
