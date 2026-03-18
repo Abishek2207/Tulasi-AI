@@ -4,14 +4,14 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from app.core.database import get_session
-from app.models.models import Hackathon
+from app.models.models import Hackathon, HackathonBookmark
 from app.api.auth import get_current_user, get_admin_user
 from app.models.models import User
 
 router = APIRouter()
 
 
-def hackathon_to_dict(h: Hackathon) -> dict:
+def hackathon_to_dict(h: Hackathon, bookmarked: bool = False) -> dict:
     """Normalize hackathon model → consistent JSON the frontend expects."""
     return {
         "id": h.id,
@@ -26,6 +26,7 @@ def hackathon_to_dict(h: Hackathon) -> dict:
         "participants_count": h.participants_count,
         "status": h.status,
         "is_active": h.is_active,
+        "bookmarked": bookmarked,
     }
 
 
@@ -33,7 +34,8 @@ def hackathon_to_dict(h: Hackathon) -> dict:
 def get_hackathons(
     tag: Optional[str] = None,
     status: Optional[str] = None,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     statement = select(Hackathon).where(Hackathon.is_active == True)
 
@@ -43,7 +45,81 @@ def get_hackathons(
         statement = statement.where(Hackathon.status == status)
 
     results = session.exec(statement).all()
-    return {"hackathons": [hackathon_to_dict(h) for h in results], "total": len(results)}
+
+    # Get user's bookmarks
+    bookmarked_ids: set = set()
+    # current_user is guaranteed to exist now
+    bookmarks = session.exec(
+        select(HackathonBookmark).where(HackathonBookmark.user_id == current_user.id)
+    ).all()
+    bookmarked_ids = {b.hackathon_id for b in bookmarks}
+
+    return {
+        "hackathons": [hackathon_to_dict(h, h.id in bookmarked_ids) for h in results],
+        "total": len(results),
+    }
+
+
+@router.get("/bookmarked")
+def get_bookmarked_hackathons(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    bookmarks = session.exec(
+        select(HackathonBookmark).where(HackathonBookmark.user_id == current_user.id)
+    ).all()
+    result = []
+    for b in bookmarks:
+        h = session.get(Hackathon, b.hackathon_id)
+        if h:
+            result.append(hackathon_to_dict(h, bookmarked=True))
+    return {"hackathons": result, "total": len(result)}
+
+
+@router.post("/{hackathon_id}/bookmark")
+def bookmark_hackathon(
+    hackathon_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    hackathon = session.get(Hackathon, hackathon_id)
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    existing_bookmark = session.exec(
+        select(HackathonBookmark)
+        .where(HackathonBookmark.user_id == current_user.id)
+        .where(HackathonBookmark.hackathon_id == hackathon_id)
+    ).first()
+
+    if existing_bookmark:
+        return {"message": "Hackathon already bookmarked"}
+
+    bookmark = HackathonBookmark(user_id=current_user.id, hackathon_id=hackathon_id)
+    session.add(bookmark)
+    session.commit()
+    session.refresh(bookmark)
+    return {"message": "Hackathon bookmarked successfully", "bookmark_id": bookmark.id}
+
+
+@router.delete("/{hackathon_id}/bookmark")
+def unbookmark_hackathon(
+    hackathon_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    bookmark = session.exec(
+        select(HackathonBookmark)
+        .where(HackathonBookmark.user_id == current_user.id)
+        .where(HackathonBookmark.hackathon_id == hackathon_id)
+    ).first()
+
+    if not bookmark:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+
+    session.delete(bookmark)
+    session.commit()
+    return {"message": "Hackathon unbookmarked successfully"}
 
 
 @router.get("/{hackathon_id}")

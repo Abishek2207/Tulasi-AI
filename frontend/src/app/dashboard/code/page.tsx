@@ -11,7 +11,7 @@ export default function CodePracticePage() {
   const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeProblem, setActiveProblem] = useState<any>(null);
-  const [code, setCode] = useState(activeProblem.starter);
+  const [code, setCode] = useState("");
   
   // Console state
   const [activeConsoleTab, setActiveConsoleTab] = useState<'output' | 'ai'>('output');
@@ -29,11 +29,13 @@ export default function CodePracticePage() {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const data = await codeApi.problems();
+        const token = (session?.user as any)?.accessToken;
+        const data = await codeApi.problems(undefined, undefined, undefined, token);
         setProblems(data.problems || []);
         if (data.problems && data.problems.length > 0) {
-          setActiveProblem(data.problems[0]);
-          setCode(`def solve(x):\n    # Starter code for ${data.problems[0].title}\n    pass\n`);
+          const first = data.problems[0];
+          setActiveProblem(first);
+          setCode(first.starter || `def solve(x):\n    # Starter code for ${first.title}\n    pass\n`);
         }
       } catch (err) {
         console.error("Failed to fetch problems", err);
@@ -42,7 +44,7 @@ export default function CodePracticePage() {
       }
     };
     fetchProblems();
-  }, []);
+  }, [session]);
 
   const categories = ["All", ...Array.from(new Set(problems.map(p => p.category)))];
   const difficulties = ["All", "Easy", "Medium", "Hard"];

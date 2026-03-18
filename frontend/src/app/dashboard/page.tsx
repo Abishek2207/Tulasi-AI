@@ -16,6 +16,9 @@ const MODULES = [
   { id: "startup", title: "Startup LAB", desc: "Ideate and generate full startup pitch decks.", icon: "🚀", link: "/dashboard/startup-lab", color: "#F97316", span: 1 },
   { id: "study", title: "Study Rooms", desc: "Join live Pomodoro focus sessions.", icon: "👥", link: "/dashboard/study-rooms", color: "#EC4899", span: 1 },
   { id: "hackathon", title: "Hackathons", desc: "Find global AI & Web3 competitions.", icon: "🏆", link: "/dashboard/hackathons", color: "#EAB308", span: 1 },
+  { id: "yt", title: "YouTube Learning", desc: "Curated masterclasses for engineers.", icon: "▶️", link: "/dashboard/youtube-learning", color: "#FF0000", span: 1 },
+  { id: "analytics", title: "Learning Analytics", desc: "Track your progress and XP velocity.", icon: "📊", link: "/dashboard/analytics", color: "#4ECDC4", span: 1 },
+  { id: "rewards", title: "Rewards Store", desc: "Redeem XP for exclusive platform perks.", icon: "🎁", link: "/dashboard/rewards", color: "#FBBF24", span: 1 },
   { id: "certs", title: "Certificates", desc: "Download verified learning credentials.", icon: "🎓", link: "/dashboard/certificates", color: "#34D399", span: 2 },
 ];
 

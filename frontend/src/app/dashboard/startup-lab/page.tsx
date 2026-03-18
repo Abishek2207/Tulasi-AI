@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-
-const API = "";
+import { startupApi } from "@/lib/api";
 
 interface StartupIdea {
   name: string;
@@ -50,8 +49,7 @@ export default function StartupLabPage() {
   const fetchSavedIdeas = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API}/api/startup/ideas`, { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
+      const data = await startupApi.ideas(token);
       setSavedIdeas(data.ideas || []);
     } catch (e) {}
   };
@@ -62,12 +60,9 @@ export default function StartupLabPage() {
     if (!idea || !token) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API}/api/startup/save`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ ...idea, domain }),
-      });
-      if (res.ok) { setSaved(true); fetchSavedIdeas(); }
+      await startupApi.save({ ...idea, domain }, token);
+      setSaved(true); 
+      fetchSavedIdeas();
     } catch (e) {}
     setSaving(false);
   };
@@ -82,23 +77,11 @@ export default function StartupLabPage() {
     setIdea(null);
 
     try {
-      const res = await fetch(`${API}/api/startup/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ domain, target_audience: audience })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setIdea(data.idea);
-        setSaved(false);
-      } else {
-        setError(data.detail || "Failed to generate idea.");
-      }
-    } catch (err) {
-      setError("Network Error: Could not reach the AI servers.");
+      const data = await startupApi.generate(domain, audience, token);
+      setIdea(data.idea);
+      setSaved(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to reach the AI servers.");
     }
     setLoading(false);
   };

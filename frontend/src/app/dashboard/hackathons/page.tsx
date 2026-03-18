@@ -2,115 +2,96 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { hackathonApi } from "@/lib/api";
 
-// Fallback data shown if API is empty
 const FALLBACK_HACKATHONS = [
   {
-    id: 1, title: "Global AI Hackathon 2026", organization: "Anthropic & OpenAI",
-    date: "April 15-17, 2026", prize_pool: "$250,000", participants_count: 4500,
-    tags: "LLMs,RAG,Agents", status: "Upcoming",
+    id: 1, title: "Global AI Hackathon 2026", organizer: "Anthropic & OpenAI",
+    deadline: "April 15-17, 2026", prize_pool: "$250,000", participants_count: 4500,
+    tags: "LLMs,RAG,Agents", status: "Upcoming", bookmarked: false,
     image_url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=60",
+    registration_link: "#",
   },
   {
-    id: 2, title: "ETH Global Spring", organization: "Ethereum Foundation",
-    date: "May 1-3, 2026", prize_pool: "$100,000", participants_count: 2100,
-    tags: "Web3,Smart Contracts,DeFi", status: "Open",
+    id: 2, title: "ETH Global Spring", organizer: "Ethereum Foundation",
+    deadline: "May 1-3, 2026", prize_pool: "$100,000", participants_count: 2100,
+    tags: "Web3,Smart Contracts,DeFi", status: "Open", bookmarked: false,
     image_url: "https://images.unsplash.com/photo-1622737133809-d95047b9e673?w=800&auto=format&fit=crop&q=60",
+    registration_link: "#",
   },
   {
-    id: 3, title: "FinTech Appathon", organization: "Stripe",
-    date: "May 20-22, 2026", prize_pool: "$50,000", participants_count: 1200,
-    tags: "Payments,SaaS,Mobile", status: "Upcoming",
+    id: 3, title: "FinTech Appathon", organizer: "Stripe",
+    deadline: "May 20-22, 2026", prize_pool: "$50,000", participants_count: 1200,
+    tags: "Payments,SaaS,Mobile", status: "Upcoming", bookmarked: false,
     image_url: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60",
+    registration_link: "#",
   },
   {
-    id: 4, title: "Tulasi Internal Buildathon", organization: "Tulasi AI",
-    date: "June 5-7, 2026", prize_pool: "Summer Internships", participants_count: 500,
-    tags: "Education,React,FastAPI", status: "Open",
+    id: 4, title: "Tulasi Internal Buildathon", organizer: "Tulasi AI",
+    deadline: "June 5-7, 2026", prize_pool: "Summer Internships", participants_count: 500,
+    tags: "Education,React,FastAPI", status: "Open", bookmarked: false,
     image_url: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=60",
+    registration_link: "#",
   },
 ];
 
-// Skeleton card shown while loading
 function HackathonSkeleton() {
   return (
-    <div style={{
-      borderRadius: 24, overflow: "hidden", background: "rgba(255,255,255,0.02)",
-      border: "1px solid rgba(255,255,255,0.06)", height: 420, animation: "shimmer 1.6s ease-in-out infinite",
-    }}>
+    <div style={{ borderRadius: 24, overflow: "hidden", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", height: 420 }}>
       <div style={{ height: 180, background: "rgba(255,255,255,0.04)" }} />
       <div style={{ padding: 24 }}>
         <div style={{ height: 24, width: "70%", borderRadius: 8, background: "rgba(255,255,255,0.06)", marginBottom: 12 }} />
         <div style={{ height: 16, width: "40%", borderRadius: 8, background: "rgba(255,255,255,0.04)", marginBottom: 24 }} />
-        <div style={{ display: "flex", gap: 24, marginBottom: 32 }}>
-          <div style={{ height: 40, width: 100, borderRadius: 8, background: "rgba(255,255,255,0.04)" }} />
-          <div style={{ height: 40, width: 80, borderRadius: 8, background: "rgba(255,255,255,0.04)" }} />
-        </div>
         <div style={{ height: 44, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
       </div>
-      <style>{`
-        @keyframes shimmer {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 }
 
 export default function HackathonsPage() {
+  const { data: session } = useSession();
+  const token = (session?.user as any)?.accessToken;
+
   const [filter, setFilter] = useState("All");
   const [hackathons, setHackathons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [bookmarking, setBookmarking] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
     const fetchHackathons = async () => {
       setLoading(true);
-      setError(false);
-
-      // Build URL: use relative /api/ so Vercel rewrites forward to Render
-      const params = new URLSearchParams();
-      if (filter !== "All") params.append("status", filter);
-      const url = `/api/hackathons${params.toString() ? `?${params}` : ""}`;
-
-      let attempt = 0;
-      while (attempt < 3) {
-        try {
-          const res = await fetch(url, { signal: controller.signal, cache: "no-store" });
-          clearTimeout(timeoutId);
-          if (res.ok) {
-            const data = await res.json();
-            const list = data.hackathons ?? [];
-            setHackathons(list.length > 0 ? list : FALLBACK_HACKATHONS);
-            setLoading(false);
-            return;
-          }
-        } catch (e: any) {
-          if (e?.name === "AbortError") break;
-        }
-        attempt++;
-        if (attempt < 3) await new Promise(r => setTimeout(r, 2000 * attempt));
+      try {
+        const data = await hackathonApi.list(undefined, filter !== "All" ? filter : undefined, token);
+        const list = data.hackathons ?? [];
+        setHackathons(list.length > 0 ? list : FALLBACK_HACKATHONS);
+      } catch (e) {
+        setHackathons(FALLBACK_HACKATHONS);
+      } finally {
+        setLoading(false);
       }
-
-      // All retries failed — silently show fallback data
-      clearTimeout(timeoutId);
-      setHackathons(FALLBACK_HACKATHONS);
-      setError(false); // Don't show scary error messages
-      setLoading(false);
     };
-
     fetchHackathons();
-    return () => { controller.abort(); clearTimeout(timeoutId); };
-  }, [filter]);
+  }, [filter, token]);
+
+  const toggleBookmark = async (hack: any) => {
+    if (!token) return;
+    setBookmarking(prev => new Set(prev).add(hack.id));
+    try {
+      if (hack.bookmarked) {
+        await hackathonApi.unbookmark(hack.id, token);
+      } else {
+        await hackathonApi.bookmark(hack.id, token);
+      }
+      setHackathons(prev => prev.map(h => h.id === hack.id ? { ...h, bookmarked: !h.bookmarked } : h));
+    } catch (e) {}
+    setBookmarking(prev => { const s = new Set(prev); s.delete(hack.id); return s; });
+  };
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 60 }}>
 
-      <div style={{ textAlign: "center", marginBottom: 32 }}>
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
         <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-outfit)", marginBottom: 12 }}>
           Global <span className="gradient-text">Hackathons</span>
         </h1>
@@ -122,16 +103,13 @@ export default function HackathonsPage() {
       {/* Filters */}
       <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 40, flexWrap: "wrap" }}>
         {["All", "Open", "Upcoming", "Past"].map(status => (
-          <button
-            key={status}
-            onClick={() => setFilter(status)}
+          <button key={status} onClick={() => setFilter(status)}
             style={{
               background: filter === status ? "var(--brand-primary)" : "rgba(255,255,255,0.05)",
               color: filter === status ? "white" : "var(--text-muted)",
               border: filter === status ? "1px solid var(--brand-primary)" : "1px solid rgba(255,255,255,0.1)",
               padding: "8px 24px", borderRadius: 24, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s"
-            }}
-          >
+            }}>
             {status}
           </button>
         ))}
@@ -151,20 +129,13 @@ export default function HackathonsPage() {
                 whileHover={{ y: -6, scale: 1.01 }}
                 transition={{ duration: 0.25 }}
                 className="glass-card"
-                style={{
-                  padding: 0, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)",
-                  display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)",
-                }}
-              >
+                style={{ padding: 0, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)" }}>
+                
                 {/* Banner */}
                 <div style={{ position: "relative", height: 180, overflow: "hidden", background: "#0f0f1a" }}>
-                  <div style={{
-                    position: "absolute", inset: 0,
-                    backgroundImage: `url(${hack.image_url || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&auto=format&fit=crop&q=60"})`,
-                    backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.6)",
-                  }} />
+                  <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${hack.image_url})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.6)" }} />
                   <div style={{ position: "absolute", top: 14, left: 14, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(10px)", padding: "5px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, color: "white", border: "1px solid rgba(255,255,255,0.2)" }}>
-                    {hack.date || "Date TBD"}
+                    {hack.deadline || "Date TBD"}
                   </div>
                   <div style={{ position: "absolute", top: 14, right: 14, background: hack.status === "Open" ? "#22c55e" : "var(--brand-primary)", padding: "4px 12px", borderRadius: 8, fontSize: 11, fontWeight: 800, color: "white" }}>
                     {hack.status || "Open"}
@@ -181,7 +152,7 @@ export default function HackathonsPage() {
                 {/* Content */}
                 <div style={{ padding: 22, flex: 1, display: "flex", flexDirection: "column" }}>
                   <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 4, lineHeight: 1.3 }}>{hack.title}</h2>
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginBottom: 18 }}>By {hack.organization || "Organizer"}</p>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginBottom: 18 }}>By {hack.organizer || "Organizer"}</p>
 
                   <div style={{ display: "flex", gap: 24, marginBottom: 22 }}>
                     <div>
@@ -195,11 +166,23 @@ export default function HackathonsPage() {
                   </div>
 
                   <div style={{ marginTop: "auto", display: "flex", gap: 10 }}>
-                    <button className="btn-primary" style={{ flex: 1, padding: 13, borderRadius: 12, fontWeight: 700, fontSize: 14 }}>
-                      Apply Now
+                    <button
+                      onClick={() => hack.registration_link && hack.registration_link !== "#" && window.open(hack.registration_link, "_blank")}
+                      className="btn-primary" style={{ flex: 1, padding: 13, borderRadius: 12, fontWeight: 700, fontSize: 14 }}>
+                      Apply Now →
                     </button>
-                    <button className="btn-ghost" style={{ padding: "0 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14 }}>
-                      Team Up
+                    <button
+                      onClick={() => toggleBookmark(hack)}
+                      disabled={bookmarking.has(hack.id)}
+                      title={hack.bookmarked ? "Remove bookmark" : "Bookmark this hackathon"}
+                      style={{
+                        padding: "0 16px", borderRadius: 12, fontSize: 18,
+                        background: hack.bookmarked ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
+                        border: hack.bookmarked ? "1px solid rgba(251,191,36,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                        cursor: "pointer", transition: "all 0.2s",
+                        opacity: bookmarking.has(hack.id) ? 0.6 : 1,
+                      }}>
+                      {hack.bookmarked ? "🔖" : "🏷️"}
                     </button>
                   </div>
                 </div>

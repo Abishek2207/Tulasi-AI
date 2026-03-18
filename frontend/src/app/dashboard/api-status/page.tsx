@@ -8,12 +8,12 @@ const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onre
 const FRONTEND = typeof window !== "undefined" ? window.location.origin : "";
 
 const BACKEND_ENDPOINTS = [
-  { method: "GET",  path: "/health",                group: "Core",          label: "Health Check" },
+  { method: "GET",  path: "/api/health",             group: "Core",          label: "Health Check" },
   { method: "GET",  path: "/api/hackathons",         group: "Hackathons",    label: "List Hackathons" },
   { method: "GET",  path: "/api/hackathons/1",       group: "Hackathons",    label: "Get Hackathon #1" },
   { method: "GET",  path: "/api/study/rooms",        group: "Study Rooms",   label: "List Rooms" },
-  { method: "GET",  path: "/api/problems",           group: "Code Practice", label: "List Problems" },
-  { method: "GET",  path: "/api/problems/ARR-001",   group: "Code Practice", label: "Get Problem" },
+  { method: "GET",  path: "/api/code/problems",      group: "Code Practice", label: "List Problems" },
+  { method: "GET",  path: "/api/code/problems/ARR-001", group: "Code Practice", label: "Get Problem" },
   { method: "POST", path: "/api/interview/start",    group: "Interview",     label: "Start Interview",  body: { role: "Software Engineer" } },
   { method: "POST", path: "/api/startup/generate",   group: "Startup Lab",   label: "Generate Idea",    body: { domain: "EdTech", target_audience: "Students" } },
   { method: "GET",  path: "/api/certificates/my",    group: "Certificates",  label: "My Certs",         auth: true },
@@ -69,7 +69,7 @@ export default function ApiStatusPage() {
     setBackendPing("waking");
     const t0 = Date.now();
     try {
-      const res = await fetch(`${BACKEND}/health`, { signal: AbortSignal.timeout(12000) });
+      const res = await fetch(`${BACKEND}/api/health`, { signal: AbortSignal.timeout(12000) });
       const ms = Date.now() - t0;
       setPingMs(ms);
       setBackendPing(res.ok ? "alive" : "down");

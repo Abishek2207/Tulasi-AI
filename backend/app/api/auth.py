@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 from pydantic import BaseModel
 from typing import Optional
 import uuid
+from datetime import date
 
 from app.core.database import get_session
 from app.core.security import verify_password, get_password_hash, create_access_token, decode_token
@@ -86,7 +87,24 @@ def login(req: LoginRequest, db: Session = Depends(get_session)):
     user = db.exec(select(User).where(User.email == req.email)).first()
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    
+
+    # ── Update streak on login ────────────────────────────────────────
+    today = date.today().isoformat()
+    last = user.last_activity_date
+    if last != today:
+        from datetime import date as _date
+        if last and (_date.today() - _date.fromisoformat(last)).days == 1:
+            user.streak = (user.streak or 0) + 1
+        elif not last or (_date.today() - _date.fromisoformat(last)).days > 1:
+            user.streak = 1
+        # Update longest streak
+        user.longest_streak = max(user.longest_streak or 0, user.streak)
+        user.last_activity_date = today
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    # ─────────────────────────────────────────────────────────────────
+
     token = create_access_token({"sub": user.email})
     return {
         "access_token": token,
@@ -107,12 +125,48 @@ def get_me(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "email": current_user.email,
         "name": current_user.name,
+        "bio": current_user.bio or "",
+        "skills": current_user.skills or "",
         "role": current_user.role,
         "avatar": current_user.avatar,
         "streak": current_user.streak,
+        "longest_streak": current_user.longest_streak or 0,
         "xp": current_user.xp,
         "level": current_user.level,
         "invite_code": current_user.invite_code,
+    }
+
+
+class ProfileUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    skills: Optional[str] = None  # comma-separated
+
+
+@router.put("/profile")
+def update_profile(
+    req: ProfileUpdateRequest,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if req.name is not None:
+        current_user.name = req.name.strip()
+    if req.bio is not None:
+        current_user.bio = req.bio.strip()
+    if req.skills is not None:
+        current_user.skills = req.skills.strip()
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return {
+        "message": "Profile updated successfully",
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "bio": current_user.bio or "",
+            "skills": current_user.skills or "",
+            "email": current_user.email,
+        },
     }
 
 
