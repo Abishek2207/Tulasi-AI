@@ -38,8 +38,8 @@ export function ConnectionStatus() {
     // Initial check
     checkHealth();
 
-    // Ping every 30 seconds
-    const interval = setInterval(checkHealth, 30000);
+    // Ping every 5 minutes to keep the Render backend awake
+    const interval = setInterval(checkHealth, 300000);
 
     return () => clearInterval(interval);
   }, []);
@@ -73,7 +73,7 @@ export function ConnectionStatus() {
           {status === "reconnecting" ? (
             <>
               <div className="spinner" style={{ width: 14, height: 14, border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-              Backend reconnecting...
+              Connecting to server...
             </>
           ) : (
             <>

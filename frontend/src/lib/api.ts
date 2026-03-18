@@ -33,32 +33,26 @@ export function websocketUrl(path: string): string {
 
 const FETCH_TIMEOUT_MS = 5_000; // 5 second timeout per request attempt
 
-// Retry utility with exponential backoff, jitter, and AbortController timeout
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
-  let attempt = 0;
-  while (attempt < retries) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    try {
-      const res = await fetch(url, { ...options, signal: controller.signal });
-      clearTimeout(timeoutId);
-
-      // Handle Render's "Service Waking Up" 502/503/504 during cold start
+async function fetchWithRetry(url: string, options: RequestInit, retries = 5): Promise<Response> {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) {
       if (res.status === 502 || res.status === 503 || res.status === 504) {
-        throw new Error(`Retrying (${res.status})`);
+         throw new Error("API error / Server waking up");
       }
-
-      return res;
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      attempt++;
-      if (attempt >= retries) throw err;
-      // Exponential backoff: 2s, 4s with jitter
-      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 300;
-      await new Promise(r => setTimeout(r, delay));
+      // If it's a 4xx error (e.g. invalid credentials), let it pass through to be handled by the caller,
+      // as retrying won't help. We throw an error here to force a retry ONLY for 5xx type errors or generic failures.
+      if (res.status >= 500) {
+         throw new Error(`API error: ${res.status}`);
+      }
+      return res; // return early for 4xx errors
     }
+    return res;
+  } catch (err: any) {
+    if (retries === 0) throw err;
+    await new Promise(r => setTimeout(r, 1000 * (6 - retries)));
+    return fetchWithRetry(url, options, retries - 1);
   }
-  throw new Error("Max retries reached");
 }
 
 async function request<T>(
