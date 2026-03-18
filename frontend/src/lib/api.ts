@@ -6,9 +6,9 @@
 const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV === "development";
 
-const DEFAULT_BACKEND_URL = "https://tulasi-ai-soda.onrender.com";
+const DEFAULT_BACKEND_URL = process.env.NEXT_PUBLIC_LOCAL_BACKEND || "https://tulasi-ai-soda.onrender.com";
 // In production, use empty string to trigger `/api/...` so Vercel rewrites intercept it.
-// In development, force the local backend URL so it doesn't accidentally hit Render from .env.local
+// In development, force the local backend URL or default to the production cloud
 export const API_URL = isDev
   ? DEFAULT_BACKEND_URL
   : (isBrowser ? "" : (process.env.NEXT_PUBLIC_API_URL || DEFAULT_BACKEND_URL));

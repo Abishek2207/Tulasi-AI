@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "backend": "cd ../backend && .\\venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --port 10000",
+    "dev:all": "start cmd /k \"npm run backend\" & start cmd /k \"npm run dev\" & timeout 3 > nul & start http://localhost:3000"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
