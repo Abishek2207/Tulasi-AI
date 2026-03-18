@@ -27,6 +27,8 @@ export default function ResumeBuilderPage() {
   const [inputStrength, setInputStrength] = useState(0);
   
   const printRef = useRef<HTMLDivElement>(null);
+  // ── Request cache: same input = instant result, zero extra API calls ──
+  const cacheRef = useRef<Map<string, any>>(new Map());
 
   // ── Smart Suggestions Engine (client-side, zero latency) ─────────────────
   const analyzeInput = (text: string) => {
@@ -68,6 +70,13 @@ export default function ResumeBuilderPage() {
       return;
     }
     
+    // ── Cache lookup ───────────────────────────────────────
+    const cacheKey = `${resumeText.trim()}|${jobDescription.trim()}|${mode}|${documentType}`;
+    if (cacheRef.current.has(cacheKey)) {
+      setResult(cacheRef.current.get(cacheKey));
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     setError("");
@@ -81,6 +90,7 @@ export default function ResumeBuilderPage() {
         document_type: documentType
       }, token);
       
+      cacheRef.current.set(cacheKey, data); // persist in cache
       setResult(data);
     } catch (err: any) {
       setError(err.message || "Failed to analyze resume. Please try again.");
@@ -319,14 +329,46 @@ export default function ResumeBuilderPage() {
           )}
 
           {loading && (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}>
-              <motion.div 
-                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} 
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                style={{ fontSize: 64 }}>
-                🧠
-              </motion.div>
-              <div style={{ color: "var(--brand-primary)", fontWeight: 600, letterSpacing: 1 }}>ANALYZING ATS SYSTEMS...</div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 20, paddingTop: 8 }}>
+              {/* Skeleton shimmer animation */}
+              <style dangerouslySetInnerHTML={{__html: `
+                @keyframes shimmer {
+                  0% { background-position: -600px 0; }
+                  100% { background-position: 600px 0; }
+                }
+                .skeleton {
+                  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.04) 75%);
+                  background-size: 600px 100%;
+                  animation: shimmer 1.4s infinite;
+                  border-radius: 8px;
+                }
+              `}} />
+
+              {/* Score row skeleton */}
+              <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+                <div className="skeleton" style={{ width: 140, height: 140, borderRadius: "50%", flexShrink: 0 }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div className="skeleton" style={{ height: 10, width: "60%" }} />
+                  <div className="skeleton" style={{ height: 8, width: "80%" }} />
+                  <div className="skeleton" style={{ height: 8, width: "45%" }} />
+                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    {[80, 60, 70, 55].map((w, i) => <div key={i} className="skeleton" style={{ height: 24, width: w }} />)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress bars skeleton */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div className="skeleton" style={{ height: 8, width: "100%" }} />
+                <div className="skeleton" style={{ height: 8, width: "85%" }} />
+              </div>
+
+              {/* Textarea skeleton */}
+              <div className="skeleton" style={{ flex: 1, minHeight: 220, borderRadius: 12 }} />
+
+              <div style={{ color: "var(--text-muted)", fontSize: 13, fontWeight: 600, textAlign: "center", letterSpacing: 0.5 }}>
+                ⚡ Analyzing with Gemini AI...
+              </div>
             </div>
           )}
 
