@@ -15,6 +15,8 @@ export default function ResumeBuilderPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ 
     ats_score: number; 
+    readability_score: number;
+    keyword_match_percent: number;
     feedback: string[];
     missing_keywords: string[];
     improved_resume: string;
@@ -231,6 +233,35 @@ export default function ResumeBuilderPage() {
                   </div>
                   <div style={{ textAlign: "center", background: result.ats_score >= 80 ? "rgba(67, 233, 123, 0.1)" : result.ats_score >= 50 ? "rgba(255, 217, 61, 0.1)" : "rgba(255, 107, 107, 0.1)", padding: "6px 12px", borderRadius: 20, color: result.ats_score >= 80 ? "#43E97B" : result.ats_score >= 50 ? "#FFD93D" : "#FF6B6B", fontWeight: 700, fontSize: 12 }}>
                     {result.ats_score >= 80 ? "🌟 Excellent Match" : result.ats_score >= 50 ? "⚠️ Needs Keywords" : "❌ Poor Match"}
+                  </div>
+                </div>
+
+                {/* Secondary Scores */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 16, justifyContent: "center", minWidth: 200 }}>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase" }}>Readability Score</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "white" }}>{result.readability_score}%</span>
+                    </div>
+                    <div style={{ height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
+                      <motion.div 
+                        initial={{ width: 0 }} animate={{ width: `${result.readability_score}%` }} transition={{ duration: 1.2, delay: 0.2 }}
+                        style={{ height: "100%", background: "linear-gradient(90deg, #4ECDC4, #556270)", borderRadius: 4 }} 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase" }}>Keyword Match</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "white" }}>{result.keyword_match_percent}%</span>
+                    </div>
+                    <div style={{ height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
+                      <motion.div 
+                        initial={{ width: 0 }} animate={{ width: `${result.keyword_match_percent}%` }} transition={{ duration: 1.2, delay: 0.4 }}
+                        style={{ height: "100%", background: "linear-gradient(90deg, #FFD93D, #F09819)", borderRadius: 4 }} 
+                      />
+                    </div>
                   </div>
                 </div>
 

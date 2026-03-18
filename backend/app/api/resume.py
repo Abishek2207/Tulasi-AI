@@ -35,7 +35,13 @@ def improve_resume(data: ImproveRequest):
 Analyze this resume against the target job description. Generate a highly optimized, fully rewritten version of the resume that aligns with the following stylistic tone:
 [TONE RULE]: {selected_instruction}
 
-Extract missing keywords, calculate a match score (0-100), and give actionable feedback.
+[STRICT QUALITY RULES]:
+1. Structure the rewritten resume explicitly into four sections: SUMMARY, EXPERIENCE, SKILLS, and PROJECTS.
+2. Use strong action verbs and enforce measurable, quantifiable impact (numbers, metrics, percentages).
+3. EXPLICITLY BAN generic buzzwords such as "hardworking", "team player", "detail-oriented", or "synergy".
+4. Ensure zero fluff. Every word must justify candidate value.
+
+Extract missing keywords, calculate a match score (0-100), evaluate readability and keyword match percentage, and give actionable feedback.
 
 TARGET JOB DESCRIPTION:
 {data.job_description}
@@ -46,9 +52,11 @@ CURRENT RESUME:
 Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
 {{
   "ats_score": 85,
-  "feedback": ["Use stronger action verbs", "Quantify revenue impact"],
+  "readability_score": 90,
+  "keyword_match_percent": 75,
+  "feedback": ["Use stronger action verbs", "Quantify revenue impact by adding exact percentages", "Removed generic phrase 'team player'"],
   "missing_keywords": ["Python", "AWS", "Agile"],
-  "improved_resume": "YOUR FULLY REWRITTEN AND WELL-FORMATTED RESUME TEXT HERE. Use neat bullet points, strong action verbs, and quantifiable metrics where appropriate."
+  "improved_resume": "YOUR FULLY REWRITTEN AND STRUCTURED RESUME TEXT HERE... (with SUMMARY, EXPERIENCE, SKILLS, PROJECTS)"
 }}"""
 
     response_text = get_ai_response(prompt, force_model="gemini-2.5-flash")

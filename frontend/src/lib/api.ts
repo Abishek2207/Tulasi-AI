@@ -264,7 +264,7 @@ export const certificateApi = {
 
 export const resumeApi = {
   improve: (data: { resume_text: string, job_description: string, mode: string }, token: string) =>
-    request<{ ats_score: number; feedback: string[]; missing_keywords: string[]; improved_resume: string }>("/api/resume/improve", {
+    request<{ ats_score: number; readability_score: number; keyword_match_percent: number; feedback: string[]; missing_keywords: string[]; improved_resume: string }>("/api/resume/improve", {
       method: "POST",
       body: JSON.stringify(data),
     }, token),
