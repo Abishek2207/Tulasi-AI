@@ -24,13 +24,13 @@ To gracefully kill both servers when you are done, simply double-click or run:
 
 ## 🔄 Toggling API Connections
 
-Your frontend is hard-wired to point to the live Render cloud instantly! To toggle between testing locally and testing on production, **you do NOT need to change any code**.
+Your frontend is hard-wired to point to the live Railway cloud instantly! To toggle between testing locally and testing on production, **you do NOT need to change any code**.
 
 If you want to use your Local Backend (`http://127.0.0.1:10000`), simply add this to your `frontend/.env.local`:
 ```env
 NEXT_PUBLIC_LOCAL_BACKEND="http://127.0.0.1:10000"
 ```
-To reconnect back to the live Production Cloud API (`tulasi-ai-soda.onrender.com`), simply delete that line.
+To reconnect back to the live Production Cloud API (`tulasi-backend.up.railway.app`), simply delete that line.
 
 ## 🛠 Manual Setup Instructions
 
