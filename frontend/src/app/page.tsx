@@ -115,6 +115,26 @@ function Navbar() {
   );
 }
 
+// ── Typewriter Effect ──────────────────────────────────────────────
+function TypewriterText({ text, delay = 0 }: { text: string, delay?: number }) {
+  const [displayed, setDisplayed] = useState("");
+
+  useEffect(() => {
+    let i = 0;
+    const t = setTimeout(() => {
+      const interval = setInterval(() => {
+        setDisplayed(text.substring(0, i));
+        i++;
+        if (i > text.length + 1) clearInterval(interval);
+      }, 25);
+      return () => clearInterval(interval);
+    }, delay);
+    return () => clearTimeout(t);
+  }, [text, delay]);
+
+  return <span>{displayed}{displayed.length < text.length && <span className="typing-cursor" style={{ opacity: 0.7, animation: "blink 1s step-end infinite" }}>|</span>}</span>;
+}
+
 // ── Hero section ─────────────────────────────────────────────────
 function Hero() {
   const ref = useRef(null);
@@ -171,14 +191,14 @@ function Hero() {
           style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 72 }}
         >
           <Link href="/auth">
-            <motion.button whileHover={{ scale: 1.05, boxShadow: "0 24px 64px rgba(108,99,255,0.55)" }} whileTap={{ scale: 0.97 }}
-              className="btn-primary" style={{ padding: "18px 44px", fontSize: 17, borderRadius: 16 }}>
+            <motion.button whileHover={{ scale: 1.05, boxShadow: "0 24px 64px rgba(108,99,255,0.6)" }} whileTap={{ scale: 0.95 }}
+              className="btn-primary" style={{ padding: "18px 44px", fontSize: 17, borderRadius: 16, background: "linear-gradient(135deg, #6C63FF, #FF6B9D)", border: "none" }}>
               Start Learning Free 🚀
             </motion.button>
           </Link>
-          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
-            className="btn-ghost" style={{ padding: "18px 36px", fontSize: 17, borderRadius: 16 }}>
-            ▶ Watch Demo
+          <motion.button whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.1)" }} whileTap={{ scale: 0.95 }}
+            className="btn-ghost" style={{ padding: "18px 36px", fontSize: 17, borderRadius: 16, border: "1px solid rgba(255,255,255,0.2)", transition: "background 0.3s" }}>
+            ▶ Try AI Chat Preview
           </motion.button>
         </motion.div>
 
@@ -227,15 +247,15 @@ function Hero() {
             <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
               <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#6C63FF,#4ECDC4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>🤖</div>
               <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px 16px 16px 16px", padding: "12px 16px", fontSize: 13, color: "rgba(255,255,255,0.8)", flex: 1, lineHeight: 1.6 }}>
-                Great choice! A BST is a tree where each node has at most 2 children. Left child &lt; parent &lt; right child. Here&apos;s a Python implementation...
+                <TypewriterText text="Great choice! A Binary Search Tree is a tree where each node has at most 2 children. Left child < parent < right child. Here is a Python implementation to get you started." delay={1000} />
               </div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
             </div>
           </div>
         </div>
       </motion.div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes blink { 50% { opacity: 0; } }
+      `}} />
     </section>
   );
 }
