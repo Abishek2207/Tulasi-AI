@@ -5,27 +5,17 @@
 
 const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV === "development";
+import toast from "react-hot-toast";
 
-const DEFAULT_BACKEND_URL = process.env.NEXT_PUBLIC_LOCAL_BACKEND || "https://tulasi-ai-soda.onrender.com";
-// In production, use empty string to trigger `/api/...` so Vercel rewrites intercept it.
-// In development, force the local backend URL or default to the production cloud
-export const API_URL = isDev
-  ? DEFAULT_BACKEND_URL
-  : (isBrowser ? "" : (process.env.NEXT_PUBLIC_API_URL || DEFAULT_BACKEND_URL));
+// We MUST direct all frontend requests natively to the Render backend to support SSE streaming
+// relying on Vercel rewrites causes chunks to buffer and drop.
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-soda.onrender.com";
 
 /** Build a WebSocket URL pointing at the correct host (wss in production, ws locally) */
 export function websocketUrl(path: string): string {
   if (!isBrowser) return "";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  
-  if (!isDev) {
-     // In production, the backend is on render directly for WS, because Vercel Serverless Functions
-     // do not support WebSockets. We must connect directly to the render WebSocket URL.
-     const backendHost = new URL(process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com").host;
-     return `${protocol}//${backendHost}${path}`;
-  }
-  
-  const host = new URL(process.env.NEXT_PUBLIC_API_URL || DEFAULT_BACKEND_URL).host;
+  const host = new URL(API_URL).host;
   return `${protocol}//${host}${path}`;
 }
 
@@ -38,18 +28,25 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 5): P
     const res = await fetch(url, options);
     if (!res.ok) {
       if (res.status === 502 || res.status === 503 || res.status === 504) {
+         if (retries === 5) toast.loading("Server waking up. Retrying...", { id: "retry-toast" }); // Show only once on first attempt
          throw new Error("API error / Server waking up");
       }
       // If it's a 4xx error (e.g. invalid credentials), let it pass through to be handled by the caller,
       // as retrying won't help. We throw an error here to force a retry ONLY for 5xx type errors or generic failures.
       if (res.status >= 500) {
+         toast.error(`Server error: ${res.status}`);
          throw new Error(`API error: ${res.status}`);
       }
       return res; // return early for 4xx errors
     }
+    toast.dismiss("retry-toast");
     return res;
   } catch (err: any) {
-    if (retries === 0) throw err;
+    if (retries === 0) {
+      toast.dismiss("retry-toast");
+      toast.error("Connection failed. Server offline.");
+      throw err;
+    }
     await new Promise(r => setTimeout(r, 1000 * (6 - retries)));
     return fetchWithRetry(url, options, retries - 1);
   }

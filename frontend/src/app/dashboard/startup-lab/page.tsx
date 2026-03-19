@@ -163,7 +163,7 @@ export default function StartupLabPage() {
         {loading && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} style={{ textAlign: "center", padding: 40 }}>
             <div className="spinner" style={{ margin: "0 auto 20px", width: 40, height: 40, border: "3px solid rgba(255,107,107,0.2)", borderTopColor: "#FF6B6B", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-            <div style={{ fontSize: 18, fontWeight: 600, color: "white", marginBottom: 8 }}>Analyzing Market Gaps...</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>Analyzing Market Gaps...</div>
             <div style={{ fontSize: 14, color: "var(--text-muted)" }}>Finding optimal product-market fit for {audience} in {domain}.</div>
           </motion.div>
         )}
@@ -196,11 +196,11 @@ export default function StartupLabPage() {
               <div style={{ display: "flex", gap: 24, flexWrap: "wrap", padding: "24px", background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid var(--border)" }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <h3 style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)", fontWeight: 700, marginBottom: 12 }}>📈 Market Opportunity</h3>
-                  <p style={{ fontSize: 15, color: "white" }}>{idea.market_opportunity}</p>
+                  <p style={{ fontSize: 15, color: "var(--text-primary)" }}>{idea.market_opportunity}</p>
                 </div>
                 <div style={{ flex: 1, minWidth: 200, borderLeft: "1px solid var(--border)", paddingLeft: 24 }}>
                   <h3 style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)", fontWeight: 700, marginBottom: 12 }}>💸 Monetization Strategy</h3>
-                  <p style={{ fontSize: 15, color: "white" }}>{idea.monetization}</p>
+                  <p style={{ fontSize: 15, color: "var(--text-primary)" }}>{idea.monetization}</p>
                 </div>
               </div>
 
@@ -208,7 +208,7 @@ export default function StartupLabPage() {
                 <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "1px", color: "#8B5CF6", fontWeight: 800, marginBottom: 16 }}>⚙️ Recommended Tech Stack</h3>
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   {idea.tech_stack.map(tech => (
-                    <div key={tech} style={{ padding: "8px 16px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: 8, color: "white", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                    <div key={tech} style={{ padding: "8px 16px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: 8, color: "var(--text-primary)", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "#8B5CF6" }}>⚡</span> {tech}
                     </div>
                   ))}
@@ -237,7 +237,7 @@ export default function StartupLabPage() {
       {/* Saved Ideas */}
       {savedIdeas.length > 0 && (
         <div style={{ marginTop: 40 }}>
-          <button onClick={() => setShowSaved(!showSaved)} style={{ background: "transparent", border: "1px solid var(--border)", color: "white", padding: "10px 20px", borderRadius: 12, cursor: "pointer", fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={() => setShowSaved(!showSaved)} style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-primary)", padding: "10px 20px", borderRadius: 12, cursor: "pointer", fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
             {showSaved ? "▲" : "▼"} 💾 My Saved Ideas ({savedIdeas.length})
           </button>
           <AnimatePresence>

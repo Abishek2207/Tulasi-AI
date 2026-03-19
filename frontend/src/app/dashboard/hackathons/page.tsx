@@ -11,28 +11,28 @@ const FALLBACK_HACKATHONS = [
     deadline: "April 15-17, 2026", prize_pool: "$250,000", participants_count: 4500,
     tags: "LLMs,RAG,Agents", status: "Upcoming", bookmarked: false,
     image_url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=60",
-    registration_link: "#",
+    registration_link: "https://devpost.com",
   },
   {
     id: 2, title: "ETH Global Spring", organizer: "Ethereum Foundation",
     deadline: "May 1-3, 2026", prize_pool: "$100,000", participants_count: 2100,
     tags: "Web3,Smart Contracts,DeFi", status: "Open", bookmarked: false,
     image_url: "https://images.unsplash.com/photo-1622737133809-d95047b9e673?w=800&auto=format&fit=crop&q=60",
-    registration_link: "#",
+    registration_link: "https://ethglobal.com",
   },
   {
     id: 3, title: "FinTech Appathon", organizer: "Stripe",
     deadline: "May 20-22, 2026", prize_pool: "$50,000", participants_count: 1200,
     tags: "Payments,SaaS,Mobile", status: "Upcoming", bookmarked: false,
     image_url: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60",
-    registration_link: "#",
+    registration_link: "https://stripe.com",
   },
   {
     id: 4, title: "Tulasi Internal Buildathon", organizer: "Tulasi AI",
     deadline: "June 5-7, 2026", prize_pool: "Summer Internships", participants_count: 500,
     tags: "Education,React,FastAPI", status: "Open", bookmarked: false,
     image_url: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=60",
-    registration_link: "#",
+    registration_link: "https://tulasiai.vercel.app",
   },
 ];
 
@@ -105,9 +105,9 @@ export default function HackathonsPage() {
         {["All", "Open", "Upcoming", "Past"].map(status => (
           <button key={status} onClick={() => setFilter(status)}
             style={{
-              background: filter === status ? "var(--brand-primary)" : "rgba(255,255,255,0.05)",
-              color: filter === status ? "white" : "var(--text-muted)",
-              border: filter === status ? "1px solid var(--brand-primary)" : "1px solid rgba(255,255,255,0.1)",
+              background: filter === status ? "var(--brand-primary)" : "rgba(108,99,255,0.05)",
+              color: filter === status ? "var(--bg-primary)" : "var(--text-muted)",
+              border: filter === status ? "1px solid var(--brand-primary)" : "1px solid var(--border)",
               padding: "8px 24px", borderRadius: 24, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s"
             }}>
             {status}
@@ -150,8 +150,8 @@ export default function HackathonsPage() {
                 </div>
 
                 {/* Content */}
-                <div style={{ padding: 22, flex: 1, display: "flex", flexDirection: "column" }}>
-                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 4, lineHeight: 1.3 }}>{hack.title}</h2>
+                <div style={{ padding: 22, flex: 1, display: "flex", flexDirection: "column", background: "var(--bg-card)" }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4, lineHeight: 1.3 }}>{hack.title}</h2>
                   <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginBottom: 18 }}>By {hack.organizer || "Organizer"}</p>
 
                   <div style={{ display: "flex", gap: 24, marginBottom: 22 }}>
@@ -161,13 +161,13 @@ export default function HackathonsPage() {
                     </div>
                     <div>
                       <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, marginBottom: 3 }}>Builders</div>
-                      <div style={{ fontSize: 17, fontWeight: 800, color: "white" }}>{(hack.participants_count ?? 0).toLocaleString()}</div>
+                      <div style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)" }}>{(hack.participants_count ?? 0).toLocaleString()}</div>
                     </div>
                   </div>
 
                   <div style={{ marginTop: "auto", display: "flex", gap: 10 }}>
                     <button
-                      onClick={() => hack.registration_link && hack.registration_link !== "#" && window.open(hack.registration_link, "_blank")}
+                      onClick={() => hack.registration_link && window.open(hack.registration_link, "_blank")}
                       className="btn-primary" style={{ flex: 1, padding: 13, borderRadius: 12, fontWeight: 700, fontSize: 14 }}>
                       Apply Now →
                     </button>
@@ -177,8 +177,8 @@ export default function HackathonsPage() {
                       title={hack.bookmarked ? "Remove bookmark" : "Bookmark this hackathon"}
                       style={{
                         padding: "0 16px", borderRadius: 12, fontSize: 18,
-                        background: hack.bookmarked ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
-                        border: hack.bookmarked ? "1px solid rgba(251,191,36,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                        background: hack.bookmarked ? "rgba(251,191,36,0.15)" : "var(--background)",
+                        border: hack.bookmarked ? "1px solid rgba(251,191,36,0.4)" : "1px solid var(--border)",
                         cursor: "pointer", transition: "all 0.2s",
                         opacity: bookmarking.has(hack.id) ? 0.6 : 1,
                       }}>

@@ -100,7 +100,7 @@ export default function RewardsPage() {
                 {item.icon}
               </div>
 
-              <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: "white" }}>{item.name}</h3>
+              <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: "var(--text-primary)" }}>{item.name}</h3>
               <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 24, flex: 1 }}>
                 {item.description}
               </p>
