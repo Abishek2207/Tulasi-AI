@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { icon: "💡", name: "Startup Lab", href: "/dashboard/startup-lab" },
   { icon: "📊", name: "Analytics", href: "/dashboard/analytics" },
   { icon: "🥇", name: "Leaderboard", href: "/dashboard/leaderboard" },
+  { icon: "💳", name: "Billing & Pro", href: "/dashboard/billing" },
   { icon: "🎁", name: "Rewards Store", href: "/dashboard/rewards" },
   { icon: "👤", name: "Profile", href: "/dashboard/profile" },
   { icon: "⚡", name: "API Status", href: "/dashboard/api-status" },
@@ -103,8 +104,8 @@ export default function Sidebar() {
                 {user.email}
               </div>
             </div>
-            <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: user.role === "admin" ? "rgba(255,107,157,0.15)" : "rgba(67,233,123,0.15)", color: user.role === "admin" ? "#FF6B9D" : "#43E97B", fontWeight: 600 }}>
-              {user.role === "admin" ? "Admin" : "Free"}
+            <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: user?.is_pro ? "linear-gradient(135deg, #8B5CF6, #D946EF)" : (user.role === "admin" ? "rgba(255,107,157,0.15)" : "rgba(67,233,123,0.15)"), color: user?.is_pro ? "white" : (user.role === "admin" ? "#FF6B9D" : "#43E97B"), fontWeight: 700 }}>
+              {user.role === "admin" ? "Admin" : (user?.is_pro ? "PRO" : "Free")}
             </span>
           </div>
         </div>

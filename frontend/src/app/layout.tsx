@@ -27,6 +27,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
+        {/* Google Analytics Snippet */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-TULASIAI123"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-TULASIAI123', {
+                page_path: window.location.pathname,
+              });
+            `,
+          }}
+        />
         <Providers>
           <ConnectionStatus />
           <Toaster 

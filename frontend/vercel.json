@@ -1,17 +1,8 @@
 {
-  "functions": {
-    "app/api/auth/[...nextauth]/route.ts": {
-      "maxDuration": 30
-    }
-  },
-  "rewrites": [
+  "crons": [
     {
-      "source": "/api/auth/:path*",
-      "destination": "/api/auth/:path*"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://tulasi-api-ldcw.onrender.com/api/:path*"
+      "path": "/api/cron/keep-alive",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

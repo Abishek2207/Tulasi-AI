@@ -23,6 +23,11 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_seen: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
+    is_pro: bool = False
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    chats_today: int = 0
+    last_reset_date: Optional[str] = None
 
 
 class ChatSession(SQLModel, table=True):

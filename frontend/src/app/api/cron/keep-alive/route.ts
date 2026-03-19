@@ -1,38 +1,23 @@
-import { NextResponse } from 'next/server';
-
-export const runtime = 'edge';
+import { NextResponse } from "next/server";
 
 export async function GET() {
+  const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-soda.onrender.com";
+  
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tulasi-api-ldcw.onrender.com';
-    
-    // Ping the backend's root or health endpoint
-    const response = await fetch(`${backendUrl}/health`, {
-      method: 'GET',
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
-      // Short timeout to not hang the Vercel cron function
-      signal: AbortSignal.timeout(5000)
+    const res = await fetch(`${RENDER_BACKEND_URL}/api/health`, {
+      method: "GET",
+      cache: "no-store",
     });
-
-    if (response.ok) {
-      return NextResponse.json({ success: true, message: 'Backend pinged successfully' });
+    
+    if (res.ok) {
+      console.log("[CRON] Pinged Render backend successfully.");
+      return NextResponse.json({ status: "success", message: "Render backend pinged successfully." }, { status: 200 });
     } else {
-      return NextResponse.json(
-        { success: false, message: `Backend responded with status: ${response.status}` },
-        { status: response.status }
-      );
+      console.warn(`[CRON] Render backend returned status: ${res.status}`);
+      return NextResponse.json({ status: "warning", message: `Render backend returned status: ${res.status}` }, { status: res.status });
     }
-  } catch (error) {
-    console.error('Keep-alive cron error:', error);
-    // Ignore abort errors as the ping is still sent
-    if (error instanceof Error && error.name === 'TimeoutError') {
-      return NextResponse.json({ success: true, message: 'Ping sent (timed out waiting for response)' });
-    }
-    return NextResponse.json(
-      { success: false, message: 'Failed to ping backend', error: String(error) },
-      { status: 500 }
-    );
+  } catch (err: any) {
+    console.error("[CRON] Failed to ping Render backend:");
+    return NextResponse.json({ status: "error", message: err.message }, { status: 500 });
   }
 }
