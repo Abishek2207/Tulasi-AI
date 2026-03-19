@@ -25,6 +25,7 @@ export default function RoadmapsPage() {
   const { data: session } = useSession();
   const [goal, setGoal] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorDesc, setErrorDesc] = useState("");
   const [roadmap, setRoadmap] = useState<RoadmapResponse | null>(null);
 
   const generateRoadmap = async () => {
@@ -36,13 +37,15 @@ export default function RoadmapsPage() {
        return;
     }
     setRoadmap(null);
+    setErrorDesc("");
     try {
       const data = await roadmapApi.generate(goal, token);
       if (data && data.roadmap) {
         setRoadmap(data.roadmap);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setErrorDesc(err.message || "Failed to generate roadmap. Please check connection.");
     }
     setLoading(false);
   };
@@ -63,7 +66,7 @@ export default function RoadmapsPage() {
             value={goal} onChange={e => setGoal(e.target.value)}
             disabled={loading}
             placeholder="e.g. Machine Learning Engineer at OpenAI"
-            style={{ flex: 1, background: "transparent", border: "none", color: "white", fontSize: 16, padding: "12px 20px", outline: "none" }}
+            style={{ flex: 1, background: "transparent", border: "none", color: "var(--text-primary)", fontSize: 16, padding: "12px 20px", outline: "none" }}
             onKeyDown={e => e.key === "Enter" && generateRoadmap()}
           />
           <motion.button 
@@ -83,13 +86,19 @@ export default function RoadmapsPage() {
         </motion.div>
       )}
 
+      {errorDesc && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 12, padding: "16px", color: "#FF6B6B", marginBottom: 24, fontSize: 14, textAlign: "center", fontWeight: 600 }}>
+          ⚠️ {errorDesc}
+        </motion.div>
+      )}
+
       {/* Render Roadmap */}
       <AnimatePresence>
         {roadmap && !loading && (
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}>
             
             <div style={{ textAlign: "center", marginBottom: 48, padding: 32, background: "linear-gradient(135deg, rgba(78,205,196,0.1), rgba(108,99,255,0.1))", borderRadius: 24, border: "1px solid rgba(108,99,255,0.2)" }}>
-              <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 12 }}>{roadmap.title}</h2>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", marginBottom: 12 }}>{roadmap.title}</h2>
               <p style={{ fontSize: 16, color: "var(--text-secondary)", marginBottom: 16 }}>{roadmap.description}</p>
               <div style={{ display: "inline-block", background: "rgba(108,99,255,0.2)", color: "#A78BFA", padding: "6px 16px", borderRadius: 20, fontSize: 14, fontWeight: 700 }}>
                 Estimated Timeline: {roadmap.estimated_months} Months
@@ -112,10 +121,10 @@ export default function RoadmapsPage() {
                       {idx + 1}
                     </div>
 
-                    <div className="dash-card" style={{ padding: 24, border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div className="dash-card" style={{ padding: 24, border: "1px solid var(--border)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
                         <div>
-                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "white" }}>{ms.title}</h3>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)" }}>{ms.title}</h3>
                           <p style={{ fontSize: 13, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, marginTop: 4 }}>Phase {ms.phase}</p>
                         </div>
                         <div style={{ background: "rgba(255,255,255,0.05)", padding: "4px 12px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: "var(--text-secondary)" }}>
@@ -131,9 +140,9 @@ export default function RoadmapsPage() {
                         ))}
                       </div>
 
-                      <div style={{ background: "rgba(255,255,255,0.02)", borderLeft: "3px solid #A78BFA", padding: "16px", borderRadius: "0 8px 8px 0", marginBottom: 20 }}>
+                      <div style={{ background: "rgba(167,139,250,0.07)", borderLeft: "3px solid #A78BFA", padding: "16px", borderRadius: "0 8px 8px 0", marginBottom: 20 }}>
                         <h4 style={{ fontSize: 13, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>🚀 Milestone Project</h4>
-                        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.9)", lineHeight: 1.5 }}>{ms.project_idea}</p>
+                        <p style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.5 }}>{ms.project_idea}</p>
                       </div>
 
                       {ms.resources.length > 0 && (

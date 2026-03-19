@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -28,6 +29,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
         <Providers>
           <ConnectionStatus />
+          <Toaster 
+            position="top-center" 
+            toastOptions={{
+              style: {
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border)'
+              }
+            }} 
+          />
           {children}
         </Providers>
       </body>

@@ -47,7 +47,7 @@ export default function Sidebar() {
           <img src="/images/logo-transparent.png" alt="Tulasi AI Pro" style={{ width: "120%", height: "120%", objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(78,205,196,0.3))" }} />
         </motion.div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: 4 }}>
-          <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 18, color: "white", letterSpacing: "-0.5px", lineHeight: 1 }}>
+          <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 18, color: "var(--text-primary)", letterSpacing: "-0.5px", lineHeight: 1 }}>
             Tulasi<span style={{ color: "#4ECDC4" }}>AI</span>
           </span>
           <span style={{ background: "linear-gradient(90deg, #6C63FF, #FF6B9D)", padding: "2px 6px", borderRadius: 4, fontSize: 9, fontWeight: 800, color: "white", marginTop: 2, letterSpacing: "1px", textTransform: "uppercase" }}>
@@ -96,7 +96,7 @@ export default function Sidebar() {
               {(user.name || user.email || "U")[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user.name || "Student"}
               </div>
               <div style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

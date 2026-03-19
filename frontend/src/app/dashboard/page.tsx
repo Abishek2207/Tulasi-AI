@@ -137,7 +137,7 @@ export default function DashboardHome() {
               <motion.div key={i} variants={item} whileHover={{ y: -4, scale: 1.02 }} className="glass-card" style={{ padding: 24, paddingBottom: 20, borderColor: stat.border, background: "rgba(255,255,255,0.02)", cursor: "pointer", borderRadius: 20 }}>
                 <Link href={stat.link} style={{ textDecoration: "none" }}>
                   <div style={{ fontSize: 24, marginBottom: 8 }}>{stat.icon}</div>
-                  <div style={{ fontSize: 28, fontWeight: 900, color: "white", marginBottom: 4, fontFamily: "var(--font-display)" }}>{stat.val}</div>
+                  <div style={{ fontSize: 28, fontWeight: 900, color: "var(--text-primary)", marginBottom: 4, fontFamily: "var(--font-display)" }}>{stat.val}</div>
                   <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{stat.label}</div>
                 </Link>
               </motion.div>

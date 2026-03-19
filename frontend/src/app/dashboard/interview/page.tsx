@@ -197,7 +197,7 @@ export default function InterviewPage() {
                         transition: "all 0.2s",
                       }}>
                       <div style={{ fontSize: 20, marginBottom: 4 }}>{t.icon}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: interviewType === t.id ? "#4ECDC4" : "white" }}>{t.id}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: interviewType === t.id ? "#4ECDC4" : "var(--text-primary)" }}>{t.id}</div>
                       <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3 }}>{t.desc}</div>
                     </button>
                   ))}
@@ -266,7 +266,7 @@ export default function InterviewPage() {
                 <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #6C63FF, #4ECDC4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>🤖</div>
                 <div>
                   <div style={{ fontSize: 12, color: "#9B95FF", fontWeight: 700, marginBottom: 6 }}>AI INTERVIEWER</div>
-                  <p style={{ fontSize: 16, lineHeight: 1.65, color: "white", margin: 0 }}>{currentQuestion}</p>
+                  <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--text-primary)", margin: 0 }}>{currentQuestion}</p>
                 </div>
               </div>
             </div>
@@ -277,11 +277,11 @@ export default function InterviewPage() {
                 placeholder="Type your answer here... Take your time and be thorough."
                 style={{
                   width: "100%", minHeight: 160, padding: "16px", borderRadius: 14, resize: "vertical",
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)",
-                  color: "white", fontSize: 15, lineHeight: 1.6, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+                  background: "var(--background)", border: "1px solid var(--border)",
+                  color: "var(--text-primary)", fontSize: 15, lineHeight: 1.6, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
                 }}
-                onFocus={e => e.target.style.borderColor = "rgba(108,99,255,0.4)"}
-                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
+                onFocus={e => e.target.style.borderColor = "var(--brand-primary)"}
+                onBlur={e => e.target.style.borderColor = "var(--border)"}
               />
               <button 
                 onClick={startListening}
@@ -321,13 +321,13 @@ export default function InterviewPage() {
                 <span style={{ color: "var(--text-secondary)", fontSize: 14 }}>• {feedback.recommendation}</span>
               </div>
 
-              <p style={{ fontSize: 16, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, maxWidth: 600, margin: "0 auto 32px" }}>{feedback.feedback_summary}</p>
+              <p style={{ fontSize: 16, color: "var(--text-primary)", lineHeight: 1.7, maxWidth: 600, margin: "0 auto 32px" }}>{feedback.feedback_summary}</p>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, textAlign: "left", marginBottom: 32 }}>
                 <div style={{ background: "rgba(67,233,123,0.07)", border: "1px solid rgba(67,233,123,0.2)", borderRadius: 14, padding: 20 }}>
                   <h3 style={{ fontSize: 14, fontWeight: 700, color: "#43E97B", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 14 }}>✅ Strengths</h3>
                   {feedback.strengths.map((s, i) => (
-                    <div key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginBottom: 8, display: "flex", gap: 8 }}>
+                    <div key={i} style={{ fontSize: 13, color: "var(--text-primary)", marginBottom: 8, display: "flex", gap: 8 }}>
                       <span style={{ color: "#43E97B", flexShrink: 0 }}>+</span> {s}
                     </div>
                   ))}
@@ -335,7 +335,7 @@ export default function InterviewPage() {
                 <div style={{ background: "rgba(255,107,107,0.07)", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 14, padding: 20 }}>
                   <h3 style={{ fontSize: 14, fontWeight: 700, color: "#FF6B6B", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 14 }}>🎯 Improve</h3>
                   {feedback.improvements.map((s, i) => (
-                    <div key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginBottom: 8, display: "flex", gap: 8 }}>
+                    <div key={i} style={{ fontSize: 13, color: "var(--text-primary)", marginBottom: 8, display: "flex", gap: 8 }}>
                       <span style={{ color: "#FF6B6B", flexShrink: 0 }}>→</span> {s}
                     </div>
                   ))}
