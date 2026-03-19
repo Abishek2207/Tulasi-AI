@@ -12,7 +12,12 @@ import { TulasiLogo } from "@/components/TulasiLogo";
 // TulasILogo Pro - with the leaf/circuit design and Pro badge
 function TulasiLogoPro() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 36 }}>
+    <motion.div 
+      initial={{ scale: 0.9, opacity: 0 }} 
+      animate={{ scale: 1, opacity: 1 }} 
+      transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
+      style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 36 }}
+    >
       <div style={{ position: "relative" }}>
         <TulasiLogo size={64} style={{ filter: "drop-shadow(0 10px 30px rgba(78,205,196,0.3))" }} />
       </div>
@@ -29,13 +34,29 @@ function TulasiLogoPro() {
           color: "white", 
           marginTop: 4,
           letterSpacing: "1px",
-          textTransform: "uppercase"
+          textTransform: "uppercase",
+          boxShadow: "0 0 10px rgba(108,99,255,0.4)"
         }}>
           Pro
         </span>
       </div>
-    </div>
+    </motion.div>
   );
+}
+
+// Password Strength Utility
+function getPasswordStrength(pwd: string) {
+  if (!pwd) return { score: 0, label: "", color: "transparent" };
+  let score = 0;
+  if (pwd.length > 5) score++;
+  if (pwd.length > 8) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  
+  if (score <= 2) return { score, label: "Weak", color: "#FF5F57" };
+  if (score <= 4) return { score, label: "Good", color: "#FEBC2E" };
+  return { score, label: "Strong", color: "#28C840" };
 }
 
 export default function AuthPage() {
@@ -159,36 +180,52 @@ export default function AuthPage() {
 
             <AnimatePresence mode="popLayout">
               {!isLogin && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", display: "block", marginBottom: 8 }}>Full Name</label>
-                  <input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required 
-                    style={{ width: "100%", background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px", color: "white", fontSize: 14, outline: "none", transition: "all 0.2s" }}
-                    onFocus={e => e.target.style.borderColor = "#4ECDC4"}
-                    onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"}
+                <motion.div initial={{ opacity: 0, height: 0, scale: 0.95 }} animate={{ opacity: 1, height: "auto", scale: 1 }} exit={{ opacity: 0, height: 0, scale: 0.95 }} transition={{ bounce: 0 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 8, transition: "color 0.2s" }}>Full Name</label>
+                  <motion.input whileFocus={{ scale: 1.02 }} value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required 
+                    style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}
+                    onFocus={e => { e.target.style.borderColor = "#4ECDC4"; e.target.style.background = "rgba(78,205,196,0.05)" }}
+                    onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.background = "rgba(255,255,255,0.03)" }}
                   />
                 </motion.div>
               )}
             </AnimatePresence>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", display: "block", marginBottom: 8 }}>Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" required 
-                style={{ width: "100%", background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px", color: "white", fontSize: 14, outline: "none", transition: "all 0.2s" }}
-                onFocus={e => e.target.style.borderColor = "#4ECDC4"}
-                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"}
+              <label style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 8, transition: "color 0.2s" }}>Email Address</label>
+              <motion.input whileFocus={{ scale: 1.02 }} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" required 
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}
+                onFocus={e => { e.target.style.borderColor = "#4ECDC4"; e.target.style.background = "rgba(78,205,196,0.05)" }}
+                onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.background = "rgba(255,255,255,0.03)" }}
               />
             </div>
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)" }}>Password</label>
-                {isLogin && <a href="#" style={{ fontSize: 12, color: "#4ECDC4", textDecoration: "none" }}>Forgot password?</a>}
+                <label style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Password</label>
+                {isLogin && <a href="#" style={{ fontSize: 12, color: "#4ECDC4", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="white"} onMouseLeave={e => e.currentTarget.style.color="#4ECDC4"}>Forgot password?</a>}
               </div>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required 
-                style={{ width: "100%", background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px", color: "white", fontSize: 14, outline: "none", transition: "all 0.2s" }}
-                onFocus={e => e.target.style.borderColor = "#4ECDC4"}
-                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"}
+              <motion.input whileFocus={{ scale: 1.02 }} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required 
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}
+                onFocus={e => { e.target.style.borderColor = "#4ECDC4"; e.target.style.background = "rgba(78,205,196,0.05)" }}
+                onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.background = "rgba(255,255,255,0.03)" }}
               />
+              
+              <AnimatePresence>
+                {!isLogin && password.length > 0 && (() => {
+                  const strength = getPasswordStrength(password);
+                  return (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ display: "flex", gap: 4, height: 4 }}>
+                        {[1, 2, 3, 4, 5].map(i => (
+                          <div key={i} style={{ flex: 1, borderRadius: 2, background: i <= strength.score ? strength.color : "rgba(255,255,255,0.1)", transition: "all 0.3s ease" }} />
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 11, color: strength.color, textAlign: "right", fontWeight: 600 }}>{strength.label}</div>
+                    </motion.div>
+                  );
+                })()}
+              </AnimatePresence>
             </div>
 
             <AnimatePresence>
