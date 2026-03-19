@@ -7,6 +7,7 @@ import { addMessage, updateLastMessage, setLoading, setSessionId, clearChat } fr
 import { chatApi } from "@/lib/api";
 import { RootState } from "@/store";
 import { useSession } from "next-auth/react";
+import { trackEvent } from "@/lib/analytics";
 
 // ─── Tool definitions ──────────────────────────────────────────────────────────
 const TOOLS = [
@@ -91,6 +92,8 @@ export default function ChatPage() {
   const sendMessage = useCallback(async (overrideText?: string) => {
     const text = (overrideText ?? input).trim();
     if (!text || isLoading) return;
+
+    trackEvent("chat_used", { provider: "gemini-2.5-flash" });
 
     // Add user message
     dispatch(addMessage({ id: Date.now().toString(), role: "user", content: text, timestamp: Date.now() }));

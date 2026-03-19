@@ -11,9 +11,11 @@ import json
 from sqlmodel import Session, select
 
 from app.core.ai_router import get_ai_response, GOOGLE_API_KEY, FALLBACK_MODELS
-from app.models.models import ChatMessage
+from app.models.models import ChatMessage, User
 from app.core.database import get_session
 from app.core.rate_limit import limiter
+from app.core.security import get_current_user
+from datetime import date
 
 import google.generativeai as genai
 import time
@@ -64,7 +66,7 @@ class ChatResponse(BaseModel):
 
 @router.post("", response_model=ChatResponse)
 @limiter.limit("20/minute")
-def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session)):
+def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session), user: User = Depends(get_current_user)):
 
     session_id = req.session_id or str(uuid.uuid4())
     tool = req.tool or "chat"
@@ -84,6 +86,15 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session))
         except Exception as e:
             print(f"Error decoding image: {e}")
 
+    # Enforce Daily Limitations
+    today = date.today().isoformat()
+    if user.last_reset_date != today:
+        user.chats_today = 0
+        user.last_reset_date = today
+    
+    if not user.is_pro and user.chats_today >= 10:
+        return ChatResponse(response="🚀 You have reached your daily limit of 10 free AI chats. Upgrade to Pro for unlimited access.", session_id=session_id, ai_model="tulasi-ai-limit")
+
     # Build system-primed message
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     primed_message = f"[System: {system_prompt}]\n\nUser: {req.message}"
@@ -95,9 +106,11 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session))
         print(f"Error generating AI response: {e}")
         response_text = "⏳ AI is temporarily busy. Please try again."
 
-    # Save messages
-    db.add(ChatMessage(session_id=session_id, user_id=None, role="user", content=req.message))
-    db.add(ChatMessage(session_id=session_id, user_id=None, role="assistant", content=response_text))
+    # Save messages & Iterate Limit
+    user.chats_today += 1
+    db.add(user)
+    db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
+    db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=response_text))
     db.commit()
 
     return ChatResponse(response=response_text, session_id=session_id, ai_model="tulasi-ai")
@@ -105,7 +118,7 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session))
 
 @router.post("/stream")
 @limiter.limit("20/minute")
-def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_session)):
+def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_session), user: User = Depends(get_current_user)):
     """
     Server-Sent Events streaming endpoint.
     Streams the AI response word-by-word for a ChatGPT-like typing effect.
@@ -117,6 +130,18 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
     statement = select(ChatMessage).where(ChatMessage.session_id == session_id).order_by(ChatMessage.created_at)
     db_messages = db.exec(statement).all()
     history = [{"role": m.role, "content": m.content} for m in db_messages]
+
+    # Enforce streaming limits
+    today = date.today().isoformat()
+    if user.last_reset_date != today:
+        user.chats_today = 0
+        user.last_reset_date = today
+        db.add(user)
+        db.commit()
+    
+    if not user.is_pro and user.chats_today >= 10:
+        err_data = json.dumps({"token": "🚀 You have reached your daily Free plan limit of 10 AI chats. Please upgrade to Pro for unlimited access via the Dashboard.", "session_id": session_id, "done": True, "error": True})
+        return StreamingResponse((f"data: {err_data}\n\n" for _ in range(1)), media_type="text/event-stream")
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     primed_message = f"[System: {system_prompt}]\n\nUser: {req.message}"
@@ -156,8 +181,12 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
             from app.core.database import engine
             from sqlmodel import Session as SyncSession
             with SyncSession(engine) as _db:
-                _db.add(ChatMessage(session_id=session_id, user_id=None, role="user", content=req.message))
-                _db.add(ChatMessage(session_id=session_id, user_id=None, role="assistant", content=full_response))
+                db_user = _db.get(User, user.id)
+                if db_user:
+                    db_user.chats_today += 1
+                    _db.add(db_user)
+                _db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
+                _db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=full_response))
                 _db.commit()
 
         except Exception as e:

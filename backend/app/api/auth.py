@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 from pydantic import BaseModel
@@ -10,6 +10,7 @@ from app.core.database import get_session
 from app.core.security import verify_password, get_password_hash, create_access_token, decode_token
 from app.core.config import settings
 from app.models.models import User
+from app.core.rate_limit import limiter
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -51,7 +52,8 @@ def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
 
 
 @router.post("/register")
-def register(req: RegisterRequest, db: Session = Depends(get_session)):
+@limiter.limit("5/minute")
+def register(request: Request, req: RegisterRequest, db: Session = Depends(get_session)):
     existing = db.exec(select(User).where(User.email == req.email)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -83,7 +85,8 @@ def register(req: RegisterRequest, db: Session = Depends(get_session)):
 
 
 @router.post("/login")
-def login(req: LoginRequest, db: Session = Depends(get_session)):
+@limiter.limit("10/minute")
+def login(request: Request, req: LoginRequest, db: Session = Depends(get_session)):
     user = db.exec(select(User).where(User.email == req.email)).first()
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")

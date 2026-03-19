@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 
 import { interviewApi } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 
 const ROLES = [
   "Software Engineer", "AI Engineer", "Data Scientist", "Backend Developer",
@@ -94,6 +95,9 @@ export default function InterviewPage() {
 
   const startInterview = async () => {
     setLoading(true); setError("");
+
+    trackEvent("interview_started", { role, company, type: interviewType });
+
     try {
       const token = (session?.user as any)?.accessToken;
       if (!token) { setError("Please log in to start an interview."); setLoading(false); return; }
