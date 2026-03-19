@@ -3,67 +3,62 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import { addMessage, setLoading, setSessionId, clearChat } from "@/store/slices/chatSlice";
+import { addMessage, updateLastMessage, setLoading, setSessionId, clearChat } from "@/store/slices/chatSlice";
 import { chatApi } from "@/lib/api";
 import { RootState } from "@/store";
 import { useSession } from "next-auth/react";
 
-const SUGGESTIONS = [
-  "Explain Big O notation",
-  "How to prepare for system design interviews?",
-  "Python tips for beginners",
-  "Best roadmap for AI engineering",
-  "Debug this code for me",
+// ─── Tool definitions ──────────────────────────────────────────────────────────
+const TOOLS = [
+  { id: "chat", icon: "🤖", label: "AI Chat", placeholder: "Ask anything… coding, career, concepts…", color: "#7C3AED" },
+  { id: "resume", icon: "📄", label: "Resume Coach", placeholder: "Paste your resume for feedback, or describe your experience…", color: "#06B6D4" },
+  { id: "interview", icon: "🎯", label: "Mock Interview", placeholder: "Tell me the role and level (e.g. SDE-2 at Google)…", color: "#10B981" },
+  { id: "cover_letter", icon: "✉️", label: "Cover Letter", placeholder: "Paste the job description to generate your cover letter…", color: "#F43F5E" },
 ];
+
+// ─── Smart suggestions per tool ────────────────────────────────────────────────
+const TOOL_SUGGESTIONS: Record<string, string[]> = {
+  chat: ["Explain Big O notation", "System design tips", "Python debugging help", "Best AI resources 2025"],
+  resume: ["Review my resume for a SDE role", "Improve my summary section", "Add action verbs to bullet points", "ATS optimization tips"],
+  interview: ["Start a Google SDE-2 interview", "Behavioral STAR questions", "System design mock: Design YouTube", "SQL interview questions"],
+  cover_letter: ["Write cover letter for a FinTech startup", "Make my tone more confident", "Keep it under 250 words", "Tailor to job description"],
+};
 
 function formatTime(ts: number) {
   return new Date(ts).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 }
 
 function isErrorMsg(content: string) {
+  return content.startsWith("❌") || content.startsWith("⏳") || content.includes("temporarily busy") || content.includes("Failed to connect");
+}
+
+// ─── Copy button ───────────────────────────────────────────────────────────────
+function CopyBtn({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
   return (
-    content.startsWith("❌") ||
-    content.startsWith("⏳") ||
-    content.includes("temporarily busy") ||
-    content.includes("Failed to connect") ||
-    content.includes("AI processing error")
+    <motion.button onClick={async () => { await navigator.clipboard.writeText(text).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+      style={{ background: "none", border: "1px solid var(--border)", borderRadius: 7, padding: "2px 8px", fontSize: 11, color: copied ? "#43E97B" : "var(--text-muted)", cursor: "pointer", transition: "all 0.2s" }}
+    >{copied ? "✅" : "📋"}</motion.button>
   );
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {}
+// ─── Feedback buttons ──────────────────────────────────────────────────────────
+function FeedbackBtns({ msgId, sessionId, token }: { msgId: string; sessionId: string; token: string }) {
+  const [voted, setVoted] = useState<1 | -1 | null>(null);
+  const vote = async (rating: 1 | -1) => {
+    setVoted(rating);
+    try { await chatApi.feedback(sessionId, msgId, rating, token); } catch {}
   };
-
   return (
-    <motion.button
-      onClick={handleCopy}
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.92 }}
-      title="Copy message"
-      style={{
-        background: "none",
-        border: "1px solid var(--border)",
-        borderRadius: 8,
-        padding: "3px 8px",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        fontSize: 11,
-        color: copied ? "#43E97B" : "var(--text-muted)",
-        transition: "all 0.2s",
-        flexShrink: 0,
-      }}
-    >
-      {copied ? "✅" : "📋"}
-    </motion.button>
+    <div style={{ display: "flex", gap: 4 }}>
+      {([1, -1] as const).map(r => (
+        <motion.button key={r} onClick={() => vote(r)} disabled={voted !== null}
+          whileHover={voted === null ? { scale: 1.15 } : {}} whileTap={voted === null ? { scale: 0.9 } : {}}
+          style={{ background: voted === r ? (r > 0 ? "rgba(16,185,129,0.2)" : "rgba(244,63,94,0.2)") : "none", border: `1px solid ${voted === r ? (r > 0 ? "rgba(16,185,129,0.5)" : "rgba(244,63,94,0.5)") : "var(--border)"}`, borderRadius: 7, padding: "2px 8px", fontSize: 12, cursor: voted !== null ? "default" : "pointer", transition: "all 0.2s" }}
+        >{r > 0 ? "👍" : "👎"}</motion.button>
+      ))}
+    </div>
   );
 }
 
@@ -71,18 +66,19 @@ export default function ChatPage() {
   const dispatch = useDispatch();
   const { messages, isLoading, sessionId } = useSelector((s: RootState) => s.chat);
   const [input, setInput] = useState("");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [activeTool, setActiveTool] = useState("chat");
   const [isWakingUp, setIsWakingUp] = useState(false);
   const [lastUserMsg, setLastUserMsg] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [streamingId, setStreamingId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
-  const token = (session?.user as any)?.accessToken;
+  const token = (session?.user as any)?.accessToken ?? "";
+  
+  const currentTool = TOOLS.find(t => t.id === activeTool) ?? TOOLS[0];
+  const suggestions = TOOL_SUGGESTIONS[activeTool] ?? [];
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isLoading]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -92,137 +88,117 @@ export default function ChatPage() {
     ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
   }, [input]);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setSelectedImage(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
   const sendMessage = useCallback(async (overrideText?: string) => {
-    const text = overrideText ?? input;
-    if ((!text.trim() && !selectedImage) || isLoading) return;
+    const text = (overrideText ?? input).trim();
+    if (!text || isLoading) return;
 
-    const msg = {
-      id: Date.now().toString(),
-      role: "user" as const,
-      content: text,
-      image: selectedImage,
-      timestamp: Date.now(),
-    };
-    dispatch(addMessage(msg));
+    // Add user message
+    dispatch(addMessage({ id: Date.now().toString(), role: "user", content: text, timestamp: Date.now() }));
     setLastUserMsg(text);
     setInput("");
-    setSelectedImage(null);
     dispatch(setLoading(true));
     setIsWakingUp(false);
 
-    const wakeTimer = setTimeout(() => setIsWakingUp(true), 4500);
+    const wakeTimer = setTimeout(() => setIsWakingUp(true), 5000);
+
+    // Create placeholder AI message for streaming
+    const aiMsgId = (Date.now() + 1).toString();
+    dispatch(addMessage({ id: aiMsgId, role: "assistant", content: "", timestamp: Date.now() }));
+    setStreamingId(aiMsgId);
 
     try {
-      const data = await chatApi.send(
-        text || (selectedImage ? "Analyze this image" : ""),
+      await chatApi.streamSend(
+        text,
         sessionId || undefined,
-        token
+        token,
+        activeTool,
+        // onToken → append to the placeholder
+        (chunk) => dispatch(updateLastMessage({ id: aiMsgId, append: chunk })),
+        // onDone
+        (sid) => { dispatch(setSessionId(sid)); },
+        // onError
+        (err) => { dispatch(updateLastMessage({ id: aiMsgId, append: `❌ ${err}` })); }
       );
-      if (data.session_id) dispatch(setSessionId(data.session_id));
-      dispatch(addMessage({
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.response || "No response received.",
-        timestamp: Date.now(),
-      }));
     } catch {
-      dispatch(addMessage({
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "❌ Failed to connect after multiple retries. Please check your connection or wait a moment.",
-        timestamp: Date.now(),
-      }));
+      dispatch(updateLastMessage({ id: aiMsgId, append: "❌ Failed to connect. Please check the backend is running." }));
     } finally {
       clearTimeout(wakeTimer);
       setIsWakingUp(false);
+      setStreamingId(null);
       dispatch(setLoading(false));
     }
-  }, [input, selectedImage, isLoading, sessionId, token, dispatch]);
+  }, [input, isLoading, sessionId, token, activeTool, dispatch]);
 
-  const handleRetry = () => {
-    if (lastUserMsg) sendMessage(lastUserMsg);
-  };
+  const handleRetry = () => { if (lastUserMsg) sendMessage(lastUserMsg); };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)", maxWidth: 960, margin: "0 auto", position: "relative" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)", maxWidth: 960, margin: "0 auto" }}>
 
-      {/* Header */}
-      <div style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {/* ─── Header ─────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, fontFamily: "var(--font-display)", letterSpacing: "-0.5px", marginBottom: 4 }}>
-            🤖 AI <span className="gradient-text">Chat</span>
+          <h1 style={{ fontSize: 26, fontWeight: 800, fontFamily: "var(--font-display)", letterSpacing: "-0.5px", marginBottom: 2 }}>
+            {currentTool.icon} <span className="gradient-text">{currentTool.label}</span>
           </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: 13 }}>Gemini-powered • context-aware • real-time</p>
+          <p style={{ color: "var(--text-secondary)", fontSize: 13 }}>Powered by Gemini · context-aware · streaming</p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="badge badge-green" style={{ padding: "5px 14px", fontSize: 12 }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", display: "inline-block", marginRight: 6, boxShadow: "0 0 6px #10B981" }} />
-            Online
-          </motion.div>
+          <div className="badge badge-green" style={{ padding: "5px 12px", fontSize: 12 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block", marginRight: 6, boxShadow: "0 0 5px #10B981" }} />
+            Live
+          </div>
           {messages.length > 0 && (
-            <motion.button
-              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              onClick={() => dispatch(clearChat())}
-              className="btn-ghost"
-              style={{ padding: "6px 14px", fontSize: 12, borderRadius: 10 }}
-            >
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => dispatch(clearChat())}
+              className="btn-ghost" style={{ padding: "6px 14px", fontSize: 12, borderRadius: 10 }}>
               🗑 Clear
             </motion.button>
           )}
         </div>
       </div>
 
-      {/* Chat area */}
-      <div
-        className="glass-card"
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "28px 28px 20px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 20,
-          marginBottom: 16,
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
+      {/* ─── AI Tools Switcher ──────────────────────────────────────── */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, background: "rgba(0,0,0,0.25)", padding: 6, borderRadius: 16, border: "1px solid var(--border)" }}>
+        {TOOLS.map(tool => (
+          <motion.button key={tool.id} onClick={() => { setActiveTool(tool.id); setInput(""); }}
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            style={{
+              flex: 1, padding: "9px 4px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s",
+              background: activeTool === tool.id ? `linear-gradient(135deg, ${tool.color}30, ${tool.color}15)` : "transparent",
+              color: activeTool === tool.id ? tool.color : "var(--text-muted)",
+              boxShadow: activeTool === tool.id ? `0 0 0 1px ${tool.color}40` : "none",
+            }}
+          >
+            {tool.icon} <span style={{ display: "flex", gap: 0 }}>{tool.label}</span>
+          </motion.button>
+        ))}
+      </div>
+
+      {/* ─── Chat area ─────────────────────────────────────────────── */}
+      <div className="glass-card" style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: 18, marginBottom: 14 }}>
         <AnimatePresence mode="popLayout">
 
           {/* Empty state */}
           {messages.length === 0 && (
             <motion.div key="empty" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}
+              style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}
             >
-              <motion.div
-                animate={{ y: [0, -10, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                style={{ width: 84, height: 84, borderRadius: 28, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42, boxShadow: "0 25px 50px rgba(124,58,237,0.3)" }}
-              >🤖</motion.div>
+              <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 3, repeat: Infinity }}
+                style={{ width: 72, height: 72, borderRadius: 22, background: `linear-gradient(135deg, ${currentTool.color}, ${currentTool.color}aa)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, boxShadow: `0 20px 50px ${currentTool.color}40` }}
+              >{currentTool.icon}</motion.div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
-                  Welcome to <span className="gradient-text">Tulasi AI</span>
-                </div>
-                <p style={{ color: "var(--text-secondary)", maxWidth: 420, lineHeight: 1.7, fontSize: 14 }}>
-                  Your advanced AI companion. Ask anything, upload images, or get your code reviewed instantly.
+                <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Start your AI journey ✨</div>
+                <p style={{ color: "var(--text-secondary)", fontSize: 13, maxWidth: 380, lineHeight: 1.65 }}>
+                  Your <strong>{currentTool.label}</strong> is ready. Pick a suggestion or type anything below.
                 </p>
               </div>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", maxWidth: 580 }}>
-                {SUGGESTIONS.map((s, idx) => (
-                  <motion.button key={s}
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: idx * 0.08 } }}
-                    whileHover={{ scale: 1.04, y: -2, background: "rgba(124,58,237,0.14)", borderColor: "rgba(124,58,237,0.4)" }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setInput(s)}
-                    style={{ padding: "9px 16px", borderRadius: 12, border: "1px solid rgba(124,58,237,0.2)", background: "rgba(124,58,237,0.06)", color: "var(--text-primary)", fontSize: 13, cursor: "pointer", fontWeight: 500, transition: "all 0.2s" }}
+              {/* Smart suggestions */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", maxWidth: 580 }}>
+                {suggestions.map((s, i) => (
+                  <motion.button key={s} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { delay: i * 0.07 } }}
+                    whileHover={{ scale: 1.04, y: -2, borderColor: `${currentTool.color}60` }} whileTap={{ scale: 0.96 }}
+                    onClick={() => { setInput(s); textareaRef.current?.focus(); }}
+                    style={{ padding: "8px 14px", borderRadius: 12, border: `1px solid ${currentTool.color}25`, background: `${currentTool.color}08`, color: "var(--text-primary)", fontSize: 12, cursor: "pointer", fontWeight: 500, transition: "all 0.2s" }}
                   >{s}</motion.button>
                 ))}
               </div>
@@ -231,158 +207,114 @@ export default function ChatPage() {
 
           {/* Messages */}
           {messages.map((msg) => (
-            <motion.div key={msg.id} layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}>
+            <motion.div key={msg.id} layout initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
               {msg.role === "user" ? (
-                // ── User bubble ─────────────────────────────────────
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, paddingLeft: "18%" }}>
-                  {msg.image && (
-                    <img src={msg.image} alt="Attached" style={{ maxWidth: 280, borderRadius: 14, border: "2px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }} />
-                  )}
-                  {msg.content && (
-                    <div className="chat-bubble-user" style={{ boxShadow: "0 8px 20px rgba(124,58,237,0.25)" }}>
-                      {msg.content}
-                    </div>
-                  )}
-                  <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 4 }}>{formatTime(msg.timestamp)}</span>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, paddingLeft: "20%" }}>
+                  {msg.content && <div className="chat-bubble-user">{msg.content}</div>}
+                  <span style={{ fontSize: 10, color: "var(--text-muted)", marginRight: 2 }}>{formatTime(msg.timestamp)}</span>
                 </div>
+
               ) : isErrorMsg(msg.content) ? (
-                // ── Error card ──────────────────────────────────────
-                <div style={{ display: "flex", gap: 14, alignItems: "flex-start", paddingRight: "12%" }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(244,63,94,0.15)", border: "1px solid rgba(244,63,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>⚠️</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ padding: "12px 16px", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.25)", borderRadius: "4px 16px 16px 16px", color: "#FB7185", fontSize: 14, lineHeight: 1.6 }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start", paddingRight: "14%" }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(244,63,94,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>⚠️</div>
+                  <div>
+                    <div style={{ padding: "10px 14px", background: "rgba(244,63,94,0.07)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: "4px 14px 14px 14px", color: "#FB7185", fontSize: 13, lineHeight: 1.6 }}>
                       {msg.content}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
-                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{formatTime(msg.timestamp)}</span>
+                    <div style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}>
+                      <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{formatTime(msg.timestamp)}</span>
                       {lastUserMsg && (
-                        <motion.button
-                          onClick={handleRetry}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          style={{ padding: "3px 12px", background: "rgba(244,63,94,0.12)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, color: "#FB7185", fontSize: 12, cursor: "pointer", fontWeight: 600 }}
-                        >
+                        <motion.button onClick={handleRetry} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          style={{ padding: "2px 10px", background: "rgba(244,63,94,0.12)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 7, color: "#FB7185", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
                           🔄 Retry
                         </motion.button>
                       )}
                     </div>
                   </div>
                 </div>
+
               ) : (
-                // ── AI bubble ───────────────────────────────────────
-                <div style={{ display: "flex", gap: 14, alignItems: "flex-start", paddingRight: "12%" }}>
-                  <motion.div whileHover={{ rotate: 12 }} style={{ width: 38, height: 38, borderRadius: 12, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, boxShadow: "0 6px 15px rgba(124,58,237,0.3)" }}>🤖</motion.div>
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start", paddingRight: "14%" }}>
+                  <motion.div whileHover={{ rotate: 12 }}
+                    style={{ width: 34, height: 34, borderRadius: 10, background: `linear-gradient(135deg, ${currentTool.color}, ${currentTool.color}aa)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0, boxShadow: `0 4px 12px ${currentTool.color}40` }}>
+                    {currentTool.icon}
+                  </motion.div>
                   <div style={{ flex: 1 }}>
-                    <div className="chat-bubble-ai">
+                    <div className="chat-bubble-ai" style={{ position: "relative" }}>
                       {msg.content}
+                      {/* Blinking cursor while streaming */}
+                      {streamingId === msg.id && (
+                        <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}
+                          style={{ display: "inline-block", width: 2, height: "1em", background: "var(--brand-primary)", marginLeft: 2, verticalAlign: "middle", borderRadius: 1 }} />
+                      )}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
-                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{formatTime(msg.timestamp)}</span>
-                      <CopyButton text={msg.content} />
-                    </div>
+                    {/* Only show actions once streaming is done */}
+                    {streamingId !== msg.id && msg.content && (
+                      <div style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}>
+                        <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{formatTime(msg.timestamp)}</span>
+                        <CopyBtn text={msg.content} />
+                        {sessionId && (
+                          <FeedbackBtns msgId={msg.id} sessionId={sessionId} token={token} />
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </motion.div>
           ))}
 
-          {/* Loading indicator */}
-          {isLoading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🤖</div>
-              <div style={{ padding: "14px 18px", background: "rgba(255,255,255,0.03)", borderRadius: "4px 18px 18px 18px", border: "1px solid var(--border)", display: "flex", gap: 8, alignItems: "center" }}>
-                {isWakingUp ? (
-                  <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>⚡ Waking up AI server…</span>
-                ) : (
-                  <><div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" /></>
-                )}
-              </div>
+          {/* Wake-up indicator */}
+          {isWakingUp && isLoading && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ display: "flex", gap: 10, alignItems: "center", padding: "8px 14px", background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: 12 }}>
+              <span style={{ fontSize: 14 }}>⚡</span>
+              <span style={{ color: "#FCD34D", fontSize: 13 }}>Waking up AI server… this may take a moment</span>
             </motion.div>
           )}
         </AnimatePresence>
         <div ref={bottomRef} />
       </div>
 
-      {/* Input area */}
-      <div style={{ position: "relative", zIndex: 10 }}>
-        {selectedImage && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            style={{ position: "absolute", bottom: "100%", left: 0, marginBottom: 12, padding: 10, background: "var(--bg-glass)", backdropFilter: "blur(20px)", borderRadius: 18, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 14 }}
-          >
-            <img src={selectedImage} alt="Preview" style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover" }} />
-            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-              onClick={() => setSelectedImage(null)}
-              style={{ background: "rgba(244,63,94,0.15)", color: "#F43F5E", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}
-            >✕</motion.button>
-          </motion.div>
-        )}
-
-        <div className="glass-card" style={{ padding: "10px", borderRadius: 22, display: "flex", gap: 10, alignItems: "flex-end", boxShadow: "0 20px 50px rgba(0,0,0,0.35)" }}>
-          {/* Image upload */}
-          <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleImageSelect} />
-          <motion.button
-            whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading}
-            style={{ background: "rgba(255,255,255,0.04)", borderRadius: 14, width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center", cursor: isLoading ? "not-allowed" : "pointer", flexShrink: 0, margin: "4px 0 4px 4px", border: "1px solid var(--border)", opacity: isLoading ? 0.4 : 1 }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+      {/* ─── Input area ─────────────────────────────────────────────── */}
+      <div className="glass-card" style={{ padding: "10px", borderRadius: 20, display: "flex", gap: 10, alignItems: "flex-end", boxShadow: "0 16px 48px rgba(0,0,0,0.3)" }}>
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+          placeholder={isLoading ? `${currentTool.icon} AI is responding…` : currentTool.placeholder}
+          disabled={isLoading}
+          rows={1}
+          style={{ flex: 1, background: "transparent", border: "none", borderRadius: 14, padding: "13px 16px", color: "var(--text-primary)", fontSize: 15, resize: "none", outline: "none", fontFamily: "var(--font-sans)", maxHeight: 200, lineHeight: 1.5, opacity: isLoading ? 0.5 : 1 }}
+        />
+        <motion.button
+          onClick={() => sendMessage()}
+          disabled={isLoading || !input.trim()}
+          whileHover={!isLoading && input.trim() ? { scale: 1.06, y: -2 } : {}}
+          whileTap={!isLoading && input.trim() ? { scale: 0.94 } : {}}
+          style={{
+            background: input.trim() && !isLoading ? `linear-gradient(135deg, ${currentTool.color}, ${currentTool.color}cc)` : "rgba(255,255,255,0.05)",
+            border: "none", borderRadius: 13, width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: input.trim() && !isLoading ? "pointer" : "not-allowed", flexShrink: 0, margin: "4px 4px 4px 0",
+            transition: "all 0.3s", boxShadow: input.trim() && !isLoading ? `0 8px 20px ${currentTool.color}50` : "none", opacity: isLoading ? 0.5 : 1,
+          }}
+        >
+          {isLoading ? (
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+              style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white" }} />
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </motion.button>
-
-          {/* Textarea */}
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-            placeholder={isLoading ? "AI is thinking…" : "Ask anything… (Enter to send, Shift+Enter for newline)"}
-            disabled={isLoading}
-            rows={1}
-            style={{ flex: 1, background: "transparent", border: "none", borderRadius: 14, padding: "14px 16px", color: "var(--text-primary)", fontSize: 15, resize: "none", outline: "none", fontFamily: "var(--font-sans)", maxHeight: 200, lineHeight: 1.5, opacity: isLoading ? 0.5 : 1 }}
-          />
-
-          {/* Send button */}
-          <motion.button
-            whileHover={!isLoading && (input.trim() || !!selectedImage) ? { scale: 1.06, y: -2 } : {}}
-            whileTap={!isLoading && (input.trim() || !!selectedImage) ? { scale: 0.94 } : {}}
-            onClick={() => sendMessage()}
-            disabled={isLoading || (!input.trim() && !selectedImage)}
-            style={{
-              background: (input.trim() || selectedImage) && !isLoading ? "var(--gradient-primary)" : "rgba(255,255,255,0.05)",
-              border: "none",
-              borderRadius: 14,
-              width: 50,
-              height: 50,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: (input.trim() || selectedImage) && !isLoading ? "pointer" : "not-allowed",
-              flexShrink: 0,
-              margin: "4px 4px 4px 0",
-              transition: "all 0.3s",
-              boxShadow: (input.trim() || selectedImage) && !isLoading ? "0 8px 20px rgba(124,58,237,0.3)" : "none",
-              opacity: isLoading ? 0.4 : 1,
-            }}
-          >
-            {isLoading ? (
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white" }}
-              />
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </motion.button>
-        </div>
-
-        <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 11, marginTop: 10, letterSpacing: "0.05em", fontWeight: 600, textTransform: "uppercase" }}>
-          Powered by Gemini 2.5 Flash · Auto-retry on 429 · Context-aware
-        </p>
+          )}
+        </motion.button>
       </div>
+
+      <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 11, marginTop: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+        Gemini 2.5 Flash · Auto-retry · Streaming · Context-aware memory
+      </p>
     </div>
   );
 }
