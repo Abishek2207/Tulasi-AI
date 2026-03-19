@@ -9,16 +9,16 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: { default: "Tulasi AI — Free AI Learning Platform for Students", template: "%s | Tulasi AI" },
-  description: "Tulasi AI is a completely FREE AI-powered learning platform for students. Chat with AI, practice coding, prepare for interviews, and track your progress.",
-  keywords: ["AI learning", "free education", "coding practice", "mock interview", "student platform", "AI chatbot", "programming"],
+  title: { default: "Tulasi AI — AI Interview & Career Platform", template: "%s | Tulasi AI" },
+  description: "AI-powered mock interviews, resume analysis, and career roadmaps",
+  keywords: ["AI interview", "career roadmaps", "mock interview", "student platform", "tech prep", "resume analyzer"],
   openGraph: {
-    title: "Tulasi AI — Free AI Learning Platform for Students",
-    description: "Free AI-powered SaaS platform for students. Learn, practice, and grow.",
+    title: "Tulasi AI — AI Interview & Career Platform",
+    description: "AI-powered mock interviews, resume analysis, and career roadmaps.",
     type: "website",
     siteName: "Tulasi AI",
   },
-  twitter: { card: "summary_large_image", title: "Tulasi AI", description: "Free AI Learning Platform" },
+  twitter: { card: "summary_large_image", title: "Tulasi AI", description: "AI Interview & Career Platform" },
 };
 
 import { ConnectionStatus } from "@/components/ConnectionStatus";
