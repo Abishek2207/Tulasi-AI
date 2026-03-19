@@ -5,6 +5,7 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 import { RootState } from "@/store";
 import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function TopBar() {
   const dispatch = useDispatch();
@@ -59,8 +60,8 @@ export default function TopBar() {
         {/* Free badge */}
         <span className="badge badge-green" style={{ padding: "5px 12px", fontSize: 11 }}>🎓 Free Plan</span>
 
-        {/* User email */}
-        <div style={{ fontSize: 13, color: "var(--text-secondary)", display: "none" }}>{user?.email}</div>
+        {/* Theme toggle */}
+        <ThemeToggle />
 
         {/* Sign out */}
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
