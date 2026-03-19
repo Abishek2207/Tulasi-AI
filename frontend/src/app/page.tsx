@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
+import { TulasiLogo } from "@/components/TulasiLogo";
 
 // ── Feature data ──────────────────────────────────────────────────
 const features = [
@@ -41,11 +42,7 @@ function TulasILogo({ size = 40 }: { size?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: size * 0.25 }}>
       <div style={{ position: "relative" }}>
-        <img 
-          src="/images/logo-transparent.png" 
-          alt="Tulasi AI Pro" 
-          style={{ width: size * 1.5, height: size * 1.5, objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(78,205,196,0.3))" }} 
-        />
+        <TulasiLogo size={size * 1.5} style={{ filter: "drop-shadow(0 4px 12px rgba(78,205,196,0.3))" }} />
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
@@ -147,9 +144,7 @@ function Hero() {
           style={{ width: 88, height: 88, margin: "0 auto", marginBottom: 32, borderRadius: 24, padding: 8, background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))", boxShadow: "0 0 40px rgba(108,99,255,0.2), inset 0 0 0 1px rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
           
           <div style={{ position: "absolute", inset: -20, background: "radial-gradient(circle, rgba(78,205,196,0.3) 0%, transparent 70%)", zIndex: -1, filter: "blur(20px)", borderRadius: "50%" }} />
-          
-          <img src="/images/logo-transparent.png" alt="Tulasi AI Hero Logo" style={{ width: "100%", height: "100%", objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))" }} />
-          
+          <TulasiLogo size={80} style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))" }} />
         </motion.div>
         </motion.div>
         <motion.h1

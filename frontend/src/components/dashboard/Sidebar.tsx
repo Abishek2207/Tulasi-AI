@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import { TulasiLogo } from "@/components/TulasiLogo";
 
 const NAV_ITEMS = [
   { icon: "🏠", name: "Dashboard", href: "/dashboard" },
@@ -45,7 +46,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div style={{ padding: "22px 20px 18px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10 }}>
         <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400 }} style={{ position: "relative", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <img src="/images/logo-transparent.png" alt="Tulasi AI Pro" style={{ width: "120%", height: "120%", objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(78,205,196,0.3))" }} />
+          <TulasiLogo size={40} style={{ filter: "drop-shadow(0 4px 12px rgba(78,205,196,0.3))" }} />
         </motion.div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: 4 }}>
           <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 18, color: "var(--text-primary)", letterSpacing: "-0.5px", lineHeight: 1 }}>

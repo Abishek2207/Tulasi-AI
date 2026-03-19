@@ -7,13 +7,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { authApi } from "@/lib/api";
+import { TulasiLogo } from "@/components/TulasiLogo";
 
 // TulasILogo Pro - with the leaf/circuit design and Pro badge
 function TulasiLogoPro() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 36 }}>
       <div style={{ position: "relative" }}>
-        <img src="/images/logo-transparent.png" alt="Tulasi AI Pro Logo" style={{ width: 64, height: 64, objectFit: "contain", filter: "drop-shadow(0 10px 30px rgba(78,205,196,0.3))" }} />
+        <TulasiLogo size={64} style={{ filter: "drop-shadow(0 10px 30px rgba(78,205,196,0.3))" }} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
         <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 26, color: "white", letterSpacing: "-0.5px", lineHeight: 1 }}>
