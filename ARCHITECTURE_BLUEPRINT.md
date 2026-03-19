@@ -6,7 +6,7 @@ Tulasi AI is built on a modern, decoupled microservices-inspired architecture de
 
 **Architecture Layers:**
 1. **Client Layer:** Next.js 14 App Router (React) deployed on Vercel.
-2. **API/Business Logic Layer:** FastAPI (Python) backend to handle intensive AI data processing, web sockets, and RAG execution, deployed on Render.
+2. **API/Business Logic Layer:** FastAPI (Python) backend to handle intensive AI data processing, web sockets, and RAG execution, deployed on Railway.
 3. **AI Execution Layer:** LangChain + Ollama (running local LLMs) to process RAG and agentic workflows completely for free.
 4. **Data Persistence Layer:** PostgreSQL (via Supabase or Neon DB) for relational data processing.
 5. **Vector Store Layer:** ChromaDB (Open-source, self-hosted/local vector database) for storing document embeddings and enabling RAG queries.
@@ -115,11 +115,11 @@ Instead of simple prompts, implement a **Supervisor Agent** (via LangGraph) that
 
 1. **Database:** Create a free tier PostgreSQL database on Supabase or Neon.
 2. **Backend:** 
-   * Deploy to **Render** Web Service (Free Tier). 
-   * Pre-requisites: Expose `PORT=8000`, set `DATABASE_URL` to Supabase connection string.
+   * Deploy to **Railway** Web Service. 
+   * Pre-requisites: Bind to `$PORT`, set `DATABASE_URL` to Supabase connection string.
 3. **Frontend:**
    * Import repository into **Vercel** (Free Tier).
-   * Define `NEXT_PUBLIC_API_URL=[Render URL]` and `NEXTAUTH_URL=[Vercel URL]`.
+   * Define `NEXT_PUBLIC_API_URL=[Railway URL]` and `NEXTAUTH_URL=[Vercel URL]`.
    * Enable CI/CD via GitHub.
 4. **AI Models (Ollama):** 
    * *Challenge*: Running Ollama on Render's free tier is RAM restrictive. 
