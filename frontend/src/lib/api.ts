@@ -100,12 +100,67 @@ export const authApi = {
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
 export const chatApi = {
-  send: (message: string, session_id: string | undefined, token: string) =>
+  send: (message: string, session_id: string | undefined, token: string, tool?: string) =>
     request<{ response: string; session_id: string; model_used: string }>(
       "/api/chat",
-      { method: "POST", body: JSON.stringify({ message, session_id }) },
+      { method: "POST", body: JSON.stringify({ message, session_id, tool }) },
       token
     ),
+
+  /** Streaming SSE — calls onToken for each chunk, onDone when complete */
+  streamSend: async (
+    message: string,
+    session_id: string | undefined,
+    token: string,
+    tool: string,
+    onToken: (token: string) => void,
+    onDone: (sessionId: string) => void,
+    onError: (err: string) => void
+  ): Promise<void> => {
+    try {
+      const res = await fetch(`${API_URL}/api/chat/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message, session_id, tool }),
+      });
+
+      if (!res.ok || !res.body) {
+        onError("Connection failed. Please try again.");
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value, { stream: true });
+        const lines = text.split("\n").filter(l => l.startsWith("data:"));
+
+        for (const line of lines) {
+          try {
+            const json = JSON.parse(line.slice(5).trim());
+            if (json.error) { onError(json.token || "AI error."); return; }
+            if (json.done) { onDone(json.session_id); return; }
+            if (json.token) onToken(json.token);
+          } catch {}
+        }
+      }
+    } catch (err: any) {
+      onError(err.message || "Network error.");
+    }
+  },
+
+  feedback: (session_id: string, message_id: string, rating: number, token: string) =>
+    request<{ status: string }>("/api/chat/feedback", {
+      method: "POST",
+      body: JSON.stringify({ session_id, message_id, rating }),
+    }, token),
 
   history: (session_id: string, token: string) =>
     request<{ messages: ChatMsg[]; session_id: string }>(
