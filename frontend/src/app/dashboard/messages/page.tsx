@@ -39,7 +39,7 @@ export default function MessagesPage() {
     if (!token || socketRef.current?.readyState === WebSocket.OPEN) return;
 
     // Use absolute WSS URL for Render backend
-    const wsUrl = `wss://tulasi-api.onrender.com/api/messages/ws/${token}`;
+    const wsUrl = `wss://tulasi-backend.up.railway.app/api/messages/ws/${token}`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => console.log("✅ WebSocket Connected");

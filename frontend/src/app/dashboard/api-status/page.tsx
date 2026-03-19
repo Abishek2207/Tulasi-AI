@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-api-ldcw.onrender.com";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.up.railway.app";
 const FRONTEND = typeof window !== "undefined" ? window.location.origin : "";
 
 const BACKEND_ENDPOINTS = [
@@ -173,7 +173,7 @@ export default function ApiStatusPage() {
               <span style={{ fontSize: 12, fontWeight: 700 }}>{frontendPing === "alive" ? "Online" : "Checking..."}</span>
             </div>
           </div>
-          <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace", marginBottom: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{FRONTEND || "https://tulasi-frontend.onrender.com"}</div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace", marginBottom: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{FRONTEND || "https://tulasi.vercel.app"}</div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{frontendOk}/{FRONTEND_ENDPOINTS.length} endpoints OK</span>
             <button onClick={testAllFrontend} style={{ padding: "5px 12px", background: "rgba(78,205,196,0.15)", border: "1px solid rgba(78,205,196,0.3)", borderRadius: 8, color: "#4ECDC4", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>

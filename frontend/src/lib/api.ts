@@ -7,9 +7,9 @@ const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV === "development";
 import toast from "react-hot-toast";
 
-// We MUST direct all frontend requests natively to the Render backend to support SSE streaming
+// We MUST direct all frontend requests natively to the Railway backend to support SSE streaming
 // relying on Vercel rewrites causes chunks to buffer and drop.
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-soda.onrender.com";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.up.railway.app";
 
 /** Build a WebSocket URL pointing at the correct host (wss in production, ws locally) */
 export function websocketUrl(path: string): string {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-soda.onrender.com";
+  const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.up.railway.app";
   
   try {
     const res = await fetch(`${RENDER_BACKEND_URL}/api/health`, {

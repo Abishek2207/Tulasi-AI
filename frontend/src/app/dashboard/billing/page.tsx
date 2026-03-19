@@ -17,7 +17,7 @@ export default function BillingPage() {
     }
     setLoading(true);
     try {
-      const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-soda.onrender.com";
+      const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.up.railway.app";
       const res = await fetch(`${RENDER_BACKEND_URL}/api/stripe/create-checkout-session`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
