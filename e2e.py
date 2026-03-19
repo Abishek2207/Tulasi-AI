@@ -4,7 +4,7 @@ import sys
 import json
 import time
 
-BASE_URL = 'https://tulasi-api-ldcw.onrender.com/api'
+BASE_URL = 'https://tulasi-backend.up.railway.app/api'
 
 report = {
     'working': [],
@@ -30,7 +30,7 @@ def test_health():
             return True
         log_failure('API Health Check', f'Status {r.status_code}')
     except Exception as e:
-        log_failure('API Health Check', str(e), 'Check if Render instance is awake or reachable.')
+        log_failure('API Health Check', str(e), 'Check if Railway instance is reachable.')
     return False
 
 def test_auth():
@@ -113,7 +113,7 @@ def main():
         else:
             log_failure('AI Chat Engine', f'Status {r.status_code}: {r.text}')
     except Exception as e:
-        log_failure('AI Chat Engine', str(e), 'Check if GOOGLE_API_KEY is valid on Render.')
+        log_failure('AI Chat Engine', f'Status {r.status_code}: {r.text}', 'Check if GOOGLE_API_KEY is valid on Railway.')
 
     print('\n--- E2E Report ---')
     print(json.dumps(report, indent=2))
