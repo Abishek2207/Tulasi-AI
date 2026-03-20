@@ -40,18 +40,21 @@ export function websocketUrl(path: string): string {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const FETCH_TIMEOUT_MS = 5_000; // 5 second timeout per request attempt
+const FETCH_TIMEOUT_MS = 60_000; // 60s timeout for AI endpoints
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 5): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
   try {
-    const res = await fetch(url, options);
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+
     if (!res.ok) {
       if (res.status === 502 || res.status === 503 || res.status === 504) {
-         if (retries === 5) toast.loading("Server waking up. Retrying...", { id: "retry-toast" }); // Show only once on first attempt
+         if (retries === 3) toast.loading("Server waking up. Retrying...", { id: "retry-toast" }); 
          throw new Error("API error / Server waking up");
       }
-      // If it's a 4xx error (e.g. invalid credentials), let it pass through to be handled by the caller,
-      // as retrying won't help. We throw an error here to force a retry ONLY for 5xx type errors or generic failures.
       if (res.status >= 500) {
          toast.error(`Server error: ${res.status}`);
          throw new Error(`API error: ${res.status}`);
@@ -61,12 +64,13 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 5): P
     toast.dismiss("retry-toast");
     return res;
   } catch (err: any) {
-    if (retries === 0) {
+    if (retries === 0 || err.name === 'AbortError') {
       toast.dismiss("retry-toast");
+      if (err.name === 'AbortError') throw new Error("Request timed out.");
       toast.error("Connection failed. Server offline.");
       throw err;
     }
-    await new Promise(r => setTimeout(r, 1000 * (6 - retries)));
+    await new Promise(r => setTimeout(r, 1000 * (4 - retries)));
     return fetchWithRetry(url, options, retries - 1);
   }
 }
@@ -140,11 +144,22 @@ export const authApi = {
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
 export const chatApi = {
-  send: (message: string, session_id?: string, tool?: string) =>
-    request<{ response: string; session_id?: string; model_used?: string }>(
-      "/api/chat",
-      { method: "POST", body: JSON.stringify({ message, session_id, tool }) }
-    ),
+  send: async (message: string, session_id?: string, tool?: string) => {
+    let retries = 2;
+    while (retries >= 0) {
+      try {
+        return await request<{ response: string; session_id?: string; model_used?: string }>(
+          "/api/chat",
+          { method: "POST", body: JSON.stringify({ message, session_id, tool }) }
+        );
+      } catch (err) {
+        if (retries === 0) throw err;
+        retries--;
+        await new Promise(r => setTimeout(r, 2000)); // 2 sec delay
+      }
+    }
+    throw new Error("Chat send failed after retries.");
+  },
 
   feedback: (session_id: string, message_id: string, rating: number) =>
     request<{ status: string }>("/api/chat/feedback", {

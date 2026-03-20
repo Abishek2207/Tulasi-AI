@@ -1,23 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
-  
   try {
-    const res = await fetch(`${RENDER_BACKEND_URL}/api/health`, {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tulasiai.up.railway.app';
+    const parsedUrl = backendUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
+    
+    // Ping the backend health endpoint
+    const response = await fetch(`${parsedUrl}/api/health`, {
       method: "GET",
-      cache: "no-store",
+      headers: { "Content-Type": "application/json" }
     });
     
-    if (res.ok) {
-      console.log("[CRON] Pinged Render backend successfully.");
-      return NextResponse.json({ status: "success", message: "Render backend pinged successfully." }, { status: 200 });
+    if (response.ok) {
+      return NextResponse.json({ success: true, message: "Backend pinged successfully" }, { status: 200 });
     } else {
-      console.warn(`[CRON] Render backend returned status: ${res.status}`);
-      return NextResponse.json({ status: "warning", message: `Render backend returned status: ${res.status}` }, { status: res.status });
+      return NextResponse.json({ success: false, error: "Backend ping failed" }, { status: response.status });
     }
-  } catch (err: any) {
-    console.error("[CRON] Failed to ping Render backend:");
-    return NextResponse.json({ status: "error", message: err.message }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
