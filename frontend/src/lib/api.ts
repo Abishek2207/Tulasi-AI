@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 
 // We MUST direct all frontend requests natively to the Railway backend to support SSE streaming
 // relying on Vercel rewrites causes chunks to buffer and drop.
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.up.railway.app";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
 
 /** Build a WebSocket URL pointing at the correct host (wss in production, ws locally) */
 export function websocketUrl(path: string): string {
@@ -61,7 +61,13 @@ async function request<T>(
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  
+  let currentToken = token;
+  if (!currentToken && isBrowser) {
+    currentToken = localStorage.getItem("token") || undefined;
+  }
+  
+  if (currentToken) headers["Authorization"] = `Bearer ${currentToken}`;
 
   try {
     const res = await fetchWithRetry(`${API_URL}${path}`, { ...options, headers });

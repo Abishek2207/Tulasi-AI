@@ -27,10 +27,16 @@ const chatSlice = createSlice({
     addMessage: (state, action: PayloadAction<Message>) => {
       state.messages.push(action.payload);
     },
-    /** Append streaming tokens to an existing message by ID */
-    updateLastMessage: (state, action: PayloadAction<{ id: string; append: string }>) => {
+    /** Update an existing message by ID (append or full replace) */
+    updateLastMessage: (state, action: PayloadAction<{ id: string; append?: string; content?: string }>) => {
       const msg = state.messages.find(m => m.id === action.payload.id);
-      if (msg) msg.content += action.payload.append;
+      if (msg) {
+        if (action.payload.content !== undefined) {
+          msg.content = action.payload.content;
+        } else if (action.payload.append !== undefined) {
+          msg.content += action.payload.append;
+        }
+      }
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;

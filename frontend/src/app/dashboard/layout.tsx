@@ -8,6 +8,7 @@ import { RootState } from "@/store";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
 import { BackendBanner } from "@/components/dashboard/BackendBanner";
+import { DebugPanel } from "@/components/DebugPanel";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -52,6 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </motion.div>
         </main>
       </div>
+      <DebugPanel />
     </div>
   );
 }

@@ -75,16 +75,22 @@ export default function AuthPage() {
     setError("");
 
     if (isLogin) {
-      const res = await signIn("credentials", { email, password, redirect: false });
-      if (res?.error) {
-        setError("Invalid email or password.");
-      } else {
+      try {
+        const data = await authApi.login(email, password);
+        if (data.access_token) {
+          localStorage.setItem("token", data.access_token);
+        }
+        await signIn("credentials", { email, password, redirect: false });
         router.push("/dashboard");
+      } catch (err: any) {
+        setError(err.message || "Invalid email or password.");
       }
     } else {
       try {
-        const res = await authApi.register(email, password, name);
-        // If the request succeeds, it returns the token and user. If it fails, our fetchWithRetry helper throws an Error.
+        const data = await authApi.register(email, password, name);
+        if (data.access_token) {
+          localStorage.setItem("token", data.access_token);
+        }
         await signIn("credentials", { email, password, redirect: false });
         router.push("/dashboard");
       } catch (err: any) {

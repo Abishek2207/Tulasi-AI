@@ -102,34 +102,64 @@ export default function ChatPage() {
     dispatch(setLoading(true));
     setIsWakingUp(false);
 
-    const wakeTimer = setTimeout(() => setIsWakingUp(true), 5000);
-
-    // Create placeholder AI message for streaming
     const aiMsgId = (Date.now() + 1).toString();
     dispatch(addMessage({ id: aiMsgId, role: "assistant", content: "", timestamp: Date.now() }));
     setStreamingId(aiMsgId);
 
-    try {
-      await chatApi.streamSend(
-        text,
-        sessionId || undefined,
-        token,
-        activeTool,
-        // onToken → append to the placeholder
-        (chunk) => dispatch(updateLastMessage({ id: aiMsgId, append: chunk })),
-        // onDone
-        (sid) => { dispatch(setSessionId(sid)); },
-        // onError
-        (err) => { dispatch(updateLastMessage({ id: aiMsgId, append: `❌ ${err}` })); }
-      );
-    } catch {
-      dispatch(updateLastMessage({ id: aiMsgId, append: "❌ Failed to connect. Please check the backend is running." }));
-    } finally {
-      clearTimeout(wakeTimer);
-      setIsWakingUp(false);
-      setStreamingId(null);
-      dispatch(setLoading(false));
+    const maxRetries = 2;
+    let attempt = 0;
+    let success = false;
+
+    while (attempt <= maxRetries && !success) {
+      const wakeTimer = setTimeout(() => setIsWakingUp(true), 5000);
+      try {
+        await chatApi.streamSend(
+          text,
+          sessionId || undefined,
+          token,
+          activeTool,
+          (chunk) => dispatch(updateLastMessage({ id: aiMsgId, append: chunk })),
+          (sid) => { 
+            dispatch(setSessionId(sid));
+            success = true;
+          },
+          (err) => { 
+            // Handle specific status errors if encoded in the message or if caught by catch
+            if (err.includes("401")) {
+               dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Session expired. Please log in again." }));
+               success = true; // Don't retry auth errors
+            } else if (err.includes("500") || err.includes("Failed to connect")) {
+               if (attempt < maxRetries) {
+                 dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Connection failed. Retrying... (Attempt ${attempt + 1})` }));
+               } else {
+                 dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Server down. Please try again later." }));
+               }
+            } else {
+               dispatch(updateLastMessage({ id: aiMsgId, append: `❌ ${err}` }));
+               success = true; // Generic error, might not help to retry
+            }
+          }
+        );
+        if (success) break;
+      } catch (err: any) {
+        if (attempt === maxRetries) {
+           dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Server down. Connection failed." }));
+        }
+      } finally {
+        clearTimeout(wakeTimer);
+        setIsWakingUp(false);
+      }
+      
+      if (!success) {
+        attempt++;
+        if (attempt <= maxRetries) {
+          await new Promise(r => setTimeout(r, 2000)); // wait before retry
+        }
+      }
     }
+
+    setStreamingId(null);
+    dispatch(setLoading(false));
   }, [input, isLoading, sessionId, token, activeTool, dispatch]);
 
   const handleRetry = () => { if (lastUserMsg) sendMessage(lastUserMsg); };
