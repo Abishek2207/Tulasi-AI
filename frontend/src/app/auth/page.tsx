@@ -16,17 +16,17 @@ function TulasiLogoPro() {
       initial={{ scale: 0.9, opacity: 0 }} 
       animate={{ scale: 1, opacity: 1 }} 
       transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
-      style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 36 }}
+      style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 36 } as any}
     >
       <div style={{ position: "relative" }}>
-        <TulasiLogo size={64} style={{ filter: "drop-shadow(0 10px 30px rgba(78,205,196,0.3))" }} />
+        <TulasiLogo size={64} style={{ filter: "drop-shadow(0 10px 30px rgba(139, 92, 246, 0.4))" }} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
         <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 26, color: "white", letterSpacing: "-0.5px", lineHeight: 1 }}>
-          Tulasi<span style={{ color: "#4ECDC4" }}>AI</span>
+          Tulasi<span className="gradient-text">AI</span>
         </span>
         <span style={{ 
-          background: "linear-gradient(90deg, #6C63FF, #FF6B9D)", 
+          background: "linear-gradient(135deg, #8B5CF6, #38BDF8)", 
           padding: "2px 8px", 
           borderRadius: 4, 
           fontSize: 10, 
@@ -35,7 +35,7 @@ function TulasiLogoPro() {
           marginTop: 4,
           letterSpacing: "1px",
           textTransform: "uppercase",
-          boxShadow: "0 0 10px rgba(108,99,255,0.4)"
+          boxShadow: "0 0 15px rgba(139, 92, 246, 0.5)"
         }}>
           Pro
         </span>
@@ -134,7 +134,7 @@ export default function AuthPage() {
       {/* Right side - Login Form */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#111218", position: "relative", zIndex: 1, boxShadow: "-20px 0 60px rgba(0,0,0,0.5)" }}>
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: [0.16,1,0.3,1] }}
-          style={{ width: "100%", maxWidth: 420, padding: "0 32px" }}
+          style={{ width: "100%", maxWidth: 420, padding: "0 32px" } as any}
         >
           <TulasiLogoPro />
 
@@ -189,7 +189,7 @@ export default function AuthPage() {
                 <motion.div initial={{ opacity: 0, height: 0, scale: 0.95 }} animate={{ opacity: 1, height: "auto", scale: 1 }} exit={{ opacity: 0, height: 0, scale: 0.95 }} transition={{ bounce: 0 }}>
                   <label style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 8, transition: "color 0.2s" }}>Full Name</label>
                   <motion.input whileFocus={{ scale: 1.02 }} value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required 
-                    style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}
+                    style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" } as any}
                     onFocus={e => { e.target.style.borderColor = "#4ECDC4"; e.target.style.background = "rgba(78,205,196,0.05)" }}
                     onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.background = "rgba(255,255,255,0.03)" }}
                   />
@@ -200,7 +200,7 @@ export default function AuthPage() {
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 8, transition: "color 0.2s" }}>Email Address</label>
               <motion.input whileFocus={{ scale: 1.02 }} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" required 
-                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" } as any}
                 onFocus={e => { e.target.style.borderColor = "#4ECDC4"; e.target.style.background = "rgba(78,205,196,0.05)" }}
                 onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.background = "rgba(255,255,255,0.03)" }}
               />
@@ -212,7 +212,7 @@ export default function AuthPage() {
                 {isLogin && <a href="#" style={{ fontSize: 12, color: "#4ECDC4", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="white"} onMouseLeave={e => e.currentTarget.style.color="#4ECDC4"}>Forgot password?</a>}
               </div>
               <motion.input whileFocus={{ scale: 1.02 }} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required 
-                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" } as any}
                 onFocus={e => { e.target.style.borderColor = "#4ECDC4"; e.target.style.background = "rgba(78,205,196,0.05)" }}
                 onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.background = "rgba(255,255,255,0.03)" }}
               />
@@ -224,7 +224,7 @@ export default function AuthPage() {
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                       <div style={{ display: "flex", gap: 4, height: 4 }}>
                         {[1, 2, 3, 4, 5].map(i => (
-                          <div key={i} style={{ flex: 1, borderRadius: 2, background: i <= strength.score ? strength.color : "rgba(255,255,255,0.1)", transition: "all 0.3s ease" }} />
+                          <div key={i} style={{ flex: 1, borderRadius: 2, background: i <= strength.score ? strength.color : "rgba(255,255,255,0.1)", transition: "all 0.3s ease" } as any} />
                         ))}
                       </div>
                       <div style={{ fontSize: 11, color: strength.color, textAlign: "right", fontWeight: 600 }}>{strength.label}</div>
@@ -237,7 +237,7 @@ export default function AuthPage() {
             <AnimatePresence>
               {error && (
                 <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  style={{ background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#FF8585", display: "flex", gap: 8, alignItems: "center" }}
+                  style={{ background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#FF8585", display: "flex", gap: 8, alignItems: "center" } as any}
                 >
                   <span style={{ fontSize: 16 }}>⚠️</span> {error}
                 </motion.div>
@@ -245,7 +245,7 @@ export default function AuthPage() {
             </AnimatePresence>
 
             <motion.button type="submit" disabled={loading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-              style={{ width: "100%", background: "white", color: "#111", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", marginTop: 8, display: "flex", justifyContent: "center", alignItems: "center", transition: "all 0.2s" }}
+              style={{ width: "100%", background: "white", color: "#111", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", marginTop: 8, display: "flex", justifyContent: "center", alignItems: "center", transition: "all 0.2s" } as any}
             >
               {loading ? (
                 <div style={{ width: 20, height: 20, border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "black", borderRadius: "50%", animation: "spin 1s linear infinite" }} />

@@ -10,6 +10,7 @@ import TopBar from "@/components/dashboard/TopBar";
 import { BackendBanner } from "@/components/dashboard/BackendBanner";
 import { DebugPanel } from "@/components/DebugPanel";
 import { motion, AnimatePresence } from "framer-motion";
+import { BackgroundBeams } from "@/components/ui/BackgroundBeams";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -25,7 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (status === "loading") return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
       <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-        style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid rgba(108,99,255,0.2)", borderTopColor: "#6C63FF" }}
+        style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid rgba(108,99,255,0.2)", borderTopColor: "#6C63FF" } as any}
       />
       <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Loading your workspace...</p>
     </div>
@@ -34,12 +35,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!session) return null;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-primary)" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "transparent" }}>
+      <BackgroundBeams />
       <BackendBanner />
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div initial={{ x: -280, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -280, opacity: 0 }} transition={{ duration: 0.22, ease: "easeOut" }}
-            style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50 }}>
+            style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50 } as any}>
             <Sidebar />
           </motion.div>
         )}

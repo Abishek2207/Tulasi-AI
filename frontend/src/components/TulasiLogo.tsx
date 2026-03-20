@@ -1,91 +1,108 @@
 "use client";
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React from 'react';
+import { motion } from 'framer-motion';
 
 export const TulasiLogo = ({ size = 100, className = "", style = {} }: { size?: number | string, className?: string, style?: React.CSSProperties }) => {
-  const [error, setError] = useState(false);
-
-  if (!error) {
-    return (
-      <div style={{ width: size, height: size, position: 'relative', overflow: 'hidden', ...style }} className={className}>
-        <Image 
-          src="/logo.png" 
-          alt="Tulasi AI Logo" 
-          fill
-          sizes={`${size}px`}
-          style={{ objectFit: "contain" }}
-          onError={() => setError(true)}
-          priority
-        />
-      </div>
-    );
-  }
-
   return (
-    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" className={className} style={style} xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="leafGreen" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4ADE80" />
-          <stop offset="100%" stopColor="#166534" />
-        </linearGradient>
-        <linearGradient id="leafBlue" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#38BDF8" />
-          <stop offset="100%" stopColor="#2563EB" />
-        </linearGradient>
-        <linearGradient id="leafPurple" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#A855F7" />
-          <stop offset="100%" stopColor="#4C1D95" />
-        </linearGradient>
-        <linearGradient id="leafPink" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#F472B6" />
-          <stop offset="100%" stopColor="#9333EA" />
-        </linearGradient>
-        <linearGradient id="circuitGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#38BDF8" />
-          <stop offset="50%" stopColor="#6366F1" />
-          <stop offset="100%" stopColor="#D946EF" />
-        </linearGradient>
-        
-        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-      </defs>
+    <div style={{ width: size, height: size, position: 'relative', ...style }} className={className}>
+      <motion.svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 200 200"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        initial="hidden"
+        animate="visible"
+      >
+        <defs>
+          <linearGradient id="brainGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#A855F7" />
+            <stop offset="50%" stopColor="#6366F1" />
+            <stop offset="100%" stopColor="#06B6D4" />
+          </linearGradient>
+          <linearGradient id="lotusGrad" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor="#8B5CF6" />
+            <stop offset="100%" stopColor="#2DD4BF" />
+          </linearGradient>
 
-      {/* CIRCUIT ROOTS */}
-      <g stroke="url(#circuitGrad)" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)">
-        <path d="M 100 115 L 100 185" />
-        <path d="M 100 135 L 115 150 L 115 175" />
-        <circle cx="115" cy="175" r="3" fill="#D946EF" stroke="none" />
-        <path d="M 100 125 L 130 155 L 140 155 L 140 165" />
-        <circle cx="140" cy="165" r="3" fill="#D946EF" stroke="none" />
-        <path d="M 115 150 L 135 130 L 155 130 L 155 145" />
-        <circle cx="155" cy="145" r="3" fill="#C084FC" stroke="none" />
-        <path d="M 135 130 L 145 120 L 175 120 L 175 130" />
-        <circle cx="175" cy="130" r="3" fill="#C084FC" stroke="none" />
-        <path d="M 145 120 L 155 110 L 185 110 L 185 115" />
-        <circle cx="185" cy="115" r="3" fill="#C084FC" stroke="none" />
+          <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur1" />
+            <feGaussianBlur stdDeviation="12" result="blur2" />
+            <feMerge>
+              <feMergeNode in="blur2" />
+              <feMergeNode in="blur1" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
 
-        <path d="M 100 135 L 85 150 L 85 175" />
-        <circle cx="85" cy="175" r="3" fill="#38BDF8" stroke="none" />
-        <path d="M 100 125 L 70 155 L 60 155 L 60 165" />
-        <circle cx="60" cy="165" r="3" fill="#38BDF8" stroke="none" />
-        <path d="M 85 150 L 65 130 L 45 130 L 45 145" />
-        <circle cx="45" cy="145" r="3" fill="#38BDF8" stroke="none" />
-        <path d="M 65 130 L 55 120 L 25 120 L 25 130" />
-        <circle cx="25" cy="130" r="3" fill="#6366F1" stroke="none" />
-        <path d="M 55 120 L 45 110 L 15 110 L 15 115" />
-        <circle cx="15" cy="115" r="3" fill="#6366F1" stroke="none" />
-      </g>
+        {/* CIRCUIT BRAIN NODES */}
+        <motion.g
+          stroke="url(#brainGrad)"
+          strokeWidth="3.5"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter="url(#neonGlow)"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 0.8 }}
+          transition={{ duration: 2, ease: "easeInOut" }}
+        >
+          {/* Left Hemisphere Circuits */}
+          <path d="M 100 80 Q 70 60 50 80 T 50 120" />
+          <path d="M 75 90 L 60 100" />
+          <path d="M 85 70 L 65 65" />
+          <circle cx="50" cy="120" r="4" fill="#06B6D4" />
+          <circle cx="60" cy="100" r="3" fill="#6366F1" />
+          <circle cx="65" cy="65" r="3" fill="#A855F7" />
 
-      {/* LEAVES */}
-      <g filter="url(#glow)">
-        <path d="M 90 100 C 40 100, 10 50, 20 60 C 20 85, 40 115, 95 110 Z" fill="url(#leafPink)" opacity="0.95" />
-        <path d="M 110 100 C 160 100, 190 50, 180 60 C 180 85, 160 115, 105 110 Z" fill="url(#leafPink)" opacity="0.95" />
-        <path d="M 95 105 C 50 90, 40 30, 50 35 C 65 30, 85 60, 100 105 Z" fill="url(#leafBlue)" />
-        <path d="M 105 105 C 150 90, 160 30, 150 35 C 135 30, 115 60, 100 105 Z" fill="url(#leafPurple)" />
-        <path d="M 100 110 C 75 80, 75 15, 100 15 C 125 15, 125 80, 100 110 Z" fill="url(#leafGreen)" />
-      </g>
-    </svg>
+          {/* Right Hemisphere Circuits */}
+          <path d="M 100 80 Q 130 60 150 80 T 150 120" />
+          <path d="M 125 90 L 140 100" />
+          <path d="M 115 70 L 135 65" />
+          <circle cx="150" cy="120" r="4" fill="#06B6D4" />
+          <circle cx="140" cy="100" r="3" fill="#6366F1" />
+          <circle cx="135" cy="65" r="3" fill="#A855F7" />
+
+          {/* Brain Stem Connection */}
+          <path d="M 100 80 L 100 130" />
+          <circle cx="100" cy="130" r="5" fill="#8B5CF6" />
+        </motion.g>
+
+        {/* LOTUS PETALS */}
+        <motion.g
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+          style={{ transformOrigin: "100px 140px" } as any}
+        >
+          {/* Center Petal */}
+          <path d="M 100 130 C 70 80, 85 40, 100 30 C 115 40, 130 80, 100 130 Z" fill="url(#lotusGrad)" opacity="0.9" />
+          
+          {/* Left Petal */}
+          <path d="M 100 130 C 50 100, 40 60, 60 45 C 75 40, 90 70, 100 130 Z" fill="url(#lotusGrad)" opacity="0.7" />
+          
+          {/* Right Petal */}
+          <path d="M 100 130 C 150 100, 160 60, 140 45 C 125 40, 110 70, 100 130 Z" fill="url(#lotusGrad)" opacity="0.7" />
+          
+          {/* Far Left Petal */}
+          <path d="M 100 130 C 40 130, 10 90, 25 75 C 40 65, 70 90, 100 130 Z" fill="url(#brainGrad)" opacity="0.5" />
+          
+          {/* Far Right Petal */}
+          <path d="M 100 130 C 160 130, 190 90, 175 75 C 160 65, 130 90, 100 130 Z" fill="url(#brainGrad)" opacity="0.5" />
+        </motion.g>
+
+        {/* PULSING NEON ORB CORE */}
+        <motion.circle
+          cx="100"
+          cy="115"
+          r="8"
+          fill="#06B6D4"
+          filter="url(#neonGlow)"
+          animate={{ scale: [1, 1.4, 1], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </motion.svg>
+    </div>
   );
 };

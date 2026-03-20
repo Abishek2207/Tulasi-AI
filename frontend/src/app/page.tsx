@@ -42,18 +42,18 @@ function TulasILogo({ size = 40 }: { size?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: size * 0.25 }}>
       <div style={{ position: "relative" }}>
-        <TulasiLogo size={size * 1.5} style={{ filter: "drop-shadow(0 4px 12px rgba(78,205,196,0.3))" }} />
+        <TulasiLogo size={size * 1.5} style={{ filter: "drop-shadow(0 4px 15px rgba(139, 92, 246, 0.4))" }} />
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          style={{ position: "absolute", inset: "-20%", background: "radial-gradient(circle, rgba(108,99,255,0.4) 0%, transparent 70%)", zIndex: -1 }}
+          style={{ position: "absolute", inset: "-20%", background: "radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%)", zIndex: -1 } as any}
         />
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
         <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: size * 0.55, color: "white", letterSpacing: "-0.5px", lineHeight: 1 }}>
-          Tulasi<span style={{ color: "#4ECDC4" }}>AI</span>
+          Tulasi<span className="gradient-text">AI</span>
         </span>
-        <span style={{ background: "linear-gradient(90deg, #6C63FF, #FF6B9D)", padding: "2px 6px", borderRadius: 4, fontSize: size * 0.22, fontWeight: 800, color: "white", marginTop: 2, letterSpacing: "1px", textTransform: "uppercase" }}>
+        <span style={{ background: "linear-gradient(135deg, #8B5CF6, #38BDF8)", padding: "2px 6px", borderRadius: 4, fontSize: size * 0.22, fontWeight: 800, color: "white", marginTop: 2, letterSpacing: "1px", textTransform: "uppercase", boxShadow: "0 0 10px rgba(139,92,246,0.3)" }}>
           Pro
         </span>
       </div>
@@ -84,7 +84,7 @@ function Navbar() {
         display: "flex", alignItems: "center", justifyContent: "space-between",
         maxWidth: 1400, margin: "0 auto",
         transition: "all 0.4s ease",
-      }}
+      } as any}
     >
       <Link href="/" style={{ textDecoration: "none" }}>
         <TulasILogo size={40} />
@@ -165,7 +165,7 @@ function Hero() {
             </p>
           </motion.div>
         </div>
-      <motion.div style={{ y, opacity: op, position: "relative", zIndex: 1, textAlign: "center", maxWidth: 960 }}>
+        <motion.div style={{ y, opacity: op, position: "relative", zIndex: 1, textAlign: "center", maxWidth: 960 } as any}>
 
         {/* Free badge */}
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, type: "spring" }}>
@@ -175,9 +175,9 @@ function Hero() {
         </motion.div>
 
         {/* Logo in hero */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={{ display: "flex", justifyContent: "center", marginBottom: 36 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={{ display: "flex", justifyContent: "center", marginBottom: 36 } as any}>
           <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1, duration: 0.8, ease: "easeOut" }}
-          style={{ width: 88, height: 88, margin: "0 auto", marginBottom: 32, borderRadius: 24, padding: 8, background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))", boxShadow: "0 0 40px rgba(108,99,255,0.2), inset 0 0 0 1px rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+          style={{ width: 88, height: 88, margin: "0 auto", marginBottom: 32, borderRadius: 24, padding: 8, background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))", boxShadow: "0 0 40px rgba(108,99,255,0.2), inset 0 0 0 1px rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" } as any}>
           
           <div style={{ position: "absolute", inset: -20, background: "radial-gradient(circle, rgba(78,205,196,0.3) 0%, transparent 70%)", zIndex: -1, filter: "blur(20px)", borderRadius: "50%" }} />
           <TulasiLogo size={80} style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))" }} />
@@ -185,42 +185,42 @@ function Hero() {
         </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.8, type: "spring" }}
-          style={{ fontSize: "clamp(42px, 8vw, 88px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 1.04, marginBottom: 28, letterSpacing: "-3px", color: "white" }}
+          style={{ fontSize: "clamp(42px, 8vw, 88px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 1.04, marginBottom: 28, letterSpacing: "-3px", color: "white" } as any}
         >
           Free AI Learning<br />
           <motion.span
             animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
             transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            style={{ background: "linear-gradient(90deg, #6C63FF, #FF6B9D, #4ECDC4, #43E97B, #6C63FF)", backgroundSize: "300% auto", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
+            style={{ background: "linear-gradient(90deg, #6C63FF, #FF6B9D, #4ECDC4, #43E97B, #6C63FF)", backgroundSize: "300% auto", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" } as any}
           >
             Platform for Students
           </motion.span>
         </motion.h1>
 
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          style={{ fontSize: 20, color: "rgba(255,255,255,0.6)", maxWidth: 640, margin: "0 auto 52px", lineHeight: 1.7, fontWeight: 400 }}
+          style={{ fontSize: 20, color: "rgba(255,255,255,0.6)", maxWidth: 640, margin: "0 auto 52px", lineHeight: 1.7, fontWeight: 400 } as any}
         >
           Your AI-powered educational companion. Chat with AI tutors, practice coding, ace interviews, and build your career — all at <strong style={{ color: "white" }}>zero cost</strong>.
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
-          style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 72 }}
+          style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 72 } as any}
         >
           <Link href="/auth">
             <motion.button whileHover={{ scale: 1.05, boxShadow: "0 24px 64px rgba(108,99,255,0.6)" }} whileTap={{ scale: 0.95 }}
-              className="btn-primary" style={{ padding: "18px 44px", fontSize: 17, borderRadius: 16, background: "linear-gradient(135deg, #6C63FF, #FF6B9D)", border: "none" }}>
+              className="btn-primary" style={{ padding: "18px 44px", fontSize: 17, borderRadius: 16, background: "linear-gradient(135deg, #6C63FF, #FF6B9D)", border: "none" } as any}>
               Start Learning Free 🚀
             </motion.button>
           </Link>
           <motion.button whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.1)" }} whileTap={{ scale: 0.95 }}
-            className="btn-ghost" style={{ padding: "18px 36px", fontSize: 17, borderRadius: 16, border: "1px solid rgba(255,255,255,0.2)", transition: "background 0.3s" }}>
+            className="btn-ghost" style={{ padding: "18px 36px", fontSize: 17, borderRadius: 16, border: "1px solid rgba(255,255,255,0.2)", transition: "background 0.3s" } as any}>
             ▶ Try AI Chat Preview
           </motion.button>
         </motion.div>
 
         {/* Stats */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}
-          style={{ display: "flex", gap: 56, justifyContent: "center", flexWrap: "wrap" }}
+          style={{ display: "flex", gap: 56, justifyContent: "center", flexWrap: "wrap" } as any}
         >
           {stats.map(s => (
             <div key={s.label} style={{ textAlign: "center" }}>
@@ -234,7 +234,7 @@ function Hero() {
       {/* Dashboard Preview */}
       <motion.div initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 1 }}
         className="float-anim"
-        style={{ marginTop: 80, width: "100%", maxWidth: 1000, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(17,17,40,0.85)", backdropFilter: "blur(20px)", boxShadow: "0 40px 120px rgba(108,99,255,0.22)", position: "relative", zIndex: 1 }}
+        style={{ marginTop: 80, width: "100%", maxWidth: 1000, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(17,17,40,0.85)", backdropFilter: "blur(20px)", boxShadow: "0 40px 120px rgba(108,99,255,0.22)", position: "relative", zIndex: 1 } as any}
       >
         <div style={{ padding: "16px 20px 0", display: "flex", gap: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           {["#FF5F57", "#FEBC2E", "#28C840"].map(c => <div key={c} style={{ width: 12, height: 12, borderRadius: "50%", background: c }} />)}
@@ -281,7 +281,7 @@ function Features() {
   return (
     <section id="features" style={{ padding: "120px 24px", position: "relative" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 72 }}>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 72 } as any}>
           <span className="badge badge-primary" style={{ marginBottom: 20, display: "inline-flex", padding: "8px 20px" }}>🚀 Platform Features</span>
           <h2 style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1.5px", marginBottom: 20 }}>
             Everything a student needs to <span className="gradient-text">excel</span>
@@ -296,7 +296,7 @@ function Features() {
             <motion.div key={f.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
               whileHover={{ y: -10, scale: 1.02 }}
               className="dash-card"
-              style={{ position: "relative", overflow: "hidden", cursor: "pointer" }}
+              style={{ position: "relative", overflow: "hidden", cursor: "pointer" } as any}
             >
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${f.color}, transparent)` }} />
               <div style={{ width: 52, height: 52, borderRadius: 14, background: `${f.color}22`, border: `1px solid ${f.color}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, marginBottom: 18 }}>
@@ -319,7 +319,7 @@ function RoadmapsSection() {
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ background: "var(--gradient-card)", border: "1px solid rgba(108,99,255,0.2)", borderRadius: 32, padding: "60px 48px", position: "relative", overflow: "hidden" }}>
           <div className="orb orb-purple" style={{ width: 400, height: 400, top: -100, right: -100, opacity: 0.15 }} />
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 52 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 52 } as any}>
             <span className="badge badge-teal" style={{ marginBottom: 20, display: "inline-flex", padding: "8px 20px" }}>🗺️ Learning Roadmaps</span>
             <h2 style={{ fontSize: "clamp(29px, 4vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px" }}>
               Structured paths to your <span className="gradient-text">dream job</span>
@@ -329,7 +329,7 @@ function RoadmapsSection() {
             {roadmaps.map((r, i) => (
               <motion.div key={r.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 whileHover={{ scale: 1.04, y: -6 }}
-                style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${r.color}30`, borderRadius: 20, padding: 28, cursor: "pointer", textAlign: "center" }}
+                style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${r.color}30`, borderRadius: 20, padding: 28, cursor: "pointer", textAlign: "center" } as any}
               >
                 <div style={{ fontSize: 48, marginBottom: 14 }}>{r.icon}</div>
                 <div style={{ fontWeight: 700, fontSize: 16, color: r.color }}>{r.title}</div>
@@ -352,7 +352,7 @@ function Testimonials() {
   return (
     <section style={{ padding: "100px 24px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 } as any}>
           <h2 style={{ fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px", marginBottom: 16 }}>
             Students love <span className="gradient-text">Tulasi AI</span>
           </h2>
@@ -361,7 +361,7 @@ function Testimonials() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
           {testimonials.map((t, i) => (
             <motion.div key={t.name} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}
-              className="glass-card" style={{ padding: 32 }}
+              className="glass-card" style={{ padding: 32 } as any}
             >
               <div style={{ fontSize: 24, color: "#FFD93D", marginBottom: 16 }}>★★★★★</div>
               <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>&ldquo;{t.text}&rdquo;</p>
@@ -385,12 +385,12 @@ function CTA() {
   return (
     <section style={{ padding: "140px 24px", textAlign: "center", position: "relative", overflow: "hidden" }}>
       <motion.div animate={{ rotate: 360 }} transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-        className="orb orb-purple" style={{ width: 900, height: 900, top: "50%", left: "50%", marginTop: -450, marginLeft: -450, opacity: 0.12, filter: "blur(120px)" }} />
+        className="orb orb-purple" style={{ width: 900, height: 900, top: "50%", left: "50%", marginTop: -450, marginLeft: -450, opacity: 0.12, filter: "blur(120px)" } as any} />
       <motion.div initial={{ opacity: 0, y: 50, scale: 0.95 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true }}
-        style={{ maxWidth: 820, margin: "0 auto", background: "linear-gradient(180deg, rgba(17,17,40,0.9) 0%, rgba(6,6,15,0.95) 100%)", border: "1px solid rgba(108,99,255,0.3)", borderRadius: 40, padding: "80px 48px", position: "relative", boxShadow: "0 40px 100px rgba(108,99,255,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }}
+        style={{ maxWidth: 820, margin: "0 auto", background: "linear-gradient(180deg, rgba(17,17,40,0.9) 0%, rgba(6,6,15,0.95) 100%)", border: "1px solid rgba(108,99,255,0.3)", borderRadius: 40, padding: "80px 48px", position: "relative", boxShadow: "0 40px 100px rgba(108,99,255,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" } as any}
       >
         <motion.div animate={{ y: [0, -12, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          style={{ width: 88, height: 88, borderRadius: 24, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, margin: "0 auto 36px", boxShadow: "0 20px 60px rgba(108,99,255,0.5)" }}
+          style={{ width: 88, height: 88, borderRadius: 24, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, margin: "0 auto 36px", boxShadow: "0 20px 60px rgba(108,99,255,0.5)" } as any}
         >🚀</motion.div>
         <h2 style={{ fontSize: "clamp(32px, 5vw, 60px)", fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 24, lineHeight: 1.1, letterSpacing: "-1.5px" }}>
           Start your learning<br /><span className="gradient-text-brand">journey today — free</span>
@@ -400,7 +400,7 @@ function CTA() {
         </p>
         <Link href="/auth">
           <motion.button whileHover={{ scale: 1.06, boxShadow: "0 24px 64px rgba(108,99,255,0.6)" }} whileTap={{ scale: 0.97 }}
-            className="btn-primary" style={{ padding: "20px 56px", fontSize: 18, borderRadius: 18 }}>
+            className="btn-primary" style={{ padding: "20px 56px", fontSize: 18, borderRadius: 18 } as any}>
             Join Tulasi AI — It&apos;s Free →
           </motion.button>
         </Link>

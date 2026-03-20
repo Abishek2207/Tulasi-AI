@@ -377,6 +377,40 @@ export const rewardApi = {
     }, token)
 };
 
+// ─── Payment (Razorpay) ──────────────────────────────────────────────────────
+
+export const paymentApi = {
+  /**
+   * Create a Razorpay order on the backend.
+   * Returns order_id, amount (in paise), currency, and the public key_id.
+   */
+  createOrder: () =>
+    request<{ order_id: string; amount: number; currency: string; key_id: string }>(
+      "/api/payment/create-order",
+      { method: "POST" }
+    ),
+
+  /**
+   * Verify Razorpay payment signature on the backend.
+   * Backend checks HMAC-SHA256 and sets is_pro = true on success.
+   */
+  verifyPayment: (data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) =>
+    request<{ success: boolean; message: string; is_pro: boolean }>(
+      "/api/payment/verify",
+      { method: "POST", body: JSON.stringify(data) }
+    ),
+
+  /** Get current user's Pro status */
+  getStatus: () =>
+    request<{ user_id: number; email: string; is_pro: boolean; plan: string }>(
+      "/api/payment/status"
+    ),
+};
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface User {
@@ -389,6 +423,7 @@ export interface User {
   xp?: number;
   level?: number;
   invite_code?: string;
+  is_pro?: boolean;
 }
 
 export interface ChatMsg {
