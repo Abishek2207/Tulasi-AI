@@ -276,12 +276,21 @@ export default function ChatPage() {
                     {currentTool.icon}
                   </motion.div>
                   <div style={{ flex: 1 }}>
-                    <div className="chat-bubble-ai" style={{ position: "relative" }}>
-                      {msg.content}
+                    <div className="chat-bubble-ai" style={{ position: "relative" } as any}>
+                      {msg.content === "" && isLoading && streamingId === msg.id ? (
+                        <div style={{ display: "flex", gap: 4, padding: "4px 0" }}>
+                          {[0, 1, 2].map(i => (
+                            <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                              style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }} />
+                          ))}
+                        </div>
+                      ) : (
+                        msg.content
+                      )}
                       {/* Blinking cursor while streaming */}
-                      {streamingId === msg.id && (
+                      {streamingId === msg.id && msg.content !== "" && (
                         <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}
-                          style={{ display: "inline-block", width: 2, height: "1em", background: "var(--brand-primary)", marginLeft: 2, verticalAlign: "middle", borderRadius: 1 }} />
+                          style={{ display: "inline-block", width: 2, height: "1em", background: "var(--brand-primary)", marginLeft: 2, verticalAlign: "middle", borderRadius: 1 } as any} />
                       )}
                     </div>
                     {/* Only show actions once streaming is done */}

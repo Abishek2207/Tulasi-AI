@@ -7,6 +7,7 @@ interface AuthState {
     email: string;
     image?: string;
     role: "user" | "admin";
+    is_pro?: boolean;
   } | null;
   isLoading: boolean;
 }
@@ -29,8 +30,14 @@ const authSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
+    setProStatus: (state, action: PayloadAction<boolean>) => {
+      if (state.user) {
+        state.user.is_pro = action.payload;
+      }
+    },
   },
 });
 
-export const { setUser, clearUser, setLoading } = authSlice.actions;
+export const { setUser, clearUser, setLoading, setProStatus } = authSlice.actions;
 export default authSlice.reducer;
+
