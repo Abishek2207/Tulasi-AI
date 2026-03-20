@@ -5,84 +5,79 @@ import { motion, AnimatePresence } from "framer-motion";
 import { API_URL } from "@/lib/api";
 
 export function ConnectionStatus() {
-  const [status, setStatus] = useState<"connected" | "reconnecting">("connected");
-  const [show, setShow] = useState(false);
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+  const [tokenPresent, setTokenPresent] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [show, setShow] = useState(true);
 
   useEffect(() => {
-    let retryCount = 0;
-    
-    const checkHealth = async () => {
+    const checkStatus = async () => {
+      // Check Token
+      const token = localStorage.getItem("token");
+      setTokenPresent(!!token);
+
+      // Check API Health
       try {
-        const res = await fetch(`${API_URL}/api/health`);
+        const res = await fetch(`${API_URL}/api/health`, { cache: 'no-store' });
         if (res.ok) {
-          if (status === "reconnecting") {
-            setStatus("connected");
-            setTimeout(() => setShow(false), 3000); // Hide after 3s of success
-          }
-          retryCount = 0;
+          setApiOnline(true);
+          setLastError(null);
         } else {
-          throw new Error("Health check failed");
+          setApiOnline(false);
+          setLastError(`HTTP ${res.status}`);
         }
-      } catch (err) {
-        console.error("Backend connection failed:", err);
-        setStatus("reconnecting");
-        setShow(true);
-        // Automatic retry logic
-        retryCount++;
-        if (retryCount < 5) {
-          setTimeout(checkHealth, 5000 * retryCount); // Exponential backoff
-        }
+      } catch (err: any) {
+        setApiOnline(false);
+        setLastError(err.message || "Connection Failed");
       }
     };
 
-    // Initial check
-    checkHealth();
-
-    // Ping every 5 minutes to keep the Render backend awake
-    const interval = setInterval(checkHealth, 300000);
-
+    checkStatus();
+    const interval = setInterval(checkStatus, 10000); // Check every 10s
     return () => clearInterval(interval);
   }, []);
 
+  if (!show) return null;
+
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          style={{
-            position: "fixed",
-            top: 20,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 9999,
-            padding: "8px 16px",
-            borderRadius: "20px",
-            background: status === "connected" ? "rgba(16, 185, 129, 0.9)" : "rgba(239, 68, 68, 0.9)",
-            color: "white",
-            fontSize: "14px",
-            fontWeight: 500,
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            backdropFilter: "blur(4px)"
-          }}
-        >
-          {status === "reconnecting" ? (
-            <>
-              <div className="spinner" style={{ width: 14, height: 14, border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-              Connecting to server...
-            </>
-          ) : (
-            <>
-              <span style={{ fontSize: "16px" }}>✓</span>
-              Connected
-            </>
-          )}
-        </motion.div>
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 p-4 rounded-xl border border-white/10 bg-black/60 backdrop-blur-md shadow-2xl text-[11px] font-mono min-w-[180px]"
+    >
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-white/40 uppercase tracking-widest font-bold">System Debug</span>
+        <button onClick={() => setShow(false)} className="text-white/20 hover:text-white">✕</button>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-white/60">API:</span>
+        <span className={apiOnline ? "text-emerald-400 font-bold" : "text-rose-400 font-bold animate-pulse"}>
+          {apiOnline === null ? "CHECKING..." : apiOnline ? "ONLINE" : "OFFLINE"}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-white/60">TOKEN:</span>
+        <span className={tokenPresent ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
+          {tokenPresent ? "PRESENT" : "MISSING"}
+        </span>
+      </div>
+
+      {lastError && (
+        <div className="mt-1 pt-1 border-t border-white/5">
+          <span className="text-rose-400/80 block leading-tight truncate max-w-[150px]" title={lastError}>
+            ERR: {lastError}
+          </span>
+        </div>
       )}
-    </AnimatePresence>
+
+      {!apiOnline && apiOnline !== null && (
+        <div className="mt-1 text-[9px] text-white/30 italic">
+          Railway may be sleeping...
+        </div>
+      )}
+    </motion.div>
   );
 }
+

@@ -11,6 +11,14 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./tulasi_ai.db"
 
+    @property
+    def normalized_database_url(self) -> str:
+        """SQLAlchemy requires postgresql:// instead of postgres://"""
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return url
+
     # AI Keys — support both GOOGLE_API_KEY and GEMINI_API_KEY (alias)
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
