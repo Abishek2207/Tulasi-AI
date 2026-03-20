@@ -144,11 +144,27 @@ function Hero() {
 
   return (
     <section ref={ref} style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", padding: "120px 24px 80px" }}>
-      <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.6 }} />
-      <div className="orb orb-purple" style={{ width: 700, height: 700, top: -150, left: "-5%", opacity: 0.35 }} />
-      <div className="orb orb-teal" style={{ width: 500, height: 500, bottom: -100, right: "-5%", opacity: 0.25, animationDelay: "4s" }} />
-      <div className="orb orb-pink" style={{ width: 300, height: 300, top: "40%", right: "15%", opacity: 0.15, animationDelay: "8s" }} />
+        {/* Floating Orbs for "Wow" Effect */}
+        <div className="orb orb-purple" style={{ top: '10%', left: '5%', width: '400px', height: '400px', opacity: 0.6 }} />
+        <div className="orb orb-teal" style={{ bottom: '15%', right: '10%', width: '350px', height: '350px', opacity: 0.4 }} />
 
+        {/* Hero Content */}
+        <div style={{ position: "relative", zIndex: 10, textAlign: "center", maxWidth: 900, margin: "0 auto" }}>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }}>
+            <span className="badge badge-primary mb-6" style={{ background: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.3)', color: '#A78BFA' }}>
+               ✨ Advanced AI Tutor for Modern Learners
+            </span>
+            <h1 style={{ fontSize: "clamp(48px, 8vw, 84px)", fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.04em", marginBottom: 28, fontFamily: "var(--font-outfit)" }}>
+              Experience the <br/>
+              <span className="gradient-text-brand" style={{ filter: 'drop-shadow(0 0 30px var(--brand-glow))' }}>Future of Learning</span>
+            </h1>
+            <p style={{ fontSize: "clamp(18px, 2vw, 21px)", color: "var(--text-secondary)", maxWidth: 640, margin: "0 auto 40px", lineHeight: 1.6 }}>
+              Tulasi AI is your hyper-personalized educational companion. 
+              Master the skills of tomorrow today with AI-driven insights, 
+              interactive mock interviews, and tailored career pathways.
+            </p>
+          </motion.div>
+        </div>
       <motion.div style={{ y, opacity: op, position: "relative", zIndex: 1, textAlign: "center", maxWidth: 960 }}>
 
         {/* Free badge */}
