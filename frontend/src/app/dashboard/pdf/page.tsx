@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import { pdfApi } from "@/lib/api";
 
 interface ChatMsg {
@@ -34,7 +35,7 @@ export default function PDFQaPage() {
     formData.append("file", uploadedFile);
 
     try {
-      const token = (session?.user as any)?.accessToken;
+      const token = useToken();
       if (!token) {
         setMessages([{ role: "ai", content: "Auth Error: Please log in to upload files." }]);
         setIsUploading(false);
@@ -59,7 +60,7 @@ export default function PDFQaPage() {
     setIsAsking(true);
 
     try {
-      const token = (session?.user as any)?.accessToken;
+      const token = useToken();
       if (!token) {
         setMessages(prev => [...prev, { role: "ai", content: "Auth Error: Please log in." }]);
         setIsAsking(false);

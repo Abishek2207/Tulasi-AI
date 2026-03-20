@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 
 const BACKEND = "";
 
@@ -40,7 +41,7 @@ export default function HistoryPage() {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const token = (session?.user as any)?.accessToken;
+      const token = useToken();
       if (!token) { setLoading(false); return; }
 
       const params = new URLSearchParams({ page: String(page), limit: "20" });

@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 
 interface User {
   id: number;
@@ -35,7 +36,7 @@ export default function MessagesPage() {
   }, [session]);
 
   const connectWebSocket = () => {
-    const token = (session?.user as any)?.accessToken;
+    const token = useToken();
     if (!token || socketRef.current?.readyState === WebSocket.OPEN) return;
 
     // Use absolute WSS URL for Render backend
@@ -92,7 +93,7 @@ export default function MessagesPage() {
   }, [messages]);
 
   const fetchDirectory = async () => {
-    const token = (session?.user as any)?.accessToken;
+    const token = useToken();
     if (!token) return;
     try {
       const res = await fetch(`/api/messages/users/directory`, {
@@ -110,7 +111,7 @@ export default function MessagesPage() {
   };
 
   const fetchMessages = async (userId: number) => {
-    const token = (session?.user as any)?.accessToken;
+    const token = useToken();
     if (!token) return;
     try {
       const res = await fetch(`/api/messages/${userId}`, {
@@ -132,7 +133,7 @@ export default function MessagesPage() {
     const currentInput = inputObj;
     setInputObj("");
 
-    const token = (session?.user as any)?.accessToken;
+    const token = useToken();
     if (!token) return;
 
     try {

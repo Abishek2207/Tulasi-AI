@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 
 import { interviewApi } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
@@ -99,7 +100,7 @@ export default function InterviewPage() {
     trackEvent("interview_started", { role, company, type: interviewType });
 
     try {
-      const token = (session?.user as any)?.accessToken;
+      const token = useToken();
       if (!token) { setError("Please log in to start an interview."); setLoading(false); return; }
       
       const data = await interviewApi.start(role, company, interviewType, token);
@@ -117,7 +118,7 @@ export default function InterviewPage() {
     if (!answer.trim()) return;
     setLoading(true); setError("");
     try {
-      const token = (session?.user as any)?.accessToken;
+      const token = useToken();
       if (!token) throw new Error("Please log in.");
       const data = await interviewApi.answer(answer, sessionId, token);
       

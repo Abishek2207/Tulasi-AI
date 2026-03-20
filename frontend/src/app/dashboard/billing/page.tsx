@@ -1,14 +1,15 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import toast from "react-hot-toast";
 
 export default function BillingPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
-  const token = (session?.user as any)?.accessToken;
+  const token = useToken();
 
   const handleSubscribe = async () => {
     if (!token) {

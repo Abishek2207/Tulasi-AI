@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import { certificateApi } from "@/lib/api";
 
 interface Milestone {
@@ -27,7 +28,7 @@ export default function CertificatesPage() {
   const fetchCertificates = async () => {
     setLoading(true);
     try {
-      const token = (session?.user as any)?.accessToken;
+      const token = useToken();
       if (!token) { setLoading(false); return; }
       const data = await certificateApi.list(token);
       setCertificates(data.certificates || []);
@@ -40,7 +41,7 @@ export default function CertificatesPage() {
   const generateCertificate = async (milestoneId: string) => {
     setGenerating(milestoneId); setError(""); setSuccess("");
     try {
-      const token = (session?.user as any)?.accessToken;
+      const token = useToken();
       const data = await certificateApi.generate(milestoneId, token);
       setSuccess(data.message || "🎉 Certificate generated!");
       fetchCertificates();

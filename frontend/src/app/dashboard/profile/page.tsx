@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { activityApi, profileApi } from "@/lib/api";
@@ -13,7 +14,7 @@ export default function ProfilePage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [formData, setFormData] = useState({ name: "", bio: "", skills: "" });
 
-  const token = (session?.user as any)?.accessToken;
+  const token = useToken();
 
   useEffect(() => {
     if (session) fetchStats();
