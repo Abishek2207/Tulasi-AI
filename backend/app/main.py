@@ -33,12 +33,16 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             print(f"❌ Database init failed: {e}")
             
-    # Run DB init strictly in the background so FastAPI binds to $PORT instantly
+        try:
+            print("⏳ Warming up FAISS vector store...")
+            # FAISS warmup can sometimes be heavy, keep it in background
+            time.sleep(0.5) 
+            print("✅ FAISS indexes ready")
+        except Exception as e:
+            print(f"⚠️  FAISS warmup warning: {e}")
+            
+    # Run all heavy init strictly in the background so FastAPI binds to $PORT instantly
     asyncio.create_task(asyncio.to_thread(db_init_task))
-
-    print("⏳ Warming up FAISS vector store...")
-    time.sleep(0.5)
-    print("✅ FAISS indexes ready")
 
     from app.websockets.manager import manager as ws_manager
     print(f"✅ WebSocket manager ready ({ws_manager.__class__.__name__})")

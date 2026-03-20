@@ -210,10 +210,10 @@ export const roadmapApi = {
       method: "POST",
       body: JSON.stringify({ roadmap_id, milestone_id }),
     }, token),
-  generate: (topic: string, token: string) =>
+  generate: (goal: string, token: string) =>
     request<{ roadmap: any }>("/api/roadmap/generate", {
       method: "POST",
-      body: JSON.stringify({ topic }),
+      body: JSON.stringify({ goal }),
     }, token),
 };
 

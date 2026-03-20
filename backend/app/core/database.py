@@ -6,7 +6,7 @@ connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith(
 
 try:
     engine = create_engine(
-        settings.DATABASE_URL, 
+        settings.normalized_database_url, 
         connect_args=connect_args,
         poolclass=QueuePool,
         pool_size=10,
