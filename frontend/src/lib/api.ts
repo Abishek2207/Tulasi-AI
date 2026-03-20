@@ -7,9 +7,26 @@ const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV === "development";
 import toast from "react-hot-toast";
 
-// We MUST direct all frontend requests natively to the Railway backend to support SSE streaming
-// relying on Vercel rewrites causes chunks to buffer and drop.
+// ─── API Base URL ─────────────────────────────────────────────────────────────
+// Env var is baked in at Vercel build time; fallback ensures local dev always works.
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
+
+/** Centralised debug logger — always prints in dev; silent in prod unless token missing */
+function log(label: string, data?: any) {
+  if (isDev) {
+    console.log(`[TulasiAPI] ${label}`, data ?? "");
+  }
+}
+
+/** Resolve the best available token: argument → localStorage → undefined */
+function resolveToken(passed?: string): string | undefined {
+  if (passed) return passed;
+  if (isBrowser) {
+    const stored = localStorage.getItem("token");
+    if (stored) return stored;
+  }
+  return undefined;
+}
 
 /** Build a WebSocket URL pointing at the correct host (wss in production, ws locally) */
 export function websocketUrl(path: string): string {
@@ -57,27 +74,33 @@ async function request<T>(
   options: RequestInit = {},
   token?: string
 ): Promise<T> {
+  const resolvedToken = resolveToken(token);
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  
-  let currentToken = token;
-  if (!currentToken && isBrowser) {
-    currentToken = localStorage.getItem("token") || undefined;
-  }
-  
-  if (currentToken) headers["Authorization"] = `Bearer ${currentToken}`;
+  if (resolvedToken) headers["Authorization"] = `Bearer ${resolvedToken}`;
+
+  const fullUrl = `${API_URL}${path}`;
+  log(`→ ${options.method || "GET"} ${fullUrl}`, { hasToken: !!resolvedToken });
 
   try {
-    const res = await fetchWithRetry(`${API_URL}${path}`, { ...options, headers });
+    const res = await fetchWithRetry(fullUrl, { ...options, headers });
+    log(`← ${res.status} ${fullUrl}`);
+
     if (!res.ok) {
+      if (res.status === 401) throw new Error("Session expired. Please log in again.");
+      if (res.status >= 500) throw new Error(`Server down (${res.status}). Try again later.`);
       const err = await res.json().catch(() => ({ detail: res.statusText }));
       throw new Error(err.detail || `Request failed: ${res.status}`);
     }
     return res.json();
   } catch (err: any) {
-    throw new Error(err.message || "Network Error");
+    const msg = err.message || "Network Error";
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED")) {
+      throw new Error("Backend unreachable. Check your connection.");
+    }
+    throw new Error(msg);
   }
 }
 
@@ -120,18 +143,45 @@ export const chatApi = {
     onDone: (sessionId: string) => void,
     onError: (err: string) => void
   ): Promise<void> => {
+    // Always resolve the best available token
+    const resolvedToken = resolveToken(token);
+    const streamUrl = `${API_URL}/api/chat/stream`;
+
+    log("→ POST (stream) /api/chat/stream", {
+      apiUrl: API_URL,
+      hasToken: !!resolvedToken,
+      tokenSnippet: resolvedToken ? resolvedToken.slice(0, 20) + "..." : "none",
+      tool,
+      session_id,
+    });
+
     try {
-      const res = await fetch(`${API_URL}/api/chat/stream`, {
+      const res = await fetch(streamUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {}),
         },
         body: JSON.stringify({ message, session_id, tool }),
       });
 
-      if (!res.ok || !res.body) {
-        onError("Connection failed. Please try again.");
+      log(`← stream response status: ${res.status}`);
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          onError("401 - Session expired. Please log in again.");
+          return;
+        }
+        if (res.status >= 500) {
+          onError(`500 - Server down. The AI service is temporarily unavailable.`);
+          return;
+        }
+        onError(`Connection failed (HTTP ${res.status}). Please try again.`);
+        return;
+      }
+
+      if (!res.body) {
+        onError("500 - Empty response from server.");
         return;
       }
 
@@ -155,7 +205,12 @@ export const chatApi = {
         }
       }
     } catch (err: any) {
-      onError(err.message || "Network error.");
+      const msg: string = err.message || "";
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED")) {
+        onError("Backend unreachable. Check your internet or try again later.");
+      } else {
+        onError(msg || "Unknown network error.");
+      }
     }
   },
 

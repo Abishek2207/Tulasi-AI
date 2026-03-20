@@ -30,7 +30,16 @@ function formatTime(ts: number) {
 }
 
 function isErrorMsg(content: string) {
-  return content.startsWith("❌") || content.startsWith("⏳") || content.includes("temporarily busy") || content.includes("Failed to connect");
+  return (
+    content.startsWith("❌") ||
+    content.startsWith("⏳") ||
+    content.includes("temporarily busy") ||
+    content.includes("Failed to connect") ||
+    content.includes("Session expired") ||
+    content.includes("Server down") ||
+    content.includes("Backend unreachable") ||
+    content.includes("Connection failed")
+  );
 }
 
 // ─── Copy button ───────────────────────────────────────────────────────────────
@@ -71,6 +80,7 @@ export default function ChatPage() {
   const [isWakingUp, setIsWakingUp] = useState(false);
   const [lastUserMsg, setLastUserMsg] = useState("");
   const [streamingId, setStreamingId] = useState<string | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
@@ -109,8 +119,10 @@ export default function ChatPage() {
     const maxRetries = 2;
     let attempt = 0;
     let success = false;
+    setRetryAttempt(0);
 
     while (attempt <= maxRetries && !success) {
+      setRetryAttempt(attempt);
       const wakeTimer = setTimeout(() => setIsWakingUp(true), 5000);
       try {
         await chatApi.streamSend(
@@ -119,45 +131,52 @@ export default function ChatPage() {
           token,
           activeTool,
           (chunk) => dispatch(updateLastMessage({ id: aiMsgId, append: chunk })),
-          (sid) => { 
+          (sid) => {
             dispatch(setSessionId(sid));
             success = true;
           },
-          (err) => { 
-            // Handle specific status errors if encoded in the message or if caught by catch
-            if (err.includes("401")) {
-               dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Session expired. Please log in again." }));
-               success = true; // Don't retry auth errors
-            } else if (err.includes("500") || err.includes("Failed to connect")) {
-               if (attempt < maxRetries) {
-                 dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Connection failed. Retrying... (Attempt ${attempt + 1})` }));
-               } else {
-                 dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Server down. Please try again later." }));
-               }
+          (err) => {
+            if (err.includes("401") || err.includes("Session expired")) {
+              dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Session expired. Please log in again." }));
+              success = true; // No point retrying auth failures
+            } else if (
+              err.includes("500") ||
+              err.includes("Server down") ||
+              err.includes("Backend unreachable") ||
+              err.includes("Connection failed")
+            ) {
+              if (attempt < maxRetries) {
+                dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Attempt ${attempt + 1} failed. Retrying...` }));
+              } else {
+                dispatch(updateLastMessage({ id: aiMsgId, content: `❌ Server down. All ${maxRetries + 1} attempts failed.` }));
+                success = true;
+              }
             } else {
-               dispatch(updateLastMessage({ id: aiMsgId, append: `❌ ${err}` }));
-               success = true; // Generic error, might not help to retry
+              dispatch(updateLastMessage({ id: aiMsgId, append: `\n❌ ${err}` }));
+              success = true;
             }
           }
         );
         if (success) break;
       } catch (err: any) {
         if (attempt === maxRetries) {
-           dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Server down. Connection failed." }));
+          dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Backend unreachable after 3 attempts. Check your connection." }));
+          success = true;
         }
       } finally {
         clearTimeout(wakeTimer);
         setIsWakingUp(false);
       }
-      
+
       if (!success) {
         attempt++;
         if (attempt <= maxRetries) {
-          await new Promise(r => setTimeout(r, 2000)); // wait before retry
+          await new Promise(r => setTimeout(r, 1500 * attempt)); // progressive backoff: 1.5s, 3s
         }
       }
     }
 
+    setRetryAttempt(0);
     setStreamingId(null);
     dispatch(setLoading(false));
   }, [input, isLoading, sessionId, token, activeTool, dispatch]);
@@ -298,12 +317,17 @@ export default function ChatPage() {
             </motion.div>
           ))}
 
-          {/* Wake-up indicator */}
-          {isWakingUp && isLoading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          {/* Loading indicator — shown while waking or retrying */}
+          {isLoading && (isWakingUp || retryAttempt > 0) && (
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
               style={{ display: "flex", gap: 10, alignItems: "center", padding: "8px 14px", background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: 12 }}>
-              <span style={{ fontSize: 14 }}>⚡</span>
-              <span style={{ color: "#FCD34D", fontSize: 13 }}>Waking up AI server… this may take a moment</span>
+              <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                style={{ fontSize: 14 }}>⚙️</motion.span>
+              <span style={{ color: "#FCD34D", fontSize: 13 }}>
+                {retryAttempt > 0
+                  ? `Retrying… (attempt ${retryAttempt} of 2)`
+                  : "Waking up AI server… this may take a moment"}
+              </span>
             </motion.div>
           )}
         </AnimatePresence>
