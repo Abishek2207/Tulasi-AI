@@ -37,8 +37,7 @@ export default function CareerRoadmapsPage() {
     setLoading(true);
     try {
       const token = "";
-      if (!token) return;
-      const data = await roadmapApi.getRoadmaps(token);
+            const data = await roadmapApi.getRoadmaps(token);
       setRoadmaps(data.roadmaps as Roadmap[]);
       setCompletedMilestones(new Set(data.completed_milestones || []));
       if (data.roadmaps && data.roadmaps.length > 0) {

@@ -100,7 +100,7 @@ export default function InterviewPage() {
 
     try {
       const token = "";
-      if (!token) { setError("Please log in to start an interview."); setLoading(false); return; }
+      
       
       const data = await interviewApi.start(role, company, interviewType, token);
       
@@ -118,8 +118,7 @@ export default function InterviewPage() {
     setLoading(true); setError("");
     try {
       const token = "";
-      if (!token) throw new Error("Please log in.");
-      const data = await interviewApi.answer(answer, sessionId, token);
+            const data = await interviewApi.answer(answer, sessionId, token);
       
       setAnswer("");
       if ((data as any).status === "completed") {

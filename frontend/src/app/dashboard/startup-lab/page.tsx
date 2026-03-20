@@ -47,8 +47,7 @@ export default function StartupLabPage() {
   const token = "";
 
   const fetchSavedIdeas = async () => {
-    if (!token) return;
-    try {
+        try {
       const data = await startupApi.ideas(token);
       setSavedIdeas(data.ideas || []);
     } catch (e) {}
@@ -57,7 +56,7 @@ export default function StartupLabPage() {
   useEffect(() => { if (session) fetchSavedIdeas(); }, [session]);
 
   const saveIdea = async () => {
-    if (!idea || !token) return;
+    if (!idea ) return;
     setSaving(true);
     try {
       await startupApi.save({ ...idea, domain }, token);
@@ -222,7 +221,7 @@ export default function StartupLabPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={saveIdea}
-                disabled={saving || !token}
+                disabled={saving }
                 style={{ margin: "0 40px 24px", padding: "12px", borderRadius: 14, border: "1px solid rgba(255,215,0,0.4)", background: "rgba(255,215,0,0.08)", color: "#FFD700", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
               >
                 {saving ? "Saving..." : "💾 Save This Idea"}

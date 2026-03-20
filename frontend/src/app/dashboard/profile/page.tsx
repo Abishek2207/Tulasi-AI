@@ -20,8 +20,7 @@ export default function ProfilePage() {
   }, [session]);
 
   const fetchStats = async () => {
-    if (!token) return;
-    try {
+        try {
       const data = await activityApi.getStats(token);
       setStats(data);
     } catch (e) {}
@@ -39,8 +38,7 @@ export default function ProfilePage() {
   }, [session]);
 
   const handleSave = async () => {
-    if (!token) return;
-    setSaving(true);
+        setSaving(true);
     setSaveStatus("idle");
     try {
       await profileApi.update(formData, token);

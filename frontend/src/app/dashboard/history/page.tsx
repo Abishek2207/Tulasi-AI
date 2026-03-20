@@ -41,7 +41,7 @@ export default function HistoryPage() {
     setLoading(true);
     try {
       const token = "";
-      if (!token) { setLoading(false); return; }
+      
 
       const params = new URLSearchParams({ page: String(page), limit: "20" });
       if (filter !== "all") params.set("action_type", filter);

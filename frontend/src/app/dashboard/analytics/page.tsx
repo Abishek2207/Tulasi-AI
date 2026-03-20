@@ -26,8 +26,7 @@ export default function AnalyticsPage() {
     const fetchAnalytics = async () => {
       try {
         const token = "";
-        if (!token) return;
-        const res = await activityApi.getAnalytics(token);
+                const res = await activityApi.getAnalytics(token);
         // Format dates for display (e.g., "Mar 15")
         const formattedData = res.time_series.map((d: any) => {
           const dateObj = new Date(d.date);

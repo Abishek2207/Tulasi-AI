@@ -35,8 +35,7 @@ export default function PDFQaPage() {
 
     try {
       const token = "";
-      if (!token) {
-        setMessages([{ role: "ai", content: "Auth Error: Please log in to upload files." }]);
+      ]);
         setIsUploading(false);
         return;
       }
@@ -60,8 +59,7 @@ export default function PDFQaPage() {
 
     try {
       const token = "";
-      if (!token) {
-        setMessages(prev => [...prev, { role: "ai", content: "Auth Error: Please log in." }]);
+      ]);
         setIsAsking(false);
         return;
       }

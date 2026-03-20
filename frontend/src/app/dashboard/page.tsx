@@ -34,8 +34,7 @@ export default function DashboardHome() {
     const fetchStats = async () => {
       try {
         const token = "";
-        if (!token) return;
-        
+                
         const [statsData, lbData] = await Promise.all([
           activityApi.getStats(token).catch(() => null),
           activityApi.getLeaderboard(token).catch(() => null)

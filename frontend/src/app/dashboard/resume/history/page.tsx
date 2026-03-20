@@ -21,8 +21,7 @@ export default function ResumeHistoryPage() {
     setLoading(true);
     try {
       const token = "";
-      if (!token) throw new Error("Unauthorized");
-      const data = await resumeApi.getHistory(token);
+            const data = await resumeApi.getHistory(token);
       setHistory(data);
     } catch (e: any) {
       setError(e.message || "Failed to load history");
