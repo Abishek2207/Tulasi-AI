@@ -25,11 +25,16 @@ async def lifespan(app: FastAPI):
 
     print("🚀 Tulasi AI v3.0 — Starting up...")
 
-    try:
-        init_db()
-        print("✅ Database initialised")
-    except Exception as e:
-        print(f"❌ Database init failed: {e}")
+    import asyncio
+    def db_init_task():
+        try:
+            init_db()
+            print("✅ Database initialised")
+        except Exception as e:
+            print(f"❌ Database init failed: {e}")
+            
+    # Run DB init strictly in the background so FastAPI binds to $PORT instantly
+    asyncio.create_task(asyncio.to_thread(db_init_task))
 
     print("⏳ Warming up FAISS vector store...")
     time.sleep(0.5)
