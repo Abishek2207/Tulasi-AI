@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,6 +7,7 @@ import { addMessage, updateLastMessage, setLoading, setSessionId, clearChat } fr
 import { chatApi } from "@/lib/api";
 import { RootState } from "@/store";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import { trackEvent } from "@/lib/analytics";
 
 // ─── Tool definitions ──────────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
-  const token = (session?.user as any)?.accessToken ?? "";
+  const token = useToken();
   
   const currentTool = TOOLS.find(t => t.id === activeTool) ?? TOOLS[0];
   const suggestions = TOOL_SUGGESTIONS[activeTool] ?? [];

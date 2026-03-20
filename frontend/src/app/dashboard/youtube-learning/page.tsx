@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 
 const BACKEND = "";
 const VIDEOS = [
@@ -93,7 +94,7 @@ export default function YouTubeLearningPage() {
   });
 
   const logWatch = async (video: typeof ALL_VIDEOS[0]) => {
-    const token = (session?.user as any)?.accessToken;
+    const token = useToken();
     if (!token) return;
     try {
       await fetch(`${BACKEND}/api/activity/log`, {

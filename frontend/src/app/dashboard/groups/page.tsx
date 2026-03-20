@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import { groupApi } from "@/lib/api";
 
 interface Group {
@@ -24,7 +25,7 @@ interface Message {
 
 export default function GroupsPage() {
   const { data: session } = useSession();
-  const token = (session?.user as any)?.accessToken;
+  const token = useToken();
   const currentUserId = (session?.user as any)?.id;
 
   const [groups, setGroups] = useState<Group[]>([]);

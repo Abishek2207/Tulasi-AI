@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import { startupApi } from "@/lib/api";
 
 interface StartupIdea {
@@ -44,7 +45,7 @@ export default function StartupLabPage() {
     "Event Organizers", "Content Creators"
   ];
 
-  const token = (session?.user as any)?.accessToken;
+  const token = useToken();
 
   const fetchSavedIdeas = async () => {
     if (!token) return;

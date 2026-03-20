@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import { studyApi } from "@/lib/api";
 
 interface Room {
@@ -38,7 +39,7 @@ export default function StudyRoomsPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<any>(null);
 
-  const token = (session?.user as any)?.accessToken;
+  const token = useToken();
 
   const fetchRooms = async () => {
     try {

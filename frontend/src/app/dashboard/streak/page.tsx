@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useToken } from "@/hooks/useToken";
 import { rewardApi, activityApi } from "@/lib/api";
 
 const streakData = Array.from({ length: 52 }, (_, week) =>
@@ -37,7 +38,7 @@ export default function StreakPage() {
   }, [session]);
 
   const fetchRewards = async () => {
-    const token = (session?.user as any)?.accessToken;
+    const token = useToken();
     if (!token) return;
     try {
       const data = await rewardApi.getRewards(token);
@@ -50,7 +51,7 @@ export default function StreakPage() {
   }, [session]);
 
   const fetchStats = async () => {
-    const token = (session?.user as any)?.accessToken;
+    const token = useToken();
     if (!token) return;
     try {
       const data = await activityApi.getStats(token);
