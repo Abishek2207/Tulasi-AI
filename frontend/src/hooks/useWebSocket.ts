@@ -53,8 +53,6 @@ export function useWebSocket({
   }, [token, roomId]);
 
   const connect = useCallback(() => {
-    if (!token) return;
-
     shouldClose.current = false;
     setStatus("connecting");
 
