@@ -116,7 +116,7 @@ export default function ChatPage() {
       setRetryAttempt(attempt);
       const wakeTimer = setTimeout(() => setIsWakingUp(true), 5000);
       try {
-        const res = await chatApi.send(text);
+        const res = await chatApi.send(text, sessionId || undefined, activeTool);
         dispatch(updateLastMessage({ id: aiMsgId, append: res.response }));
         if (res.session_id) dispatch(setSessionId(res.session_id));
         success = true;

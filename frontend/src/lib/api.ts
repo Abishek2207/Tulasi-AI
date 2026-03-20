@@ -140,10 +140,10 @@ export const authApi = {
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
 export const chatApi = {
-  send: (message: string) =>
+  send: (message: string, session_id?: string, tool?: string) =>
     request<{ response: string; session_id?: string; model_used?: string }>(
       "/api/chat",
-      { method: "POST", body: JSON.stringify({ message }) }
+      { method: "POST", body: JSON.stringify({ message, session_id, tool }) }
     ),
 
   feedback: (session_id: string, message_id: string, rating: number) =>
