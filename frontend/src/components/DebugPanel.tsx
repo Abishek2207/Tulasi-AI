@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function DebugPanel() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
   const [tokenStatus, setTokenStatus] = useState<"present" | "missing">("missing");
   const [lastLog, setLastLog] = useState<string>("No recent API calls.");

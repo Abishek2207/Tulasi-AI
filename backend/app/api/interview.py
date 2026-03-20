@@ -90,7 +90,7 @@ def start_interview(
     )
 
     try:
-        question = get_ai_response(prompt, force_model="complex_reasoning")
+        question = get_ai_response(prompt)
         interview_sessions[session_id] = {
             "role": req.role,
             "company": req.company,
@@ -153,7 +153,7 @@ Provide structured evaluation as JSON with EXACTLY these keys:
 Return ONLY valid JSON, no markdown."""
 
         try:
-            fb_str = get_ai_response(prompt, force_model="complex_reasoning")
+            fb_str = get_ai_response(prompt)
             import re
             match = re.search(r'\{.*\}', fb_str, re.DOTALL)
             if match:
@@ -224,7 +224,7 @@ Briefly acknowledge their answer (1 brief sentence), then ask the next question.
 Do not break character. Keep it professional."""
 
     try:
-        next_q = get_ai_response(prompt, force_model="complex_reasoning")
+        next_q = get_ai_response(prompt)
         history.append({"role": "ai", "content": next_q})
         return {
             "status": "in_progress",
