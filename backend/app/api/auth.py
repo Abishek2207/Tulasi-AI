@@ -54,6 +54,7 @@ def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
 @router.post("/register")
 @limiter.limit("5/minute")
 def register(request: Request, req: RegisterRequest, db: Session = Depends(get_session)):
+    print("Incoming password length:", len(req.password))
     existing = db.exec(select(User).where(User.email == req.email)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
