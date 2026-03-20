@@ -9,7 +9,10 @@ import toast from "react-hot-toast";
 
 // ─── API Base URL ─────────────────────────────────────────────────────────────
 // Env var is baked in at Vercel build time; fallback ensures local dev always works.
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
+// We strip any trailing slashes or /api suffixes to prevent /api/api duplication.
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app")
+  .replace(/\/api\/?$/, "")
+  .replace(/\/$/, "");
 
 /** Centralised debug logger — always prints in dev; silent in prod unless token missing */
 function log(label: string, data?: any) {
@@ -82,6 +85,12 @@ async function request<T>(
   if (resolvedToken) headers["Authorization"] = `Bearer ${resolvedToken}`;
 
   const fullUrl = `${API_URL}${path}`;
+  
+  // LIVE DEBUG LOGGING
+  console.log("TOKEN:", resolvedToken || "undefined");
+  console.log("HEADERS:", headers);
+  console.log("REQUEST:", fullUrl);
+
   log(`→ ${options.method || "GET"} ${fullUrl}`, { hasToken: !!resolvedToken });
 
   try {
@@ -161,13 +170,21 @@ export const chatApi = {
       session_id,
     });
 
+    // Build headers explicitly so we can log them
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {}),
+    };
+
+    // LIVE DEBUG LOGGING
+    console.log("TOKEN:", resolvedToken || "undefined");
+    console.log("HEADERS:", headers);
+    console.log("REQUEST:", streamUrl);
+
     try {
       const res = await fetch(streamUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {}),
-        },
+        headers,
         body: JSON.stringify({ message, session_id, tool }),
       });
 
