@@ -18,13 +18,10 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
 
 if not GOOGLE_API_KEY:
-    raise RuntimeError(
-        "❌ GOOGLE_API_KEY is not set! "
-        "Add it to backend/.env or in your Render Environment Variables dashboard."
-    )
-
-genai.configure(api_key=GOOGLE_API_KEY)
-print(f"✅ Gemini configured (key: {GOOGLE_API_KEY[:8]}...)")
+    print("⚠️  WARNING: GOOGLE_API_KEY is not set! AI endpoints will fail.")
+else:
+    genai.configure(api_key=GOOGLE_API_KEY)
+    print(f"✅ Gemini configured (key: {GOOGLE_API_KEY[:8]}...)")
 
 # ── Model fallback chain ────────────────────────────────────────────
 # Cascades through models on 429/quota errors
@@ -45,6 +42,9 @@ def _is_quota_error(err: Exception) -> bool:
 
 def _call_model_with_retry(model_name: str, contents: list, max_retries: int = 3) -> str:
     """Calls a single Gemini model with exponential backoff. Raises on final failure."""
+    if not GOOGLE_API_KEY:
+        raise RuntimeError("GOOGLE_API_KEY is missing in server environment.")
+    
     for attempt in range(max_retries):
         try:
             model = genai.GenerativeModel(model_name)
