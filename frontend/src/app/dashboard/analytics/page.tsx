@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { activityApi } from "@/lib/api";
 import {
   AreaChart,
@@ -26,7 +25,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const token = useToken();
+        const token = "";
         if (!token) return;
         const res = await activityApi.getAnalytics(token);
         // Format dates for display (e.g., "Mar 15")

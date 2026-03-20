@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import toast from "react-hot-toast";
 
 export default function BillingPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
-  const token = useToken();
+  const token = "";
 
   const handleSubscribe = async () => {
     if (!token) {

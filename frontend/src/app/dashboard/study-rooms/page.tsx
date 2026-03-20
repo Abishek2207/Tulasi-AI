@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { studyApi } from "@/lib/api";
 
 interface Room {
@@ -39,7 +38,7 @@ export default function StudyRoomsPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<any>(null);
 
-  const token = useToken();
+  const token = "";
 
   const fetchRooms = async () => {
     try {

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { hackathonApi } from "@/lib/api";
 
 const FALLBACK_HACKATHONS = [
@@ -52,7 +51,7 @@ function HackathonSkeleton() {
 
 export default function HackathonsPage() {
   const { data: session } = useSession();
-  const token = useToken();
+  const token = "";
 
   const [filter, setFilter] = useState("All");
   const [hackathons, setHackathons] = useState<any[]>([]);

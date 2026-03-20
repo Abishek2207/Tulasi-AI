@@ -2,14 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { motion, AnimatePresence } from "framer-motion";
 import { resumeApi } from "@/lib/api";
 import Link from "next/link";
 
 export default function ResumeBuilderPage() {
   const { data: session } = useSession();
-  const token = useToken();
+  const token = "";
 
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
