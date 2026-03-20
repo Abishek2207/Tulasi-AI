@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,16 +31,7 @@ function formatTime(ts: number) {
 }
 
 function isErrorMsg(content: string) {
-  return (
-    content.startsWith("❌") ||
-    content.startsWith("⏳") ||
-    content.includes("temporarily busy") ||
-    content.includes("Failed to connect") ||
-    content.includes("Session expired") ||
-    content.includes("Server down") ||
-    content.includes("Backend unreachable") ||
-    content.includes("Connection failed")
-  );
+  return content.startsWith("❌") || content.startsWith("⏳");
 }
 
 // ─── Copy button ───────────────────────────────────────────────────────────────
@@ -140,16 +131,21 @@ export default function ChatPage() {
             if (err.includes("401") || err.includes("Session expired")) {
               dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Session expired. Please log in again." }));
               success = true; // No point retrying auth failures
+            } else if (err.includes("500 Server Error")) {
+              if (attempt < maxRetries) {
+                dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Attempt ${attempt + 1} failed. Retrying...` }));
+              } else {
+                dispatch(updateLastMessage({ id: aiMsgId, content: `❌ ${err.replace("500 Server Error: ", "")}` }));
+                success = true;
+              }
             } else if (
-              err.includes("500") ||
-              err.includes("Server down") ||
               err.includes("Backend unreachable") ||
               err.includes("Connection failed")
             ) {
               if (attempt < maxRetries) {
                 dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Attempt ${attempt + 1} failed. Retrying...` }));
               } else {
-                dispatch(updateLastMessage({ id: aiMsgId, content: `❌ Server down. All ${maxRetries + 1} attempts failed.` }));
+                dispatch(updateLastMessage({ id: aiMsgId, content: `❌ Backend unreachable. All ${maxRetries + 1} attempts failed.` }));
                 success = true;
               }
             } else {
