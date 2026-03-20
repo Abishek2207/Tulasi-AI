@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -34,7 +33,7 @@ export default function DashboardHome() {
     setMounted(true);
     const fetchStats = async () => {
       try {
-        const token = useToken();
+        const token = "";
         if (!token) return;
         
         const [statsData, lbData] = await Promise.all([

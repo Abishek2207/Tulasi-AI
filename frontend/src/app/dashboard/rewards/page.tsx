@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { activityApi } from "@/lib/api";
 
 const REWARD_ITEMS = [
@@ -17,7 +16,7 @@ const REWARD_ITEMS = [
 
 export default function RewardsPage() {
   const { data: session } = useSession();
-  const token = useToken();
+  const token = "";
   const [xp, setXp] = useState(0);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<number | null>(null);

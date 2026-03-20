@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { roadmapApi } from "@/lib/api";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 
 interface Milestone {
   id: string;
@@ -37,7 +36,7 @@ export default function CareerRoadmapsPage() {
   const fetchRoadmaps = async () => {
     setLoading(true);
     try {
-      const token = useToken();
+      const token = "";
       if (!token) return;
       const data = await roadmapApi.getRoadmaps(token);
       setRoadmaps(data.roadmaps as Roadmap[]);
@@ -69,7 +68,7 @@ export default function CareerRoadmapsPage() {
     });
 
     try {
-      const token = useToken();
+      const token = "";
       await roadmapApi.logProgress(activeId, milestoneId, token);
     } catch (err) {
       // Revert optimism if failed

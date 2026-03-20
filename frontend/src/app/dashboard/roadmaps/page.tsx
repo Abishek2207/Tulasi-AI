@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { roadmapApi } from "@/lib/api";
 
 interface Milestone {
@@ -31,7 +30,7 @@ export default function RoadmapsPage() {
 
   const generateRoadmap = async () => {
     if (!goal.trim()) return;
-    const token = useToken();
+    const token = "";
     if (!token) {
        console.error("No access token found. Please log in.");
        setLoading(false);

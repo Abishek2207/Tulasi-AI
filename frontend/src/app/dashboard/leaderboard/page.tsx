@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { activityApi } from "@/lib/api";
 
 const RANK_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
@@ -13,7 +12,7 @@ export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const currentUserId = (session?.user as any)?.id;
-  const token = useToken();
+  const token = "";
 
   useEffect(() => {
     const fetchLeaderboard = async () => {

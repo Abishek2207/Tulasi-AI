@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 import { resumeApi } from "@/lib/api";
 import Link from "next/link";
 
@@ -21,7 +20,7 @@ export default function ResumeHistoryPage() {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const token = useToken();
+      const token = "";
       if (!token) throw new Error("Unauthorized");
       const data = await resumeApi.getHistory(token);
       setHistory(data);

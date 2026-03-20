@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useToken } from "@/hooks/useToken";
 
 interface User {
   id: number;
@@ -36,7 +35,7 @@ export default function MessagesPage() {
   }, [session]);
 
   const connectWebSocket = () => {
-    const token = useToken();
+    const token = "";
     if (!token || socketRef.current?.readyState === WebSocket.OPEN) return;
 
     // Use absolute WSS URL for Render backend
@@ -93,7 +92,7 @@ export default function MessagesPage() {
   }, [messages]);
 
   const fetchDirectory = async () => {
-    const token = useToken();
+    const token = "";
     if (!token) return;
     try {
       const res = await fetch(`/api/messages/users/directory`, {
@@ -111,7 +110,7 @@ export default function MessagesPage() {
   };
 
   const fetchMessages = async (userId: number) => {
-    const token = useToken();
+    const token = "";
     if (!token) return;
     try {
       const res = await fetch(`/api/messages/${userId}`, {
@@ -133,7 +132,7 @@ export default function MessagesPage() {
     const currentInput = inputObj;
     setInputObj("");
 
-    const token = useToken();
+    const token = "";
     if (!token) return;
 
     try {
