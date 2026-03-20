@@ -90,9 +90,15 @@ async function request<T>(
 
     if (!res.ok) {
       if (res.status === 401) throw new Error("Session expired. Please log in again.");
-      if (res.status >= 500) throw new Error(`Server down (${res.status}). Try again later.`);
-      const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || `Request failed: ${res.status}`);
+      
+      let backendMsg = res.statusText;
+      try {
+        const errJson = await res.json();
+        backendMsg = errJson.detail || errJson.message || errJson.error || backendMsg;
+      } catch (e) {}
+      
+      if (res.status >= 500) throw new Error(`500 Server Error: ${backendMsg}`);
+      throw new Error(backendMsg || `Request failed: ${res.status}`);
     }
     return res.json();
   } catch (err: any) {
@@ -172,11 +178,26 @@ export const chatApi = {
           onError("401 - Session expired. Please log in again.");
           return;
         }
+        
+        let backendMsg = `HTTP ${res.status}`;
+        if (res.body) {
+           try {
+              // Try to read a chunk to parse the error message
+              const reader = res.body.getReader();
+              const { value } = await reader.read();
+              if (value) {
+                 const text = new TextDecoder().decode(value);
+                 const json = JSON.parse(text);
+                 backendMsg = json.detail || json.error || json.message || text.substring(0, 100);
+              }
+           } catch(e) {}
+        }
+
         if (res.status >= 500) {
-          onError(`500 - Server down. The AI service is temporarily unavailable.`);
+          onError(`500 Server Error: ${backendMsg}`);
           return;
         }
-        onError(`Connection failed (HTTP ${res.status}). Please try again.`);
+        onError(`Request failed: ${backendMsg}`);
         return;
       }
 

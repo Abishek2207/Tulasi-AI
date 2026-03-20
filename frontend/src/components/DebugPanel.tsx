@@ -1,93 +1,85 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
 import { healthCheck } from "@/lib/api";
+import { motion } from "framer-motion";
 
 export function DebugPanel() {
-  const [status, setStatus] = useState<"connecting" | "online" | "offline">("connecting");
+  const [online, setOnline] = useState(false);
   const [hasToken, setHasToken] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [lastError, setLastError] = useState("None");
 
   useEffect(() => {
+    let _mounted = true;
     const checkStatus = async () => {
       try {
-        const res = await healthCheck();
-        setStatus(res.status === "ok" ? "online" : "offline");
-      } catch {
-        setStatus("offline");
+        await healthCheck();
+        if (_mounted) { setOnline(true); setLastError("None"); }
+      } catch (e: any) {
+        if (_mounted) { setOnline(false); setLastError(e.message || "Offline"); }
       }
-      setHasToken(!!localStorage.getItem("token"));
+      if (_mounted) setHasToken(!!localStorage.getItem("token"));
     };
 
     checkStatus();
-    const interval = setInterval(checkStatus, 10000); // Check every 10s
-    return () => clearInterval(interval);
+    const interval = setInterval(checkStatus, 15000); // 15s poll
+    return () => { _mounted = false; clearInterval(interval); };
   }, []);
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999]">
-      <motion.div
-        layout
-        initial={false}
-        animate={{ width: isExpanded ? 220 : 48, height: isExpanded ? "auto" : 48 }}
-        className="glass-card overflow-hidden"
-        style={{ 
-          padding: isExpanded ? "16px" : "0",
-          background: "rgba(3, 7, 18, 0.8)",
-          borderColor: status === "online" ? "rgba(16, 185, 129, 0.3)" : "rgba(244, 63, 94, 0.3)",
-          boxShadow: isExpanded ? "0 20px 50px rgba(0,0,0,0.5)" : "none",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px"
-        }}
-      >
-        {!isExpanded ? (
-          <button 
-            onClick={() => setIsExpanded(true)}
-            className="w-full h-full flex items-center justify-center text-xl"
-            title="Open Debug Panel"
-          >
-            {status === "online" ? "🟢" : status === "offline" ? "🔴" : "🟡"}
-          </button>
-        ) : (
-          <>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Debug Engine</span>
-              <button 
-                onClick={() => setIsExpanded(false)}
-                className="text-muted hover:text-white transition-colors"
-                title="Close"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-secondary">Backend Hub</span>
-                <span className={`badge ${status === "online" ? "badge-green" : status === "offline" ? "badge-pink" : "badge-yellow"}`} style={{ fontSize: '10px', padding: '2px 8px' }}>
-                  {status.toUpperCase()}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-secondary">Session Token</span>
-                <span className="text-xs font-bold" style={{ color: hasToken ? "var(--brand-green)" : "var(--brand-accent)" }}>
-                  {hasToken ? "ACTIVE" : "MISSING"}
-                </span>
-              </div>
-
-              <div className="pt-2 border-t border-white/5 mt-1">
-                  <div className="text-[9px] text-muted leading-tight">
-                      RAILWAY: tulasiai.up.railway.app<br/>
-                      ENV: production
-                  </div>
-              </div>
-            </div>
-          </>
-        )}
-      </motion.div>
-    </div>
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+      animate={{ opacity: 0.9, scale: 1, y: 0 }}
+      whileHover={{ opacity: 1, scale: 1.02 }}
+      style={{ 
+        position: "fixed", 
+        bottom: 24, 
+        right: 24, 
+        background: "rgba(10, 10, 15, 0.85)", 
+        backdropFilter: "blur(12px)", 
+        border: "1px solid rgba(255,255,255,0.1)", 
+        padding: "16px 20px", 
+        borderRadius: 16, 
+        zIndex: 9999, 
+        fontSize: 13, 
+        display: "flex", 
+        flexDirection: "column", 
+        gap: 8, 
+        width: 260,
+        boxShadow: "0 10px 40px rgba(0,0,0,0.5)"
+      }}
+    >
+      <div style={{ fontWeight: 800, color: "white", marginBottom: 6, letterSpacing: "1px", textTransform: "uppercase", fontSize: 11, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>🛠 System Debug</span>
+        {online && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#43E97B", boxShadow: "0 0 8px #43E97B" }} />}
+      </div>
+      
+      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 6 }}>
+        <span style={{ color: "var(--text-muted)" }}>API Status</span>
+        <span style={{ color: online ? "#43E97B" : "#FF6B6B", fontWeight: 700 }}>
+          {online ? "● RUNNING" : "● OFFLINE"}
+        </span>
+      </div>
+      
+      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 6 }}>
+        <span style={{ color: "var(--text-muted)" }}>Token</span>
+        <span style={{ color: hasToken ? "#43E97B" : "#FF6B6B", fontWeight: 700 }}>
+          {hasToken ? "PRESENT" : "MISSING"}
+        </span>
+      </div>
+      
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 11, textTransform: "uppercase" }}>Last Error</span>
+        <span style={{ 
+          color: lastError === "None" ? "#43E97B" : "#FF6B6B", 
+          background: lastError === "None" ? "transparent" : "rgba(255,107,107,0.1)",
+          padding: lastError === "None" ? 0 : "4px 8px",
+          borderRadius: 6,
+          fontSize: 12,
+          wordBreak: "break-word"
+        }}>
+          {lastError}
+        </span>
+      </div>
+    </motion.div>
   );
 }
