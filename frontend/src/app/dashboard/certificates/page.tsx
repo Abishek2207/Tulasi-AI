@@ -28,7 +28,7 @@ export default function CertificatesPage() {
     setLoading(true);
     try {
       const token = "";
-      if (!token) { setLoading(false); return; }
+      
       const data = await certificateApi.list(token);
       setCertificates(data.certificates || []);
       setMilestones(data.milestones || []);

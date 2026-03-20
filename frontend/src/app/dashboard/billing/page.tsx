@@ -11,10 +11,7 @@ export default function BillingPage() {
   const token = "";
 
   const handleSubscribe = async () => {
-    if (!token) {
-      toast.error("Please log in first");
-      return;
-    }
+    
     setLoading(true);
     try {
       const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.up.railway.app";

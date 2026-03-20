@@ -36,7 +36,7 @@ export default function MessagesPage() {
 
   const connectWebSocket = () => {
     const token = "";
-    if (!token || socketRef.current?.readyState === WebSocket.OPEN) return;
+    if ( socketRef.current?.readyState === WebSocket.OPEN) return;
 
     // Use absolute WSS URL for Render backend
     const wsUrl = `wss://tulasi-backend.up.railway.app/api/messages/ws/${token}`;
@@ -93,8 +93,7 @@ export default function MessagesPage() {
 
   const fetchDirectory = async () => {
     const token = "";
-    if (!token) return;
-    try {
+        try {
       const res = await fetch(`/api/messages/users/directory`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -111,8 +110,7 @@ export default function MessagesPage() {
 
   const fetchMessages = async (userId: number) => {
     const token = "";
-    if (!token) return;
-    try {
+        try {
       const res = await fetch(`/api/messages/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -133,8 +131,7 @@ export default function MessagesPage() {
     setInputObj("");
 
     const token = "";
-    if (!token) return;
-
+    
     try {
       const res = await fetch(`/api/messages`, {
         method: "POST",

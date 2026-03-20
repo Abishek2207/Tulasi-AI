@@ -66,7 +66,7 @@ export default function GroupsPage() {
   };
 
   const fetchMessages = async () => {
-    if (!activeGroup || !token) return;
+    if (!activeGroup ) return;
     try {
       const data = await groupApi.getMessages(activeGroup.id, token);
       setMessages(data.messages || []);
@@ -75,7 +75,7 @@ export default function GroupsPage() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !activeGroup || !token || sending) return;
+    if (!input.trim() || !activeGroup  || sending) return;
     const content = input.trim();
     setInput("");
     setSending(true);
@@ -87,7 +87,7 @@ export default function GroupsPage() {
   };
 
   const handleCreate = async () => {
-    if (!modalInput.name.trim() || !token) return;
+    if (!modalInput.name.trim() ) return;
     setModalError("");
     try {
       const newGroup = await groupApi.create(modalInput.name, modalInput.description, token);
@@ -101,7 +101,7 @@ export default function GroupsPage() {
   };
 
   const handleJoin = async () => {
-    if (!modalInput.code.trim() || !token) return;
+    if (!modalInput.code.trim() ) return;
     setModalError("");
     try {
       const res = await groupApi.join(modalInput.code.trim().toUpperCase(), token);

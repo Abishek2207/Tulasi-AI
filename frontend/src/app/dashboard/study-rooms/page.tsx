@@ -49,8 +49,7 @@ export default function StudyRoomsPage() {
   };
 
   const fetchMessages = async (roomId: number) => {
-    if (!token) return;
-    try {
+        try {
       const data = await studyApi.messages(roomId.toString(), token);
       setMessages(data.messages || []);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
@@ -88,7 +87,7 @@ export default function StudyRoomsPage() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim() || !activeRoom || !token) return;
+    if (!chatInput.trim() || !activeRoom ) return;
     setSending(true);
     try {
       await studyApi.sendMessage(activeRoom.id.toString(), chatInput.trim(), token);
@@ -100,7 +99,7 @@ export default function StudyRoomsPage() {
 
   const createRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newRoomName.trim() || !token) return;
+    if (!newRoomName.trim() ) return;
     try {
       const res = await studyApi.create({ name: newRoomName, description: newRoomDesc, tag: newRoomTag }, token);
       if (res) {
@@ -165,7 +164,7 @@ export default function StudyRoomsPage() {
 
           {/* Input */}
           <form onSubmit={handleSend} style={{ padding: 16, borderTop: "1px solid var(--border)", display: "flex", gap: 12 }}>
-            {!token && <div style={{ flex: 1, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Sign in to send messages</div>}
+            { <div style={{ flex: 1, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Sign in to send messages</div>}
             {token && <>
               <input
                 value={chatInput}

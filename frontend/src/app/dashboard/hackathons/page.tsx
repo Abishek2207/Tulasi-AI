@@ -75,8 +75,7 @@ export default function HackathonsPage() {
   }, [filter, token]);
 
   const toggleBookmark = async (hack: any) => {
-    if (!token) return;
-    setBookmarking(prev => new Set(prev).add(hack.id));
+        setBookmarking(prev => new Set(prev).add(hack.id));
     try {
       if (hack.bookmarked) {
         await hackathonApi.unbookmark(hack.id, token);

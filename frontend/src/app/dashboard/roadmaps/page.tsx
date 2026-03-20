@@ -31,11 +31,7 @@ export default function RoadmapsPage() {
   const generateRoadmap = async () => {
     if (!goal.trim()) return;
     const token = "";
-    if (!token) {
-       console.error("No access token found. Please log in.");
-       setLoading(false);
-       return;
-    }
+    
     setRoadmap(null);
     setErrorDesc("");
     try {

@@ -83,8 +83,7 @@ export default function ResumeBuilderPage() {
     setError("");
 
     try {
-      if (!token) throw new Error("Unauthorized");
-      const data = await resumeApi.improve({ 
+            const data = await resumeApi.improve({ 
         resume_text: resumeText, 
         job_description: jobDescription,
         mode: mode,

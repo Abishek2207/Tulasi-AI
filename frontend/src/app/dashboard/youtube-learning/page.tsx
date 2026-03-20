@@ -94,8 +94,7 @@ export default function YouTubeLearningPage() {
 
   const logWatch = async (video: typeof ALL_VIDEOS[0]) => {
     const token = "";
-    if (!token) return;
-    try {
+        try {
       await fetch(`${BACKEND}/api/activity/log`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

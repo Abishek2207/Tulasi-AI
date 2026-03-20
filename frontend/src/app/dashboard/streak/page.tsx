@@ -38,8 +38,7 @@ export default function StreakPage() {
 
   const fetchRewards = async () => {
     const token = "";
-    if (!token) return;
-    try {
+        try {
       const data = await rewardApi.getRewards(token);
       setStoreRewards(data.rewards || []);
     } catch (e) { /* silent */ }
@@ -51,8 +50,7 @@ export default function StreakPage() {
 
   const fetchStats = async () => {
     const token = "";
-    if (!token) return;
-    try {
+        try {
       const data = await activityApi.getStats(token);
       setStats(data);
     } catch (e) { /* silent */ }

@@ -60,18 +60,29 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
-# ── Global Error Handlers ──────────────────────────────────────────
+from fastapi.exceptions import RequestValidationError, HTTPException
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=422,
         content={
+            "success": False,
+            "error": "Validation failed",
             "detail": exc.errors(),
             "message": "Validation failed. Check your request payload.",
         },
     )
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": exc.detail,
+        },
+    )
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
@@ -79,8 +90,9 @@ async def general_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "Internal server error",
-            "message": str(exc),
+            "success": False, 
+            "error": str(exc),
+            "detail": "Internal server error"
         },
     )
 
