@@ -50,7 +50,7 @@ function FeedbackBtns({ msgId, sessionId, token }: { msgId: string; sessionId: s
   const [voted, setVoted] = useState<1 | -1 | null>(null);
   const vote = async (rating: 1 | -1) => {
     setVoted(rating);
-    try { await chatApi.feedback(sessionId, msgId, rating, token); } catch {}
+    try { await chatApi.feedback(sessionId, msgId, rating); } catch {}
   };
   return (
     <div style={{ display: "flex", gap: 4 }}>
@@ -117,47 +117,34 @@ export default function ChatPage() {
       setRetryAttempt(attempt);
       const wakeTimer = setTimeout(() => setIsWakingUp(true), 5000);
       try {
-        await chatApi.streamSend(
-          text,
-          sessionId || undefined,
-          token,
-          activeTool,
-          (chunk) => dispatch(updateLastMessage({ id: aiMsgId, append: chunk })),
-          (sid) => {
-            dispatch(setSessionId(sid));
-            success = true;
-          },
-          (err) => {
-            if (err.includes("401") || err.includes("Session expired")) {
-              dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Session expired. Please log in again." }));
-              success = true; // No point retrying auth failures
-            } else if (err.includes("500 Server Error")) {
-              if (attempt < maxRetries) {
-                dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Attempt ${attempt + 1} failed. Retrying...` }));
-              } else {
-                dispatch(updateLastMessage({ id: aiMsgId, content: `❌ ${err.replace("500 Server Error: ", "")}` }));
-                success = true;
-              }
-            } else if (
-              err.includes("Backend unreachable") ||
-              err.includes("Connection failed")
-            ) {
-              if (attempt < maxRetries) {
-                dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Attempt ${attempt + 1} failed. Retrying...` }));
-              } else {
-                dispatch(updateLastMessage({ id: aiMsgId, content: `❌ Backend unreachable. All ${maxRetries + 1} attempts failed.` }));
-                success = true;
-              }
-            } else {
-              dispatch(updateLastMessage({ id: aiMsgId, append: `\n❌ ${err}` }));
-              success = true;
-            }
-          }
-        );
-        if (success) break;
+        const res = await chatApi.send(text);
+        dispatch(updateLastMessage({ id: aiMsgId, append: res.response }));
+        if (res.session_id) dispatch(setSessionId(res.session_id));
+        success = true;
       } catch (err: any) {
-        if (attempt === maxRetries) {
-          dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Backend unreachable after 3 attempts. Check your connection." }));
+        const errMsg = err.message || String(err);
+        if (errMsg.includes("401") || errMsg.includes("Session expired")) {
+          dispatch(updateLastMessage({ id: aiMsgId, content: "❌ Session expired. Please log in again." }));
+          success = true; // No point retrying auth failures
+        } else if (errMsg.includes("500 Server Error")) {
+          if (attempt < maxRetries) {
+            dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Attempt ${attempt + 1} failed. Retrying...` }));
+          } else {
+            dispatch(updateLastMessage({ id: aiMsgId, content: `❌ ${errMsg.replace("500 Server Error: ", "")}` }));
+            success = true;
+          }
+        } else if (
+          errMsg.includes("Backend unreachable") ||
+          errMsg.includes("Connection failed")
+        ) {
+          if (attempt < maxRetries) {
+            dispatch(updateLastMessage({ id: aiMsgId, content: `⏳ Attempt ${attempt + 1} failed. Retrying...` }));
+          } else {
+            dispatch(updateLastMessage({ id: aiMsgId, content: `❌ Backend unreachable. All ${maxRetries + 1} attempts failed.` }));
+            success = true;
+          }
+        } else {
+          dispatch(updateLastMessage({ id: aiMsgId, append: `\n❌ ${errMsg}` }));
           success = true;
         }
       } finally {
@@ -168,7 +155,7 @@ export default function ChatPage() {
       if (!success) {
         attempt++;
         if (attempt <= maxRetries) {
-          await new Promise(r => setTimeout(r, 1500 * attempt)); // progressive backoff: 1.5s, 3s
+          await new Promise(r => setTimeout(r, 1500 * attempt));
         }
       }
     }
@@ -367,7 +354,7 @@ export default function ChatPage() {
       </div>
 
       <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 11, marginTop: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-        Gemini 2.5 Flash · Auto-retry · Streaming · Context-aware memory
+        Gemini 2.5 Flash · Auto-retry · Context-aware memory
       </p>
     </div>
   );

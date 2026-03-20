@@ -21,9 +21,8 @@ function log(label: string, data?: any) {
   }
 }
 
-/** Resolve the best available token: argument → localStorage → undefined */
-function resolveToken(passed?: string): string | undefined {
-  if (passed) return passed;
+/** Resolve token EXCLUSIVELY from localStorage */
+function resolveToken(): string | undefined {
   if (isBrowser) {
     const stored = localStorage.getItem("token");
     if (stored) return stored;
@@ -75,23 +74,23 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 5): P
 async function request<T>(
   path: string,
   options: RequestInit = {},
-  token?: string
+  ignoredToken?: string
 ): Promise<T> {
-  const resolvedToken = resolveToken(token);
+  const token = resolveToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (resolvedToken) headers["Authorization"] = `Bearer ${resolvedToken}`;
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   const fullUrl = `${API_URL}${path}`;
-  
-  // LIVE DEBUG LOGGING
-  console.log("TOKEN:", resolvedToken || "undefined");
-  console.log("HEADERS:", headers);
-  console.log("REQUEST:", fullUrl);
 
-  log(`→ ${options.method || "GET"} ${fullUrl}`, { hasToken: !!resolvedToken });
+  // MANDATORY DEBUG LOGS
+  console.log("TOKEN:", token || "MISSING");
+  console.log("URL:", fullUrl);
+  console.log("BODY:", options.body || "None");
 
   try {
     const res = await fetchWithRetry(fullUrl, { ...options, headers });
@@ -141,132 +140,26 @@ export const authApi = {
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
 export const chatApi = {
-  send: (message: string, session_id: string | undefined, token: string, tool?: string) =>
-    request<{ response: string; session_id: string; model_used: string }>(
+  send: (message: string) =>
+    request<{ response: string; session_id?: string; model_used?: string }>(
       "/api/chat",
-      { method: "POST", body: JSON.stringify({ message, session_id, tool }) },
-      token
+      { method: "POST", body: JSON.stringify({ message }) }
     ),
 
-  /** Streaming SSE — calls onToken for each chunk, onDone when complete */
-  streamSend: async (
-    message: string,
-    session_id: string | undefined,
-    token: string,
-    tool: string,
-    onToken: (token: string) => void,
-    onDone: (sessionId: string) => void,
-    onError: (err: string) => void
-  ): Promise<void> => {
-    // Always resolve the best available token
-    const resolvedToken = resolveToken(token);
-    const streamUrl = `${API_URL}/api/chat/stream`;
-
-    log("→ POST (stream) /api/chat/stream", {
-      apiUrl: API_URL,
-      hasToken: !!resolvedToken,
-      tokenSnippet: resolvedToken ? resolvedToken.slice(0, 20) + "..." : "none",
-      tool,
-      session_id,
-    });
-
-    // Build headers explicitly so we can log them
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {}),
-    };
-
-    // LIVE DEBUG LOGGING
-    console.log("TOKEN:", resolvedToken || "undefined");
-    console.log("HEADERS:", headers);
-    console.log("REQUEST:", streamUrl);
-
-    try {
-      const res = await fetch(streamUrl, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ message, session_id, tool }),
-      });
-
-      log(`← stream response status: ${res.status}`);
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          onError("401 - Session expired. Please log in again.");
-          return;
-        }
-        
-        let backendMsg = `HTTP ${res.status}`;
-        if (res.body) {
-           try {
-              // Try to read a chunk to parse the error message
-              const reader = res.body.getReader();
-              const { value } = await reader.read();
-              if (value) {
-                 const text = new TextDecoder().decode(value);
-                 const json = JSON.parse(text);
-                 backendMsg = json.detail || json.error || json.message || text.substring(0, 100);
-              }
-           } catch(e) {}
-        }
-
-        if (res.status >= 500) {
-          onError(`500 Server Error: ${backendMsg}`);
-          return;
-        }
-        onError(`Request failed: ${backendMsg}`);
-        return;
-      }
-
-      if (!res.body) {
-        onError("500 - Empty response from server.");
-        return;
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const text = decoder.decode(value, { stream: true });
-        const lines = text.split("\n").filter(l => l.startsWith("data:"));
-
-        for (const line of lines) {
-          try {
-            const json = JSON.parse(line.slice(5).trim());
-            if (json.error) { onError(json.token || "AI error."); return; }
-            if (json.done) { onDone(json.session_id); return; }
-            if (json.token) onToken(json.token);
-          } catch {}
-        }
-      }
-    } catch (err: any) {
-      const msg: string = err.message || "";
-      if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED")) {
-        onError("Backend unreachable. Check your internet or try again later.");
-      } else {
-        onError(msg || "Unknown network error.");
-      }
-    }
-  },
-
-  feedback: (session_id: string, message_id: string, rating: number, token: string) =>
+  feedback: (session_id: string, message_id: string, rating: number) =>
     request<{ status: string }>("/api/chat/feedback", {
       method: "POST",
       body: JSON.stringify({ session_id, message_id, rating }),
-    }, token),
+    }),
 
-  history: (session_id: string, token: string) =>
+  history: (session_id: string) =>
     request<{ messages: ChatMsg[]; session_id: string }>(
       `/api/chat/history/${session_id}`,
-      {},
-      token
+      {}
     ),
 
-  clearHistory: (session_id: string, token: string) =>
-    request<{ message: string }>(`/api/chat/history/${session_id}`, { method: "DELETE" }, token),
+  clearHistory: (session_id: string) =>
+    request<{ message: string }>(`/api/chat/history/${session_id}`, { method: "DELETE" }),
 };
 
 // ─── PDF / RAG ───────────────────────────────────────────────────────────────
