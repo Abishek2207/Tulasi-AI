@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 import { ConnectionStatus } from "@/components/ConnectionStatus";
+import { DebugPanel } from "@/components/DebugPanel";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }} 
           />
           {children}
+          <DebugPanel />
         </Providers>
       </body>
     </html>
