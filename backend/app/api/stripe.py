@@ -1,12 +1,20 @@
 import os
-import stripe
+try:
+    import stripe
+    STRIPE_AVAILABLE = True
+except ImportError:
+    stripe = None
+    STRIPE_AVAILABLE = False
+    print("⚠️  stripe package not installed — Stripe endpoints will return 503")
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlmodel import Session
 from app.core.database import get_session
 from app.core.security import get_current_user
 from app.models.models import User
 
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_dummy_key_change_me")
+stripe_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_dummy_key_change_me")
+if STRIPE_AVAILABLE and stripe:
+    stripe.api_key = stripe_key
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_dummy_secret_change_me")
 
 router = APIRouter()
