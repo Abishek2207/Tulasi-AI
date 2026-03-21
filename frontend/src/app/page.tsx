@@ -6,7 +6,7 @@ import Link from "next/link";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import { 
   Bot, FileText, Target, Map, Code, Award, Trophy, Users, 
-  Check, Sparkles, ChevronRight, Zap, Shield, Globe, Terminal
+  Check, Sparkles, ChevronRight, Zap, Shield, Globe, Terminal, Star, Briefcase
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 
@@ -195,6 +195,65 @@ function Features() {
   );
 }
 
+// ── Use Cases ────────────────────────────────────────────────────
+function UseCases() {
+  const cases = [
+    { role: "Software Engineers", desc: "Crush system design and algorithmic coding rounds with real-time AI mock interviews.", icon: Code, color: "#06B6D4" },
+    { role: "University Students", desc: "Get personalized learning roadmaps to bridge the gap between academia and industry.", icon: FileText, color: "#10B981" },
+    { role: "Startup Founders", desc: "Generate, evaluate, and refine your pitch deck ideas using the Startup Lab simulator.", icon: Zap, color: "#F59E0B" },
+  ];
+  return (
+    <section id="use-cases" style={{ padding: "80px 24px", background: "url('/noise.png')", position: "relative" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
+        {cases.map((c, i) => (
+          <motion.div key={c.role} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+               style={{ padding: 32, background: "rgba(255,255,255,0.03)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>
+            <c.icon size={32} color={c.color} style={{ marginBottom: 20 }} />
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: "white", marginBottom: 12 }}>{c.role}</h3>
+            <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.6 }}>{c.desc}</p>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── Testimonials ─────────────────────────────────────────────────
+function Testimonials() {
+  const reviews = [
+    { quote: "The mock interview AI completely changed my prep game. I landed a Senior SDE role at Amazon just weeks after using Tulasi.", author: "Priya S.", title: "SDE @ Amazon" },
+    { quote: "I was stuck in tutorial hell until I used the personalized Roadmaps. The structured approach and live AI tutoring are unmatched.", author: "Ankit R.", title: "CS Student" },
+    { quote: "Using the Chat feature internally feels just like Apple Messages. The UX is flawless and the answers are incredibly sharp.", author: "Michael T.", title: "Startup Founder" },
+  ];
+  return (
+    <section id="testimonials" style={{ padding: "120px 24px" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 } as any}>
+          <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px", marginBottom: 20 }}>
+            Loved by <span className="gradient-text">thousands</span>
+          </h2>
+        </motion.div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
+          {reviews.map((r, i) => (
+            <TiltCard key={r.author}>
+              <div className="glass-card" style={{ padding: 40, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ display: "flex", gap: 4, marginBottom: 24 }}>{[1,2,3,4,5].map(n => <Star key={n} size={16} color="#F59E0B" fill="#F59E0B" />)}</div>
+                  <p style={{ fontSize: 16, color: "var(--text-primary)", lineHeight: 1.7, marginBottom: 32, fontStyle: "italic" }}>"{r.quote}"</p>
+                </div>
+                <div>
+                  <h4 style={{ color: "white", fontWeight: 700, fontSize: 15 }}>{r.author}</h4>
+                  <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{r.title}</span>
+                </div>
+              </div>
+            </TiltCard>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── Pricing ──────────────────────────────────────────────────────
 function Pricing() {
   return (
@@ -266,9 +325,10 @@ function Footer() {
         <div>
           <h4 style={{ color: "white", fontWeight: 700, marginBottom: 20 }}>Company</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>About</Link>
-            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Privacy Policy</Link>
-            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Terms of Service</Link>
+            <Link href="/blog" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Blog & Resources</Link>
+            <Link href="/contact" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Contact Support</Link>
+            <Link href="/privacy" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Privacy Policy</Link>
+            <Link href="/terms" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Terms of Service</Link>
           </div>
         </div>
       </div>
@@ -289,7 +349,9 @@ export default function LandingPage() {
     <main style={{ background: "var(--bg-primary)", minHeight: "100vh" }}>
       <Navbar />
       <Hero />
+      <UseCases />
       <Features />
+      <Testimonials />
       <Pricing />
       <Footer />
     </main>

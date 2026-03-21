@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { activityApi } from "@/lib/api";
 import { 
   MessageSquare, BookOpen, Code, Target, Map, FileText, 
-  Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award, Flame, Zap
+  Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award, Flame, Zap, Linkedin, Share2, MessageCircle
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 
@@ -151,6 +151,38 @@ export default function DashboardHome() {
               </motion.div>
             ))}
           </div>
+
+          {/* Viral Referral & LinkedIn Loop */}
+          <motion.div variants={item} className="glass-card" style={{ padding: 24, background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(124, 58, 237, 0.1))", borderRadius: 24, border: "1px solid rgba(59, 130, 246, 0.3)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <div style={{ background: "linear-gradient(135deg, #0077B5, #25D366)", padding: 6, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}><Share2 size={18} color="white" /></div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "white" }}>Refer & Earn Free AI Chats</h3>
+              </div>
+              <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: 0, lineHeight: 1.5 }}>
+                Share your journey on LinkedIn or invite friends with code <strong style={{ color: "white", background: "rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: 6 }}>{(session?.user as any)?.id ? `TULASI-${(session?.user as any).id.toString().substring(0,4)}` : "TUL-2026"}</strong>. Get +500 XP and permanently expand your Daily Chat limit!
+              </p>
+            </div>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, flexShrink: 0 }}>
+              <button 
+                onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=https://tulasiai.vercel.app&summary=I%20am%20accelerating%20my%20software%20engineering%20career%20on%20Tulasi%20AI.%20Join%20me%20and%20use%20my%20invite%20code%20for%20exclusive%20bonuses!`, "_blank")}
+                className="btn-primary" 
+                style={{ background: "#0077B5", border: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 16px", borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 8px 16px rgba(0, 119, 181, 0.3)" }}
+              >
+                <Linkedin size={15} /> LinkedIn
+              </button>
+              
+              <button 
+                onClick={() => window.open(`https://api.whatsapp.com/send?text=I%20am%20accelerating%20my%20software%20engineering%20career%20on%20Tulasi%20AI.%20Join%20me%20and%20use%20my%20invite%20code%20for%20exclusive%20bonuses!%20https://tulasiai.vercel.app`, "_blank")}
+                className="btn-primary" 
+                style={{ background: "#25D366", border: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 16px", borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 8px 16px rgba(37, 211, 102, 0.3)", color: "white" }}
+              >
+                <MessageCircle size={15} /> WhatsApp
+              </button>
+            </div>
+          </motion.div>
+
         </div>
 
         {/* Right Column: Leaderboard */}

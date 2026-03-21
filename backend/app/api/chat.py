@@ -86,14 +86,16 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
         except Exception as e:
             print(f"Error decoding image: {e}")
 
-    # Enforce Daily Limitations
+    # Enforce Daily Limitations (Dynamic based on XP Gamification!)
     today = date.today().isoformat()
     if user.last_reset_date != today:
         user.chats_today = 0
         user.last_reset_date = today
     
-    if not user.is_pro and user.chats_today >= 10:
-        return ChatResponse(response="🚀 You have reached your daily limit of 10 free AI chats. Upgrade to Pro for unlimited access.", session_id=session_id, ai_model="tulasi-ai-limit")
+    daily_limit = 10 + (user.xp // 100) if hasattr(user, "xp") else 10
+    
+    if not user.is_pro and user.chats_today >= daily_limit:
+        return ChatResponse(response=f"🚀 You have reached your daily limit of {daily_limit} free AI chats. Upgrade to Pro for unlimited access.", session_id=session_id, ai_model="tulasi-ai-limit")
 
     # Build system-primed message
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
@@ -131,7 +133,7 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
     db_messages = db.exec(statement).all()
     history = [{"role": m.role, "content": m.content} for m in db_messages]
 
-    # Enforce streaming limits
+    # Enforce streaming limits (Dynamic depending on XP!)
     today = date.today().isoformat()
     if user.last_reset_date != today:
         user.chats_today = 0
@@ -139,8 +141,10 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
         db.add(user)
         db.commit()
     
-    if not user.is_pro and user.chats_today >= 10:
-        err_data = json.dumps({"token": "🚀 You have reached your daily Free plan limit of 10 AI chats. Please upgrade to Pro for unlimited access via the Dashboard.", "session_id": session_id, "done": True, "error": True})
+    daily_limit = 10 + (user.xp // 100) if hasattr(user, "xp") else 10
+    
+    if not user.is_pro and user.chats_today >= daily_limit:
+        err_data = json.dumps({"token": f"🚀 You have reached your daily limit of {daily_limit} free AI chats. Upgrade to Pro for unlimited access via the Dashboard.", "session_id": session_id, "done": True, "error": True})
         return StreamingResponse((f"data: {err_data}\n\n" for _ in range(1)), media_type="text/event-stream")
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])

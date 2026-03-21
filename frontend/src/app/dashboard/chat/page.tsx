@@ -10,8 +10,9 @@ import { useSession } from "next-auth/react";
 import { trackEvent } from "@/lib/analytics";
 import {
   Bot, FileText, Target, Mail, Copy, Check, ThumbsUp, ThumbsDown,
-  Trash2, Sparkles, RefreshCw, Send, Settings, AlertTriangle, User
+  Trash2, Sparkles, RefreshCw, Send, Settings, AlertTriangle, User, Zap
 } from "lucide-react";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 // ─── Tool definitions ──────────────────────────────────────────────────────────
 const TOOLS = [
@@ -73,6 +74,7 @@ export default function ChatPage() {
   const [lastUserMsg, setLastUserMsg] = useState("");
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
@@ -116,6 +118,12 @@ export default function ChatPage() {
       const wakeTimer = setTimeout(() => setIsWakingUp(true), 5000);
       try {
         const res = await chatApi.send(text, sessionId || undefined, activeTool);
+        
+        // INTERCEPT USAGE EXHAUSTION
+        if (typeof res?.response === "string" && res.response.includes("daily limit of 10 free")) {
+          setTimeout(() => setShowUpgradeModal(true), 800); 
+        }
+
         dispatch(updateLastMessage({ id: aiMsgId, append: res.response }));
         if (res.session_id) dispatch(setSessionId(res.session_id));
         success = true;
@@ -142,7 +150,7 @@ export default function ChatPage() {
           dispatch(updateLastMessage({ id: aiMsgId, append: `\n❌ ${errMsg}` }));
           success = true;
         }
-      } finally {
+      } finally {        
         clearTimeout(wakeTimer);
         setIsWakingUp(false);
       }
@@ -207,6 +215,8 @@ export default function ChatPage() {
           </motion.button>
         ))}
       </div>
+
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
 
       {/* Chat Area */}
       <div className="glass-card" style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: 24, marginBottom: 14 }}>
