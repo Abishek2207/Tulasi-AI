@@ -37,4 +37,7 @@ PyPDF2==3.0.1
 
 # ── Rate Limiting ─────────────────────────────────────────────────────
 slowapi==0.1.9
-# Invalidate cache for redeploy
+
+# ── Payments ───────────────────────────────────────────────────────────
+stripe>=7.0.0
+# Invalidate cache for redeploy 2
