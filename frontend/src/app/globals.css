@@ -14,8 +14,9 @@
   --brand-glow:      rgba(124, 58, 237, 0.5);
 
   /* Backgrounds — Deep SaaS Dark */
-  --bg-primary:   #09090b; /* Deep Zinc / Near Black */
-  --bg-secondary: #0f0f13; /* Slightly lighter for sidebars */
+  --bg-primary: #05070D; /* Apple Deep Black */
+  --bg-secondary: #0A0C14;
+  --bg-tertiary: #111421; /* Slightly lighter for sidebars */
   --bg-card:      rgba(24, 24, 27, 0.6);
   --bg-card-2:    rgba(39, 39, 42, 0.7);
   --bg-glass:     rgba(9, 9, 11, 0.6);
@@ -154,10 +155,10 @@ h1, h2, h3, h4, h5, h6 {
    CHAT BUBBLE ENHANCEMENTS
    ============================ */
 .chat-bubble-user {
-  background: linear-gradient(135deg, #7C3AED, #3B82F6);
+  background: linear-gradient(135deg, #007AFF, #0056D6); /* Apple Messages Blue */
   color: white;
   border-radius: 18px 18px 4px 18px;
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);
 }
 .chat-bubble-ai {
   background: rgba(255, 255, 255, 0.05);

@@ -8,6 +8,7 @@ import {
   Bot, FileText, Target, Map, Code, Award, Trophy, Users, 
   Check, Sparkles, ChevronRight, Zap, Shield, Globe, Terminal
 } from "lucide-react";
+import { TiltCard } from "@/components/ui/TiltCard";
 
 // ── Feature data ──────────────────────────────────────────────────
 const features = [
@@ -121,9 +122,10 @@ function Hero() {
 
       {/* Hero Mockup */}
       <motion.div initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        style={{ width: "100%", maxWidth: 1080, position: "relative", zIndex: 10 }}>
-        <div style={{ padding: 10, background: "rgba(255,255,255,0.03)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>
-          <div className="glass-card" style={{ height: 500, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        style={{ width: "100%", maxWidth: 1080, position: "relative", zIndex: 10, perspective: 1200 }}>
+        <TiltCard>
+          <div style={{ padding: 10, background: "rgba(255,255,255,0.03)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 40px 80px rgba(0,0,0,0.6)" }}>
+            <div className="glass-card" style={{ height: 500, overflow: "hidden", display: "flex", flexDirection: "column" }}>
             {/* Window header */}
             <div style={{ height: 48, borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", padding: "0 16px", gap: 8 }}>
               {["#FF5F57", "#FEBC2E", "#28C840"].map(c => <div key={c} style={{ width: 12, height: 12, borderRadius: "50%", background: c }} />)}
@@ -152,6 +154,7 @@ function Hero() {
             </div>
           </div>
         </div>
+      </TiltCard>
       </motion.div>
     </section>
   );
@@ -174,12 +177,16 @@ function Features() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24 }}>
           {features.map((f, i) => (
             <motion.div key={f.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -6 }} className="glass-card" style={{ padding: 32, cursor: "default" } as any}>
-              <div style={{ width: 48, height: 48, borderRadius: 12, background: `${f.color}15`, border: `1px solid ${f.color}30`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24, color: f.color }}>
-                <f.icon size={24} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: "white" }}>{f.title}</h3>
-              <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6 }}>{f.desc}</p>
+              whileHover={{ y: -6 }} style={{ height: "100%", perspective: 1200 }}>
+              <TiltCard className="h-full">
+                <div className="glass-card" style={{ padding: 32, cursor: "default", height: "100%" }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: `${f.color}15`, border: `1px solid ${f.color}30`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24, color: f.color }}>
+                    <f.icon size={24} />
+                  </div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: "white" }}>{f.title}</h3>
+                  <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6 }}>{f.desc}</p>
+                </div>
+              </TiltCard>
             </motion.div>
           ))}
         </div>

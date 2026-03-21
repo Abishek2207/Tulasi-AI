@@ -9,6 +9,7 @@ import {
   MessageSquare, BookOpen, Code, Target, Map, FileText, 
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award, Flame, Zap
 } from "lucide-react";
+import { TiltCard } from "@/components/ui/TiltCard";
 
 const MODULES = [
   { id: "chat", title: "AI Learning Chat", desc: "Have a conversation with Tulasi AI to learn new concepts.", icon: <MessageSquare size={26} />, link: "/dashboard/chat", color: "#7C3AED", span: 2 },
@@ -137,12 +138,16 @@ export default function DashboardHome() {
               { icon: <Youtube size={24} color="#7C3AED" />, val: stats.videos_watched, label: "Videos Watched", link: "/dashboard/youtube-learning", border: "rgba(124,58,237,0.2)" },
               { icon: <Trophy size={24} color="#FBBF24" />, val: stats.hackathons_joined, label: "Competitions", link: "/dashboard/hackathons", border: "rgba(251,191,36,0.2)" }
             ].map((stat, i) => (
-              <motion.div key={i} variants={item} whileHover={{ y: -4, scale: 1.02 }} className="glass-card" style={{ padding: 24, paddingBottom: 20, borderColor: stat.border, background: "rgba(255,255,255,0.02)", cursor: "pointer", borderRadius: 20 }}>
-                <Link href={stat.link} style={{ textDecoration: "none" }}>
-                  <div style={{ fontSize: 24, marginBottom: 8 }}>{stat.icon}</div>
-                  <div style={{ fontSize: 28, fontWeight: 900, color: "var(--text-primary)", marginBottom: 4, fontFamily: "var(--font-display)" }}>{stat.val}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{stat.label}</div>
-                </Link>
+              <motion.div key={i} variants={item} whileHover={{ y: -4, scale: 1.03 }} style={{ height: "100%", perspective: 1200 }}>
+                <TiltCard className="h-full">
+                  <div className="glass-card" style={{ padding: 24, paddingBottom: 20, borderColor: stat.border, background: "rgba(255,255,255,0.02)", cursor: "pointer", borderRadius: 20, height: "100%" }}>
+                    <Link href={stat.link} style={{ textDecoration: "none" }}>
+                      <div style={{ fontSize: 24, marginBottom: 8 }}>{stat.icon}</div>
+                      <div style={{ fontSize: 28, fontWeight: 900, color: "var(--text-primary)", marginBottom: 4, fontFamily: "var(--font-display)" }}>{stat.val}</div>
+                      <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{stat.label}</div>
+                    </Link>
+                  </div>
+                </TiltCard>
               </motion.div>
             ))}
           </div>
@@ -195,30 +200,32 @@ export default function DashboardHome() {
           <motion.div 
             key={mod.id}
             variants={item}
-            whileHover={{ y: -8, scale: 1.02 }}
-            style={{ gridColumn: mod.span > 1 ? "span 2" : "span 1" }}
+            whileHover={{ y: -8, scale: 1.03 }}
+            style={{ gridColumn: mod.span > 1 ? "span 2" : "span 1", perspective: 1200 }}
           >
-            <Link href={mod.link} style={{ textDecoration: "none", height: "100%", display: "block" }}>
-              <div 
-                className="glass-card"
-                style={{ padding: 36, height: "100%", display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", position: "relative", overflow: "hidden" }}
-              >
-                <div style={{ position: "absolute", top: 0, right: 0, width: 180, height: 180, background: `radial-gradient(circle at top right, ${mod.color}15, transparent 70%)`, borderRadius: "0 0 0 100%" }} />
-                
-                <div style={{ width: 72, height: 72, borderRadius: 24, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, marginBottom: 28, border: "1px solid rgba(255,255,255,0.08)", position: "relative", zIndex: 1, boxShadow: "0 10px 20px rgba(0,0,0,0.2)" }}>
-                  {mod.icon}
-                </div>
-                
-                <h3 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 14, position: "relative", zIndex: 1, fontFamily: "var(--font-display)" }}>{mod.title}</h3>
-                <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.6, position: "relative", zIndex: 1, paddingBottom: 40, fontWeight: 400 }}>{mod.desc}</p>
-                
-                <div style={{ marginTop: "auto", position: "absolute", bottom: 36, left: 36, zIndex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, color: mod.color, fontSize: 15, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Launch Module <span>→</span>
+            <TiltCard style={{ height: "100%" }}>
+              <Link href={mod.link} style={{ textDecoration: "none", height: "100%", display: "block" }}>
+                <div 
+                  className="glass-card"
+                  style={{ padding: 36, height: "100%", display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", position: "relative", overflow: "hidden" }}
+                >
+                  <div style={{ position: "absolute", top: 0, right: 0, width: 180, height: 180, background: `radial-gradient(circle at top right, ${mod.color}15, transparent 70%)`, borderRadius: "0 0 0 100%" }} />
+                  
+                  <div style={{ width: 72, height: 72, borderRadius: 24, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, marginBottom: 28, border: "1px solid rgba(255,255,255,0.08)", position: "relative", zIndex: 1, boxShadow: "0 10px 20px rgba(0,0,0,0.2)" }}>
+                    {mod.icon}
+                  </div>
+                  
+                  <h3 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 14, position: "relative", zIndex: 1, fontFamily: "var(--font-display)" }}>{mod.title}</h3>
+                  <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.6, position: "relative", zIndex: 1, paddingBottom: 40, fontWeight: 400 }}>{mod.desc}</p>
+                  
+                  <div style={{ marginTop: "auto", position: "absolute", bottom: 36, left: 36, zIndex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, color: mod.color, fontSize: 15, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Launch Module <span>→</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </TiltCard>
           </motion.div>
         ))}
       </div>
