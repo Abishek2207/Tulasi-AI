@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, Zap, Shield, Clock, Award } from "lucide-react";
+import { X, CheckCircle, Zap, Shield, Clock, Award, PartyPopper } from "lucide-react";
 import { paymentApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -55,7 +55,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               razorpay_signature: response.razorpay_signature,
             });
             if (result.success) {
-              toast.success("Payment successful! You are now a Pro member 🎉", { id: "verify" });
+              toast.success("Payment successful! You are now a Pro member.", { id: "verify", icon: <PartyPopper color="#10B981" size={18} /> });
               
               // REVENUE SUCCESS CELEBRATION
               confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#7C3AED', '#06B6D4', '#10B981'] });

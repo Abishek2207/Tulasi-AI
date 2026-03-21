@@ -15,11 +15,25 @@ export default function BlogHome() {
       color: "#F43F5E"
     },
     {
-      title: "Building the Perfect Career with an AI Roadmap Generator",
+      title: "Building the Perfect Career with an AI Roadmap Generator 2026",
       excerpt: "Don't get stuck in tutorial hell. Discover how role-playing AI models can map out exactly what you need to learn week-by-week to land your dream Software Engineering role.",
       cat: "Career Growth",
       icon: Map,
       color: "#10B981"
+    },
+    {
+      title: "Ultimate 2026 AI Interview Questions for Google",
+      excerpt: "A comprehensive teardown of exactly what Google evaluators are looking for, mapped across Systems Architecture, DP algorithms, and Behavioral Leadership Principles.",
+      cat: "FAANG Prep",
+      icon: Target,
+      color: "#06B6D4"
+    },
+    {
+      title: "How to Secure a Job at Google (The 2026 Playbook)",
+      excerpt: "Step-by-step strategies for getting your resume past the strict ATS filters, landing the initial recruiter screen, and dominating the 5-round onsite loop.",
+      cat: "Career Growth",
+      icon: Map,
+      color: "#7C3AED"
     }
   ];
 
