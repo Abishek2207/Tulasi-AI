@@ -1,60 +1,34 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { TulasiLogo } from "@/components/TulasiLogo";
+import { 
+  Bot, FileText, Target, Map, Code, Award, Trophy, Users, 
+  Check, Sparkles, ChevronRight, Zap, Shield, Globe, Terminal
+} from "lucide-react";
 
 // ── Feature data ──────────────────────────────────────────────────
 const features = [
-  { icon: "🤖", title: "AI RAG Chatbot", desc: "Context-aware AI tutor with memory. Ask anything — coding, career, concepts.", color: "#6C63FF" },
-  { icon: "📄", title: "PDF Intelligence", desc: "Upload any PDF. Extract insights, summaries, and answers with AI.", color: "#4ECDC4" },
-  { icon: "🎯", title: "Mock Interviews", desc: "AI conducts real interviews, evaluates your answers, and gives detailed feedback.", color: "#FF6B9D" },
-  { icon: "🗺️", title: "Learning Roadmaps", desc: "Role-based paths for AI Engineer, Web Dev, Data Science, and more.", color: "#43E97B" },
-  { icon: "💻", title: "Coding Practice Hub", desc: "Curated resources from LeetCode, HackerRank, Codeforces. Track progress.", color: "#FFD93D" },
-  { icon: "📜", title: "Certificate System", desc: "Upload your certs or earn Tulasi AI certificates by hitting milestones.", color: "#6C63FF" },
-  { icon: "🏆", title: "Hackathon Hub", desc: "Discover 20+ handpicked hackathons — from SIH to GSoC to MLH.", color: "#4ECDC4" },
-  { icon: "👥", title: "Group Study Rooms", desc: "Realtime collaborative study sessions with live chat and shared resources.", color: "#FF6B9D" },
+  { icon: Bot, title: "AI RAG Chatbot", desc: "Context-aware AI tutor with memory. Ask anything — coding, career, concepts.", color: "#7C3AED" },
+  { icon: FileText, title: "PDF Intelligence", desc: "Upload any PDF. Extract insights, summaries, and answers instantly.", color: "#06B6D4" },
+  { icon: Target, title: "Mock Interviews", desc: "AI conducts real interviews, evaluates your answers, and gives feedback.", color: "#F43F5E" },
+  { icon: Map, title: "Learning Roadmaps", desc: "Role-based paths for AI Engineer, Web Dev, Data Science, and more.", color: "#10B981" },
+  { icon: Code, title: "Coding Practice Hub", desc: "Curated resources from LeetCode & Codeforces. Track progress.", color: "#F59E0B" },
+  { icon: Award, title: "Certificate System", desc: "Upload your certs or earn Tulasi AI certificates by hitting milestones.", color: "#7C3AED" },
+  { icon: Trophy, title: "Hackathon Hub", desc: "Discover 20+ handpicked hackathons — from SIH to GSoC.", color: "#06B6D4" },
+  { icon: Users, title: "Group Study Rooms", desc: "Realtime collaborative study sessions with live chat.", color: "#F43F5E" },
 ];
 
-const roadmaps = [
-  { icon: "🤖", title: "AI Engineer", color: "#6C63FF" },
-  { icon: "🌐", title: "Web Developer", color: "#4ECDC4" },
-  { icon: "📊", title: "Data Scientist", color: "#FF6B9D" },
-  { icon: "🏆", title: "Competitive Programmer", color: "#43E97B" },
-];
-
-const testimonials = [
-  { name: "Priya S.", college: "IIT Bombay", text: "Tulasi AI helped me crack my front-end internship at Microsoft. The mock interviews are incredible!", avatar: "P" },
-  { name: "Arjun K.", college: "NIT Trichy", text: "The AI chatbot explains concepts better than my professors! And it's completely free.", avatar: "A" },
-  { name: "Meera R.", college: "BITS Pilani", text: "I went from 0 to 1500 on LeetCode using the Competitive Programming roadmap. Life-changing.", avatar: "M" },
-];
-
-const stats = [
-  { value: "100%", label: "Free for Students" },
-  { value: "50K+", label: "Active Learners" },
-  { value: "4.9★", label: "User Rating" },
-  { value: "20+", label: "Hackathons Listed" },
-];
-
-// ── Logo component ───────────────────────────────────────────────
-function TulasILogo({ size = 40 }: { size?: number }) {
+// ── Shared Branding Component ─────────────────────────────────────
+function BrandText({ size = 40 }: { size?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: size * 0.25 }}>
-      <div style={{ position: "relative" }}>
-        <TulasiLogo size={size * 1.5} style={{ filter: "drop-shadow(0 4px 15px rgba(139, 92, 246, 0.4))" }} />
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          style={{ position: "absolute", inset: "-20%", background: "radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%)", zIndex: -1 } as any}
-        />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      <TulasiLogo size={size * 1.2} />
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", marginTop: 2 }}>
         <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: size * 0.55, color: "white", letterSpacing: "-0.5px", lineHeight: 1 }}>
-          Tulasi<span className="gradient-text">AI</span>
-        </span>
-        <span style={{ background: "linear-gradient(135deg, #8B5CF6, #38BDF8)", padding: "2px 6px", borderRadius: 4, fontSize: size * 0.22, fontWeight: 800, color: "white", marginTop: 2, letterSpacing: "1px", textTransform: "uppercase", boxShadow: "0 0 10px rgba(139,92,246,0.3)" }}>
-          Pro
+          Tulasi<span style={{ color: "#06B6D4" }}>AI</span>
         </span>
       </div>
     </div>
@@ -71,207 +45,114 @@ function Navbar() {
   }, []);
 
   return (
-    <motion.nav
-      initial={{ y: -80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        background: scrolled ? "rgba(6,6,15,0.92)" : "transparent",
-        backdropFilter: scrolled ? "blur(24px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
-        padding: "0 40px", height: 72,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        maxWidth: 1400, margin: "0 auto",
-        transition: "all 0.4s ease",
-      } as any}
-    >
-      <Link href="/" style={{ textDecoration: "none" }}>
-        <TulasILogo size={40} />
-      </Link>
-
-      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-        {["Features", "Roadmaps", "Hackathons", "Pricing"].map(l => (
-          <button key={l} style={{
-            background: "transparent", border: "none", color: "rgba(255,255,255,0.55)",
-            fontSize: 14, fontWeight: 500, padding: "8px 16px", cursor: "pointer",
-            borderRadius: 8, transition: "color 0.2s", fontFamily: "var(--font-sans)",
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = "white"}
-          onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.55)"}
-          >{l}</button>
-        ))}
+    <nav style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      background: scrolled ? "rgba(9,9,11,0.8)" : "transparent",
+      backdropFilter: scrolled ? "blur(24px)" : "none",
+      borderBottom: scrolled ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
+      transition: "all 0.3s var(--ease-premium)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 72, maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
+        <Link href="/" style={{ textDecoration: "none" }}><BrandText size={36} /></Link>
+        <div style={{ display: "flex", gap: 32, alignItems: "center" }}>
+          {["Features", "Roadmaps", "Pricing"].map(l => (
+            <Link key={l} href={`#${l.toLowerCase()}`} style={{ color: "var(--text-secondary)", fontSize: 14, fontWeight: 500, textDecoration: "none", transition: "color 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-secondary)"}
+            >{l}</Link>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          <Link href="/auth" style={{ color: "white", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Sign In</Link>
+          <Link href="/auth" className="btn-primary" style={{ padding: "8px 20px", fontSize: 13, borderRadius: 12, textDecoration: "none" }}>Start Free</Link>
+        </div>
       </div>
-
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <Link href="/auth" style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>
-          Sign In
-        </Link>
-        <Link href="/auth" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14, borderRadius: 12 }}>
-          Start Free →
-        </Link>
-      </div>
-    </motion.nav>
+    </nav>
   );
-}
-
-// ── Typewriter Effect ──────────────────────────────────────────────
-function TypewriterText({ text, delay = 0 }: { text: string, delay?: number }) {
-  const [displayed, setDisplayed] = useState("");
-
-  useEffect(() => {
-    let i = 0;
-    const t = setTimeout(() => {
-      const interval = setInterval(() => {
-        setDisplayed(text.substring(0, i));
-        i++;
-        if (i > text.length + 1) clearInterval(interval);
-      }, 25);
-      return () => clearInterval(interval);
-    }, delay);
-    return () => clearTimeout(t);
-  }, [text, delay]);
-
-  return <span>{displayed}{displayed.length < text.length && <span className="typing-cursor" style={{ opacity: 0.7, animation: "blink 1s step-end infinite" }}>|</span>}</span>;
 }
 
 // ── Hero section ─────────────────────────────────────────────────
 function Hero() {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref });
-  const y = useTransform(scrollYProgress, [0, 1], [0, -80]);
-  const op = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
-    <section ref={ref} style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", padding: "120px 24px 80px" }}>
-        {/* Floating Orbs for "Wow" Effect */}
-        <div className="orb orb-purple" style={{ top: '10%', left: '5%', width: '400px', height: '400px', opacity: 0.6 }} />
-        <div className="orb orb-teal" style={{ bottom: '15%', right: '10%', width: '350px', height: '350px', opacity: 0.4 }} />
+    <section ref={ref} style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "160px 24px 80px", overflow: "hidden" }}>
+      {/* Premium Gradient Background */}
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+          style={{ position: "absolute", top: "-20%", left: "-10%", width: "70%", height: "70%", background: "radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 60%)", filter: "blur(60px)" } as any} />
+        <motion.div animate={{ rotate: -360 }} transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+             style={{ position: "absolute", bottom: "-20%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 60%)", filter: "blur(60px)" } as any} />
+      </div>
 
-        {/* Hero Content */}
-        <div style={{ position: "relative", zIndex: 10, textAlign: "center", maxWidth: 900, margin: "0 auto" }}>
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }}>
-            <span className="badge badge-primary mb-6" style={{ background: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.3)', color: '#A78BFA' }}>
-               ✨ Advanced AI Tutor for Modern Learners
-            </span>
-            <h1 style={{ fontSize: "clamp(48px, 8vw, 84px)", fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.04em", marginBottom: 28, fontFamily: "var(--font-outfit)" }}>
-              Experience the <br/>
-              <span className="gradient-text-brand" style={{ filter: 'drop-shadow(0 0 30px var(--brand-glow))' }}>Future of Learning</span>
-            </h1>
-            <p style={{ fontSize: "clamp(18px, 2vw, 21px)", color: "var(--text-secondary)", maxWidth: 640, margin: "0 auto 40px", lineHeight: 1.6 }}>
-              Tulasi AI is your hyper-personalized educational companion. 
-              Master the skills of tomorrow today with AI-driven insights, 
-              interactive mock interviews, and tailored career pathways.
-            </p>
-          </motion.div>
-        </div>
-        <motion.div style={{ y, opacity: op, position: "relative", zIndex: 1, textAlign: "center", maxWidth: 960 } as any}>
-
-        {/* Free badge */}
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, type: "spring" }}>
-          <span className="badge badge-green" style={{ marginBottom: 28, display: "inline-flex", padding: "8px 20px", fontSize: 13 }}>
-            🎓 100% FREE for Students — No Credit Card Required
+      <motion.div style={{ y, opacity, position: "relative", zIndex: 10, textAlign: "center", maxWidth: 960 } as any}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 20, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", color: "#A78BFA", fontSize: 13, fontWeight: 600, marginBottom: 32 }}>
+            <Sparkles size={14} /> Meet Tulasi AI 3.0
           </span>
         </motion.div>
-
-        {/* Logo in hero */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={{ display: "flex", justifyContent: "center", marginBottom: 36 } as any}>
-          <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1, duration: 0.8, ease: "easeOut" }}
-          style={{ width: 88, height: 88, margin: "0 auto", marginBottom: 32, borderRadius: 24, padding: 8, background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))", boxShadow: "0 0 40px rgba(108,99,255,0.2), inset 0 0 0 1px rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" } as any}>
-          
-          <div style={{ position: "absolute", inset: -20, background: "radial-gradient(circle, rgba(78,205,196,0.3) 0%, transparent 70%)", zIndex: -1, filter: "blur(20px)", borderRadius: "50%" }} />
-          <TulasiLogo size={80} style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))" }} />
-        </motion.div>
-        </motion.div>
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.8, type: "spring" }}
-          style={{ fontSize: "clamp(42px, 8vw, 88px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 1.04, marginBottom: 28, letterSpacing: "-3px", color: "white" } as any}
-        >
-          Free AI Learning<br />
-          <motion.span
-            animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            style={{ background: "linear-gradient(90deg, #6C63FF, #FF6B9D, #4ECDC4, #43E97B, #6C63FF)", backgroundSize: "300% auto", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" } as any}
-          >
-            Platform for Students
-          </motion.span>
+        
+        <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1 }}
+          style={{ fontSize: "clamp(48px, 8vw, 84px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 1.05, letterSpacing: "-0.04em", marginBottom: 24 }}>
+          Your AI-Powered <br />
+          <span className="gradient-text">Career Companion</span>
         </motion.h1>
 
-        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          style={{ fontSize: 20, color: "rgba(255,255,255,0.6)", maxWidth: 640, margin: "0 auto 52px", lineHeight: 1.7, fontWeight: 400 } as any}
-        >
-          Your AI-powered educational companion. Chat with AI tutors, practice coding, ace interviews, and build your career — all at <strong style={{ color: "white" }}>zero cost</strong>.
+        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
+          style={{ fontSize: 20, color: "var(--text-secondary)", maxWidth: 640, margin: "0 auto 48px", lineHeight: 1.6 }}>
+          Master the skills of tomorrow today. Chat with AI tutors, practice coding, ace mock interviews, and build your career portfolio — all in one premium workspace.
         </motion.p>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
-          style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 72 } as any}
-        >
-          <Link href="/auth">
-            <motion.button whileHover={{ scale: 1.05, boxShadow: "0 24px 64px rgba(108,99,255,0.6)" }} whileTap={{ scale: 0.95 }}
-              className="btn-primary" style={{ padding: "18px 44px", fontSize: 17, borderRadius: 16, background: "linear-gradient(135deg, #6C63FF, #FF6B9D)", border: "none" } as any}>
-              Start Learning Free 🚀
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
+          style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 64 }}>
+          <Link href="/auth" style={{ textDecoration: "none" }}>
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-primary"
+              style={{ padding: "16px 36px", fontSize: 16, borderRadius: 14 }}>
+              Start for Free <ChevronRight size={18} />
             </motion.button>
           </Link>
-          <motion.button whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.1)" }} whileTap={{ scale: 0.95 }}
-            className="btn-ghost" style={{ padding: "18px 36px", fontSize: 17, borderRadius: 16, border: "1px solid rgba(255,255,255,0.2)", transition: "background 0.3s" } as any}>
-            ▶ Try AI Chat Preview
-          </motion.button>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}
-          style={{ display: "flex", gap: 56, justifyContent: "center", flexWrap: "wrap" } as any}
-        >
-          {stats.map(s => (
-            <div key={s.label} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 34, fontWeight: 900, fontFamily: "var(--font-outfit)", background: "linear-gradient(135deg,#6C63FF,#4ECDC4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{s.value}</div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 4 }}>{s.label}</div>
-            </div>
-          ))}
+          <button className="btn-ghost" style={{ padding: "16px 36px", fontSize: 16, borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+            <Terminal size={18} opacity={0.7} /> View Live Demo
+          </button>
         </motion.div>
       </motion.div>
 
-      {/* Dashboard Preview */}
-      <motion.div initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 1 }}
-        className="float-anim"
-        style={{ marginTop: 80, width: "100%", maxWidth: 1000, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(17,17,40,0.85)", backdropFilter: "blur(20px)", boxShadow: "0 40px 120px rgba(108,99,255,0.22)", position: "relative", zIndex: 1 } as any}
-      >
-        <div style={{ padding: "16px 20px 0", display: "flex", gap: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          {["#FF5F57", "#FEBC2E", "#28C840"].map(c => <div key={c} style={{ width: 12, height: 12, borderRadius: "50%", background: c }} />)}
-          <div style={{ flex: 1, textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12, marginTop: 2 }}>tulasi.ai/dashboard</div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", height: 340 }}>
-          <div style={{ borderRight: "1px solid rgba(255,255,255,0.06)", padding: "20px 12px", display: "flex", flexDirection: "column", gap: 4 }}>
-            {[{ icon: "🤖", label: "AI Chat", active: true }, { icon: "📄", label: "PDF Q&A" }, { icon: "💻", label: "Code Practice" }, { icon: "🎯", label: "Mock Interview" }, { icon: "🗺️", label: "Roadmaps" }, { icon: "🏆", label: "Hackathons" }].map(item => (
-              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, background: item.active ? "rgba(108,99,255,0.2)" : "transparent", border: item.active ? "1px solid rgba(108,99,255,0.3)" : "1px solid transparent", color: item.active ? "#9B95FF" : "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 500 }}>
-                <span>{item.icon}</span>{item.label}
-              </div>
-            ))}
-          </div>
-          <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#6C63FF,#4ECDC4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>🤖</div>
-              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px 16px 16px 16px", padding: "12px 16px", fontSize: 13, color: "rgba(255,255,255,0.8)", flex: 1, lineHeight: 1.6 }}>
-                👋 Hello! I&apos;m Tulasi AI — your personal learning assistant. I can help you with programming, algorithms, interview prep, and career guidance. What would you like to learn today?
-              </div>
+      {/* Hero Mockup */}
+      <motion.div initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        style={{ width: "100%", maxWidth: 1080, position: "relative", zIndex: 10 }}>
+        <div style={{ padding: 10, background: "rgba(255,255,255,0.03)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="glass-card" style={{ height: 500, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            {/* Window header */}
+            <div style={{ height: 48, borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", padding: "0 16px", gap: 8 }}>
+              {["#FF5F57", "#FEBC2E", "#28C840"].map(c => <div key={c} style={{ width: 12, height: 12, borderRadius: "50%", background: c }} />)}
+              <div style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)", margin: "0 auto" }}>tulasi.ai/dashboard</div>
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <div style={{ background: "linear-gradient(135deg,#6C63FF,#4ECDC4)", padding: "12px 16px", borderRadius: "16px 16px 4px 16px", fontSize: 13, color: "white", maxWidth: "70%" }}>
-                Can you explain how to implement a binary search tree in Python?
+            {/* Mock Chat UI */}
+            <div style={{ flex: 1, padding: 32, display: "flex", flexDirection: "column", gap: 24 }}>
+              <div style={{ display: "flex", gap: 16 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}><Bot size={20} color="white" /></div>
+                <div className="chat-bubble-ai" style={{ padding: "16px 20px", fontSize: 14, maxWidth: "80%", lineHeight: 1.6 }}>
+                  Hello! I'm Tulasi AI. I can help you prepare for your technical interview at Google. Should we start with system design or data structures?
+                </div>
               </div>
-            </div>
-            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#6C63FF,#4ECDC4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>🤖</div>
-              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px 16px 16px 16px", padding: "12px 16px", fontSize: 13, color: "rgba(255,255,255,0.8)", flex: 1, lineHeight: 1.6 }}>
-                <TypewriterText text="Great choice! A Binary Search Tree is a tree where each node has at most 2 children. Left child < parent < right child. Here is a Python implementation to get you started." delay={1000} />
+              <div style={{ display: "flex", gap: 16, alignSelf: "flex-end", flexDirection: "row-reverse" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>U</div>
+                <div className="chat-bubble-user" style={{ padding: "16px 20px", fontSize: 14, maxWidth: "80%", lineHeight: 1.6 }}>
+                  Let's do a mock system design interview. How would you design a URL shortener like Bitly?
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 16 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}><Bot size={20} color="white" /></div>
+                <div className="chat-bubble-ai" style={{ padding: "16px 24px", display: "flex", alignItems: "center", gap: 6 }}>
+                  <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes blink { 50% { opacity: 0; } }
-      `}} />
     </section>
   );
 }
@@ -281,29 +162,24 @@ function Features() {
   return (
     <section id="features" style={{ padding: "120px 24px", position: "relative" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 72 } as any}>
-          <span className="badge badge-primary" style={{ marginBottom: 20, display: "inline-flex", padding: "8px 20px" }}>🚀 Platform Features</span>
-          <h2 style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1.5px", marginBottom: 20 }}>
-            Everything a student needs to <span className="gradient-text">excel</span>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 80 } as any}>
+          <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px", marginBottom: 20 }}>
+            Everything you need to <span className="gradient-text">accelerate</span>
           </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: 18, maxWidth: 560, margin: "0 auto" }}>
-            A complete AI-powered learning ecosystem. Completely free. No credit card. No limits.
+          <p style={{ color: "var(--text-secondary)", fontSize: 18, maxWidth: 600, margin: "0 auto" }}>
+            A complete ecosystem designed to take you from learning concepts to landing offers.
           </p>
         </motion.div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24 }}>
           {features.map((f, i) => (
-            <motion.div key={f.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-              whileHover={{ y: -10, scale: 1.02 }}
-              className="dash-card"
-              style={{ position: "relative", overflow: "hidden", cursor: "pointer" } as any}
-            >
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${f.color}, transparent)` }} />
-              <div style={{ width: 52, height: 52, borderRadius: 14, background: `${f.color}22`, border: `1px solid ${f.color}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, marginBottom: 18 }}>
-                {f.icon}
+            <motion.div key={f.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+              whileHover={{ y: -6 }} className="glass-card" style={{ padding: 32, cursor: "default" } as any}>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: `${f.color}15`, border: `1px solid ${f.color}30`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24, color: f.color }}>
+                <f.icon size={24} />
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 10, color: "white" }}>{f.title}</h3>
-              <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.65 }}>{f.desc}</p>
+              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: "white" }}>{f.title}</h3>
+              <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6 }}>{f.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -312,100 +188,51 @@ function Features() {
   );
 }
 
-// ── Roadmaps preview ─────────────────────────────────────────────
-function RoadmapsSection() {
+// ── Pricing ──────────────────────────────────────────────────────
+function Pricing() {
   return (
-    <section style={{ padding: "80px 24px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ background: "var(--gradient-card)", border: "1px solid rgba(108,99,255,0.2)", borderRadius: 32, padding: "60px 48px", position: "relative", overflow: "hidden" }}>
-          <div className="orb orb-purple" style={{ width: 400, height: 400, top: -100, right: -100, opacity: 0.15 }} />
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 52 } as any}>
-            <span className="badge badge-teal" style={{ marginBottom: 20, display: "inline-flex", padding: "8px 20px" }}>🗺️ Learning Roadmaps</span>
-            <h2 style={{ fontSize: "clamp(29px, 4vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px" }}>
-              Structured paths to your <span className="gradient-text">dream job</span>
-            </h2>
-          </motion.div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20, position: "relative" }}>
-            {roadmaps.map((r, i) => (
-              <motion.div key={r.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                whileHover={{ scale: 1.04, y: -6 }}
-                style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${r.color}30`, borderRadius: 20, padding: 28, cursor: "pointer", textAlign: "center" } as any}
-              >
-                <div style={{ fontSize: 48, marginBottom: 14 }}>{r.icon}</div>
-                <div style={{ fontWeight: 700, fontSize: 16, color: r.color }}>{r.title}</div>
-              </motion.div>
-            ))}
-          </div>
-          <div style={{ textAlign: "center", marginTop: 40 }}>
-            <Link href="/auth" className="btn-primary" style={{ padding: "14px 36px", fontSize: 15, display: "inline-flex" }}>
-              Explore Roadmaps →
-            </Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ── Social proof ─────────────────────────────────────────────────
-function Testimonials() {
-  return (
-    <section style={{ padding: "100px 24px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 } as any}>
-          <h2 style={{ fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px", marginBottom: 16 }}>
-            Students love <span className="gradient-text">Tulasi AI</span>
+    <section id="pricing" style={{ padding: "120px 24px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 } as any}>
+          <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px", marginBottom: 20 }}>
+            Simple, transparent <span className="gradient-text">pricing</span>
           </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: 17 }}>Real stories from real students across India.</p>
+          <p style={{ color: "var(--text-secondary)", fontSize: 18 }}>Always free for students. Go Pro for unlimited power.</p>
         </motion.div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
-          {testimonials.map((t, i) => (
-            <motion.div key={t.name} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}
-              className="glass-card" style={{ padding: 32 } as any}
-            >
-              <div style={{ fontSize: 24, color: "#FFD93D", marginBottom: 16 }}>★★★★★</div>
-              <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>&ldquo;{t.text}&rdquo;</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 18, color: "white" }}>{t.avatar}</div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: "white" }}>{t.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{t.college}</div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 32 }}>
+          {/* Free Tier */}
+          <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card" style={{ padding: 48, position: "relative" } as any}>
+            <h3 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 8 }}>Free</h3>
+            <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 24 }}>Perfect for students getting started.</p>
+            <div style={{ marginBottom: 32 }}><span style={{ fontSize: 48, fontWeight: 900, fontFamily: "var(--font-outfit)" }}>$0</span> <span style={{ color: "var(--text-secondary)" }}>/ forever</span></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 40 }}>
+              {[ "Standard AI Chat (Flash)", "Access to Roadmaps", "Basic Study Rooms", "Hackathon Listings" ].map(t => (
+                <div key={t} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "var(--text-primary)" }}>
+                  <Check size={16} color="#10B981" /> {t}
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              ))}
+            </div>
+            <Link href="/auth"><button className="btn-ghost" style={{ width: "100%", padding: 16, borderRadius: 12, fontSize: 15, cursor: "pointer" }}>Start Free</button></Link>
+          </motion.div>
+
+          {/* Pro Tier */}
+          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card" style={{ padding: 48, position: "relative", border: "1px solid var(--brand-primary)" } as any}>
+            <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "var(--gradient-primary)", color: "white", fontSize: 12, fontWeight: 800, padding: "4px 16px", borderRadius: 20, letterSpacing: "1px", textTransform: "uppercase" }}>Most Popular</div>
+            <h3 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 8 }}>Pro</h3>
+            <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 24 }}>For serious engineers accelerating their career.</p>
+            <div style={{ marginBottom: 32 }}><span style={{ fontSize: 48, fontWeight: 900, fontFamily: "var(--font-outfit)", color: "var(--brand-secondary)" }}>₹249</span> <span style={{ color: "var(--text-secondary)" }}>/ month</span></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 40 }}>
+              {[ "Advanced AI Models (Pro)", "Unlimited Mock Interviews", "Premium ATS Resume Builder", "Priority Support" ].map(t => (
+                <div key={t} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "var(--text-primary)" }}>
+                  <Zap size={16} color="#7C3AED" /> {t}
+                </div>
+              ))}
+            </div>
+            <Link href="/auth"><button className="btn-primary" style={{ width: "100%", padding: 16, borderRadius: 12, fontSize: 15, cursor: "pointer" }}>Upgrade to Pro</button></Link>
+          </motion.div>
         </div>
       </div>
-    </section>
-  );
-}
-
-// ── CTA ──────────────────────────────────────────────────────────
-function CTA() {
-  return (
-    <section style={{ padding: "140px 24px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-        className="orb orb-purple" style={{ width: 900, height: 900, top: "50%", left: "50%", marginTop: -450, marginLeft: -450, opacity: 0.12, filter: "blur(120px)" } as any} />
-      <motion.div initial={{ opacity: 0, y: 50, scale: 0.95 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true }}
-        style={{ maxWidth: 820, margin: "0 auto", background: "linear-gradient(180deg, rgba(17,17,40,0.9) 0%, rgba(6,6,15,0.95) 100%)", border: "1px solid rgba(108,99,255,0.3)", borderRadius: 40, padding: "80px 48px", position: "relative", boxShadow: "0 40px 100px rgba(108,99,255,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" } as any}
-      >
-        <motion.div animate={{ y: [0, -12, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          style={{ width: 88, height: 88, borderRadius: 24, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, margin: "0 auto 36px", boxShadow: "0 20px 60px rgba(108,99,255,0.5)" } as any}
-        >🚀</motion.div>
-        <h2 style={{ fontSize: "clamp(32px, 5vw, 60px)", fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 24, lineHeight: 1.1, letterSpacing: "-1.5px" }}>
-          Start your learning<br /><span className="gradient-text-brand">journey today — free</span>
-        </h2>
-        <p style={{ color: "var(--text-secondary)", fontSize: 18, marginBottom: 48, maxWidth: 540, margin: "0 auto 48px", lineHeight: 1.65 }}>
-          Join 50,000+ students using Tulasi AI to learn faster and land their dream jobs. Always free for students.
-        </p>
-        <Link href="/auth">
-          <motion.button whileHover={{ scale: 1.06, boxShadow: "0 24px 64px rgba(108,99,255,0.6)" }} whileTap={{ scale: 0.97 }}
-            className="btn-primary" style={{ padding: "20px 56px", fontSize: 18, borderRadius: 18 } as any}>
-            Join Tulasi AI — It&apos;s Free →
-          </motion.button>
-        </Link>
-        <div style={{ marginTop: 24, color: "var(--text-muted)", fontSize: 13 }}>No credit card · No signup limits · Free forever for students</div>
-      </motion.div>
     </section>
   );
 }
@@ -413,33 +240,50 @@ function CTA() {
 // ── Footer ───────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer style={{ borderTop: "1px solid var(--border)", padding: "48px 40px", maxWidth: 1400, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
-        <TulasILogo size={36} />
-        <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
-          {[{ label: "Docs", href: "#" }, { label: "API", href: "#" }, { label: "Privacy", href: "#" }, { label: "Terms", href: "#" }, { label: "Contact", href: "#" }].map(l => (
-            <a key={l.label} href={l.href} style={{ color: "var(--text-muted)", fontSize: 14, textDecoration: "none" }}
-              onMouseEnter={e => e.currentTarget.style.color = "white"}
-              onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
-            >{l.label}</a>
-          ))}
+    <footer style={{ borderTop: "1px solid var(--border)", padding: "64px 24px 40px" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 48, marginBottom: 64 }}>
+        <div>
+          <BrandText size={32} />
+          <p style={{ color: "var(--text-secondary)", fontSize: 14, marginTop: 24, maxWidth: 300, lineHeight: 1.6 }}>
+            The premier AI learning ecosystem designed to help you master tech skills, crack interviews, and build your career portfolio.
+          </p>
         </div>
-        <div style={{ color: "var(--text-muted)", fontSize: 13 }}>© 2026 Tulasi AI · Built for Students</div>
+        <div>
+          <h4 style={{ color: "white", fontWeight: 700, marginBottom: 20 }}>Product</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Features</Link>
+            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Pricing</Link>
+            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Roadmaps</Link>
+          </div>
+        </div>
+        <div>
+          <h4 style={{ color: "white", fontWeight: 700, marginBottom: 20 }}>Company</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>About</Link>
+            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Privacy Policy</Link>
+            <Link href="#" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>Terms of Service</Link>
+          </div>
+        </div>
+      </div>
+      <div style={{ maxWidth: 1200, margin: "0 auto", paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 13 }}>© 2026 Tulasi AI. All rights reserved.</span>
+        <div style={{ display: "flex", gap: 16, color: "var(--text-muted)" }}>
+          <Globe size={18} />
+          <Shield size={18} />
+        </div>
       </div>
     </footer>
   );
 }
 
-// ── Main page ────────────────────────────────────────────────────
+// ── Main Layout ──────────────────────────────────────────────────
 export default function LandingPage() {
   return (
     <main style={{ background: "var(--bg-primary)", minHeight: "100vh" }}>
       <Navbar />
       <Hero />
       <Features />
-      <RoadmapsSection />
-      <Testimonials />
-      <CTA />
+      <Pricing />
       <Footer />
     </main>
   );

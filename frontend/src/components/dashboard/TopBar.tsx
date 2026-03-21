@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { useState, useEffect } from "react";
+import { Menu, X, Search, Command, Zap } from "lucide-react";
 
 export default function TopBar() {
   const dispatch = useDispatch();
@@ -49,19 +50,19 @@ export default function TopBar() {
         style={{
           background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
           color: "rgba(255,255,255,0.6)", cursor: "pointer", padding: "7px 10px",
-          borderRadius: 9, display: "flex", alignItems: "center", fontSize: 16,
+          borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
           transition: "all 0.15s ease",
         } as any}
       >
-        {sidebarOpen ? "✕" : "☰"}
+        {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
       </motion.button>
 
       {/* Search */}
       <div style={{ flex: 1, maxWidth: 420, position: "relative" }}>
         <span style={{
           position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-          color: "rgba(255,255,255,0.2)", fontSize: 14
-        }}>⌕</span>
+          color: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center"
+        }}><Search size={14} /></span>
         <input
           placeholder="Search features, topics..."
           style={{
@@ -84,10 +85,10 @@ export default function TopBar() {
         />
         <span style={{
           position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-          fontSize: 10, color: "rgba(255,255,255,0.15)", fontFamily: "var(--font-mono)",
-          background: "rgba(255,255,255,0.04)", padding: "2px 6px", borderRadius: 5,
-          border: "1px solid rgba(255,255,255,0.06)"
-        }}>⌘K</span>
+          fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "var(--font-mono)",
+          background: "rgba(255,255,255,0.04)", padding: "4px 6px", borderRadius: 5,
+          border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 2
+        }}><Command size={10} />K</span>
       </div>
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
@@ -100,7 +101,7 @@ export default function TopBar() {
             padding: "5px 10px", borderRadius: 8,
             background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.15)",
           }}>
-            <span style={{ fontSize: 12 }}>⚡</span>
+            <Zap size={14} color="#8B5CF6" />
             <span style={{ fontSize: 12, fontWeight: 700, color: "#8B5CF6", fontFamily: "var(--font-mono)" }}>
               {xp} XP
             </span>
@@ -126,7 +127,8 @@ export default function TopBar() {
               transition: "all 0.15s ease",
             }}
           >
-            ⚡ Upgrade
+            <Zap size={14} style={{ display: "inline", marginBottom: -2, marginRight: 4 }} /> 
+            Upgrade
           </motion.button>
         )}
 
