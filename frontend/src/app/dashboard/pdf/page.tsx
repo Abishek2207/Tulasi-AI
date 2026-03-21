@@ -35,7 +35,7 @@ export default function PDFQaPage() {
 
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-      ]);
+      if (!token) {
         setIsUploading(false);
         return;
       }
@@ -59,7 +59,7 @@ export default function PDFQaPage() {
 
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-      ]);
+      if (!token) {
         setIsAsking(false);
         return;
       }

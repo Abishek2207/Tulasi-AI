@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-export function TulasiLogo({ size = 40, className = "" }: { size?: number; className?: string }) {
+export function TulasiLogo({ size = 40, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) {
   const leafTransition = {
     duration: 3,
     repeat: Infinity,
@@ -13,7 +13,7 @@ export function TulasiLogo({ size = 40, className = "" }: { size?: number; class
   return (
     <motion.div 
       className={className}
-      style={{ width: size, height: size, filter: "drop-shadow(0px 0px 8px rgba(124, 58, 237, 0.4))" }}
+      style={{ width: size, height: size, filter: "drop-shadow(0px 0px 8px rgba(124, 58, 237, 0.4))", ...style }}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 200, damping: 20 }}
@@ -96,14 +96,14 @@ export function TulasiLogo({ size = 40, className = "" }: { size?: number; class
             d="M48 55 C20 65, 0 45, 5 30 C15 25, 30 40, 48 55 Z" 
             fill="url(#leafPurple)" 
             animate={{ rotate: [-2, 2, -2], originX: "48px", originY: "55px" }} 
-            transition={{ ...leafTransition, delay: 0.4 }} 
+            transition={{ ...leafTransition, delay: 0.4 } as any} 
           />
           {/* Far Outer Right Leaf (Light Purple/Pink) */}
           <motion.path 
             d="M52 55 C80 65, 100 45, 95 30 C85 25, 70 40, 52 55 Z" 
             fill="url(#leafPurple)" 
             animate={{ rotate: [2, -2, 2], originX: "52px", originY: "55px" }} 
-            transition={{ ...leafTransition, delay: 0.4 }} 
+            transition={{ ...leafTransition, delay: 0.4 } as any} 
           />
           
           {/* Inner Left Leaf (Blue/Cyan) */}
@@ -111,14 +111,14 @@ export function TulasiLogo({ size = 40, className = "" }: { size?: number; class
             d="M49 55 C25 50, 15 25, 25 10 C35 15, 45 35, 49 55 Z" 
             fill="url(#leafBlue)" 
             animate={{ rotate: [-1, 1, -1], originX: "49px", originY: "55px" }} 
-            transition={{ ...leafTransition, delay: 0.2 }} 
+            transition={{ ...leafTransition, delay: 0.2 } as any} 
           />
           {/* Inner Right Leaf (Blue/Cyan) */}
           <motion.path 
             d="M51 55 C75 50, 85 25, 75 10 C65 15, 55 35, 51 55 Z" 
             fill="url(#leafBlue)" 
             animate={{ rotate: [1, -1, 1], originX: "51px", originY: "55px" }} 
-            transition={{ ...leafTransition, delay: 0.2 }} 
+            transition={{ ...leafTransition, delay: 0.2 } as any} 
           />
           
           {/* Center Leaf (Green gradient) */}
@@ -126,7 +126,7 @@ export function TulasiLogo({ size = 40, className = "" }: { size?: number; class
             d="M50 55 C40 40, 35 15, 50 5 C65 15, 60 40, 50 55 Z" 
             fill="url(#leafGreen)" 
             animate={{ scaleY: [0.96, 1.04, 0.96], originX: "50px", originY: "55px" }} 
-            transition={leafTransition} 
+            transition={leafTransition as any} 
           />
 
           {/* Leaf Central Veins (Dark lines giving depth) */}
