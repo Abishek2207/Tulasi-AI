@@ -5,21 +5,25 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { activityApi } from "@/lib/api";
+import { 
+  MessageSquare, BookOpen, Code, Target, Map, FileText, 
+  Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award, Flame, Zap
+} from "lucide-react";
 
 const MODULES = [
-  { id: "chat", title: "AI Learning Chat", desc: "Have a conversation with Tulasi AI to learn new concepts.", icon: "💬", link: "/dashboard/chat", color: "#7C3AED", span: 2 },
-  { id: "pdf", title: "PDF Q&A", desc: "Upload textbooks and query them instantly.", icon: "📚", link: "/dashboard/pdf", color: "#F43F5E", span: 1 },
-  { id: "code", title: "Coding Arena", desc: "Practice Data Structures & Algorithms with AI feedback.", icon: "💻", link: "/dashboard/code", color: "#06B6D4", span: 1 },
-  { id: "interview", title: "Mock Interviews", desc: "Live chat with an AI Hiring Manager.", icon: "🎯", link: "/dashboard/interview", color: "#FBBF24", span: 2 },
-  { id: "roadmaps", title: "Career Roadmaps", desc: "Generate week-by-week learning paths.", icon: "🗺️", link: "/dashboard/roadmaps", color: "#8B5CF6", span: 1 },
-  { id: "resume", title: "Resume Builder", desc: "Craft an ATS-friendly A4 resume on the fly.", icon: "📄", link: "/dashboard/resume", color: "#10B981", span: 1 },
-  { id: "startup", title: "Startup LAB", desc: "Ideate and generate full startup pitch decks.", icon: "🚀", link: "/dashboard/startup-lab", color: "#F97316", span: 1 },
-  { id: "study", title: "Study Rooms", desc: "Join live Pomodoro focus sessions.", icon: "👥", link: "/dashboard/study-rooms", color: "#EC4899", span: 1 },
-  { id: "hackathon", title: "Hackathons", desc: "Find global AI & Web3 competitions.", icon: "🏆", link: "/dashboard/hackathons", color: "#EAB308", span: 1 },
-  { id: "yt", title: "YouTube Learning", desc: "Curated masterclasses for engineers.", icon: "▶️", link: "/dashboard/youtube-learning", color: "#FF0000", span: 1 },
-  { id: "analytics", title: "Learning Analytics", desc: "Track your progress and XP velocity.", icon: "📊", link: "/dashboard/analytics", color: "#4ECDC4", span: 1 },
-  { id: "rewards", title: "Rewards Store", desc: "Redeem XP for exclusive platform perks.", icon: "🎁", link: "/dashboard/rewards", color: "#FBBF24", span: 1 },
-  { id: "certs", title: "Certificates", desc: "Download verified learning credentials.", icon: "🎓", link: "/dashboard/certificates", color: "#34D399", span: 2 },
+  { id: "chat", title: "AI Learning Chat", desc: "Have a conversation with Tulasi AI to learn new concepts.", icon: <MessageSquare size={26} />, link: "/dashboard/chat", color: "#7C3AED", span: 2 },
+  { id: "pdf", title: "PDF Q&A", desc: "Upload textbooks and query them instantly.", icon: <BookOpen size={26} />, link: "/dashboard/pdf", color: "#F43F5E", span: 1 },
+  { id: "code", title: "Coding Arena", desc: "Practice Data Structures & Algorithms with AI feedback.", icon: <Code size={26} />, link: "/dashboard/code", color: "#06B6D4", span: 1 },
+  { id: "interview", title: "Mock Interviews", desc: "Live chat with an AI Hiring Manager.", icon: <Target size={26} />, link: "/dashboard/interview", color: "#FBBF24", span: 2 },
+  { id: "roadmaps", title: "Career Roadmaps", desc: "Generate week-by-week learning paths.", icon: <Map size={26} />, link: "/dashboard/roadmaps", color: "#8B5CF6", span: 1 },
+  { id: "resume", title: "Resume Builder", desc: "Craft an ATS-friendly A4 resume on the fly.", icon: <FileText size={26} />, link: "/dashboard/resume", color: "#10B981", span: 1 },
+  { id: "startup", title: "Startup LAB", desc: "Ideate and generate full startup pitch decks.", icon: <Rocket size={26} />, link: "/dashboard/startup-lab", color: "#F97316", span: 1 },
+  { id: "study", title: "Study Rooms", desc: "Join live Pomodoro focus sessions.", icon: <Users size={26} />, link: "/dashboard/study-rooms", color: "#EC4899", span: 1 },
+  { id: "hackathon", title: "Hackathons", desc: "Find global AI & Web3 competitions.", icon: <Trophy size={26} />, link: "/dashboard/hackathons", color: "#EAB308", span: 1 },
+  { id: "yt", title: "YouTube Learning", desc: "Curated masterclasses for engineers.", icon: <Youtube size={26} />, link: "/dashboard/youtube-learning", color: "#FF0000", span: 1 },
+  { id: "analytics", title: "Learning Analytics", desc: "Track your progress and XP velocity.", icon: <BarChart3 size={26} />, link: "/dashboard/analytics", color: "#4ECDC4", span: 1 },
+  { id: "rewards", title: "Rewards Store", desc: "Redeem XP for exclusive platform perks.", icon: <Gift size={26} />, link: "/dashboard/rewards", color: "#FBBF24", span: 1 },
+  { id: "certs", title: "Certificates", desc: "Download verified learning credentials.", icon: <Award size={26} />, link: "/dashboard/certificates", color: "#34D399", span: 2 },
 ];
 
 export default function DashboardHome() {
@@ -72,7 +76,7 @@ export default function DashboardHome() {
         
         <div style={{ position: "relative", zIndex: 1, maxWidth: 650 }}>
           <h1 style={{ fontSize: 44, fontWeight: 800, fontFamily: "var(--font-display)", marginBottom: 16, lineHeight: 1.15, letterSpacing: "-1px" }}>
-            Welcome back, <span className="gradient-text">{userName}</span> ⚡️
+            Welcome back, <span className="gradient-text">{userName}</span> <Zap size={32} style={{ display: "inline", marginBottom: -4 }} color="#06B6D4" />
           </h1>
           <p style={{ fontSize: 19, color: "var(--text-secondary)", marginBottom: 36, lineHeight: 1.6, fontWeight: 450 }}>
             Your central command center for learning, coding, and career preparation. What masterpiece are we building today?
@@ -128,10 +132,10 @@ export default function DashboardHome() {
           {/* Activity Overview */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 20 }}>
             {[
-              { icon: "🔥", val: `${stats.streak} Days`, label: "Current Streak", link: "/dashboard/streak", border: "rgba(244,63,94,0.2)" },
-              { icon: "💻", val: stats.problems_solved, label: "Problems Solved", link: "/dashboard/code", border: "rgba(6,182,212,0.2)" },
-              { icon: "▶️", val: stats.videos_watched, label: "Videos Watched", link: "/dashboard/youtube-learning", border: "rgba(124,58,237,0.2)" },
-              { icon: "🏆", val: stats.hackathons_joined, label: "Competitions", link: "/dashboard/hackathons", border: "rgba(251,191,36,0.2)" }
+              { icon: <Flame size={24} color="#F43F5E" />, val: `${stats.streak} Days`, label: "Current Streak", link: "/dashboard/streak", border: "rgba(244,63,94,0.2)" },
+              { icon: <Code size={24} color="#06B6D4" />, val: stats.problems_solved, label: "Problems Solved", link: "/dashboard/code", border: "rgba(6,182,212,0.2)" },
+              { icon: <Youtube size={24} color="#7C3AED" />, val: stats.videos_watched, label: "Videos Watched", link: "/dashboard/youtube-learning", border: "rgba(124,58,237,0.2)" },
+              { icon: <Trophy size={24} color="#FBBF24" />, val: stats.hackathons_joined, label: "Competitions", link: "/dashboard/hackathons", border: "rgba(251,191,36,0.2)" }
             ].map((stat, i) => (
               <motion.div key={i} variants={item} whileHover={{ y: -4, scale: 1.02 }} className="glass-card" style={{ padding: 24, paddingBottom: 20, borderColor: stat.border, background: "rgba(255,255,255,0.02)", cursor: "pointer", borderRadius: 20 }}>
                 <Link href={stat.link} style={{ textDecoration: "none" }}>

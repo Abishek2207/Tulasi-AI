@@ -7,52 +7,59 @@ import { motion } from "framer-motion";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import { useState, useEffect } from "react";
 
+import { 
+  LayoutDashboard, MessageSquare, Target, Map, Rocket, 
+  Code, Users, Trophy, BookOpen, Youtube, Building2, 
+  FileText, Award, BarChart3, FileQuestion, MessageCircle, 
+  Mail, Medal, User, Gift, CreditCard, Activity, Settings
+} from "lucide-react";
+
 const NAV_SECTIONS = [
   {
     label: "Core",
     items: [
-      { icon: "⊞", name: "Dashboard",       href: "/dashboard" },
-      { icon: "◉", name: "AI Chat",          href: "/dashboard/chat" },
-      { icon: "◈", name: "Mock Interview",   href: "/dashboard/interview",      requiresPro: true },
-      { icon: "◎", name: "Career Roadmaps",  href: "/dashboard/career-roadmaps" },
-      { icon: "◧", name: "Startup Lab",      href: "/dashboard/startup-lab" },
+      { icon: LayoutDashboard, name: "Dashboard",       href: "/dashboard" },
+      { icon: MessageSquare,   name: "AI Chat",         href: "/dashboard/chat" },
+      { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
+      { icon: Map,             name: "Career Roadmaps", href: "/dashboard/career-roadmaps" },
+      { icon: Rocket,           name: "Startup Lab",     href: "/dashboard/startup-lab" },
     ]
   },
   {
     label: "Learning",
     items: [
-      { icon: "⬡", name: "Code Practice",   href: "/dashboard/code" },
-      { icon: "⬢", name: "Study Rooms",     href: "/dashboard/study-rooms" },
-      { icon: "⊕", name: "Hackathons",      href: "/dashboard/hackathons" },
-      { icon: "◐", name: "Platform Guides", href: "/dashboard/platform-guides" },
-      { icon: "▷", name: "YouTube Hub",     href: "/dashboard/youtube-learning" },
-      { icon: "◱", name: "Company Prep",    href: "/dashboard/company-prep" },
+      { icon: Code,            name: "Code Practice",   href: "/dashboard/code" },
+      { icon: Users,           name: "Study Rooms",     href: "/dashboard/study-rooms" },
+      { icon: Trophy,          name: "Hackathons",      href: "/dashboard/hackathons" },
+      { icon: BookOpen,        name: "Platform Guides", href: "/dashboard/platform-guides" },
+      { icon: Youtube,         name: "YouTube Hub",     href: "/dashboard/youtube-learning" },
+      { icon: Building2,       name: "Company Prep",    href: "/dashboard/company-prep" },
     ]
   },
   {
     label: "Tools",
     items: [
-      { icon: "⊞", name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
-      { icon: "◑", name: "Certificates",    href: "/dashboard/certificates" },
-      { icon: "◫", name: "Analytics",       href: "/dashboard/analytics" },
-      { icon: "◰", name: "PDF Q&A",         href: "/pdf" },
+      { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
+      { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
+      { icon: BarChart3,       name: "Analytics",       href: "/dashboard/analytics" },
+      { icon: FileQuestion,    name: "PDF Q&A",         href: "/pdf" },
     ]
   },
   {
     label: "Community",
     items: [
-      { icon: "◻", name: "Group Chat",      href: "/dashboard/groups" },
-      { icon: "◼", name: "Messages",        href: "/dashboard/messages" },
-      { icon: "◈", name: "Leaderboard",     href: "/dashboard/leaderboard" },
+      { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
+      { icon: Mail,            name: "Messages",        href: "/dashboard/messages" },
+      { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
     ]
   },
   {
     label: "Account",
     items: [
-      { icon: "◉", name: "Profile",         href: "/dashboard/profile" },
-      { icon: "◎", name: "Rewards Store",   href: "/dashboard/rewards" },
-      { icon: "⬡", name: "Billing & Pro",   href: "/dashboard/billing" },
-      { icon: "◧", name: "API Status",      href: "/dashboard/api-status" },
+      { icon: User,            name: "Profile",         href: "/dashboard/profile" },
+      { icon: Gift,            name: "Rewards Store",   href: "/dashboard/rewards" },
+      { icon: CreditCard,      name: "Billing & Pro",   href: "/dashboard/billing" },
+      { icon: Activity,        name: "API Status",      href: "/dashboard/api-status" },
     ]
   }
 ];
@@ -159,9 +166,9 @@ export default function Sidebar() {
                     }}
                   >
                     <span style={{
-                      fontSize: 14, width: 20, textAlign: "center", flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center", width: 20, flexShrink: 0,
                       color: active ? "#8B5CF6" : "inherit",
-                    }}>{item.icon}</span>
+                    }}><item.icon size={16} /></span>
                     <span style={{ flex: 1 }}>{item.name}</span>
                     {isLocked && (
                       <span style={{
@@ -189,7 +196,7 @@ export default function Sidebar() {
               borderRadius: 9, textDecoration: "none", color: "#FF6B9D", fontSize: 13, fontWeight: 600,
               background: "rgba(255,107,157,0.06)",
             }}>
-              <span style={{ fontSize: 14 }}>⚙</span>
+              <Settings size={14} />
               Admin Panel
               <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "rgba(255,107,157,0.15)", fontWeight: 700 }}>ADMIN</span>
             </Link>
