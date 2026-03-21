@@ -1,25 +1,31 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.core.database import get_db
-from app.models.user import User, RoleEnum
-from app.schemas.user import UserResponse
-from typing import List
+from sqlmodel import Session, select
+from app.core.database import get_session
+from app.core.security import get_current_user
+from app.models.models import User
 
 router = APIRouter()
 
-# In a real app we'd verify the JWT token here using a dependency
-# For now, these are placeholder structures
 
-@router.get("/me", response_model=UserResponse)
-def get_current_user(db: Session = Depends(get_db)):
-    # Placeholder: assuming user ID 1 is logged in
-    user = db.query(User).filter(User.id == 1).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+@router.get("/me")
+def get_my_profile(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.name,
+        "role": current_user.role,
+        "is_pro": current_user.is_pro,
+        "xp": current_user.xp,
+        "level": current_user.level,
+    }
 
-@router.get("/", response_model=List[UserResponse])
-def get_all_users(db: Session = Depends(get_db)):
-    # Placeholder: Only Admin should access this
-    users = db.query(User).all()
-    return users
+
+@router.get("/")
+def get_all_users(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    users = db.exec(select(User)).all()
+    return [{"id": u.id, "email": u.email, "name": u.name, "role": u.role} for u in users]
