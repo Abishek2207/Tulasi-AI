@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -27,7 +27,7 @@ export default function CertificatesPage() {
   const fetchCertificates = async () => {
     setLoading(true);
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       
       const data = await certificateApi.list(token);
       setCertificates(data.certificates || []);
@@ -40,7 +40,7 @@ export default function CertificatesPage() {
   const generateCertificate = async (milestoneId: string) => {
     setGenerating(milestoneId); setError(""); setSuccess("");
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       const data = await certificateApi.generate(milestoneId, token);
       setSuccess(data.message || "🎉 Certificate generated!");
       fetchCertificates();

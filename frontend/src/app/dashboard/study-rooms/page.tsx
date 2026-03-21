@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,7 +38,7 @@ export default function StudyRoomsPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<any>(null);
 
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const fetchRooms = async () => {
     try {

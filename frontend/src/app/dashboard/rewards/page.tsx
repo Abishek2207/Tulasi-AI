@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,7 +16,7 @@ const REWARD_ITEMS = [
 
 export default function RewardsPage() {
   const { data: session } = useSession();
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
   const [xp, setXp] = useState(0);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<number | null>(null);

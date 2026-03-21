@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,7 +35,7 @@ export default function MessagesPage() {
   }, [session]);
 
   const connectWebSocket = () => {
-    const token = "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     if ( socketRef.current?.readyState === WebSocket.OPEN) return;
 
     // Use absolute WSS URL for Render backend
@@ -92,7 +92,7 @@ export default function MessagesPage() {
   }, [messages]);
 
   const fetchDirectory = async () => {
-    const token = "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
       const res = await fetch(`/api/messages/users/directory`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -109,7 +109,7 @@ export default function MessagesPage() {
   };
 
   const fetchMessages = async (userId: number) => {
-    const token = "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
       const res = await fetch(`/api/messages/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -130,7 +130,7 @@ export default function MessagesPage() {
     const currentInput = inputObj;
     setInputObj("");
 
-    const token = "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     
     try {
       const res = await fetch(`/api/messages`, {

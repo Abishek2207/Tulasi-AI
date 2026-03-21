@@ -75,7 +75,8 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+
   
   const currentTool = TOOLS.find(t => t.id === activeTool) ?? TOOLS[0];
   const suggestions = TOOL_SUGGESTIONS[activeTool] ?? [];

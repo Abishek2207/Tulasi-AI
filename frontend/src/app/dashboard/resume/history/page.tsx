@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,7 +20,7 @@ export default function ResumeHistoryPage() {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
             const data = await resumeApi.getHistory(token);
       setHistory(data);
     } catch (e: any) {

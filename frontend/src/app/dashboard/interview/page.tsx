@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -99,7 +99,7 @@ export default function InterviewPage() {
     trackEvent("interview_started", { role, company, type: interviewType });
 
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       
       
       const data = await interviewApi.start(role, company, interviewType, token);
@@ -117,7 +117,7 @@ export default function InterviewPage() {
     if (!answer.trim()) return;
     setLoading(true); setError("");
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
             const data = await interviewApi.answer(answer, sessionId, token);
       
       setAnswer("");

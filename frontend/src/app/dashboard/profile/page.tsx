@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
@@ -13,7 +13,7 @@ export default function ProfilePage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [formData, setFormData] = useState({ name: "", bio: "", skills: "" });
 
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   useEffect(() => {
     if (session) fetchStats();

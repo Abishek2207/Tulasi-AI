@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,7 +34,7 @@ export default function PDFQaPage() {
     formData.append("file", uploadedFile);
 
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       ]);
         setIsUploading(false);
         return;
@@ -58,7 +58,7 @@ export default function PDFQaPage() {
     setIsAsking(true);
 
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       ]);
         setIsAsking(false);
         return;

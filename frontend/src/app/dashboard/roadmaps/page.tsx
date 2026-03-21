@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +30,7 @@ export default function RoadmapsPage() {
 
   const generateRoadmap = async () => {
     if (!goal.trim()) return;
-    const token = "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     
     setRoadmap(null);
     setErrorDesc("");

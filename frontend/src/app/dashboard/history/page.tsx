@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -40,7 +40,7 @@ export default function HistoryPage() {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       
 
       const params = new URLSearchParams({ page: String(page), limit: "20" });

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
@@ -33,7 +33,7 @@ export default function DashboardHome() {
     setMounted(true);
     const fetchStats = async () => {
       try {
-        const token = "";
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
                 
         const [statsData, lbData] = await Promise.all([
           activityApi.getStats(token).catch(() => null),

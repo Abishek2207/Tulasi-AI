@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -93,7 +93,7 @@ export default function YouTubeLearningPage() {
   });
 
   const logWatch = async (video: typeof ALL_VIDEOS[0]) => {
-    const token = "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
       await fetch(`${BACKEND}/api/activity/log`, {
         method: "POST",

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -12,7 +12,7 @@ export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const currentUserId = (session?.user as any)?.id;
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   useEffect(() => {
     const fetchLeaderboard = async () => {

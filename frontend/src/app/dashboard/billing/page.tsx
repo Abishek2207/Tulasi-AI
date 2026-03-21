@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 export default function BillingPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const handleSubscribe = async () => {
     
