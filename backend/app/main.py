@@ -114,6 +114,7 @@ app.add_middleware(
         "https://tulasiai.vercel.app",
         "https://tulasi.vercel.app",
         "https://tulasi-ai-tau.vercel.app",
+        "https://*.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -190,7 +191,8 @@ def health():
     uptime = int(time.time() - _START_TIME)
 
     return {
-        "status": "ok",
+        "success": True,
+        "status": "alive",
         "server": "Tulasi AI backend",
         "version": "3.0.0",
         "uptime_seconds": uptime,

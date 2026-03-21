@@ -96,9 +96,9 @@ async function request<T>(
   console.log("URL:", fullUrl);
   console.log("BODY:", options.body || "None");
 
-  try {
-    const res = await fetchWithRetry(fullUrl, { ...options, headers });
-    log(`← ${res.status} ${fullUrl}`);
+    try {
+      const res = await fetchWithRetry(fullUrl, { ...options, headers, mode: "cors" });
+      log(`← ${res.status} ${fullUrl}`);
 
     if (!res.ok) {
       if (res.status === 401) throw new Error("Session expired. Please log in again.");
