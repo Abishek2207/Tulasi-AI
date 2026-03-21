@@ -7,9 +7,14 @@ import { useEffect, useState } from "react";
 import { activityApi } from "@/lib/api";
 import { 
   MessageSquare, BookOpen, Code, Target, Map, FileText, 
-  Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award, Flame, Zap, Linkedin, Share2, MessageCircle
+  Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award, Flame, Zap, Linkedin, Share2, MessageCircle, Terminal, CheckCircle2, Star, Sparkles
 } from "lucide-react";
-import { TiltCard } from "@/components/ui/TiltCard";
+import dynamic from "next/dynamic";
+
+const TiltCard = dynamic(() => import("@/components/ui/TiltCard").then(mod => mod.TiltCard), { 
+  ssr: false, 
+  loading: () => <div style={{ height: 200, background: "rgba(255,255,255,0.02)", borderRadius: 24, animation: "pulse 2s infinite" }} /> 
+});
 
 const MODULES = [
   { id: "chat", title: "AI Learning Chat", desc: "Have a conversation with Tulasi AI to learn new concepts.", icon: <MessageSquare size={26} />, link: "/dashboard/chat", color: "#7C3AED", span: 2 },
@@ -85,13 +90,13 @@ export default function DashboardHome() {
           
           <div style={{ display: "flex", gap: 18 }}>
             <Link href="/dashboard/roadmaps" style={{ textDecoration: "none" }}>
-              <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} className="btn-primary" style={{ padding: "16px 32px", fontSize: 16, borderRadius: 16 }}>
-                Continue My Journey <span style={{ fontSize: 20 }}>→</span>
+              <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} className="btn-primary" style={{ padding: "16px 32px", fontSize: 16, borderRadius: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                Continue My Journey <Rocket size={18} />
               </motion.button>
             </Link>
             <Link href="/dashboard/code" style={{ textDecoration: "none" }}>
-              <motion.button whileHover={{ scale: 1.05, y: -2, background: "rgba(255,255,255,0.08)" }} whileTap={{ scale: 0.95 }} className="btn-ghost" style={{ padding: "16px 32px", borderRadius: 16, fontSize: 16 }}>
-                Algorithm Arena <span style={{ fontSize: 20 }}>💻</span>
+              <motion.button whileHover={{ scale: 1.05, y: -2, background: "rgba(255,255,255,0.08)" }} whileTap={{ scale: 0.95 }} className="btn-ghost" style={{ padding: "16px 32px", borderRadius: 16, fontSize: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                Algorithm Arena <Terminal size={18} />
               </motion.button>
             </Link>
           </div>
@@ -188,7 +193,7 @@ export default function DashboardHome() {
         {/* Right Column: Leaderboard */}
         <motion.div variants={item} className="glass-card" style={{ padding: 24, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.06)", height: "100%" }}>
           <h3 style={{ margin: "0 0 20px 0", fontSize: 18, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}>
-            🏆 Global Leaderboard
+            <Trophy size={20} color="#FBBF24" /> Global Leaderboard
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {leaderboard.slice(0, 5).map((user, idx) => (
@@ -224,7 +229,7 @@ export default function DashboardHome() {
 
       {/* Grid Quick Access */}
       <motion.h2 variants={item} style={{ fontSize: 28, fontWeight: 800, marginBottom: 32, display: "flex", alignItems: "center", gap: 14, fontFamily: "var(--font-display)" }}>
-        <span style={{ color: "var(--brand-primary)", fontSize: 32 }}>❖</span> Explore Learning Modules
+        <Sparkles size={28} color="var(--brand-primary)" /> Explore Learning Modules
       </motion.h2>
       
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 28 }}>
