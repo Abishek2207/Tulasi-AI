@@ -1,78 +1,160 @@
 "use client";
-import React from 'react';
-import { motion } from 'framer-motion';
 
-export const TulasiLogo = ({ size = 40, className = "", style = {} }: { size?: number | string, className?: string, style?: React.CSSProperties }) => {
+import { motion } from "framer-motion";
+
+export function TulasiLogo({ size = 40, className = "" }: { size?: number; className?: string }) {
+  const leafTransition = {
+    duration: 3,
+    repeat: Infinity,
+    repeatType: "reverse" as const,
+    ease: "easeInOut",
+  };
+
   return (
-    <div style={{ width: size, height: size, position: 'relative', ...style }} className={className}>
-      <motion.svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 100"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        initial="hidden"
-        animate="visible"
-      >
+    <motion.div 
+      className={className}
+      style={{ width: size, height: size, filter: "drop-shadow(0px 0px 8px rgba(124, 58, 237, 0.4))" }}
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      whileHover={{ scale: 1.05, filter: "drop-shadow(0px 0px 12px rgba(6, 182, 212, 0.6))" }}
+    >
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%", overflow: "visible" }}>
         <defs>
-          <linearGradient id="tulasi-primary" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#7C3AED" />
-            <stop offset="100%" stopColor="#06B6D4" />
+          <linearGradient id="leafGreen" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" stopColor="#86EFAC" />
+            <stop offset="50%" stopColor="#22C55E" />
+            <stop offset="100%" stopColor="#14532D" />
           </linearGradient>
-          <linearGradient id="tulasi-secondary" x1="100" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#06B6D4" />
+          <linearGradient id="leafCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#67E8F9" />
+            <stop offset="50%" stopColor="#06B6D4" />
+            <stop offset="100%" stopColor="#164E63" />
+          </linearGradient>
+          <linearGradient id="leafPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#C4B5FD" />
             <stop offset="50%" stopColor="#7C3AED" />
-            <stop offset="100%" stopColor="#3B82F6" />
+            <stop offset="100%" stopColor="#4C1D95" />
           </linearGradient>
-          <filter id="tulasi-glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          <linearGradient id="leafBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#93C5FD" />
+            <stop offset="50%" stopColor="#3B82F6" />
+            <stop offset="100%" stopColor="#1E3A8A" />
+          </linearGradient>
+          <linearGradient id="circuitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#F472B6" />
+            <stop offset="50%" stopColor="#818CF8" />
+            <stop offset="100%" stopColor="#22D3EE" />
+          </linearGradient>
+          
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
           </filter>
         </defs>
 
-        {/* Outer Lotus / Brain Envelope */}
-        <motion.path
-          d="M50 10 C 25 10, 5 35, 10 65 C 20 85, 50 85, 50 85 C 50 85, 80 85, 90 65 C 95 35, 75 10, 50 10 Z"
-          fill="url(#tulasi-primary)"
-          opacity="0.85"
-          filter="url(#tulasi-glow)"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.85 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-        />
+        {/* --- CIRCUIT ROOTS (Animated Paths) --- */}
+        <g stroke="url(#circuitGrad)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none">
+          {/* Main Trunk */}
+          <motion.path d="M50 95 L50 60" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeOut" }} />
+          <circle cx="50" cy="96" r="2.5" fill="url(#circuitGrad)" />
+          
+          {/* Inner Left Branches */}
+          <motion.path d="M48 85 L35 85 L25 70" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.1 }} />
+          <circle cx="24" cy="69" r="2" fill="#818CF8" />
+          <motion.path d="M35 85 L35 75 L28 65" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.2 }} />
+          <circle cx="28" cy="63" r="1.5" fill="#F472B6" />
+          
+          {/* Outer Left Branches */}
+          <motion.path d="M48 90 L20 90 L10 75" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.3 }} />
+          <circle cx="9" cy="74" r="2" fill="#F472B6" />
+          <motion.path d="M20 90 L20 80 L15 70" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.4 }} />
+          <circle cx="15" cy="68" r="1.5" fill="#818CF8" />
 
-        {/* Inner Tech Core */}
-        <motion.path
-          d="M50 25 C 35 25, 20 45, 25 65 C 35 75, 50 75, 50 75 C 50 75, 65 75, 75 65 C 80 45, 65 25, 50 25 Z"
-          fill="url(#tulasi-secondary)"
-          opacity="0.95"
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.95 }}
-          transition={{ duration: 1.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-        />
+          {/* Inner Right Branches */}
+          <motion.path d="M52 85 L65 85 L75 70" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.1 }} />
+          <circle cx="76" cy="69" r="2" fill="#818CF8" />
+          <motion.path d="M65 85 L65 75 L72 65" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.2 }} />
+          <circle cx="72" cy="63" r="1.5" fill="#22D3EE" />
 
-        {/* AI Circuit Pulse */}
-        <motion.circle
-          cx="50"
-          cy="52"
-          r="8"
-          fill="#FFFFFF"
-          initial={{ scale: 0 }}
-          animate={{ scale: [1, 1.15, 1], opacity: [0.9, 1, 0.9] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        />
-        
-        {/* Node connections */}
-        <motion.path
-          d="M50 10 L50 25 M30 35 L40 45 M70 35 L60 45 M35 60 L44 54 M65 60 L56 54"
-          stroke="#FFFFFF"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.6 }}
-          transition={{ duration: 1.5, delay: 0.4, ease: "easeInOut" }}
-        />
-      </motion.svg>
-    </div>
+          {/* Outer Right Branches */}
+          <motion.path d="M52 90 L80 90 L90 75" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.3 }} />
+          <circle cx="91" cy="74" r="2" fill="#F472B6" />
+          <motion.path d="M80 90 L80 80 L85 70" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.4 }} />
+          <circle cx="85" cy="68" r="1.5" fill="#22D3EE" />
+        </g>
+
+        {/* --- LOTUS LEAVES --- */}
+        {/* The lotus sits on top of the circuit roots around Y=55 */}
+        <g stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" filter="url(#glow)">
+          
+          {/* Far Outer Left Leaf (Light Purple/Pink) */}
+          <motion.path 
+            d="M48 55 C20 65, 0 45, 5 30 C15 25, 30 40, 48 55 Z" 
+            fill="url(#leafPurple)" 
+            animate={{ rotate: [-2, 2, -2], originX: "48px", originY: "55px" }} 
+            transition={{ ...leafTransition, delay: 0.4 }} 
+          />
+          {/* Far Outer Right Leaf (Light Purple/Pink) */}
+          <motion.path 
+            d="M52 55 C80 65, 100 45, 95 30 C85 25, 70 40, 52 55 Z" 
+            fill="url(#leafPurple)" 
+            animate={{ rotate: [2, -2, 2], originX: "52px", originY: "55px" }} 
+            transition={{ ...leafTransition, delay: 0.4 }} 
+          />
+          
+          {/* Inner Left Leaf (Blue/Cyan) */}
+          <motion.path 
+            d="M49 55 C25 50, 15 25, 25 10 C35 15, 45 35, 49 55 Z" 
+            fill="url(#leafBlue)" 
+            animate={{ rotate: [-1, 1, -1], originX: "49px", originY: "55px" }} 
+            transition={{ ...leafTransition, delay: 0.2 }} 
+          />
+          {/* Inner Right Leaf (Blue/Cyan) */}
+          <motion.path 
+            d="M51 55 C75 50, 85 25, 75 10 C65 15, 55 35, 51 55 Z" 
+            fill="url(#leafBlue)" 
+            animate={{ rotate: [1, -1, 1], originX: "51px", originY: "55px" }} 
+            transition={{ ...leafTransition, delay: 0.2 }} 
+          />
+          
+          {/* Center Leaf (Green gradient) */}
+          <motion.path 
+            d="M50 55 C40 40, 35 15, 50 5 C65 15, 60 40, 50 55 Z" 
+            fill="url(#leafGreen)" 
+            animate={{ scaleY: [0.96, 1.04, 0.96], originX: "50px", originY: "55px" }} 
+            transition={leafTransition} 
+          />
+
+          {/* Leaf Central Veins (Dark lines giving depth) */}
+          <path d="M50 55 C50 35, 50 15, 50 5" stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" fill="none" />
+          <path d="M49 55 C42 40, 32 25, 25 10" stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" fill="none" />
+          <path d="M51 55 C58 40, 68 25, 75 10" stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" fill="none" />
+          <path d="M48 55 C35 48, 20 38, 5 30" stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" fill="none" />
+          <path d="M52 55 C65 48, 80 38, 95 30" stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" fill="none" />
+
+          {/* Brain / Core Neural Node glowing at the base of the Lotus */}
+          <motion.circle 
+            cx="50" cy="55" r="3.5" 
+            fill="#FFFFFF" 
+            filter="drop-shadow(0px 0px 4px #06B6D4)"
+            animate={{ filter: ["drop-shadow(0px 0px 4px #06B6D4)", "drop-shadow(0px 0px 10px #7C3AED)", "drop-shadow(0px 0px 4px #06B6D4)"] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </g>
+
+        {/* --- DYNAMIC GLOW PULSES ALONG CIRCUITS --- */}
+        <g fill="#FFFFFF">
+          <motion.circle cx="50" cy="95" r="1.5" animate={{ cy: [95, 60], opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }} />
+          <motion.circle r="1.2" animate={{ cx: [48, 35, 25], cy: [85, 85, 70], opacity: [0, 1, 0] }} transition={{ duration: 1.5, delay: 0.5, repeat: Infinity, ease: "linear" }} />
+          <motion.circle r="1.2" animate={{ cx: [52, 65, 75], cy: [85, 85, 70], opacity: [0, 1, 0] }} transition={{ duration: 1.5, delay: 0.8, repeat: Infinity, ease: "linear" }} />
+          <motion.circle r="1.5" animate={{ cx: [48, 20, 10], cy: [90, 90, 75], opacity: [0, 1, 0] }} transition={{ duration: 1.5, delay: 1.2, repeat: Infinity, ease: "linear" }} />
+          <motion.circle r="1.5" animate={{ cx: [52, 80, 90], cy: [90, 90, 75], opacity: [0, 1, 0] }} transition={{ duration: 1.5, delay: 0.3, repeat: Infinity, ease: "linear" }} />
+        </g>
+      </svg>
+    </motion.div>
   );
-};
+}
