@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,7 +44,7 @@ export default function StartupLabPage() {
     "Event Organizers", "Content Creators"
   ];
 
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const fetchSavedIdeas = async () => {
         try {

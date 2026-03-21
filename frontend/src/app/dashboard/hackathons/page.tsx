@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,7 +51,7 @@ function HackathonSkeleton() {
 
 export default function HackathonsPage() {
   const { data: session } = useSession();
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const [filter, setFilter] = useState("All");
   const [hackathons, setHackathons] = useState<any[]>([]);

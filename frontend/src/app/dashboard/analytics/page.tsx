@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -25,7 +25,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const token = "";
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
                 const res = await activityApi.getAnalytics(token);
         // Format dates for display (e.g., "Mar 15")
         const formattedData = res.time_series.map((d: any) => {

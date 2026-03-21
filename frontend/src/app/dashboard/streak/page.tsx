@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -37,7 +37,7 @@ export default function StreakPage() {
   }, [session]);
 
   const fetchRewards = async () => {
-    const token = "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
       const data = await rewardApi.getRewards(token);
       setStoreRewards(data.rewards || []);
@@ -49,7 +49,7 @@ export default function StreakPage() {
   }, [session]);
 
   const fetchStats = async () => {
-    const token = "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
       const data = await activityApi.getStats(token);
       setStats(data);

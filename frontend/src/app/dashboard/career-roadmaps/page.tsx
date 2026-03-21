@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,7 +36,7 @@ export default function CareerRoadmapsPage() {
   const fetchRoadmaps = async () => {
     setLoading(true);
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
             const data = await roadmapApi.getRoadmaps(token);
       setRoadmaps(data.roadmaps as Roadmap[]);
       setCompletedMilestones(new Set(data.completed_milestones || []));
@@ -67,7 +67,7 @@ export default function CareerRoadmapsPage() {
     });
 
     try {
-      const token = "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       await roadmapApi.logProgress(activeId, milestoneId, token);
     } catch (err) {
       // Revert optimism if failed

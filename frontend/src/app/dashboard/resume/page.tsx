@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export default function ResumeBuilderPage() {
   const { data: session } = useSession();
-  const token = "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
