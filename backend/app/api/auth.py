@@ -20,6 +20,7 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
     name: str
+    invite_code: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -67,6 +68,17 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_s
         role="admin" if is_admin else "student",
         invite_code=uuid.uuid4().hex[:8].upper(),
     )
+    
+    # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
+    if req.invite_code:
+        referer = db.exec(select(User).where(User.invite_code == req.invite_code)).first()
+        if referer:
+            referer.xp = (referer.xp or 0) + 500
+            user.xp = 500
+            user.referred_by = referer.invite_code
+            db.add(referer)
+    # ─────────────────────────────────────────────────────────────
+
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -178,6 +190,7 @@ class OAuthLoginRequest(BaseModel):
     email: str
     name: Optional[str] = None
     provider: str = "google"
+    invite_code: Optional[str] = None
 
 
 @router.post("/google-oauth")
@@ -196,6 +209,17 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
             provider=req.provider,
             invite_code=uuid.uuid4().hex[:8].upper(),
         )
+
+        # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
+        if req.invite_code:
+            referer = db.exec(select(User).where(User.invite_code == req.invite_code)).first()
+            if referer:
+                referer.xp = (referer.xp or 0) + 500
+                user.xp = 500
+                user.referred_by = referer.invite_code
+                db.add(referer)
+        # ─────────────────────────────────────────────────────────────
+
         db.add(user)
         db.commit()
         db.refresh(user)

@@ -112,7 +112,17 @@ async function request<T>(
       if (res.status >= 500) throw new Error(`500 Server Error: ${backendMsg}`);
       throw new Error(backendMsg || `Request failed: ${res.status}`);
     }
-    return res.json();
+    const data = await res.json();
+    
+    // GAMIFICATION INTERCEPTOR: Inject addictive UX toasts
+    if (data && typeof data === "object" && typeof data.xp_earned === "number" && data.xp_earned > 0) {
+      toast.success(`You improved today 🚀 +${data.xp_earned} XP`, { 
+        icon: "✨", 
+        style: { borderRadius: "14px", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", color: "#10B981" } 
+      });
+    }
+    
+    return data;
   } catch (err: any) {
     const msg = err.message || "Network Error";
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED")) {
