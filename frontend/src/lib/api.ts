@@ -91,17 +91,17 @@ async function request<T>(
 
   const fullUrl = `${API_URL}${path}`;
 
-  // MANDATORY DEBUG LOGS
-  console.log("TOKEN:", token || "MISSING");
-  console.log("URL:", fullUrl);
-  console.log("BODY:", options.body || "None");
-
     try {
       const res = await fetchWithRetry(fullUrl, { ...options, headers, mode: "cors" });
       log(`← ${res.status} ${fullUrl}`);
 
     if (!res.ok) {
-      if (res.status === 401) throw new Error("Session expired. Please log in again.");
+      if (res.status === 401) {
+        if (isBrowser && !window.location.pathname.startsWith("/auth")) {
+          window.location.href = "/auth";
+        }
+        throw new Error("Session expired. Please log in again.");
+      }
       
       let backendMsg = res.statusText;
       try {
@@ -114,10 +114,9 @@ async function request<T>(
     }
     const data = await res.json();
     
-    // GAMIFICATION INTERCEPTOR: Inject addictive UX toasts
+    // XP toast — clean, no emojis
     if (data && typeof data === "object" && typeof data.xp_earned === "number" && data.xp_earned > 0) {
-      toast.success(`You improved today 🚀 +${data.xp_earned} XP`, { 
-        icon: "✨", 
+      toast.success(`+${data.xp_earned} XP earned`, { 
         style: { borderRadius: "14px", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", color: "#10B981" } 
       });
     }

@@ -121,7 +121,7 @@ export default function Sidebar() {
               backgroundClip: "text",
               marginTop: 2,
             }}>
-              {isPro ? "⚡ Pro Plan" : "Free Plan"}
+              {isPro ? "Pro Plan" : "Free Plan"}
             </div>
           </div>
         </motion.div>
@@ -226,7 +226,7 @@ export default function Sidebar() {
               </div>
             </div>
             {isPro ? (
-              <span style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, background: "linear-gradient(135deg,#8B5CF6,#D946EF)", color: "white", fontWeight: 700, whiteSpace: "nowrap" }}>⚡ PRO</span>
+              <span style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, background: "linear-gradient(135deg,#8B5CF6,#D946EF)", color: "white", fontWeight: 700, whiteSpace: "nowrap" }}>PRO</span>
             ) : (
               <span style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>Free</span>
             )}
@@ -241,7 +241,7 @@ export default function Sidebar() {
               textDecoration: "none", fontSize: 12, color: "#8B5CF6", fontWeight: 600,
               transition: "all 0.2s ease",
             }}>
-              ⚡ Upgrade to Pro
+              Upgrade to Pro
             </Link>
           )}
         </div>
