@@ -9,56 +9,42 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: { default: "Tulasi AI — AI Interview & Career Platform", template: "%s | Tulasi AI" },
-  description: "AI-powered mock interviews, resume analysis, and career roadmaps",
-  keywords: ["AI interview", "career roadmaps", "mock interview", "student platform", "tech prep", "resume analyzer"],
+  title: { default: "Tulasi AI — AI Career & Learning Platform", template: "%s | Tulasi AI" },
+  description: "AI-powered mock interviews, learning roadmaps, resume builder, and career acceleration tools for engineers and students.",
+  keywords: ["AI interview prep", "career roadmaps", "mock interview", "student platform", "tech prep", "resume analyzer", "coding practice"],
   openGraph: {
-    title: "Tulasi AI — AI Interview & Career Platform",
-    description: "AI-powered mock interviews, resume analysis, and career roadmaps.",
+    title: "Tulasi AI — AI Career & Learning Platform",
+    description: "AI-powered mock interviews, resume analysis, coding practice, and career roadmaps.",
     type: "website",
     siteName: "Tulasi AI",
   },
-  twitter: { card: "summary_large_image", title: "Tulasi AI", description: "AI Interview & Career Platform" },
+  twitter: { card: "summary_large_image", title: "Tulasi AI", description: "AI Career & Learning Platform" },
 };
-
-import { ConnectionStatus } from "@/components/ConnectionStatus";
-import { DebugPanel } from "@/components/DebugPanel";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
-        {/* Google Analytics Snippet */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-TULASIAI123"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-TULASIAI123', {
-                page_path: window.location.pathname,
-              });
-            `,
-          }}
-        />
         <Providers>
-          <ConnectionStatus />
-          <Toaster 
-            position="top-center" 
+          <Toaster
+            position="top-center"
             toastOptions={{
+              duration: 4000,
               style: {
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border)'
-              }
-            }} 
+                background: "rgba(18, 18, 24, 0.95)",
+                color: "var(--text-primary)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                backdropFilter: "blur(20px)",
+                borderRadius: "12px",
+                fontSize: "14px",
+                fontFamily: "var(--font-inter)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+              },
+            }}
           />
           {children}
-          <DebugPanel />
         </Providers>
       </body>
     </html>
   );
 }
-
