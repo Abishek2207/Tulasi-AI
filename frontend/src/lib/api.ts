@@ -42,7 +42,7 @@ export function websocketUrl(path: string): string {
 
 const FETCH_TIMEOUT_MS = 60_000; // 60s timeout for AI endpoints
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<Response> {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -52,11 +52,11 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3): P
 
     if (!res.ok) {
       if (res.status === 502 || res.status === 503 || res.status === 504) {
-         if (retries === 3) toast.loading("Server waking up. Retrying...", { id: "retry-toast" }); 
+         if (retries === 2) toast.loading("Server waking up. Retrying...", { id: "retry-toast" }); 
          throw new Error("API error / Server waking up");
       }
       if (res.status >= 500) {
-         toast.error(`Server error: ${res.status}`);
+         if (retries === 0) toast.error(`Server error: ${res.status}`);
          throw new Error(`API error: ${res.status}`);
       }
       return res; // return early for 4xx errors
@@ -66,11 +66,15 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3): P
   } catch (err: any) {
     if (retries === 0 || err.name === 'AbortError') {
       toast.dismiss("retry-toast");
-      if (err.name === 'AbortError') throw new Error("Request timed out.");
-      toast.error("Connection failed. Server offline.");
+      if (err.name === 'AbortError') {
+        toast.error("Request timed out. Please try again.");
+        throw new Error("Request timed out.");
+      }
+      toast.error("Connection failed. Check your network.");
       throw err;
     }
-    await new Promise(r => setTimeout(r, 1000 * (4 - retries)));
+    // Exponential backoff for the 2 retries
+    await new Promise(r => setTimeout(r, 1000 * (3 - retries)));
     return fetchWithRetry(url, options, retries - 1);
   }
 }

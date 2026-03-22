@@ -41,9 +41,23 @@ _START_TIME = time.time()
 
 
 # ── Lifespan ───────────────────────────────────────────────────────
+import threading
+from app.core.database import init_db
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 Tulasi AI — Starting up...")
+    
+    # Phase 2: Move DB init to background thread (prevent Render/Railway timeout)
+    def bg_init_db():
+        try:
+            init_db()
+            print("✅ Background DB init complete.")
+        except Exception as e:
+            print(f"⚠️ Background DB init failed gracefully: {e}")
+            
+    threading.Thread(target=bg_init_db, daemon=True).start()
+    
     yield
     print("🛑 Tulasi AI — Shutting down...")
 
