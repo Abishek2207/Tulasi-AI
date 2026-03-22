@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Tulasi AI", description: "AI Career & Learning Platform" },
 };
 
+import { DebugPanel } from "@/components/DebugPanel";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -43,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
           {children}
+          <DebugPanel />
         </Providers>
       </body>
     </html>
