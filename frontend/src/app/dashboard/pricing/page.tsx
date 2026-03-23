@@ -68,7 +68,7 @@ export default function PricingPage() {
               position: "relative", background: plan.gradient, border: plan.border, borderRadius: 24,
               padding: 40, overflow: "hidden", backdropFilter: "blur(20px)",
               transform: plan.popular ? "scale(1.05)" : "scale(1)", zIndex: plan.popular ? 10 : 1
-            } as any}
+            }}
           >
             {plan.popular && (
               <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(90deg, #8B5CF6, #38BDF8)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "6px 16px", borderRadius: "0 0 12px 12px", textTransform: "uppercase", letterSpacing: "1px" }}>
@@ -92,7 +92,7 @@ export default function PricingPage() {
                 background: plan.popular ? "linear-gradient(135deg, #8B5CF6, #38BDF8)" : "rgba(255,255,255,0.05)",
                 color: plan.popular ? "#fff" : "var(--text-primary)", fontSize: 16, fontWeight: 600, cursor: "pointer", marginBottom: 32,
                 boxShadow: plan.popular ? "0 8px 20px rgba(139, 92, 246, 0.4)" : "none", transition: "0.2s"
-              } as any}
+              }}
             >
               {plan.buttonText}
             </motion.button>

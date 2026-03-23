@@ -9,7 +9,7 @@ export function useAdminGuard() {
   const router = useRouter();
   
   const isLoading = status === "loading";
-  const user = session?.user as any;
+  const user = session?.user;
   const isAdmin = user?.role === "admin";
 
   useEffect(() => {

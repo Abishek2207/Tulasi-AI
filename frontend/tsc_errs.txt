@@ -1,0 +1,14 @@
+src/app/dashboard/resume/history/page.tsx(81,15): error TS2322: Type 'unknown' is not assignable to type 'Key | null | undefined'.
+src/app/dashboard/resume/history/page.tsx(103,83): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(104,170): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(106,87): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/app/dashboard/resume/history/page.tsx(109,69): error TS18046: 'item.ats_score' is of type 'unknown'.
+src/app/dashboard/resume/history/page.tsx(110,19): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(134,65): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(135,114): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/app/dashboard/resume/history/page.tsx(144,68): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(148,68): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(156,21): error TS2322: Type 'unknown' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/app/dashboard/resume/history/page.tsx(163,52): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/app/dashboard/resume/page.tsx(86,17): error TS2345: Argument of type 'ResumeResult | undefined' is not assignable to parameter of type 'SetStateAction<{ ats_score: number; readability_score: number; keyword_match_percent: number; feedback: string[]; missing_keywords: string[]; improved_resume: string; } | null>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<{ ats_score: number; readability_score: number; keyword_match_percent: number; feedback: string[]; missing_keywords: string[]; improved_resume: string; } | null>'.

@@ -5,13 +5,30 @@ import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+interface AdminStats {
+  total_users: number;
+  students: number;
+  active_today: number;
+  admins: number;
+}
+
+interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  xp: number;
+  created_at: string;
+  is_active: boolean;
+}
+
 export default function AdminPage() {
-  const [stats, setStats] = useState<any>(null);
-  const [users, setUsers] = useState<any[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
-  const user = session?.user as any;
+  const user = session?.user;
   const token = user?.accessToken;
 
   useEffect(() => {
@@ -24,7 +41,7 @@ export default function AdminPage() {
     Promise.all([
       fetch(`/api/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
       fetch(`/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-    ]).then(([s, u]) => { setStats(s); setUsers(u.users || []); }).catch(() => {}).finally(() => setLoading(false));
+    ]).then(([s, u]) => { setStats(s as AdminStats); setUsers((u.users as AdminUser[]) || []); }).catch(() => {}).finally(() => setLoading(false));
   }, [token, user]);
 
   const toggleUser = async (userId: number, isActive: boolean) => {

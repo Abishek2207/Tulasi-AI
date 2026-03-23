@@ -11,7 +11,7 @@ export default function ResumeHistoryPage() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   useEffect(() => {
     if (session) fetchHistory();
@@ -23,8 +23,9 @@ export default function ResumeHistoryPage() {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
             const data = await resumeApi.getHistory(token);
       setHistory(data);
-    } catch (e: any) {
-      setError(e.message || "Failed to load history");
+    } catch (e: unknown) {
+      const error = e as Error;
+      setError(error.message || "Failed to load history");
     } finally {
       setLoading(false);
     }

@@ -9,12 +9,13 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
 import { motion, AnimatePresence } from "framer-motion";
 import { BackgroundBeams } from "@/components/ui/BackgroundBeams";
+import { DebugPanel } from "@/components/DebugPanel";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const sidebarOpen = useSelector((s: RootState) => s.ui.sidebarOpen);
-  const user = session?.user as any;
+  const user = session?.user;
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth");
@@ -26,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-        style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid rgba(124,58,237,0.2)", borderTopColor: "#7C3AED" } as any}
+        style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid rgba(124,58,237,0.2)", borderTopColor: "#7C3AED" }}
       />
       <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Loading your workspace...</p>
     </div>
@@ -44,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -280, opacity: 0 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50 } as any}
+            style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50 }}
           >
             <Sidebar />
           </motion.div>
@@ -66,6 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </motion.div>
         </main>
       </div>
+      <DebugPanel />
     </div>
   );
 }

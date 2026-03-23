@@ -5,10 +5,25 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { activityApi, profileApi } from "@/lib/api";
 
+interface UserStats {
+  xp?: number;
+  level?: number;
+  problems_solved?: number;
+  interviews_completed?: number;
+  streak?: number;
+  badges?: Array<{ name: string; icon?: string }>;
+  progress?: {
+    coding?: number;
+    interview?: number;
+    videos?: number;
+    roadmap?: number;
+  };
+}
+
 export default function ProfilePage() {
   const { data: session, update: updateSession } = useSession();
   const [activeTab, setActiveTab] = useState<"overview" | "settings">("overview");
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [formData, setFormData] = useState({ name: "", bio: "", skills: "" });
@@ -28,7 +43,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (session?.user) {
-      const u = session.user as any;
+      const u = session.user as { name?: string; bio?: string; skills?: string };
       setFormData({
         name: u.name || "",
         bio: u.bio || "",
@@ -60,8 +75,10 @@ export default function ProfilePage() {
     { label: "Badges Earned", value: stats?.badges?.length || 0, icon: "🎖️", color: "#EC4899" },
   ];
 
-  const BADGES = stats?.badges?.length > 0
-    ? stats.badges.map((b: any) => ({ name: b.name, icon: b.icon || "✨", bg: "rgba(108,99,255,0.1)", color: "#6C63FF" }))
+  type BadgeItem = { name: string; icon: string; bg: string; color: string };
+  const rawBadges = stats?.badges as Array<{ name: string; icon?: string }> | undefined;
+  const BADGES: BadgeItem[] = rawBadges && rawBadges.length > 0
+    ? rawBadges.map((b) => ({ name: b.name, icon: b.icon || "✨", bg: "rgba(108,99,255,0.1)", color: "#6C63FF" }))
     : [
         { name: "Early Adopter", icon: "🚀", bg: "rgba(108,99,255,0.1)", color: "#6C63FF" },
       ];
@@ -80,12 +97,12 @@ export default function ProfilePage() {
         <div style={{ zIndex: 1, flex: 1 }}>
           <h1 style={{ fontSize: 32, fontWeight: 800, margin: "0 0 4px 0" }}>{session?.user?.name || "Student User"}</h1>
           <p style={{ color: "var(--text-secondary)", fontSize: 15, margin: "0 0 8px 0" }}>{session?.user?.email}</p>
-          {(session?.user as any)?.bio && (
-            <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: "0 0 12px 0", fontStyle: "italic" }}>{(session?.user as any).bio}</p>
+          {(session?.user as { bio?: string })?.bio && (
+            <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: "0 0 12px 0", fontStyle: "italic" }}>{(session?.user as { bio?: string }).bio}</p>
           )}
-          {(session?.user as any)?.skills && (
+          {(session?.user as { skills?: string })?.skills && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-              {((session?.user as any).skills as string).split(",").filter(Boolean).map((skill: string, i: number) => (
+              {((session?.user as { skills?: string }).skills as string).split(",").filter(Boolean).map((skill: string, i: number) => (
                 <span key={i} style={{ padding: "3px 10px", background: "rgba(78,205,196,0.1)", color: "#4ECDC4", borderRadius: 20, fontSize: 12, fontWeight: 600, border: "1px solid rgba(78,205,196,0.2)" }}>
                   {skill.trim()}
                 </span>
@@ -93,14 +110,14 @@ export default function ProfilePage() {
             </div>
           )}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {BADGES.slice(0, 4).map((b: any, i: number) => (
+            {BADGES.slice(0, 4).map((b: BadgeItem, i: number) => (
               <div key={i} style={{ padding: "5px 12px", background: b.bg, color: b.color, borderRadius: 20, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, border: `1px solid ${b.color}40` }}>
                 <span>{b.icon}</span> {b.name}
               </div>
             ))}
-            {stats?.level > 1 && (
+            {(stats?.level ?? 0) > 1 && (
               <div style={{ padding: "5px 12px", background: "rgba(108,99,255,0.1)", color: "#6C63FF", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "1px solid #6C63FF40" }}>
-                ⭐ Level {stats.level} Achiever
+                ⭐ Level {stats?.level} Achiever
               </div>
             )}
           </div>

@@ -1,0 +1,79 @@
+src/app/admin/page.tsx(74,114): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/admin/page.tsx(93,21): error TS2322: Type 'unknown' is not assignable to type 'Key | null | undefined'.
+src/app/admin/page.tsx(99,24): error TS7053: Element implicitly has an 'any' type because expression of type '0' can't be used to index type '{}'.
+  Property '0' does not exist on type '{}'.
+src/app/admin/page.tsx(102,103): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/app/admin/page.tsx(102,196): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/admin/page.tsx(104,125): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/admin/page.tsx(106,102): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/admin/page.tsx(107,108): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'string | number'.
+src/app/admin/page.tsx(114,51): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'number'.
+src/app/auth/page.tsx(109,144): error TS2353: Object literal may only specify known properties, and '"@media (max-width: 900px)"' does not exist in type 'Properties<string | number, string & {}>'.
+src/app/dashboard/hackathons/page.tsx(124,17): error TS2322: Type 'unknown' is not assignable to type 'Key | null | undefined'.
+src/app/dashboard/hackathons/page.tsx(137,21): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/app/dashboard/hackathons/page.tsx(140,21): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/app/dashboard/hackathons/page.tsx(143,40): error TS2339: Property 'split' does not exist on type '{}'.
+src/app/dashboard/hackathons/page.tsx(153,129): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/hackathons/page.tsx(154,117): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/app/dashboard/hackathons/page.tsx(159,101): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/app/dashboard/hackathons/page.tsx(169,76): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string | URL | undefined'.
+src/app/dashboard/hackathons/page.tsx(175,49): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'number'.
+src/app/dashboard/hackathons/page.tsx(182,50): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'number'.
+src/app/dashboard/page.tsx(200,20): error TS2322: Type 'unknown' is not assignable to type 'Key | null | undefined'.
+src/app/dashboard/page.tsx(206,26): error TS2322: Type '{}' is not assignable to type 'string | Blob | undefined'.
+src/app/dashboard/page.tsx(209,24): error TS18046: 'user.name' is of type 'unknown'.
+src/app/dashboard/page.tsx(212,66): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/page.tsx(215,19): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(81,15): error TS2322: Type 'unknown' is not assignable to type 'Key | null | undefined'.
+src/app/dashboard/resume/history/page.tsx(103,83): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(104,170): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(106,87): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/app/dashboard/resume/history/page.tsx(109,69): error TS18046: 'item.ats_score' is of type 'unknown'.
+src/app/dashboard/resume/history/page.tsx(110,19): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(134,65): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(135,114): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/app/dashboard/resume/history/page.tsx(144,68): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(148,68): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/dashboard/resume/history/page.tsx(156,21): error TS2322: Type 'unknown' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/app/dashboard/resume/history/page.tsx(163,52): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/app/dashboard/resume/page.tsx(77,17): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<{ ats_score: number; readability_score: number; keyword_match_percent: number; feedback: string[]; missing_keywords: string[]; improved_resume: string; } | null>'.
+src/app/dashboard/study-rooms/page.tsx(66,32): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(timeout: string | number | Timeout | undefined): void', gave the following error.
+    Argument of type 'Timeout | null' is not assignable to parameter of type 'string | number | Timeout | undefined'.
+      Type 'null' is not assignable to type 'string | number | Timeout | undefined'.
+  Overload 2 of 2, '(id: number | undefined): void', gave the following error.
+    Argument of type 'Timeout | null' is not assignable to parameter of type 'number | undefined'.
+      Type 'null' is not assignable to type 'number | undefined'.
+src/app/dashboard/study-rooms/page.tsx(127,73): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(timeout: string | number | Timeout | undefined): void', gave the following error.
+    Argument of type 'Timeout | null' is not assignable to parameter of type 'string | number | Timeout | undefined'.
+      Type 'null' is not assignable to type 'string | number | Timeout | undefined'.
+  Overload 2 of 2, '(id: number | undefined): void', gave the following error.
+    Argument of type 'Timeout | null' is not assignable to parameter of type 'number | undefined'.
+      Type 'null' is not assignable to type 'number | undefined'.
+src/components/dashboard/Sidebar.tsx(77,52): error TS2339: Property 'is_pro' does not exist on type '{ id?: string | undefined; name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; role?: string | undefined; accessToken?: string | undefined; inviteCode?: string | undefined; bio?: string | undefined; skills?: string | undefined; }'.
+src/components/dashboard/TopBar.tsx(116,17): error TS2339: Property 'is_pro' does not exist on type '{ id?: string | undefined; name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; role?: string | undefined; accessToken?: string | undefined; inviteCode?: string | undefined; bio?: string | undefined; skills?: string | undefined; }'.
+src/components/TulasiLogo.tsx(99,13): error TS2322: Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+  Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+    Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+      Types of property 'ease' are incompatible.
+        Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/components/TulasiLogo.tsx(106,13): error TS2322: Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+  Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+    Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+      Types of property 'ease' are incompatible.
+        Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/components/TulasiLogo.tsx(114,13): error TS2322: Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+  Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+    Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+      Types of property 'ease' are incompatible.
+        Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/components/TulasiLogo.tsx(121,13): error TS2322: Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+  Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+    Type '{ delay: number; duration: number; repeat: number; repeatType: "reverse"; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+      Types of property 'ease' are incompatible.
+        Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.

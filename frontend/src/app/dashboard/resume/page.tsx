@@ -6,6 +6,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { resumeApi } from "@/lib/api";
 import Link from "next/link";
 
+export interface ResumeResult {
+  ats_score: number;
+  readability_score: number;
+  keyword_match_percent: number;
+  feedback: string[];
+  missing_keywords: string[];
+  improved_resume: string;
+}
+
 export default function ResumeBuilderPage() {
   const { data: session } = useSession();
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
@@ -29,7 +38,7 @@ export default function ResumeBuilderPage() {
   
   const printRef = useRef<HTMLDivElement>(null);
   // ── Request cache: same input = instant result, zero extra API calls ──
-  const cacheRef = useRef<Map<string, any>>(new Map());
+  const cacheRef = useRef<Map<string, ResumeResult>>(new Map());
 
   // ── Smart Suggestions Engine (client-side, zero latency) ─────────────────
   const analyzeInput = (text: string) => {
@@ -74,7 +83,7 @@ export default function ResumeBuilderPage() {
     // ── Cache lookup ───────────────────────────────────────
     const cacheKey = `${resumeText.trim()}|${jobDescription.trim()}|${mode}|${documentType}`;
     if (cacheRef.current.has(cacheKey)) {
-      setResult(cacheRef.current.get(cacheKey));
+      setResult(cacheRef.current.get(cacheKey) || null);
       return;
     }
 
@@ -92,8 +101,9 @@ export default function ResumeBuilderPage() {
       
       cacheRef.current.set(cacheKey, data); // persist in cache
       setResult(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to analyze resume. Please try again.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "Failed to analyze resume. Please try again.");
     } finally {
       setLoading(false);
     }

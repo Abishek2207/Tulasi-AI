@@ -1,0 +1,7 @@
+src/app/dashboard/chat/page.tsx(133,27): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/dashboard/page.tsx(168,253): error TS2532: Object is possibly 'undefined'.
+src/app/dashboard/profile/page.tsx(83,64): error TS2339: Property 'bio' does not exist on type '{ id?: number | undefined; email?: string | undefined; }'.
+src/app/dashboard/profile/page.tsx(84,168): error TS2339: Property 'bio' does not exist on type '{ id?: number | undefined; email?: string | undefined; }'.
+src/app/dashboard/profile/page.tsx(86,64): error TS2339: Property 'skills' does not exist on type '{ id?: number | undefined; email?: string | undefined; }'.
+src/app/dashboard/profile/page.tsx(88,68): error TS2339: Property 'skills' does not exist on type '{ id?: number | undefined; email?: string | undefined; }'.
+src/app/pdf/page.tsx(12,69): error TS2339: Property 'accessToken' does not exist on type '{ id?: number | undefined; email?: string | undefined; }'.

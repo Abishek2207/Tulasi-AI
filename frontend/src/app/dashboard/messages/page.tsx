@@ -224,7 +224,7 @@ export default function MessagesPage() {
                   </div>
                 ) : (
                   messages.map(msg => {
-                    const isMe = msg.sender_id === ((session?.user as any)?.id || 0);
+                    const isMe = msg.sender_id === ((session?.user as { id?: number, email?: string, name?: string, accessToken?: string })?.id || 0);
                     return (
                       <motion.div 
                         key={msg.id}

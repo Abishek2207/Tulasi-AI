@@ -25,7 +25,7 @@ interface Message {
 export default function GroupsPage() {
   const { data: session } = useSession();
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-  const currentUserId = (session?.user as any)?.id;
+  const currentUserId = (session?.user as { id?: number, email?: string, name?: string, accessToken?: string })?.id;
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
@@ -59,8 +59,9 @@ export default function GroupsPage() {
   const fetchGroups = async () => {
     try {
       const data = await groupApi.list(token);
-      setGroups(data.groups || []);
-      if (data.groups?.length && !activeGroup) setActiveGroup(data.groups[0]);
+      const fetchedGroups = data.groups as unknown as Group[];
+      setGroups(fetchedGroups || []);
+      if (fetchedGroups?.length && !activeGroup) setActiveGroup(fetchedGroups[0]);
     } catch (e) {}
     setLoading(false);
   };
@@ -69,7 +70,7 @@ export default function GroupsPage() {
     if (!activeGroup ) return;
     try {
       const data = await groupApi.getMessages(activeGroup.id, token);
-      setMessages(data.messages || []);
+      setMessages((data.messages as unknown as Message[]) || []);
     } catch (e) {}
   };
 
@@ -81,7 +82,7 @@ export default function GroupsPage() {
     setSending(true);
     try {
       const msg = await groupApi.sendMessage(activeGroup.id, content, token);
-      setMessages(prev => [...prev, msg]);
+      setMessages(prev => [...prev, msg as unknown as Message]);
     } catch (e) {}
     setSending(false);
   };
@@ -90,13 +91,14 @@ export default function GroupsPage() {
     if (!modalInput.name.trim() ) return;
     setModalError("");
     try {
-      const newGroup = await groupApi.create(modalInput.name, modalInput.description, token);
+      const newGroup = await groupApi.create(modalInput.name, modalInput.description, token) as unknown as Group;
       setGroups(prev => [...prev, { ...newGroup, member_count: 1 }]);
       setActiveGroup({ ...newGroup, member_count: 1 });
       setShowModal(null);
       setModalInput({ name: "", description: "", code: "" });
-    } catch (e: any) {
-      setModalError(e.message || "Failed to create group");
+    } catch (e: unknown) {
+      const error = e as Error;
+      setModalError(error.message || "Failed to create group");
     }
   };
 
@@ -108,8 +110,9 @@ export default function GroupsPage() {
       await fetchGroups();
       setShowModal(null);
       setModalInput({ name: "", description: "", code: "" });
-    } catch (e: any) {
-      setModalError(e.message || "Invalid join code");
+    } catch (e: unknown) {
+      const error = e as Error;
+      setModalError(error.message || "Invalid join code");
     }
   };
 

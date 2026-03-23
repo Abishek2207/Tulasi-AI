@@ -32,12 +32,19 @@ const MODULES = [
   { id: "certs", title: "Certificates", desc: "Download verified learning credentials.", icon: <Award size={26} />, link: "/dashboard/certificates", color: "#34D399", span: 2 },
 ];
 
+interface LocalLeaderboardUser {
+  id: number | string;
+  name: string;
+  avatar?: string;
+  xp: number;
+}
+
 export default function DashboardHome() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Student";
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState({ streak: 0, xp: 0, level: 1, problems_solved: 0, videos_watched: 0, hackathons_joined: 0 });
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LocalLeaderboardUser[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -50,8 +57,8 @@ export default function DashboardHome() {
           activityApi.getLeaderboard(token).catch(() => null)
         ]);
         
-        if (statsData) setStats(statsData);
-        if (lbData) setLeaderboard(lbData.leaderboard || []);
+        if (statsData) setStats(statsData as any as typeof stats);
+        if (lbData) setLeaderboard((lbData.leaderboard as any as LocalLeaderboardUser[]) || []);
       } catch (e) { /* silent */ }
     };
     fetchStats();
@@ -165,7 +172,7 @@ export default function DashboardHome() {
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "white" }}>Refer & Earn Free AI Chats</h3>
               </div>
               <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: 0, lineHeight: 1.5 }}>
-                Share your journey on LinkedIn or invite friends with code <strong style={{ color: "white", background: "rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: 6 }}>{(session?.user as any)?.id ? `TULASI-${(session?.user as any).id.toString().substring(0,4)}` : "TUL-2026"}</strong>. Get +500 XP and permanently expand your Daily Chat limit!
+                Share your journey on LinkedIn or invite friends with code <strong style={{ color: "white", background: "rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: 6 }}>{(session?.user as { id?: number, email?: string, name?: string, accessToken?: string })?.id ? `TULASI-${((session?.user as { id?: number })?.id?.toString() || '').substring(0,4)}` : "TUL-2026"}</strong>. Get +500 XP and permanently expand your Daily Chat limit!
               </p>
             </div>
             
@@ -203,7 +210,7 @@ export default function DashboardHome() {
                     #{idx + 1}
                   </div>
                   {user.avatar ? (
-                    <img src={user.avatar} style={{ width: 34, height: 34, borderRadius: "50%", background: "#222" }} />
+                    <img src={user.avatar as string} style={{ width: 34, height: 34, borderRadius: "50%", background: "#222" }} />
                   ) : (
                     <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg, #7C3AED, #3B82F6)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
                       {user.name.charAt(0).toUpperCase()}

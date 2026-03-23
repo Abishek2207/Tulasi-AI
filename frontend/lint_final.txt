@@ -1,0 +1,616 @@
+
+> frontend@0.1.0 lint
+> eslint
+
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\next.config.ts
+  2:7  warning  'BACKEND_URL' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\api\cron\keep-alive\route.ts
+  19:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\auth\page.tsx
+    8:8   warning  'Image' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  164:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  177:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\analytics\page.tsx
+  31:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\api-status\page.tsx
+    4:10  warning  'motion' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+    4:18  warning  'AnimatePresence' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   63:7   error    Error: Cannot access variable before it is declared
+
+`pingBackend` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\api-status\page.tsx:63:7
+  61 |   useEffect(() => {
+  62 |     if (isAdmin && !isLoading) {
+> 63 |       pingBackend(); 
+     |       ^^^^^^^^^^^ `pingBackend` accessed before it is declared
+  64 |       pingFrontend(); 
+  65 |     }
+  66 |   }, [isAdmin, isLoading]);
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\api-status\page.tsx:68:3
+  66 |   }, [isAdmin, isLoading]);
+  67 |
+> 68 |   const pingBackend = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 69 |     setBackendPing("waking");
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |     const t0 = Date.now();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 71 |     try {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 72 |       const res = await fetch(`${BACKEND}/api/health`, { signal: AbortSignal.timeout(12000) });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 73 |       const ms = Date.now() - t0;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 74 |       setPingMs(ms);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 75 |       setBackendPing(res.ok ? "alive" : "down");
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |     } catch { setBackendPing("down"); }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |   };
+     | ^^^^^ `pingBackend` is declared here
+  78 |
+  79 |   const pingFrontend = async () => {
+  80 |     const t0 = Date.now();  react-hooks/immutability
+   64:7   error    Error: Cannot access variable before it is declared
+
+`pingFrontend` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\api-status\page.tsx:64:7
+  62 |     if (isAdmin && !isLoading) {
+  63 |       pingBackend(); 
+> 64 |       pingFrontend(); 
+     |       ^^^^^^^^^^^^ `pingFrontend` accessed before it is declared
+  65 |     }
+  66 |   }, [isAdmin, isLoading]);
+  67 |
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\api-status\page.tsx:79:3
+  77 |   };
+  78 |
+> 79 |   const pingFrontend = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |     const t0 = Date.now();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |     try {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |       const res = await fetch(`${FRONTEND}/api/auth/providers`, { signal: AbortSignal.timeout(5000) });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 83 |       setFrontendPing(res.ok ? "alive" : "down");
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     } catch { setFrontendPing("down"); }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   };
+     | ^^^^^ `pingFrontend` is declared here
+  86 |
+  87 |   useEffect(() => { pingBackend(); pingFrontend(); }, []);
+  88 |                                                                                                                                                                                                                                                                          react-hooks/immutability
+   80:11  warning  't0' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  135:17  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\billing\page.tsx
+   9:17  warning  'session' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  29:14  warning  'err' is defined but never used               @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\career-roadmaps\page.tsx
+  50:13  warning  'error' is assigned a value but never used                                                                        @typescript-eslint/no-unused-vars
+  59:6   warning  React Hook useEffect has a missing dependency: 'fetchRoadmaps'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  74:14  warning  'err' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\certificates\page.tsx
+  35:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\chat\page.tsx
+   7:29  warning  'RotateCcw' is defined but never used         @typescript-eslint/no-unused-vars
+   7:40  warning  'Sparkles' is defined but never used          @typescript-eslint/no-unused-vars
+  77:17  warning  'session' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\groups\page.tsx
+   44:16  error    Error: Cannot access variable before it is declared
+
+`fetchGroups` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\groups\page.tsx:44:16
+  42 |
+  43 |   useEffect(() => {
+> 44 |     if (token) fetchGroups();
+     |                ^^^^^^^^^^^ `fetchGroups` accessed before it is declared
+  45 |   }, [token]);
+  46 |
+  47 |   useEffect(() => {
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\groups\page.tsx:59:3
+  57 |   }, [activeGroup]);
+  58 |
+> 59 |   const fetchGroups = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |     try {
+     | ^^^^^^^^^
+> 61 |       const data = await groupApi.list(token);
+     | ^^^^^^^^^
+> 62 |       const fetchedGroups = data.groups as unknown as Group[];
+     | ^^^^^^^^^
+> 63 |       setGroups(fetchedGroups || []);
+     | ^^^^^^^^^
+> 64 |       if (fetchedGroups?.length && !activeGroup) setActiveGroup(fetchedGroups[0]);
+     | ^^^^^^^^^
+> 65 |     } catch (e) {}
+     | ^^^^^^^^^
+> 66 |     setLoading(false);
+     | ^^^^^^^^^
+> 67 |   };
+     | ^^^^^ `fetchGroups` is declared here
+  68 |
+  69 |   const fetchMessages = async () => {
+  70 |     if (!activeGroup ) return;                                                                                                react-hooks/immutability
+   45:6   warning  React Hook useEffect has a missing dependency: 'fetchGroups'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+   53:7   error    Error: Cannot access variable before it is declared
+
+`fetchMessages` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\groups\page.tsx:53:7
+  51 |   useEffect(() => {
+  52 |     if (activeGroup && token) {
+> 53 |       fetchMessages();
+     |       ^^^^^^^^^^^^^ `fetchMessages` accessed before it is declared
+  54 |       pollRef.current = setInterval(fetchMessages, 3000);
+  55 |     }
+  56 |     return () => { if (pollRef.current) clearInterval(pollRef.current); };
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\groups\page.tsx:69:3
+  67 |   };
+  68 |
+> 69 |   const fetchMessages = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |     if (!activeGroup ) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 71 |     try {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 72 |       const data = await groupApi.getMessages(activeGroup.id, token);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 73 |       setMessages((data.messages as unknown as Message[]) || []);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 74 |     } catch (e) {}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 75 |   };
+     | ^^^^^ `fetchMessages` is declared here
+  76 |
+  77 |   const sendMessage = async (e: React.FormEvent) => {
+  78 |     e.preventDefault();  react-hooks/immutability
+   57:6   warning  React Hook useEffect has missing dependencies: 'fetchMessages' and 'token'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+   65:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   74:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   86:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  109:13  warning  'res' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\hackathons\page.tsx
+   67:17  warning  'session' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   82:16  warning  'e' is defined but never used                 @typescript-eslint/no-unused-vars
+  100:14  warning  'e' is defined but never used                 @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\history\page.tsx
+  38:6   warning  React Hook useEffect has a missing dependency: 'fetchHistory'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  57:14  warning  'e' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\interview\page.tsx
+   34:17  warning  'session' is assigned a value but never used                                                                     @typescript-eslint/no-unused-vars
+   48:10  warning  'isSpeaking' is assigned a value but never used                                                                  @typescript-eslint/no-unused-vars
+   61:6   warning  React Hook useEffect has a missing dependency: 'submitAnswer'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   69:6   warning  React Hook useEffect has a missing dependency: 'voiceEnabled'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   81:42  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   81:79  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   88:36  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  125:20  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  126:30  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\leaderboard\page.tsx
+   30:16  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  122:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  122:17  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\messages\page.tsx
+  33:7  error    Error: Cannot access variable before it is declared
+
+`fetchDirectory` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\messages\page.tsx:33:7
+  31 |   useEffect(() => {
+  32 |     if (session) {
+> 33 |       fetchDirectory();
+     |       ^^^^^^^^^^^^^^ `fetchDirectory` accessed before it is declared
+  34 |     }
+  35 |   }, [session]);
+  36 |
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\messages\page.tsx:94:3
+   92 |   }, [messages]);
+   93 |
+>  94 |   const fetchDirectory = async () => {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  95 |     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  96 |         try {
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 108 |     setLoading(false);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 109 |   };
+      | ^^^^^ `fetchDirectory` is declared here
+  110 |
+  111 |   const fetchMessages = async (userId: number) => {
+  112 |     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";  react-hooks/immutability
+  35:6  warning  React Hook useEffect has a missing dependency: 'fetchDirectory'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+  82:6  warning  React Hook useEffect has a missing dependency: 'connectWebSocket'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+  86:7  error    Error: Cannot access variable before it is declared
+
+`fetchMessages` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\messages\page.tsx:86:7
+  84 |   useEffect(() => {
+  85 |     if (activeUser) {
+> 86 |       fetchMessages(activeUser.id);
+     |       ^^^^^^^^^^^^^ `fetchMessages` accessed before it is declared
+  87 |     }
+  88 |   }, [activeUser]);
+  89 |
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\messages\page.tsx:111:3
+  109 |   };
+  110 |
+> 111 |   const fetchMessages = async (userId: number) => {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 112 |     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 113 |         try {
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 123 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 124 |   };
+      | ^^^^^ `fetchMessages` is declared here
+  125 |
+  126 |   const sendMessage = async (e: React.FormEvent) => {
+  127 |     e.preventDefault();                                                         react-hooks/immutability
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\page.tsx
+   10:114  warning  'CheckCircle2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   10:128  warning  'Star' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   50:5    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\page.tsx:50:5
+  48 |
+  49 |   useEffect(() => {
+> 50 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |     const fetchStats = async () => {
+  52 |       try {
+  53 |         const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";  react-hooks/set-state-in-effect
+   62:16   warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   79:87   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+  213:21   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @next/next/no-img-element
+  213:21   warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    jsx-a11y/alt-text
+  243:28   warning  'i' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\pdf\page.tsx
+  14:17  warning  'session' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\profile\page.tsx
+  24:34  warning  'updateSession' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  34:18  error    Error: Cannot access variable before it is declared
+
+`fetchStats` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\profile\page.tsx:34:18
+  32 |
+  33 |   useEffect(() => {
+> 34 |     if (session) fetchStats();
+     |                  ^^^^^^^^^^ `fetchStats` accessed before it is declared
+  35 |   }, [session]);
+  36 |
+  37 |   const fetchStats = async () => {
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\profile\page.tsx:37:3
+  35 |   }, [session]);
+  36 |
+> 37 |   const fetchStats = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 38 |         try {
+     | ^^^^^^^^^^^^^
+> 39 |       const data = await activityApi.getStats(token);
+     | ^^^^^^^^^^^^^
+> 40 |       setStats(data);
+     | ^^^^^^^^^^^^^
+> 41 |     } catch (e) {}
+     | ^^^^^^^^^^^^^
+> 42 |   };
+     | ^^^^^ `fetchStats` is declared here
+  43 |
+  44 |   useEffect(() => {
+  45 |     if (session?.user) {  react-hooks/immutability
+  35:6   warning  React Hook useEffect has a missing dependency: 'fetchStats'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+  41:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  62:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\resume\history\page.tsx
+  11:42  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  13:10  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  14:52  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\resume\page.tsx
+  19:17  warning  'session' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  39:9   warning  'printRef' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\rewards\page.tsx
+  18:17  warning  'session' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  34:31  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\roadmaps\page.tsx
+  25:17  warning  'session' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\startup-lab\page.tsx
+  53:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  56:34  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\startup-lab\page.tsx:56:34
+  54 |   };
+  55 |
+> 56 |   useEffect(() => { if (session) fetchSavedIdeas(); }, [session]);
+     |                                  ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  57 |
+  58 |   const saveIdea = async () => {
+  59 |     if (!idea ) return;  react-hooks/set-state-in-effect
+  56:56  warning  React Hook useEffect has a missing dependency: 'fetchSavedIdeas'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+  65:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\streak\page.tsx
+  18:7   warning  'rewards' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  48:7   error    Error: Cannot access variable before it is declared
+
+`fetchStats` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\streak\page.tsx:48:7
+  46 |   useEffect(() => {
+  47 |     if (session) {
+> 48 |       fetchStats();
+     |       ^^^^^^^^^^ `fetchStats` accessed before it is declared
+  49 |       fetchRewards();
+  50 |     }
+  51 |   }, [session]);
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\streak\page.tsx:65:3
+  63 |   }, [session]);
+  64 |
+> 65 |   const fetchStats = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |         try {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 68 |       const data = await activityApi.getStats(token);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 69 |       setStats(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |     } catch (e) { /* silent */ }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 71 |   };
+     | ^^^^^ `fetchStats` is declared here
+  72 |   const getColor = (val: number) => {
+  73 |     if (val === 0) return "rgba(255,255,255,0.05)";
+  74 |     if (val === 1) return "rgba(108,99,255,0.3)";  react-hooks/immutability
+  49:7   error    Error: Cannot access variable before it is declared
+
+`fetchRewards` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\streak\page.tsx:49:7
+  47 |     if (session) {
+  48 |       fetchStats();
+> 49 |       fetchRewards();
+     |       ^^^^^^^^^^^^ `fetchRewards` accessed before it is declared
+  50 |     }
+  51 |   }, [session]);
+  52 |
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\streak\page.tsx:53:3
+  51 |   }, [session]);
+  52 |
+> 53 |   const fetchRewards = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 54 |     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 55 |         try {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |       const data = await rewardApi.getRewards(token);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |       setStoreRewards((data.rewards as unknown as LocalStoreReward[]) || []);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 58 |     } catch (e) { /* silent */ }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |   };
+     | ^^^^^ `fetchRewards` is declared here
+  60 |
+  61 |   useEffect(() => {
+  62 |     if (session) fetchStats();                                           react-hooks/immutability
+  58:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  70:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\study-rooms\page.tsx
+   56:14  warning  'e' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+   67:6   warning  React Hook useEffect has a missing dependency: 'fetchMessages'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   84:17  warning  'e' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+   96:14  warning  'e' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  110:14  warning  'e' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  113:9   warning  'COLORS' is assigned a value but never used                                                                       @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\youtube-learning\page.tsx
+    3:20  warning  'useEffect' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   87:17  warning  'session' is assigned a value but never used                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  107:14  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  151:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\page.tsx
+    3:43   warning  'AnimatePresence' is defined but never used                      @typescript-eslint/no-unused-vars
+    9:70   warning  'Briefcase' is defined but never used                            @typescript-eslint/no-unused-vars
+  139:27   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  145:22   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  237:28   warning  'i' is defined but never used                                    @typescript-eslint/no-unused-vars
+  242:133  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  242:143  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\ConnectionStatus.tsx
+  4:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\DebugPanel.tsx
+  28:16  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  37:31  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\ErrorBoundary.tsx
+  25:21  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  25:35  warning  'info' is defined but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\ThemeToggle.tsx
+  13:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\ThemeToggle.tsx:13:7
+  11 |     const saved = localStorage.getItem("tulasi-theme") as "dark" | "light" | null;
+  12 |     if (saved) {
+> 13 |       setTheme(saved);
+     |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  14 |       document.documentElement.dataset.theme = saved;
+  15 |     }
+  16 |   }, []);  react-hooks/set-state-in-effect
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\TulasiLogo.tsx
+  129:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\UpgradeModal.tsx
+   3:20  warning  'useEffect' is defined but never used     @typescript-eslint/no-unused-vars
+   5:46  warning  'Award' is defined but never used         @typescript-eslint/no-unused-vars
+  25:22  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  81:34  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:52  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\dashboard\TopBar.tsx
+  25:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\dashboard\TopBar.tsx:25:7
+  23 |     try {
+  24 |       const stored = JSON.parse(localStorage.getItem("user") || "{}");
+> 25 |       setXp(stored.xp || 0);
+     |       ^^^^^ Avoid calling setState() directly within an effect
+  26 |       setLevel(stored.level || 1);
+  27 |     } catch {}
+  28 |   }, []);  react-hooks/set-state-in-effect
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\ui\BackgroundBeams.tsx
+  7:19  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\ui\BackgroundBeams.tsx:7:19
+   5 | export function BackgroundBeams() {
+   6 |   const [mounted, setMounted] = useState(false);
+>  7 |   useEffect(() => setMounted(true), []);
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+   8 |   if (!mounted) return null;
+   9 |
+  10 |   return (  react-hooks/set-state-in-effect
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useBackendWake.ts
+  39:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useBackendWake.ts:39:5
+  37 |   // Silent check on mount
+  38 |   useEffect(() => {
+> 39 |     checkHealth();
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |   }, [checkHealth]);
+  41 |
+  42 |   // Keep-alive every 4 minutes — prevents Render sleep  react-hooks/set-state-in-effect
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useWebSocket.ts
+  101:47  error    Error: Cannot access variable before it is declared
+
+`connect` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useWebSocket.ts:101:47
+   99 |         const delay = Math.min(reconnectDelay * 2 ** (retryCount.current - 1), 30_000);
+  100 |         console.warn(`WebSocket closed. Reconnecting in ${Math.round(delay / 1000)}s... (attempt ${retryCount.current}/${maxRetries})`);
+> 101 |         reconnectTimeout.current = setTimeout(connect, delay);
+      |                                               ^^^^^^^ `connect` accessed before it is declared
+  102 |       } else {
+  103 |         console.error("WebSocket max reconnect attempts reached.");
+  104 |         setStatus("error");
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useWebSocket.ts:55:3
+   53 |   }, [token, roomId]);
+   54 |
+>  55 |   const connect = useCallback(() => {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  56 |     shouldClose.current = false;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  57 |     setStatus("connecting");
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 106 |     };
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 107 |   }, [token, roomId, buildUrl, reconnectDelay, maxRetries, onMessage]);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `connect` is declared here
+  108 |
+  109 |   useEffect(() => {
+  110 |     connect();  react-hooks/immutability
+  107:6   warning  React Hook useCallback has unnecessary dependencies: 'roomId' and 'token'. Either exclude them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react-hooks/exhaustive-deps
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\lib\analytics.ts
+  3:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  4:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\lib\api.ts
+   86:3   warning  'ignoredToken' is defined but never used  @typescript-eslint/no-unused-vars
+  115:16  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+
+✖ 122 problems (42 errors, 80 warnings)
+

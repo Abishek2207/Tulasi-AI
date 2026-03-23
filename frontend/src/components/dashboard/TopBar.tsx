@@ -14,7 +14,7 @@ export default function TopBar() {
   const dispatch = useDispatch();
   const sidebarOpen = useSelector((s: RootState) => s.ui.sidebarOpen);
   const { data: session } = useSession();
-  const user = session?.user as any;
+  const user = session?.user;
   const [modalOpen, setModalOpen] = useState(false);
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
@@ -41,7 +41,7 @@ export default function TopBar() {
       position: "sticky",
       top: 0,
       zIndex: 40,
-    } as any}>
+    }}>
       {/* Sidebar toggle */}
       <motion.button
         whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.06)" }}
@@ -52,7 +52,7 @@ export default function TopBar() {
           color: "rgba(255,255,255,0.6)", cursor: "pointer", padding: "7px 10px",
           borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
           transition: "all 0.15s ease",
-        } as any}
+        }}
       >
         {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
       </motion.button>
@@ -147,7 +147,7 @@ export default function TopBar() {
               background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
               color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: 12, fontWeight: 500,
               transition: "all 0.15s ease",
-            } as any}
+            }}
           >
             <div style={{
               width: 24, height: 24, borderRadius: "50%",

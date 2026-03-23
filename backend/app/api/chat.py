@@ -157,26 +157,19 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
         contents.append({"role": role, "parts": [m["content"]]})
     contents.append({"role": "user", "parts": [primed_message]})
 
+    from app.core.ai_client import ai_client
+
     def generate():
         full_response = ""
         try:
-            # Try models in fallback order
-            for model_name in FALLBACK_MODELS:
-                try:
-                    model = genai.GenerativeModel(model_name)
-                    response = model.generate_content(contents, stream=True)
-                    for chunk in response:
-                        if chunk.text:
-                            full_response += chunk.text
-                            data = json.dumps({"token": chunk.text, "session_id": session_id, "done": False})
-                            yield f"data: {data}\n\n"
-                    break  # success — stop trying other models
-                except Exception as e:
-                    err = str(e).lower()
-                    if any(k in err for k in ["429", "quota", "rate limit", "resource exhausted"]):
-                        time.sleep(1)
-                        continue
-                    raise
+            # Use unified hybrid client with streaming
+            stream_gen = ai_client.get_response(primed_message, history=history, stream=True)
+            
+            for token in stream_gen:
+                if token:
+                    full_response += token
+                    data = json.dumps({"token": token, "session_id": session_id, "done": False})
+                    yield f"data: {data}\n\n"
 
             # Send done signal
             yield f"data: {json.dumps({'token': '', 'session_id': session_id, 'done': True})}\n\n"
@@ -194,6 +187,7 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
                 _db.commit()
 
         except Exception as e:
+            print(f"❌ [Stream] Fatal error: {e}")
             err_data = json.dumps({"token": "⏳ AI temporarily busy. Please retry.", "session_id": session_id, "done": True, "error": True})
             yield f"data: {err_data}\n\n"
 

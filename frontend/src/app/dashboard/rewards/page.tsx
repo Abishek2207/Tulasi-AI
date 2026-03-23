@@ -25,7 +25,7 @@ export default function RewardsPage() {
   useEffect(() => {
     if (token) {
       activityApi.getStats(token).then(data => {
-        setXp(data.xp || 0);
+        setXp((data.xp as number) || 0);
         setLoading(false);
       }).catch(() => setLoading(false));
     }

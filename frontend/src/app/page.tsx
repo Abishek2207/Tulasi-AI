@@ -83,12 +83,12 @@ function Hero() {
       {/* Premium Gradient Background */}
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-          style={{ position: "absolute", top: "-20%", left: "-10%", width: "70%", height: "70%", background: "radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 60%)", filter: "blur(60px)" } as any} />
+          style={{ position: "absolute", top: "-20%", left: "-10%", width: "70%", height: "70%", background: "radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 60%)", filter: "blur(60px)" }} />
         <motion.div animate={{ rotate: -360 }} transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-             style={{ position: "absolute", bottom: "-20%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 60%)", filter: "blur(60px)" } as any} />
+             style={{ position: "absolute", bottom: "-20%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 60%)", filter: "blur(60px)" }} />
       </div>
 
-      <motion.div style={{ y, opacity, position: "relative", zIndex: 10, textAlign: "center", maxWidth: 960 } as any}>
+      <motion.div style={{ y, opacity, position: "relative", zIndex: 10, textAlign: "center", maxWidth: 960 }}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 20, background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", color: "#A78BFA", fontSize: 13, fontWeight: 600, marginBottom: 32 }}>
             <Sparkles size={14} /> Meet Tulasi AI 3.0
@@ -165,7 +165,7 @@ function Features() {
   return (
     <section id="features" style={{ padding: "120px 24px", position: "relative" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 80 } as any}>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 80 }}>
           <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px", marginBottom: 20 }}>
             Everything you need to <span className="gradient-text">accelerate</span>
           </h2>
@@ -228,7 +228,7 @@ function Testimonials() {
   return (
     <section id="testimonials" style={{ padding: "120px 24px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 } as any}>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 }}>
           <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px", marginBottom: 20 }}>
             Loved by <span className="gradient-text">thousands</span>
           </h2>
@@ -259,7 +259,7 @@ function Pricing() {
   return (
     <section id="pricing" style={{ padding: "120px 24px" }}>
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 } as any}>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 }}>
           <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1px", marginBottom: 20 }}>
             Simple, transparent <span className="gradient-text">pricing</span>
           </h2>
@@ -268,7 +268,7 @@ function Pricing() {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 32 }}>
           {/* Free Tier */}
-          <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card" style={{ padding: 48, position: "relative" } as any}>
+          <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card" style={{ padding: 48, position: "relative" }}>
             <h3 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 8 }}>Free</h3>
             <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 24 }}>Perfect for students getting started.</p>
             <div style={{ marginBottom: 32 }}><span style={{ fontSize: 48, fontWeight: 900, fontFamily: "var(--font-outfit)" }}>$0</span> <span style={{ color: "var(--text-secondary)" }}>/ forever</span></div>
@@ -283,7 +283,7 @@ function Pricing() {
           </motion.div>
 
           {/* Pro Tier */}
-          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card" style={{ padding: 48, position: "relative", border: "1px solid var(--brand-primary)" } as any}>
+          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card" style={{ padding: 48, position: "relative", border: "1px solid var(--brand-primary)" }}>
             <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "var(--gradient-primary)", color: "white", fontSize: 12, fontWeight: 800, padding: "4px 16px", borderRadius: 20, letterSpacing: "1px", textTransform: "uppercase" }}>Most Popular</div>
             <h3 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 8 }}>Pro</h3>
             <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 24 }}>For serious engineers accelerating their career.</p>

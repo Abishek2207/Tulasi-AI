@@ -1,0 +1,122 @@
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\fix_any.js (2 errors)
+Rules: @typescript-eslint/no-require-imports(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\fix_any2.js (2 errors)
+Rules: @typescript-eslint/no-require-imports(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\parse_lint.js (1 errors)
+Rules: @typescript-eslint/no-require-imports(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\parse_lint2.js (1 errors)
+Rules: @typescript-eslint/no-require-imports(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\read_tsc.js (1 errors)
+Rules: @typescript-eslint/no-require-imports(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\admin\page.tsx (3 errors)
+Rules: @typescript-eslint/no-explicit-any(3)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\api\auth\[...nextauth]\route.ts (8 errors)
+Rules: @typescript-eslint/no-explicit-any(8)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\api\cron\keep-alive\route.ts (1 errors)
+Rules: @typescript-eslint/no-explicit-any(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\auth\page.tsx (9 errors)
+Rules: @typescript-eslint/no-explicit-any(9)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\analytics\page.tsx (3 errors)
+Rules: @typescript-eslint/no-explicit-any(3)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\api-status\page.tsx (3 errors)
+Rules: react-hooks/immutability(2), @typescript-eslint/no-explicit-any(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\groups\page.tsx (2 errors)
+Rules: react-hooks/immutability(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\hackathons\page.tsx (2 errors)
+Rules: @typescript-eslint/no-explicit-any(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\interview\page.tsx (5 errors)
+Rules: @typescript-eslint/no-explicit-any(5)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\layout.tsx (3 errors)
+Rules: @typescript-eslint/no-explicit-any(3)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\leaderboard\page.tsx (1 errors)
+Rules: @typescript-eslint/no-explicit-any(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\loading.tsx (2 errors)
+Rules: @typescript-eslint/no-explicit-any(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\messages\page.tsx (2 errors)
+Rules: react-hooks/immutability(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\page.tsx (3 errors)
+Rules: @typescript-eslint/no-explicit-any(2), react-hooks/set-state-in-effect(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\pricing\page.tsx (2 errors)
+Rules: @typescript-eslint/no-explicit-any(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\profile\page.tsx (1 errors)
+Rules: react-hooks/immutability(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\resume\history\page.tsx (2 errors)
+Rules: @typescript-eslint/no-explicit-any(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\resume\page.tsx (1 errors)
+Rules: @typescript-eslint/no-explicit-any(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\rewards\page.tsx (1 errors)
+Rules: @typescript-eslint/no-explicit-any(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\startup-lab\page.tsx (1 errors)
+Rules: react-hooks/set-state-in-effect(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\streak\page.tsx (5 errors)
+Rules: @typescript-eslint/no-explicit-any(3), react-hooks/immutability(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\study-rooms\page.tsx (2 errors)
+Rules: @typescript-eslint/no-explicit-any(2)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\page.tsx (12 errors)
+Rules: @typescript-eslint/no-explicit-any(8), react/no-unescaped-entities(4)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\DebugPanel.tsx (1 errors)
+Rules: @typescript-eslint/no-explicit-any(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\ThemeToggle.tsx (1 errors)
+Rules: react-hooks/set-state-in-effect(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\TulasiLogo.tsx (5 errors)
+Rules: @typescript-eslint/no-explicit-any(5)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\UpgradeModal.tsx (4 errors)
+Rules: @typescript-eslint/no-explicit-any(4)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\dashboard\Sidebar.tsx (3 errors)
+Rules: @typescript-eslint/no-explicit-any(3)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\dashboard\TopBar.tsx (5 errors)
+Rules: @typescript-eslint/no-explicit-any(4), react-hooks/set-state-in-effect(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\dashboard\UpgradeModal.tsx (4 errors)
+Rules: @typescript-eslint/no-explicit-any(4)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\ui\BackgroundBeams.tsx (1 errors)
+Rules: react-hooks/set-state-in-effect(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useAdminGuard.ts (1 errors)
+Rules: @typescript-eslint/no-explicit-any(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useBackendWake.ts (1 errors)
+Rules: react-hooks/set-state-in-effect(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useWebSocket.ts (1 errors)
+Rules: react-hooks/immutability(1)
+
+📄 C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\lib\analytics.ts (3 errors)
+Rules: @typescript-eslint/no-explicit-any(3)
+
+Total Errors: 111

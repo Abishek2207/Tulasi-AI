@@ -19,29 +19,18 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 
-import google.generativeai as genai
 from dotenv import load_dotenv
 
-# ── Load env & configure Gemini ────────────────────────────────────
+# ── Load env ───────────────────────────────────────────────────────
 load_dotenv()
-
-GOOGLE_API_KEY = (
-    os.getenv("GOOGLE_API_KEY") or
-    os.getenv("GEMINI_API_KEY") or
-    ""
-)
-
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
-    print(f"✅ Gemini configured with gemini-1.5-flash (key: {GOOGLE_API_KEY[:8]}...)")
-else:
-    print("⚠️  WARNING: No GOOGLE_API_KEY found. Set it in .env or Render environment.")
 
 _START_TIME = time.time()
 
 
 # ── Lifespan ───────────────────────────────────────────────────────
 import threading
+import time
+import urllib.request
 from app.core.database import init_db
 
 @asynccontextmanager
@@ -57,6 +46,19 @@ async def lifespan(app: FastAPI):
             print(f"⚠️ Background DB init failed gracefully: {e}")
             
     threading.Thread(target=bg_init_db, daemon=True).start()
+    
+    # Railway Keep-Alive Thread
+    def keep_alive():
+        while True:
+            try:
+                # Ping our own health check every 14 minutes
+                time.sleep(840)
+                urllib.request.urlopen("https://tulasiai.up.railway.app/api/health", timeout=10)
+                print("💓 Keep-alive ping successful")
+            except Exception as e:
+                print(f"⚠️ Keep-alive ping failed: {e}")
+                
+    threading.Thread(target=keep_alive, daemon=True).start()
     
     yield
     print("🛑 Tulasi AI — Shutting down...")
