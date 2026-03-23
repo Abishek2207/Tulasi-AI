@@ -14,10 +14,11 @@ export async function GET() {
       backend_status: data.status || "unknown",
       timestamp: new Date().toISOString(),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+      const error = err as Error;
     return NextResponse.json({
       pinged: false,
-      error: err.message || "Failed to reach backend",
+      error: error.message || "Failed to reach backend",
       timestamp: new Date().toISOString(),
     }, { status: 200 }); // Always 200 so Vercel doesn't disable the cron
   }

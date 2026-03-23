@@ -91,13 +91,12 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user, account }) {
       if (user) {
-        token.role = (user as any).role || (user.email === ADMIN_EMAIL ? "admin" : "student");
-        // Keep accessToken and inviteCode if logged in via credentials
-        if ((user as any).accessToken) {
-            token.accessToken = (user as any).accessToken;
+        token.role = user.role || (user.email === ADMIN_EMAIL ? "admin" : "student");
+        if (user.accessToken) {
+            token.accessToken = user.accessToken;
         }
-        if ((user as any).inviteCode) {
-            token.inviteCode = (user as any).inviteCode;
+        if (user.inviteCode) {
+            token.inviteCode = user.inviteCode;
         }
       }
       // OAuth providers — auto-assign role
@@ -108,9 +107,9 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).role = token.role;
-        (session.user as any).accessToken = token.accessToken; // Might be undefined for OAuth, but login is instant
-        (session.user as any).inviteCode = token.inviteCode;
+        session.user.role = token.role;
+        session.user.accessToken = token.accessToken;
+        session.user.inviteCode = token.inviteCode;
       }
       return session;
     },

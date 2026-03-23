@@ -7,18 +7,26 @@ import { activityApi } from "@/lib/api";
 
 const RANK_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 
+interface LocalLeaderboardUser {
+  id: number | string;
+  name: string;
+  xp: number;
+  level: number;
+  avatar?: string;
+}
+
 export default function LeaderboardPage() {
   const { data: session } = useSession();
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LocalLeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const currentUserId = (session?.user as any)?.id;
+  const currentUserId = (session?.user as { id?: number, email?: string, name?: string, accessToken?: string })?.id;
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
         const data = await activityApi.getLeaderboard(token);
-        setLeaderboard(data.leaderboard || []);
+        setLeaderboard((data.leaderboard as unknown as LocalLeaderboardUser[]) || []);
       } catch (e) {}
       setLoading(false);
     };
@@ -47,12 +55,13 @@ export default function LeaderboardPage() {
       {!loading && leaderboard.length >= 3 && (
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 16, marginBottom: 48, paddingBottom: 0 }}>
           {[leaderboard[1], leaderboard[0], leaderboard[2]].map((user, i) => {
+            if (!user) return <div key={i} style={{ width: 160 }} />;
             const rank = i === 1 ? 1 : i === 0 ? 2 : 3;
             const heights = [160, 200, 140];
             const colors = ["#C0C0C0", "#FFD700", "#CD7F32"];
             return (
               <motion.div
-                key={user.id}
+                key={user.id as import("react").Key}
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * rank }}
@@ -92,7 +101,7 @@ export default function LeaderboardPage() {
           const isTop3 = idx < 3;
           return (
             <motion.div
-              key={user.id}
+              key={user.id as import("react").Key}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.04 }}
@@ -110,7 +119,7 @@ export default function LeaderboardPage() {
 
               {/* Avatar */}
               {user.avatar ? (
-                <img src={user.avatar} style={{ width: 42, height: 42, borderRadius: "50%" }} />
+                <img src={user.avatar as string} style={{ width: 42, height: 42, borderRadius: "50%" }} />
               ) : (
                 <div style={{ width: 42, height: 42, borderRadius: "50%", background: isTop3 ? `linear-gradient(135deg, ${RANK_COLORS[idx]}, ${RANK_COLORS[idx]}80)` : "linear-gradient(135deg, #6C63FF, #3B82F6)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16, color: "white", flexShrink: 0 }}>
                   {user.name.charAt(0).toUpperCase()}

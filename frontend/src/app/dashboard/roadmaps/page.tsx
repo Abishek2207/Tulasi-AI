@@ -37,11 +37,12 @@ export default function RoadmapsPage() {
     try {
       const data = await roadmapApi.generate(goal, token);
       if (data && data.roadmap) {
-        setRoadmap(data.roadmap);
+        setRoadmap(data.roadmap as unknown as RoadmapResponse);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       console.error(err);
-      setErrorDesc(err.message || "Failed to generate roadmap. Please check connection.");
+      setErrorDesc(error.message || "Failed to generate roadmap. Please check connection.");
     }
     setLoading(false);
   };

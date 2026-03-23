@@ -5,7 +5,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { hackathonApi } from "@/lib/api";
 
-const FALLBACK_HACKATHONS = [
+interface LocalHackathon {
+  id: number;
+  title: string;
+  organizer?: string;
+  deadline?: string;
+  prize_pool?: string;
+  participants_count?: number;
+  tags?: string;
+  status?: string;
+  bookmarked?: boolean;
+  image_url?: string;
+  registration_link?: string;
+}
+
+const FALLBACK_HACKATHONS: LocalHackathon[] = [
   {
     id: 1, title: "Global AI Hackathon 2026", organizer: "Anthropic & OpenAI",
     deadline: "April 15-17, 2026", prize_pool: "$250,000", participants_count: 4500,
@@ -54,7 +68,7 @@ export default function HackathonsPage() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const [filter, setFilter] = useState("All");
-  const [hackathons, setHackathons] = useState<any[]>([]);
+  const [hackathons, setHackathons] = useState<LocalHackathon[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookmarking, setBookmarking] = useState<Set<number>>(new Set());
 
@@ -64,7 +78,7 @@ export default function HackathonsPage() {
       try {
         const data = await hackathonApi.list(undefined, filter !== "All" ? filter : undefined, token);
         const list = data.hackathons ?? [];
-        setHackathons(list.length > 0 ? list : FALLBACK_HACKATHONS);
+        setHackathons(list.length > 0 ? (list as unknown as LocalHackathon[]) : FALLBACK_HACKATHONS);
       } catch (e) {
         setHackathons(FALLBACK_HACKATHONS);
       } finally {
@@ -74,7 +88,7 @@ export default function HackathonsPage() {
     fetchHackathons();
   }, [filter, token]);
 
-  const toggleBookmark = async (hack: any) => {
+  const toggleBookmark = async (hack: LocalHackathon) => {
         setBookmarking(prev => new Set(prev).add(hack.id));
     try {
       if (hack.bookmarked) {

@@ -26,9 +26,10 @@ export function ConnectionStatus() {
           setApiOnline(false);
           setLastError(`HTTP ${res.status}`);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+      const error = err as Error;
         setApiOnline(false);
-        setLastError(err.message || "Connection Failed");
+        setLastError(error.message || "Connection Failed");
       }
     };
 

@@ -67,7 +67,7 @@ const NAV_SECTIONS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const sessionUser = session?.user as any;
+  const sessionUser = session?.user;
   const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function Sidebar() {
     }}>
       {/* Logo */}
       <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        <motion.div whileHover={{ scale: 1.02 }} style={{ display: "flex", alignItems: "center", gap: 10 } as any}>
+        <motion.div whileHover={{ scale: 1.02 }} style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
             width: 42, height: 42, borderRadius: 12,
             background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
@@ -178,7 +178,7 @@ export default function Sidebar() {
                     )}
                     {active && (
                       <motion.div layoutId="sidebar-active-dot"
-                        style={{ width: 5, height: 5, borderRadius: "50%", background: "#06B6D4", boxShadow: "0 0 8px #06B6D4" } as any}
+                        style={{ width: 5, height: 5, borderRadius: "50%", background: "#06B6D4", boxShadow: "0 0 8px #06B6D4" }}
                       />
                     )}
                   </Link>

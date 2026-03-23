@@ -42,8 +42,9 @@ export default function PDFQaPage() {
       const data = await pdfApi.upload(uploadedFile, token);
       setSessionId(data.session_id);
       setMessages([{ role: "ai", content: `Successfully parsed ${data.pages} pages of ${data.filename}. Ask me anything about it!` }]);
-    } catch (err: any) {
-      setMessages([{ role: "ai", content: `Error: ${err.message || "Could not upload file"}` }]);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessages([{ role: "ai", content: `Error: ${error.message || "Could not upload file"}` }]);
     }
     setIsUploading(false);
   };
@@ -65,8 +66,9 @@ export default function PDFQaPage() {
       }
       const data = await pdfApi.ask(userQ, sessionId, token);
       setMessages(prev => [...prev, { role: "ai", content: data.answer }]);
-    } catch (err: any) {
-      setMessages(prev => [...prev, { role: "ai", content: `Error: ${err.message || "An error occurred while fetching the answer."}` }]);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessages(prev => [...prev, { role: "ai", content: `Error: ${error.message || "An error occurred while fetching the answer."}` }]);
     }
     setIsAsking(false);
   };

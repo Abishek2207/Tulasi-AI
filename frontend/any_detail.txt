@@ -1,0 +1,138 @@
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\admin\page.tsx (3 any errors) ===
+  Line 9: const [stats, setStats] = useState<any>(null);
+  Line 10: const [users, setUsers] = useState<any[]>([]);
+  Line 14: const user = session?.user as any;
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\api\auth\[...nextauth]\route.ts (8 any errors) ===
+  Line 94: token.role = user.role || (user.email === ADMIN_EMAIL ? "admin" : "student");
+  Line 96: token.accessToken = user.accessToken;
+  Line 97: }
+  Line 99: token.inviteCode = user.inviteCode;
+  Line 100: }
+  Line 111: session.user.accessToken = token.accessToken;
+  Line 112: session.user.inviteCode = token.inviteCode;
+  Line 113: }
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\api\cron\keep-alive\route.ts (1 any errors) ===
+  Line 19: } catch (error: any) {
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\auth\page.tsx (9 any errors) ===
+  Line 19: style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 36 } as any}
+  Line 109: <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column", padding: "60px", justifyContent: "space-between", "@media (max-width: 900px)": { display: "none" } } as any}>
+  Line 139: style={{ width: "100%", maxWidth: 420, padding: "0 32px" } as any}
+  Line 194: style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" } as any}
+  Line 205: style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" } as any}
+  Line 217: style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" } as any}
+  Line 229: <div key={i} style={{ flex: 1, borderRadius: 2, background: i <= strength.score ? strength.color : "rgba(255,255,255,0.1)", transition: "all 0.3s ease" } as any} />
+  Line 242: style={{ background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#FF8585", display: "flex", gap: 8, alignItems: "center" } as any}
+  Line 251: style={{ width: "100%", background: "white", color: "#111", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", marginTop: 8, display: "flex", justifyContent: "center", alignItems: "center", transition: "all 0.2s" } as any}
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\analytics\page.tsx (3 any errors) ===
+  Line 21: const [data, setData] = useState<any[]>([]);
+  Line 31: const formattedData = res.time_series.map((d: any) => {
+  Line 42: interviews: formattedData.reduce((acc: number, val: any) => acc + val.interviews, 0)
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\api-status\page.tsx (1 any errors) ===
+  Line 135: {(ep as any).auth && <span style={{ fontSize: 9, color: "#FFD93D", border: "1px solid rgba(255,217,61,0.3)", padding: "1px 6px", borderRadius: 4 }}>AUTH</span>}
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\hackathons\page.tsx (2 any errors) ===
+  Line 57: const [hackathons, setHackathons] = useState<any[]>([]);
+  Line 77: const toggleBookmark = async (hack: any) => {
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\interview\page.tsx (5 any errors) ===
+  Line 81: const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  Line 81: const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  Line 88: recognition.onresult = (event: any) => {
+  Line 125: if ((data as any).status === "completed") {
+  Line 126: setFeedback((data as any).feedback);
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\layout.tsx (3 any errors) ===
+  Line 17: const user = session?.user as any;
+  Line 29: style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid rgba(124,58,237,0.2)", borderTopColor: "#7C3AED" } as any}
+  Line 47: style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50 } as any}
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\leaderboard\page.tsx (1 any errors) ===
+  Line 12: const [leaderboard, setLeaderboard] = useState<any[]>([]);
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\loading.tsx (2 any errors) ===
+  Line 10: style={{ width: "35%", height: 38, background: "rgba(255,255,255,0.08)", borderRadius: 12, marginBottom: 8 } as any}
+  Line 18: style={{ height: 220, background: "rgba(255,255,255,0.05)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.02)" } as any}
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\page.tsx (2 any errors) ===
+  Line 40: const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  Line 72: show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as any } }
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\pricing\page.tsx (2 any errors) ===
+  Line 71: } as any}
+  Line 95: } as any}
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\resume\history\page.tsx (2 any errors) ===
+  Line 11: const [history, setHistory] = useState<any[]>([]);
+  Line 14: const [selectedItem, setSelectedItem] = useState<any>(null);
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\resume\page.tsx (1 any errors) ===
+  Line 32: const cacheRef = useRef<Map<string, any>>(new Map());
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\rewards\page.tsx (1 any errors) ===
+  Line 34: const handleRedeem = (item: any) => {
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\streak\page.tsx (3 any errors) ===
+  Line 29: const [stats, setStats] = useState<any>(null);
+  Line 30: const [storeRewards, setStoreRewards] = useState<any[]>([]);
+  Line 112: {stats?.badges && stats.badges.length > 0 ? stats.badges.map((b: any, i: number) => (
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\dashboard\study-rooms\page.tsx (2 any errors) ===
+  Line 39: const pollRef = useRef<any>(null);
+  Line 70: let interval: any;
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\app\page.tsx (8 any errors) ===
+  Line 86: style={{ position: "absolute", top: "-20%", left: "-10%", width: "70%", height: "70%", background: "radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 60%)", filter: "blur(60px)" } as any} />
+  Line 88: style={{ position: "absolute", bottom: "-20%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 60%)", filter: "blur(60px)" } as any} />
+  Line 91: <motion.div style={{ y, opacity, position: "relative", zIndex: 10, textAlign: "center", maxWidth: 960 } as any}>
+  Line 168: <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 80 } as any}>
+  Line 231: <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 } as any}>
+  Line 262: <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 } as any}>
+  Line 271: <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card" style={{ padding: 48, position: "relative" } as any}>
+  Line 286: <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card" style={{ padding: 48, position: "relative", border: "1px solid var(--brand-primary)" } as any}>
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\DebugPanel.tsx (1 any errors) ===
+  Line 37: console.error = (...args: any[]) => {
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\TulasiLogo.tsx (5 any errors) ===
+  Line 99: transition={{ ...leafTransition, delay: 0.4 } as any}
+  Line 106: transition={{ ...leafTransition, delay: 0.4 } as any}
+  Line 114: transition={{ ...leafTransition, delay: 0.2 } as any}
+  Line 121: transition={{ ...leafTransition, delay: 0.2 } as any}
+  Line 129: transition={leafTransition as any}
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\UpgradeModal.tsx (4 any errors) ===
+  Line 25: if ((window as any).Razorpay) return resolve(true);
+  Line 49: handler: async function (response: any) {
+  Line 81: const rzp = new (window as any).Razorpay(options);
+  Line 82: rzp.on("payment.failed", function (response: any) {
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\dashboard\Sidebar.tsx (3 any errors) ===
+  Line 70: const sessionUser = session?.user as any;
+  Line 98: <motion.div whileHover={{ scale: 1.02 }} style={{ display: "flex", alignItems: "center", gap: 10 } as any}>
+  Line 181: style={{ width: 5, height: 5, borderRadius: "50%", background: "#06B6D4", boxShadow: "0 0 8px #06B6D4" } as any}
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\dashboard\TopBar.tsx (4 any errors) ===
+  Line 17: const user = session?.user as any;
+  Line 44: } as any}>
+  Line 55: } as any}
+  Line 150: } as any}
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\components\dashboard\UpgradeModal.tsx (4 any errors) ===
+  Line 156: } as any}
+  Line 186: style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#E2E8F0" } as any}>
+  Line 201: } as any}
+  Line 204: ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" } as any} />
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\hooks\useAdminGuard.ts (1 any errors) ===
+  Line 12: const user = session?.user as any;
+
+=== C:\Users\Admin\Downloads\Desktop\Project\TulasiAI\frontend\src\lib\analytics.ts (3 any errors) ===
+  Line 3: export const trackEvent = (eventName: string, params?: Record<string, any>) => {
+  Line 4: if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
+  Line 5: (window as any).gtag("event", eventName, params);

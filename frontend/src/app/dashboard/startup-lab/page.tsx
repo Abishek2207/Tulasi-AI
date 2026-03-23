@@ -49,7 +49,7 @@ export default function StartupLabPage() {
   const fetchSavedIdeas = async () => {
         try {
       const data = await startupApi.ideas(token);
-      setSavedIdeas(data.ideas || []);
+      setSavedIdeas((data.ideas as unknown as SavedIdea[]) || []);
     } catch (e) {}
   };
 
@@ -59,7 +59,7 @@ export default function StartupLabPage() {
     if (!idea ) return;
     setSaving(true);
     try {
-      await startupApi.save({ ...idea, domain }, token);
+      await startupApi.save({ ...idea, domain } as unknown as import("@/lib/api").StartupIdea, token);
       setSaved(true); 
       fetchSavedIdeas();
     } catch (e) {}
@@ -77,10 +77,11 @@ export default function StartupLabPage() {
 
     try {
       const data = await startupApi.generate(domain, audience, token);
-      setIdea(data.idea);
+      setIdea(data.idea as unknown as StartupIdea);
       setSaved(false);
-    } catch (err: any) {
-      setError(err.message || "Failed to reach the AI servers.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "Failed to reach the AI servers.");
     }
     setLoading(false);
   };

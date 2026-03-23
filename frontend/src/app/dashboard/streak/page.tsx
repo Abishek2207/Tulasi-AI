@@ -24,10 +24,24 @@ const rewards = [
   { icon: "🌟", title: "30-Day Legend", desc: "Maintain a 30-day streak", xp: 1000, achieved: false },
 ];
 
+interface StreakStats {
+  streak?: number;
+  xp?: number;
+  badges?: Array<{ badge_icon?: string; badge_name?: string; earned_at?: string }>;
+}
+
+interface LocalStoreReward {
+  id: number | string;
+  name: string;
+  description?: string;
+  category?: string;
+  cost_xp: number;
+}
+
 export default function StreakPage() {
   const { data: session } = useSession();
-  const [stats, setStats] = useState<any>(null);
-  const [storeRewards, setStoreRewards] = useState<any[]>([]);
+  const [stats, setStats] = useState<StreakStats | null>(null);
+  const [storeRewards, setStoreRewards] = useState<LocalStoreReward[]>([]);
 
   useEffect(() => {
     if (session) {
@@ -40,7 +54,7 @@ export default function StreakPage() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
       const data = await rewardApi.getRewards(token);
-      setStoreRewards(data.rewards || []);
+      setStoreRewards((data.rewards as unknown as LocalStoreReward[]) || []);
     } catch (e) { /* silent */ }
   };
 
@@ -74,8 +88,8 @@ export default function StreakPage() {
         {[
           { label: "Current Streak", value: `${stats?.streak || 0} 🔥`, color: "#FFD93D" },
           { label: "Longest Streak", value: `${stats?.streak || 0} 💪`, color: "#43E97B" },
-          { label: "Total XP", value: `${stats?.xp || 0} ⚡`, color: "#6C63FF" },
-          { label: "Rank", value: stats?.xp > 2000 ? "Gold 🥇" : stats?.xp > 500 ? "Silver 🥈" : "Bronze 🥉", color: "#FF6B9D" },
+          { label: "Total XP", value: `${stats?.xp ?? 0} ⚡`, color: "#6C63FF" },
+          { label: "Rank", value: (stats?.xp ?? 0) > 2000 ? "Gold 🥇" : (stats?.xp ?? 0) > 500 ? "Silver 🥈" : "Bronze 🥉", color: "#FF6B9D" },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="stat-card">
             <div style={{ fontSize: 22, fontWeight: 800, color: s.color, fontFamily: "Outfit" }}>{s.value}</div>
@@ -109,7 +123,7 @@ export default function StreakPage() {
       {/* Achievements */}
       <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>🏆 Earned Achievements</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16, marginBottom: 36 }}>
-        {stats?.badges && stats.badges.length > 0 ? stats.badges.map((b: any, i: number) => (
+        {stats?.badges && stats.badges.length > 0 ? stats.badges.map((b, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.08 }}
             style={{ background: "rgba(67,233,123,0.1)", border: "1px solid rgba(67,233,123,0.3)", borderRadius: 14, padding: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -117,7 +131,7 @@ export default function StreakPage() {
               <span className="badge badge-green" style={{ fontSize: 10 }}>✓ Earned</span>
             </div>
             <div style={{ fontSize: 15, fontWeight: 700, marginTop: 10 }}>{b.badge_name}</div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>Earned on {new Date(b.earned_at).toLocaleDateString()}</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>Earned on {new Date(b.earned_at || new Date().toISOString()).toLocaleDateString()}</div>
           </motion.div>
         )) : (
           <div style={{ gridColumn: "1/-1", padding: 32, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px dashed var(--border)", color: "var(--text-muted)" }}>
@@ -134,20 +148,20 @@ export default function StreakPage() {
             <div style={{ position: "absolute", top: -10, right: -10, width: 80, height: 80, background: "radial-gradient(circle, rgba(108,99,255,0.1) 0%, transparent 70%)" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: "#9B95FF", letterSpacing: 1 }}>{r.category}</span>
-               <span style={{ fontSize: 13, fontWeight: 800, color: (stats?.xp || 0) >= r.cost_xp ? "#43E97B" : "var(--text-muted)" }}>
+               <span style={{ fontSize: 13, fontWeight: 800, color: (stats?.xp ?? 0) >= (r.cost_xp ?? 0) ? "#43E97B" : "var(--text-muted)" }}>
                  {r.cost_xp} XP
                </span>
             </div>
             <h4 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px 0" }}>{r.name}</h4>
             <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "0 0 16px 0", lineHeight: 1.5 }}>{r.description}</p>
             <button 
-              disabled={(stats?.xp || 0) < r.cost_xp}
+              disabled={(stats?.xp ?? 0) < (r.cost_xp ?? 0)}
               style={{ 
-                width: "100%", padding: "10px", borderRadius: 10, background: (stats?.xp || 0) >= r.cost_xp ? "linear-gradient(135deg, #6C63FF, #4ECDC4)" : "rgba(255,255,255,0.05)",
-                border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: (stats?.xp || 0) >= r.cost_xp ? "pointer" : "not-allowed", opacity: (stats?.xp || 0) >= r.cost_xp ? 1 : 0.5
+                width: "100%", padding: "10px", borderRadius: 10, background: (stats?.xp ?? 0) >= (r.cost_xp ?? 0) ? "linear-gradient(135deg, #6C63FF, #4ECDC4)" : "rgba(255,255,255,0.05)",
+                border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: (stats?.xp ?? 0) >= (r.cost_xp ?? 0) ? "pointer" : "not-allowed", opacity: (stats?.xp ?? 0) >= (r.cost_xp ?? 0) ? 1 : 0.5
               }}
             >
-              {(stats?.xp || 0) >= r.cost_xp ? "Unlock Reward" : "Not Enough XP"}
+              {(stats?.xp ?? 0) >= (r.cost_xp ?? 0) ? "Unlock Reward" : "Not Enough XP"}
             </button>
           </motion.div>
         ))}

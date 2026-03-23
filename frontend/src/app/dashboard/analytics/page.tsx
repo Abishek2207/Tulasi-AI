@@ -18,7 +18,7 @@ import {
 
 export default function AnalyticsPage() {
   const { data: session } = useSession();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Record<string, unknown>[]>([]);
   const [summary, setSummary] = useState({ xp: 0, problems: 0, interviews: 0 });
   const [loading, setLoading] = useState(true);
 

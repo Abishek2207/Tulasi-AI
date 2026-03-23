@@ -112,9 +112,10 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
             } else {
               throw new Error("Verification failed. Contact support.");
             }
-          } catch (err: any) {
+          } catch (err: unknown) {
+      const error = err as Error;
             toast.dismiss(verifyToastId);
-            toast.error(err.message || "Payment verification failed.");
+            toast.error(error.message || "Payment verification failed.");
           }
         },
 
@@ -127,9 +128,10 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
       });
 
       rzp.open();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       toast.dismiss(toastId);
-      toast.error(err.message || "Payment failed. Try again.");
+      toast.error(error.message || "Payment failed. Try again.");
       setLoading(false);
     }
   };
@@ -151,7 +153,7 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
           boxShadow: "0 25px 50px -12px rgba(139, 92, 246, 0.25), inset 0 1px 0 rgba(255,255,255,0.1)",
           borderRadius: 24, padding: "clamp(24px, 5vw, 40px)",
           maxWidth: 480, width: "90%", position: "relative", overflow: "hidden"
-        } as any}
+        }}
       >
         {/* Glow orb */}
         <div style={{
@@ -181,7 +183,7 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
             "Priority Support & Zero Ads"
           ].map((feature, i) => (
             <motion.div key={i} initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.1 }}
-              style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#E2E8F0" } as any}>
+              style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#E2E8F0" }}>
               <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}>✓</div>
               {feature}
             </motion.div>
@@ -196,10 +198,10 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
             background: "linear-gradient(135deg, #8B5CF6, #38BDF8)", color: "#fff", fontSize: 16, fontWeight: 600,
             boxShadow: "0 8px 20px rgba(139, 92, 246, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
             opacity: loading ? 0.7 : 1
-          } as any}
+          }}
         >
           {loading
-            ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" } as any} />
+            ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} />
             : "⚡ Upgrade to Pro — ₹749/mo"
           }
         </motion.button>

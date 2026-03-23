@@ -1,0 +1,53 @@
+src/app/dashboard/career-roadmaps/page.tsx(41,19): error TS2352: Conversion of type 'import("C:/Users/Admin/Downloads/Desktop/Project/TulasiAI/frontend/src/lib/api").Roadmap[]' to type 'Roadmap[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'Roadmap' is missing the following properties from type 'Roadmap': icon, color, desc, skills, and 4 more.
+src/app/dashboard/career-roadmaps/page.tsx(44,33): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: Roadmap, index: number, obj: Roadmap[]) => value is Roadmap, thisArg?: any): Roadmap | undefined', gave the following error.
+    Argument of type '(r: Roadmap) => boolean' is not assignable to parameter of type '(value: Roadmap, index: number, obj: Roadmap[]) => value is Roadmap'.
+      Types of parameters 'r' and 'value' are incompatible.
+        Type 'Roadmap' is missing the following properties from type 'Roadmap': icon, color, desc, skills, and 4 more.
+  Overload 2 of 2, '(predicate: (value: Roadmap, index: number, obj: Roadmap[]) => unknown, thisArg?: any): Roadmap | undefined', gave the following error.
+    Argument of type '(r: Roadmap) => boolean' is not assignable to parameter of type '(value: Roadmap, index: number, obj: Roadmap[]) => unknown'.
+      Types of parameters 'r' and 'value' are incompatible.
+        Type 'Roadmap' is missing the following properties from type 'Roadmap': icon, color, desc, skills, and 4 more.
+src/app/dashboard/certificates/page.tsx(33,23): error TS2345: Argument of type 'Certificate[]' is not assignable to parameter of type 'SetStateAction<Certificate[]>'.
+  Type 'import("C:/Users/Admin/Downloads/Desktop/Project/TulasiAI/frontend/src/lib/api").Certificate[]' is not assignable to type 'Certificate[]'.
+    Type 'Certificate' is missing the following properties from type 'Certificate': issuer, type, issued_at
+src/app/dashboard/certificates/page.tsx(34,21): error TS2345: Argument of type 'Milestone[]' is not assignable to parameter of type 'SetStateAction<Milestone[]>'.
+  Type 'import("C:/Users/Admin/Downloads/Desktop/Project/TulasiAI/frontend/src/lib/api").Milestone[]' is not assignable to type 'Milestone[]'.
+    Type 'Milestone' is missing the following properties from type 'Milestone': desc, icon, category, current_pct, and 2 more.
+src/app/dashboard/groups/page.tsx(62,17): error TS2345: Argument of type 'Group[]' is not assignable to parameter of type 'SetStateAction<Group[]>'.
+  Type 'import("C:/Users/Admin/Downloads/Desktop/Project/TulasiAI/frontend/src/lib/api").Group[]' is not assignable to type 'Group[]'.
+    Type 'Group' is missing the following properties from type 'Group': join_code, member_count, created_at
+src/app/dashboard/groups/page.tsx(63,63): error TS2345: Argument of type 'Group' is not assignable to parameter of type 'SetStateAction<Group | null>'.
+  Type 'Group' is missing the following properties from type 'Group': join_code, member_count, created_at
+src/app/dashboard/groups/page.tsx(72,19): error TS2345: Argument of type 'GroupMessage[]' is not assignable to parameter of type 'SetStateAction<Message[]>'.
+  Type 'GroupMessage[]' is not assignable to type 'Message[]'.
+    Property 'user_id' is missing in type 'GroupMessage' but required in type 'Message'.
+src/app/dashboard/groups/page.tsx(84,19): error TS2345: Argument of type '(prev: Message[]) => (GroupMessage | Message)[]' is not assignable to parameter of type 'SetStateAction<Message[]>'.
+  Type '(prev: Message[]) => (GroupMessage | Message)[]' is not assignable to type '(prevState: Message[]) => Message[]'.
+    Type '(GroupMessage | Message)[]' is not assignable to type 'Message[]'.
+      Type 'GroupMessage | Message' is not assignable to type 'Message'.
+        Property 'user_id' is missing in type 'GroupMessage' but required in type 'Message'.
+src/app/dashboard/groups/page.tsx(94,17): error TS2345: Argument of type '(prev: Group[]) => (Group | { member_count: number; id: number; name: string; description: string; })[]' is not assignable to parameter of type 'SetStateAction<Group[]>'.
+  Type '(prev: Group[]) => (Group | { member_count: number; id: number; name: string; description: string; })[]' is not assignable to type '(prevState: Group[]) => Group[]'.
+    Type '(Group | { member_count: number; id: number; name: string; description: string; })[]' is not assignable to type 'Group[]'.
+      Type 'Group | { member_count: number; id: number; name: string; description: string; }' is not assignable to type 'Group'.
+        Type '{ member_count: number; id: number; name: string; description: string; }' is missing the following properties from type 'Group': join_code, created_at
+src/app/dashboard/groups/page.tsx(95,22): error TS2345: Argument of type '{ member_count: number; id: number; name: string; description: string; }' is not assignable to parameter of type 'SetStateAction<Group | null>'.
+  Type '{ member_count: number; id: number; name: string; description: string; }' is missing the following properties from type 'Group': join_code, created_at
+src/app/dashboard/page.tsx(53,33): error TS2345: Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'SetStateAction<{ streak: number; xp: number; level: number; problems_solved: number; videos_watched: number; hackathons_joined: number; }>'.
+  Type 'Record<string, unknown>' is missing the following properties from type '{ streak: number; xp: number; level: number; problems_solved: number; videos_watched: number; hackathons_joined: number; }': streak, xp, level, problems_solved, and 2 more.
+src/app/dashboard/rewards/page.tsx(28,15): error TS2345: Argument of type '{}' is not assignable to parameter of type 'SetStateAction<number>'.
+src/app/dashboard/roadmaps/page.tsx(40,20): error TS2345: Argument of type 'Roadmap' is not assignable to parameter of type 'SetStateAction<RoadmapResponse | null>'.
+  Type 'Roadmap' is missing the following properties from type 'RoadmapResponse': description, estimated_months, milestones
+src/app/dashboard/startup-lab/page.tsx(52,21): error TS2345: Argument of type 'StartupIdea[]' is not assignable to parameter of type 'SetStateAction<SavedIdea[]>'.
+  Type 'StartupIdea[]' is not assignable to type 'SavedIdea[]'.
+    Type 'StartupIdea' is missing the following properties from type 'SavedIdea': created_at, name, problem, solution, and 3 more.
+src/app/dashboard/startup-lab/page.tsx(62,29): error TS2345: Argument of type '{ domain: string; name: string; problem: string; solution: string; market_opportunity: string; tech_stack: string[]; monetization: string; }' is not assignable to parameter of type 'Partial<StartupIdea>'.
+  Property 'tech_stack' is incompatible with index signature.
+    Type 'string[]' is not assignable to type 'string | number | boolean | null | undefined'.
+src/app/dashboard/startup-lab/page.tsx(80,15): error TS2345: Argument of type 'StartupIdea' is not assignable to parameter of type 'SetStateAction<StartupIdea | null>'.
+  Type 'StartupIdea' is missing the following properties from type 'StartupIdea': name, problem, solution, market_opportunity, and 2 more.
+src/app/dashboard/study-rooms/page.tsx(46,16): error TS2345: Argument of type 'StudyRoom[]' is not assignable to parameter of type 'SetStateAction<Room[]>'.
+  Type 'StudyRoom[]' is not assignable to type 'Room[]'.
+    Type 'StudyRoom' is missing the following properties from type 'Room': description, tag, color

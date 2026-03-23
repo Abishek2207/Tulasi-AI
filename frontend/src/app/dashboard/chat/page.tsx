@@ -9,6 +9,13 @@ import toast from "react-hot-toast";
 
 const GREETING = "Hello! I'm Tulasi AI, your personal learning companion. Ask me anything — coding concepts, career advice, interview prep, or system design.";
 
+const QUICK_PROMPTS = [
+  { label: "🎯 Simulate Google Interview", value: "Simulate a Google Software Engineer technical interview. Ask me a LeetCode-style question and evaluate my answers." },
+  { label: "🗺️ Create Learning Roadmap", value: "Create a detailed 12-week learning roadmap for a Full Stack Engineer role with daily tasks and resources." },
+  { label: "🔧 Fix My Code", value: "I have a bug in my code. Help me debug it step by step. I'll paste my code below." },
+  { label: "🏗️ System Design", value: "Walk me through how to design a scalable URL shortener like Bitly — cover architecture, databases, and scaling strategy." },
+];
+
 function TypingDots() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "16px 20px" }}>
@@ -122,14 +129,15 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      const res = await chatApi.send(text, sessionId || undefined, token);
+      const res = await chatApi.send(text, sessionId || undefined);
       if (res.session_id && !sessionId) setSessionId(res.session_id);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: res.response || "No response received." },
       ]);
-    } catch (err: any) {
-      const errMsg = err?.message || "Failed to connect to backend.";
+    } catch (err: unknown) {
+      const error = err as Error;
+      const errMsg = error.message || "Failed to connect to backend.";
       toast.error(errMsg.length > 80 ? "Connection failed. Please try again." : errMsg);
       setMessages((prev) => [
         ...prev,
@@ -154,6 +162,11 @@ export default function ChatPage() {
   const clearChat = () => {
     setMessages([{ role: "assistant", content: GREETING }]);
     setSessionId("");
+  };
+
+  const handleQuickPrompt = (value: string) => {
+    setInput(value);
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   if (!mounted) return null;
@@ -253,6 +266,34 @@ export default function ChatPage() {
         )}
         <div ref={endRef} />
       </div>
+
+      {/* Quick Prompts */}
+      {messages.length <= 1 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}
+        >
+          {QUICK_PROMPTS.map((p) => (
+            <button
+              key={p.label}
+              onClick={() => handleQuickPrompt(p.value)}
+              disabled={!hasToken}
+              style={{
+                padding: "7px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+                cursor: hasToken ? "pointer" : "not-allowed",
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                color: "var(--text-secondary)", transition: "all 0.2s", opacity: hasToken ? 1 : 0.4,
+              }}
+              onMouseEnter={e => { if (hasToken) { e.currentTarget.style.background = "rgba(124,58,237,0.15)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)"; e.currentTarget.style.color = "#A78BFA"; }}}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </motion.div>
+      )}
 
       {/* Input area */}
       <motion.div

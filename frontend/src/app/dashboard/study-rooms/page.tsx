@@ -36,14 +36,14 @@ export default function StudyRoomsPage() {
   const [timer, setTimer] = useState(25 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<any>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const fetchRooms = async () => {
     try {
       const data = await studyApi.rooms();
-      setRooms(data.rooms || []);
+      setRooms((data.rooms as unknown as Room[]) || []);
     } catch (e) { console.error("Rooms fetch failed:", e); }
     finally { setLoading(false); }
   };
@@ -51,7 +51,7 @@ export default function StudyRoomsPage() {
   const fetchMessages = async (roomId: number) => {
         try {
       const data = await studyApi.messages(roomId.toString(), token);
-      setMessages(data.messages || []);
+      setMessages((data.messages as unknown as Message[]) || []);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (e) {}
   };
@@ -63,11 +63,11 @@ export default function StudyRoomsPage() {
       fetchMessages(activeRoom.id);
       pollRef.current = setInterval(() => fetchMessages(activeRoom.id), 5000);
     }
-    return () => clearInterval(pollRef.current);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [activeRoom]);
 
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (isTimerRunning && timer > 0) interval = setInterval(() => setTimer(t => t - 1), 1000);
     else if (timer === 0) setIsTimerRunning(false);
     return () => clearInterval(interval);
@@ -124,7 +124,7 @@ export default function StudyRoomsPage() {
               </h2>
               <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{activeRoom.description}</div>
             </div>
-            <button onClick={() => { setActiveRoom(null); clearInterval(pollRef.current); }} className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: 13, borderRadius: 8 }}>
+            <button onClick={() => { setActiveRoom(null); if (pollRef.current) clearInterval(pollRef.current); }} className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: 13, borderRadius: 8 }}>
               Leave Room
             </button>
           </div>
@@ -138,7 +138,7 @@ export default function StudyRoomsPage() {
               </div>
             )}
             {messages.map((m) => {
-              const isMe = m.user_name === (session?.user?.name || (session?.user as any)?.email?.split("@")[0]);
+              const isMe = m.user_name === (session?.user?.name || (session?.user as { id?: number, email?: string, name?: string, accessToken?: string })?.email?.split("@")[0]);
               return (
                 <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
                   <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>

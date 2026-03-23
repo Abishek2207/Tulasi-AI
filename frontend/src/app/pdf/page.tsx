@@ -9,7 +9,7 @@ import { pdfApi } from "@/lib/api";
 
 export default function PDFPage() {
   const { data: session } = useSession();
-  const token = (session?.user as any)?.accessToken;
+  const token = (session?.user as { id?: number, email?: string, name?: string, accessToken?: string })?.accessToken;
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [query, setQuery] = useState("");
@@ -28,9 +28,10 @@ export default function PDFPage() {
       const res = await pdfApi.upload(file, token);
       setSessionId(res.session_id);
       alert("PDF Uploaded and Processed successfully!");
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const error = e as Error;
       console.error(e);
-      alert(`Upload failed: ${e.message}`);
+      alert(`Upload failed: ${error.message}`);
     } finally {
       setUploading(false);
     }
@@ -45,9 +46,10 @@ export default function PDFPage() {
     try {
       const res = await pdfApi.ask(query, sessionId, token);
       setAnswer(res.answer);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const error = e as Error;
       console.error(e);
-      setAnswer(`Error: ${e.message}`);
+      setAnswer(`Error: ${error.message}`);
     } finally {
       setAsking(false);
     }

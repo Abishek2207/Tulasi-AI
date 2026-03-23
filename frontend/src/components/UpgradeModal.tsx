@@ -65,7 +65,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               router.refresh(); // force server components to re-read Pro status if any
             }
           } catch (err: any) {
-            toast.error(err.message || "Payment verification failed", { id: "verify" });
+      const error = err as Error;
+            toast.error(error.message || "Payment verification failed", { id: "verify" });
           }
         },
         prefill: {
@@ -84,7 +85,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
       rzp.open();
 
     } catch (err: any) {
-      toast.error(err.message || "Failed to initiate checkout");
+      const error = err as Error;
+      toast.error(error.message || "Failed to initiate checkout");
     } finally {
       setLoading(false);
     }

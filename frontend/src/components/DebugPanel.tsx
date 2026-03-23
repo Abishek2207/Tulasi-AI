@@ -34,7 +34,7 @@ export function DebugPanel() {
 
     // Intercept Console Errors
     const originalConsoleError = console.error;
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       originalConsoleError.apply(console, args);
       const errText = args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ");
       setErrors(prev => [...prev.slice(-9), { 

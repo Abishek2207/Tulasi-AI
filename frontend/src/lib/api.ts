@@ -15,7 +15,7 @@ export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.
   .replace(/\/$/, "");
 
 /** Centralised debug logger — always prints in dev; silent in prod unless token missing */
-function log(label: string, data?: any) {
+function log(label: string, data?: unknown) {
   if (isDev) {
     console.log(`[TulasiAPI] ${label}`, data ?? "");
   }
@@ -63,15 +63,16 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2): P
     }
     toast.dismiss("retry-toast");
     return res;
-  } catch (err: any) {
-    if (retries === 0 || err.name === 'AbortError') {
+  } catch (err: unknown) {
+    const error = err as Error;
+    if (retries === 0 || error.name === 'AbortError') {
       toast.dismiss("retry-toast");
-      if (err.name === 'AbortError') {
+      if (error.name === 'AbortError') {
         toast.error("Request timed out. Please try again.");
         throw new Error("Request timed out.");
       }
       toast.error("Connection failed. Check your network.");
-      throw err;
+      throw error;
     }
     // Exponential backoff for the 2 retries
     await new Promise(r => setTimeout(r, 1000 * (3 - retries)));
@@ -126,8 +127,9 @@ async function request<T>(
     }
     
     return data;
-  } catch (err: any) {
-    const msg = err.message || "Network Error";
+  } catch (err: unknown) {
+    const error = err as Error;
+    const msg = error.message || "Network Error";
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED")) {
       throw new Error("Backend unreachable. Check your connection.");
     }
@@ -216,15 +218,15 @@ export const pdfApi = {
 // ─── Roadmap ─────────────────────────────────────────────────────────────────
 
 export const roadmapApi = {
-  getRoadmaps: (token: string) => request<{ roadmaps: any[], completed_milestones: string[] }>("/api/roadmap/", {}, token),
-  getRoadmap: (id: string, token: string) => request<any>(`/api/roadmap/${id}`, {}, token),
+  getRoadmaps: (token: string) => request<{ roadmaps: Roadmap[], completed_milestones: string[] }>("/api/roadmap/", {}, token),
+  getRoadmap: (id: string, token: string) => request<Roadmap>(`/api/roadmap/${id}`, {}, token),
   logProgress: (roadmap_id: string, milestone_id: string, token: string) =>
     request<{ message: string; xp_earned: number }>("/api/roadmap/progress", {
       method: "POST",
       body: JSON.stringify({ roadmap_id, milestone_id }),
     }, token),
   generate: (goal: string, token: string) =>
-    request<{ roadmap: any }>("/api/roadmap/generate", {
+    request<{ roadmap: Roadmap }>("/api/roadmap/generate", {
       method: "POST",
       body: JSON.stringify({ goal }),
     }, token),
@@ -254,34 +256,34 @@ export const hackathonApi = {
     const params = new URLSearchParams();
     if (tag) params.append("tag", tag);
     if (status) params.append("status", status);
-    return request<{ hackathons: any[]; total: number }>(`/api/hackathons?${params.toString()}`, {}, token);
+    return request<{ hackathons: Hackathon[]; total: number }>(`/api/hackathons?${params.toString()}`, {}, token);
   },
-  get: (id: number, token?: string) => request<any>(`/api/hackathons/${id}`, {}, token),
-  create: (data: any, token: string) =>
-    request<any>("/api/hackathons", {
+  get: (id: number, token?: string) => request<Hackathon>(`/api/hackathons/${id}`, {}, token),
+  create: (data: Partial<Hackathon>, token: string) =>
+    request<Hackathon>("/api/hackathons", {
       method: "POST",
       body: JSON.stringify(data),
     }, token),
   bookmark: (id: number, token: string) =>
-    request<any>(`/api/hackathons/${id}/bookmark`, { method: "POST" }, token),
+    request<Hackathon>(`/api/hackathons/${id}/bookmark`, { method: "POST" }, token),
   unbookmark: (id: number, token: string) =>
-    request<any>(`/api/hackathons/${id}/bookmark`, { method: "DELETE" }, token),
+    request<Hackathon>(`/api/hackathons/${id}/bookmark`, { method: "DELETE" }, token),
   bookmarked: (token: string) =>
-    request<{ hackathons: any[] }>("/api/hackathons/bookmarked", {}, token),
+    request<{ hackathons: Hackathon[] }>("/api/hackathons/bookmarked", {}, token),
 };
 
 // ─── Study Rooms ─────────────────────────────────────────────────────────────
 
 export const studyApi = {
-  rooms: () => request<{ rooms: any[] }>("/api/study/rooms"),
-  create: (data: any, token: string) =>
-    request<any>("/api/study/create", { method: "POST", body: JSON.stringify(data) }, token),
+  rooms: () => request<{ rooms: StudyRoom[] }>("/api/study/rooms"),
+  create: (data: Partial<StudyRoom>, token: string) =>
+    request<StudyRoom>("/api/study/create", { method: "POST", body: JSON.stringify(data) }, token),
   join: (roomId: number | string, token: string) =>
-    request<any>(`/api/study/join/${roomId}`, { method: "POST" }, token),
+    request<StudyRoom>(`/api/study/join/${roomId}`, { method: "POST" }, token),
   messages: (roomId: number | string, token: string, limit = 50) =>
-    request<{ room_id: number; room_name: string; messages: any[] }>(`/api/study/${roomId}/messages?limit=${limit}`, {}, token),
+    request<{ room_id: number; room_name: string; messages: StudyMessage[] }>(`/api/study/${roomId}/messages?limit=${limit}`, {}, token),
   sendMessage: (roomId: number | string, content: string, token: string) =>
-    request<any>(`/api/study/${roomId}/messages`, { method: "POST", body: JSON.stringify({ content }) }, token),
+    request<StudyMessage>(`/api/study/${roomId}/messages`, { method: "POST", body: JSON.stringify({ content }) }, token),
 };
 
 // ─── Code Practice ───────────────────────────────────────────────────────────
@@ -292,11 +294,11 @@ export const codeApi = {
     if (category) params.append("category", category);
     if (difficulty) params.append("difficulty", difficulty);
     if (search) params.append("search", search);
-    return request<{ problems: any[]; categories: string[]; total: number; solved_count: number }>(`/api/code/problems?${params.toString()}`, {}, token);
+    return request<{ problems: CodeProblem[]; categories: string[]; total: number; solved_count: number }>(`/api/code/problems?${params.toString()}`, {}, token);
   },
-  getProblem: (id: string, token: string) => request<any>(`/api/code/problems/${id}`, {}, token),
+  getProblem: (id: string, token: string) => request<CodeProblem>(`/api/code/problems/${id}`, {}, token),
   markSolved: (id: string, token: string) =>
-    request<any>(`/api/code/problems/${id}/solve`, { method: "POST" }, token),
+    request<CodeProblem>(`/api/code/problems/${id}/solve`, { method: "POST" }, token),
   run: (code: string, language: string, token: string, stdin?: string) =>
     request<{ output: string; status: string; execution_time_ms?: number }>("/api/code/run", { method: "POST", body: JSON.stringify({ code, language, stdin }) }, token),
   explain: (code: string, language: string, token: string) =>
@@ -307,16 +309,16 @@ export const codeApi = {
 
 export const startupApi = {
   generate: (domain: string, target_audience: string, token: string) =>
-    request<{ status: string; idea: any }>("/api/startup/generate", { method: "POST", body: JSON.stringify({ domain, target_audience }) }, token),
-  save: (idea: any, token: string) =>
+    request<{ status: string; idea: StartupIdea }>("/api/startup/generate", { method: "POST", body: JSON.stringify({ domain, target_audience }) }, token),
+  save: (idea: Partial<StartupIdea>, token: string) =>
     request<{ message: string; id: number }>("/api/startup/save", { method: "POST", body: JSON.stringify(idea) }, token),
-  ideas: (token: string) => request<{ ideas: any[] }>("/api/startup/ideas", {}, token),
+  ideas: (token: string) => request<{ ideas: StartupIdea[] }>("/api/startup/ideas", {}, token),
 };
 
 // ─── Certificates ────────────────────────────────────────────────────────────
 
 export const certificateApi = {
-  list: (token: string) => request<{ certificates: any[], milestones: any[] }>("/api/certificates/my", {}, token),
+  list: (token: string) => request<{ certificates: Certificate[], milestones: Milestone[] }>("/api/certificates/my", {}, token),
   generate: (milestoneId: string, token: string) => request<{ message: string }>(`/api/certificates/generate/${milestoneId}`, { method: "POST" }, token),
   uploadFile: async (file: File, title: string, token: string) => {
     const form = new FormData();
@@ -342,7 +344,7 @@ export const resumeApi = {
     }, token),
   
   getHistory: (token: string) =>
-    request<any[]>("/api/resume/history", {
+    request<ResumeHistory[]>("/api/resume/history", {
       method: "GET",
     }, token),
 };
@@ -356,16 +358,16 @@ export const healthCheck = () =>
 // ─── Gamification & Activity ─────────────────────────────────────────────────
 
 export const activityApi = {
-  getStats: (token: string) => request<any>("/api/activity/stats", {}, token),
-  getLeaderboard: (token?: string) => request<{ leaderboard: any[] }>("/api/activity/leaderboard", {}, token),
-  getAnalytics: (token: string) => request<{ time_series: any[], total_period_xp: number, total_period_problems: number }>("/api/activity/analytics", {}, token)
+  getStats: (token: string) => request<Record<string, unknown>>("/api/activity/stats", {}, token),
+  getLeaderboard: (token?: string) => request<{ leaderboard: LeaderboardUser[] }>("/api/activity/leaderboard", {}, token),
+  getAnalytics: (token: string) => request<{ time_series: AnalyticsSeries[], total_period_xp: number, total_period_problems: number }>("/api/activity/analytics", {}, token)
 };
 
 // ─── Profile ─────────────────────────────────────────────────────────────────
 
 export const profileApi = {
   update: (data: { name?: string; bio?: string; skills?: string }, token: string) =>
-    request<{ message: string; user: any }>("/api/auth/profile", {
+    request<{ message: string; user: User }>("/api/auth/profile", {
       method: "PUT",
       body: JSON.stringify(data),
     }, token),
@@ -374,21 +376,21 @@ export const profileApi = {
 // ─── Group Chat ───────────────────────────────────────────────────────────────
 
 export const groupApi = {
-  list: (token: string) => request<{ groups: any[] }>("/api/groups", {}, token),
+  list: (token: string) => request<{ groups: Group[] }>("/api/groups", {}, token),
   create: (name: string, description: string, token: string) =>
-    request<any>("/api/groups/create", {
+    request<Group>("/api/groups/create", {
       method: "POST",
       body: JSON.stringify({ name, description }),
     }, token),
   join: (join_code: string, token: string) =>
-    request<{ message: string; group: any }>("/api/groups/join", {
+    request<{ message: string; group: Group }>("/api/groups/join", {
       method: "POST",
       body: JSON.stringify({ join_code }),
     }, token),
   getMessages: (groupId: number, token: string) =>
-    request<{ group_id: number; messages: any[] }>(`/api/groups/${groupId}/messages`, {}, token),
+    request<{ group_id: number; messages: GroupMessage[] }>(`/api/groups/${groupId}/messages`, {}, token),
   sendMessage: (groupId: number, content: string, token: string) =>
-    request<any>(`/api/groups/${groupId}/messages`, {
+    request<GroupMessage>(`/api/groups/${groupId}/messages`, {
       method: "POST",
       body: JSON.stringify({ content }),
     }, token),
@@ -397,7 +399,7 @@ export const groupApi = {
 // ─── Rewards ─────────────────────────────────────────────────────────────────
 
 export const rewardApi = {
-  getRewards: (token: string) => request<{ rewards: any[] }>("/api/activity/rewards", {}, token),
+  getRewards: (token: string) => request<{ rewards: Reward[] }>("/api/activity/rewards", {}, token),
   redeem: (reward_id: number, token: string) => 
     request<{ message: string; remaining_xp: number }>("/api/activity/rewards/redeem", {
       method: "POST",
@@ -457,4 +459,102 @@ export interface User {
 export interface ChatMsg {
   role: "user" | "assistant";
   content: string;
+}
+
+export interface Hackathon {
+  id: number;
+  title: string;
+  date: string;
+  location?: string;
+  tags?: string[];
+  [key: string]: string | number | boolean | string[] | undefined | null;
+}
+
+export interface StudyRoom {
+  id: number;
+  name: string;
+  topic?: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface StudyMessage {
+  id: number;
+  user_name: string;
+  content: string;
+  created_at: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface CodeProblem {
+  id: string;
+  title: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Milestone {
+  id: string;
+  title: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Certificate {
+  id: number;
+  title: string;
+  file_path: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Group {
+  id: number;
+  name: string;
+  description: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface GroupMessage {
+  id: number;
+  user_name: string;
+  content: string;
+  created_at: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Roadmap {
+  id: string;
+  title: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface AnalyticsSeries {
+  date: string;
+  xp: number;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface LeaderboardUser {
+  rank: number;
+  name: string;
+  xp: number;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Reward {
+  id: number;
+  title: string;
+  cost: number;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface StartupIdea {
+  id: number;
+  domain: string;
+  idea: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface ResumeHistory {
+  id: number;
+  score: number;
+  [key: string]: string | number | boolean | undefined | null;
 }

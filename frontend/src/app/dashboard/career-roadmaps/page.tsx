@@ -38,14 +38,16 @@ export default function CareerRoadmapsPage() {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
             const data = await roadmapApi.getRoadmaps(token);
-      setRoadmaps(data.roadmaps as Roadmap[]);
-      setCompletedMilestones(new Set(data.completed_milestones || []));
-      if (data.roadmaps && data.roadmaps.length > 0) {
-        if (!data.roadmaps.find((r: Roadmap) => r.id === activeId)) {
-          setActiveId(data.roadmaps[0].id);
+      const fetchedRoadmaps = data.roadmaps as unknown as Roadmap[];
+      setRoadmaps(fetchedRoadmaps);
+      setCompletedMilestones(new Set((data.completed_milestones as string[]) || []));
+      if (fetchedRoadmaps && fetchedRoadmaps.length > 0) {
+        if (!fetchedRoadmaps.find((r) => r.id === activeId)) {
+          setActiveId(fetchedRoadmaps[0].id);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       setError("Failed to load roadmaps. The backend might be sleeping. Please try again later.");
     } finally {
       setLoading(false);

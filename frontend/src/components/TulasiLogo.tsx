@@ -7,7 +7,7 @@ export function TulasiLogo({ size = 40, className = "", style = {} }: { size?: n
     duration: 3,
     repeat: Infinity,
     repeatType: "reverse" as const,
-    ease: "easeInOut",
+    ease: "easeInOut" as const,
   };
 
   return (
@@ -96,14 +96,14 @@ export function TulasiLogo({ size = 40, className = "", style = {} }: { size?: n
             d="M48 55 C20 65, 0 45, 5 30 C15 25, 30 40, 48 55 Z" 
             fill="url(#leafPurple)" 
             animate={{ rotate: [-2, 2, -2], originX: "48px", originY: "55px" }} 
-            transition={{ ...leafTransition, delay: 0.4 } as any} 
+            transition={{ ...leafTransition, delay: 0.4 }} 
           />
           {/* Far Outer Right Leaf (Light Purple/Pink) */}
           <motion.path 
             d="M52 55 C80 65, 100 45, 95 30 C85 25, 70 40, 52 55 Z" 
             fill="url(#leafPurple)" 
             animate={{ rotate: [2, -2, 2], originX: "52px", originY: "55px" }} 
-            transition={{ ...leafTransition, delay: 0.4 } as any} 
+            transition={{ ...leafTransition, delay: 0.4 }} 
           />
           
           {/* Inner Left Leaf (Blue/Cyan) */}
@@ -111,14 +111,14 @@ export function TulasiLogo({ size = 40, className = "", style = {} }: { size?: n
             d="M49 55 C25 50, 15 25, 25 10 C35 15, 45 35, 49 55 Z" 
             fill="url(#leafBlue)" 
             animate={{ rotate: [-1, 1, -1], originX: "49px", originY: "55px" }} 
-            transition={{ ...leafTransition, delay: 0.2 } as any} 
+            transition={{ ...leafTransition, delay: 0.2 }} 
           />
           {/* Inner Right Leaf (Blue/Cyan) */}
           <motion.path 
             d="M51 55 C75 50, 85 25, 75 10 C65 15, 55 35, 51 55 Z" 
             fill="url(#leafBlue)" 
             animate={{ rotate: [1, -1, 1], originX: "51px", originY: "55px" }} 
-            transition={{ ...leafTransition, delay: 0.2 } as any} 
+            transition={{ ...leafTransition, delay: 0.2 }} 
           />
           
           {/* Center Leaf (Green gradient) */}

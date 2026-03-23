@@ -109,7 +109,8 @@ export default function InterviewPage() {
       setQuestionNum(1);
       setPhase("active");
     } catch (e: any) {
-      setError(e.message || "Failed to start interview. The backend might be sleeping. Please try again.");
+      const error = e as Error;
+      setError(error.message || "Failed to start interview. The backend might be sleeping. Please try again.");
     } finally { setLoading(false); }
   };
 
@@ -134,7 +135,8 @@ export default function InterviewPage() {
         }
       }
     } catch (e: any) {
-      setError(e.message || "Error submitting answer. The backend might be sleeping. Please try again.");
+      const error = e as Error;
+      setError(error.message || "Error submitting answer. The backend might be sleeping. Please try again.");
     } finally { setLoading(false); }
   };
 

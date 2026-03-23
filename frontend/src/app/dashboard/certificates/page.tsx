@@ -30,8 +30,8 @@ export default function CertificatesPage() {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       
       const data = await certificateApi.list(token);
-      setCertificates(data.certificates || []);
-      setMilestones(data.milestones || []);
+      setCertificates((data.certificates as unknown as Certificate[]) || []);
+      setMilestones((data.milestones as unknown as Milestone[]) || []);
     } catch (e) {
       setError("Could not load certificates. The backend might be sleeping (takes ~50s to wake up). Please try again.");
     } finally { setLoading(false); }
@@ -44,8 +44,9 @@ export default function CertificatesPage() {
       const data = await certificateApi.generate(milestoneId, token);
       setSuccess(data.message || "🎉 Certificate generated!");
       fetchCertificates();
-    } catch (e: any) {
-      setError(e.message || "Failed to generate certificate.");
+    } catch (e: unknown) {
+      const error = e as Error;
+      setError(error.message || "Failed to generate certificate.");
     } finally { setGenerating(null); }
   };
 
