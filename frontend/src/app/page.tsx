@@ -97,8 +97,9 @@ function Hero() {
         
         <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1 }}
           style={{ fontSize: "clamp(48px, 8vw, 84px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 1.05, letterSpacing: "-0.04em", marginBottom: 24 }}>
-          Your AI-Powered <br />
-          <span className="gradient-text">Career Companion</span>
+          Tulasi AI <br />
+          <span className="gradient-text">LIVE v2</span>
+          {(console.log("FORCE DEPLOY ACTIVE") as unknown) as React.ReactNode}
         </motion.h1>
 
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
