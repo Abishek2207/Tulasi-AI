@@ -27,6 +27,8 @@ export const viewport = {
 };
 
 import { DebugPanel } from "@/components/DebugPanel";
+import { XPNotificationSystem } from "@/components/XPNotification";
+import { OnboardingTour } from "@/components/OnboardingTour";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -51,6 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
           {children}
           <DebugPanel />
+          <XPNotificationSystem />
+          <OnboardingTour />
         </Providers>
       </body>
     </html>
