@@ -11,6 +11,12 @@ import {
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 
+const Code2 = ({ size, color }: { size: number, color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/>
+  </svg>
+);
+
 // ── Feature Data (Bento Grid Style) ────────────────────────────────
 const primaryFeatures = [
   { id: "ai-tutor", title: "Autonomous AI Tutor", desc: "Context-aware mastery. Tulasi AI doesn't just answer; it architects your understanding with deep pedagogical memory.", icon: BrainCircuit, color: "#10B981", span: 2, bg: "rgba(16,185,129,0.05)" },
@@ -194,7 +200,7 @@ function RoleSelector() {
     { name: "ML Architect", desc: "Data-driven career paths.", icon: BrainCircuit, color: "#8B5CF6" },
   ];
   return (
-    <div style={{ padding: "80px 24px", background: "rgba(255,255,255,0.01)", borderY: "1px solid rgba(255,255,255,0.03)" }}>
+    <div style={{ padding: "80px 24px", background: "rgba(255,255,255,0.01)", borderTop: "1px solid rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", justifyContent: "center", gap: 40, flexWrap: "wrap" }}>
         {roles.map(r => (
           <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -276,7 +282,7 @@ function Footer() {
            </div>
         </div>
       </div>
-      <div style={{ maxWidth: 1280, margin: "0 auto", pt: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>DESIGNED BY TULASI AI LABS • © 2026</span>
         <div style={{ display: "flex", gap: 24, color: "var(--text-muted)" }}>
            <Link href="#" style={{ color: "var(--text-muted)" }}><Globe size={18} /></Link>
@@ -287,11 +293,6 @@ function Footer() {
   );
 }
 
-const Code2 = ({ size, color }: { size: number, color: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/>
-  </svg>
-);
 
 // ── Main Page Component ──────────────────────────────────────────
 export default function LandingPage() {

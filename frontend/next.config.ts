@@ -3,7 +3,6 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.rail
 
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true, // Force swcMinify per user request to invalidate cache
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.googleusercontent.com' },
