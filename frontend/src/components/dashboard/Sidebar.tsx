@@ -21,7 +21,7 @@ const NAV_SECTIONS = [
       { icon: LayoutDashboard, name: "Dashboard",       href: "/dashboard" },
       { icon: MessageSquare,   name: "AI Chat",         href: "/dashboard/chat" },
       { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
-      { icon: Map,             name: "Career Roadmaps", href: "/dashboard/career-roadmaps" },
+      { icon: Map,             name: "Career Roadmaps", href: "/dashboard/roadmaps" },
       { icon: Rocket,           name: "Startup Lab",     href: "/dashboard/startup-lab" },
     ]
   },

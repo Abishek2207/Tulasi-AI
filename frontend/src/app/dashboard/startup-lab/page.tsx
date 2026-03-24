@@ -4,6 +4,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { startupApi } from "@/lib/api";
+import { TiltCard } from "@/components/ui/TiltCard";
+import { 
+  Rocket, Lightbulb, Users, BarChart3, 
+  Sparkles, CheckCircle2, Save, History, 
+  ArrowRight, Zap, Target, Globe
+} from "lucide-react";
 
 interface StartupIdea {
   name: string;
@@ -47,7 +53,7 @@ export default function StartupLabPage() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const fetchSavedIdeas = async () => {
-        try {
+    try {
       const data = await startupApi.ideas(token);
       setSavedIdeas((data.ideas as unknown as SavedIdea[]) || []);
     } catch (e) {}
@@ -56,10 +62,10 @@ export default function StartupLabPage() {
   useEffect(() => { if (session) fetchSavedIdeas(); }, [session]);
 
   const saveIdea = async () => {
-    if (!idea ) return;
+    if (!idea) return;
     setSaving(true);
     try {
-      await startupApi.save({ ...idea, domain } as unknown as import("@/lib/api").StartupIdea, token);
+      await startupApi.save({ ...idea, domain } as any, token);
       setSaved(true); 
       fetchSavedIdeas();
     } catch (e) {}
@@ -79,187 +85,202 @@ export default function StartupLabPage() {
       const data = await startupApi.generate(domain, audience, token);
       setIdea(data.idea as unknown as StartupIdea);
       setSaved(false);
-    } catch (err: unknown) {
-      const error = err as Error;
-      setError(error.message || "Failed to reach the AI servers.");
+    } catch (err: any) {
+      setError(err.message || "Failed to reach the AI servers.");
     }
     setLoading(false);
   };
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 60 }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 60 }}>
       
-      <div style={{ marginBottom: 36, textAlign: "center" }}>
-        <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-outfit)", letterSpacing: "-1px" }}>
-          🚀 Startup <span className="gradient-text" style={{ background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Ideas LAB</span>
+      {/* Header */}
+      <div style={{ marginBottom: 48, textAlign: "left" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+           <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #F97316, #FB923C)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(249,115,22,0.3)" }}>
+              <Rocket size={22} color="white" />
+           </div>
+           <span style={{ fontSize: 13, fontWeight: 900, color: "#F97316", textTransform: "uppercase", letterSpacing: 2 }}>Incubator Engine</span>
+        </div>
+        <h1 style={{ fontSize: 44, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1.5px", marginBottom: 12 }}>
+          Startup <span className="gradient-text">Ideation LAB</span>
         </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 15, marginTop: 8, maxWidth: 600, margin: "8px auto 0" }}>
-          Select an industry and an audience. Our AI will instantly generate a 
-          verified business plan, complete with a technical architecture recommendation.
+        <p style={{ color: "var(--text-secondary)", fontSize: 18, maxWidth: 700, lineHeight: 1.6 }}>
+          Zero-to-One velocity. Our AI analyzes market gaps in real-time to generate 
+          high-fidelity business plans and technical architectures.
         </p>
       </div>
 
-      <div style={{ display: "flex", gap: 24, marginBottom: 40, flexWrap: "wrap", justifyContent: "center" }}>
-        <div className="dash-card" style={{ flex: "1 1 300px", padding: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,107,107,0.2)" }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>1. Select Domain</h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-            {domains.map(d => (
-              <button 
-                key={d} 
-                onClick={() => setDomain(d)}
-                style={{ 
-                  padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
-                  background: domain === d ? "rgba(255,107,107,0.15)" : "transparent",
-                  color: domain === d ? "#FF6B6B" : "var(--text-secondary)",
-                  border: `1px solid ${domain === d ? "#FF6B6B" : "var(--border)"}`
-                }}
-              >
-                {d}
-              </button>
-            ))}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginBottom: 48 }}>
+        {/* Domain Selection */}
+        <TiltCard intensity={5}>
+          <div className="glass-card" style={{ padding: 32, height: "100%", background: "rgba(255,255,255,0.02)" }}>
+            <h3 style={{ fontSize: 14, fontWeight: 900, marginBottom: 24, display: "flex", alignItems: "center", gap: 10, color: "var(--text-primary)" }}>
+              <Globe size={16} color="#F97316" /> 01. SELECT MARKET DOMAIN
+            </h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {domains.map(d => (
+                <button 
+                  key={d} 
+                  onClick={() => setDomain(d)}
+                  style={{ 
+                    padding: "10px 16px", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s",
+                    background: domain === d ? "#F9731615" : "rgba(255,255,255,0.03)",
+                    color: domain === d ? "#F97316" : "var(--text-muted)",
+                    border: `1px solid ${domain === d ? "#F97316" : "rgba(255,255,255,0.06)"}`
+                  }}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </TiltCard>
 
-        <div className="dash-card" style={{ flex: "1 1 300px", padding: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,142,83,0.2)" }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>2. Target Audience</h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-            {audiences.map(a => (
-              <button 
-                key={a} 
-                onClick={() => setAudience(a)}
-                style={{ 
-                  padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
-                  background: audience === a ? "rgba(255,142,83,0.15)" : "transparent",
-                  color: audience === a ? "#FF8E53" : "var(--text-secondary)",
-                  border: `1px solid ${audience === a ? "#FF8E53" : "var(--border)"}`
-                }}
-              >
-                {a}
-              </button>
-            ))}
+        {/* Audience Selection */}
+        <TiltCard intensity={5}>
+          <div className="glass-card" style={{ padding: 32, height: "100%", background: "rgba(255,255,255,0.02)" }}>
+            <h3 style={{ fontSize: 14, fontWeight: 900, marginBottom: 24, display: "flex", alignItems: "center", gap: 10, color: "var(--text-primary)" }}>
+              <Users size={16} color="#FB923C" /> 02. TARGET AUDIENCE
+            </h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {audiences.map(a => (
+                <button 
+                  key={a} 
+                  onClick={() => setAudience(a)}
+                  style={{ 
+                    padding: "10px 16px", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s",
+                    background: audience === a ? "#FB923C15" : "rgba(255,255,255,0.03)",
+                    color: audience === a ? "#FB923C" : "var(--text-muted)",
+                    border: `1px solid ${audience === a ? "#FB923C" : "rgba(255,255,255,0.06)"}`
+                  }}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </TiltCard>
       </div>
 
-      <div style={{ textAlign: "center", marginBottom: 40 }}>
-        {error && <div style={{ color: "#FF6B6B", marginBottom: 16, fontSize: 14 }}>{error}</div>}
+      {/* Action Button */}
+      <div style={{ textAlign: "center", marginBottom: 64 }}>
+        {error && <div style={{ color: "#F43F5E", marginBottom: 16, fontSize: 14, fontWeight: 700 }}>{error}</div>}
         <motion.button 
-          whileHover={{ scale: 1.05 }} 
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02, y: -2 }} 
+          whileTap={{ scale: 0.98 }}
           onClick={handleGenerate}
           disabled={loading || !domain || !audience}
+          className="btn-primary"
           style={{ 
-            background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", 
-            color: "white", padding: "14px 40px", borderRadius: 30, fontSize: 16, fontWeight: 700, border: "none", cursor: loading ? "not-allowed" : "pointer",
-            opacity: (!domain || !audience || loading) ? 0.6 : 1,
-            boxShadow: "0 10px 20px rgba(255,107,107,0.3)"
+            background: "linear-gradient(135deg, #F97316, #FB923C)", 
+            padding: "18px 48px", borderRadius: 16, fontSize: 16, fontWeight: 900, 
+            boxShadow: "0 12px 32px rgba(249,115,22,0.3)", opacity: (loading || !domain || !audience) ? 0.6 : 1
           }}
         >
-          {loading ? "Brainstorming with AI..." : "Generate Startup Pitch"}
+          {loading ? "BRACING FOR IMPACT..." : "INITIALIZE GENERATION SEQUENCE"}
         </motion.button>
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {loading && (
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} style={{ textAlign: "center", padding: 40 }}>
-            <div className="spinner" style={{ margin: "0 auto 20px", width: 40, height: 40, border: "3px solid rgba(255,107,107,0.2)", borderTopColor: "#FF6B6B", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-            <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>Analyzing Market Gaps...</div>
-            <div style={{ fontSize: 14, color: "var(--text-muted)" }}>Finding optimal product-market fit for {audience} in {domain}.</div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ textAlign: "center", padding: 60 }}>
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} style={{ width: 44, height: 44, border: "4px solid rgba(249,115,22,0.1)", borderTopColor: "#F97316", borderRadius: "50%", margin: "0 auto 24px" }} />
+            <div style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>Synthesizing Business Intelligence...</div>
+            <p style={{ color: "var(--text-secondary)", fontSize: 15 }}>Analyzing market signals for {audience} in {domain}.</p>
           </motion.div>
         )}
 
         {idea && !loading && (
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }} 
-            animate={{ opacity: 1, y: 0 }}
-            className="dash-card"
-            style={{ padding: 0, overflow: "hidden", border: "1px solid rgba(255,107,107,0.3)", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}
-          >
-            <div style={{ background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", padding: "30px", textAlign: "center", position: "relative" }}>
-              <div style={{ position: "absolute", top: 16, right: 16, background: "rgba(0,0,0,0.2)", padding: "4px 12px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: "white" }}>YC W26</div>
-              <h2 style={{ fontSize: 40, fontWeight: 900, color: "white", marginBottom: 8, textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>{idea.name}</h2>
-              <div style={{ fontSize: 18, color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>The operating system for {audience.toLowerCase()}.</div>
-            </div>
-
-            <div style={{ padding: 40, display: "flex", flexDirection: "column", gap: 32 }}>
-              
-              <div>
-                <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "1px", color: "#FF6B6B", fontWeight: 800, marginBottom: 12 }}>🔴 The Problem</h3>
-                <p style={{ fontSize: 16, lineHeight: 1.6, color: "rgba(255,255,255,0.9)" }}>{idea.problem}</p>
-              </div>
-
-              <div>
-                <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "1px", color: "#4ECDC4", fontWeight: 800, marginBottom: 12 }}>🟢 The Solution</h3>
-                <p style={{ fontSize: 16, lineHeight: 1.6, color: "rgba(255,255,255,0.9)" }}>{idea.solution}</p>
-              </div>
-
-              <div style={{ display: "flex", gap: 24, flexWrap: "wrap", padding: "24px", background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid var(--border)" }}>
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <h3 style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)", fontWeight: 700, marginBottom: 12 }}>📈 Market Opportunity</h3>
-                  <p style={{ fontSize: 15, color: "var(--text-primary)" }}>{idea.market_opportunity}</p>
+          <motion.div initial={{ opacity: 0, scale: 0.98, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }}>
+            <TiltCard intensity={3}>
+              <div className="glass-card" style={{ padding: 0, overflow: "hidden", border: "1px solid rgba(249,115,22,0.3)" }}>
+                <div style={{ background: "linear-gradient(135deg, #F97316, #FB923C)", padding: "48px 40px", textAlign: "center", position: "relative" }}>
+                  <div style={{ position: "absolute", top: 20, right: 20, padding: "6px 14px", borderRadius: 12, background: "rgba(0,0,0,0.2)", fontSize: 11, fontWeight: 900, color: "white", letterSpacing: 1 }}>UNICORN POTENTIAL</div>
+                  <h2 style={{ fontSize: 44, fontWeight: 900, color: "white", marginBottom: 12, fontFamily: "var(--font-outfit)", letterSpacing: "-1.5px" }}>{idea.name}</h2>
+                  <p style={{ fontSize: 18, color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>The definitive operating system for {audience.toLowerCase()}.</p>
                 </div>
-                <div style={{ flex: 1, minWidth: 200, borderLeft: "1px solid var(--border)", paddingLeft: 24 }}>
-                  <h3 style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)", fontWeight: 700, marginBottom: 12 }}>💸 Monetization Strategy</h3>
-                  <p style={{ fontSize: 15, color: "var(--text-primary)" }}>{idea.monetization}</p>
-                </div>
-              </div>
 
-              <div>
-                <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "1px", color: "#8B5CF6", fontWeight: 800, marginBottom: 16 }}>⚙️ Recommended Tech Stack</h3>
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                  {idea.tech_stack.map(tech => (
-                    <div key={tech} style={{ padding: "8px 16px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: 8, color: "var(--text-primary)", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "#8B5CF6" }}>⚡</span> {tech}
+                <div style={{ padding: 48, display: "flex", flexDirection: "column", gap: 40 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+                    <div>
+                      <h3 style={{ fontSize: 12, fontWeight: 900, color: "#F97316", letterSpacing: 2, marginBottom: 16 }}>THE PROBLEM</h3>
+                      <p style={{ fontSize: 16, lineHeight: 1.6, color: "rgba(255,255,255,0.85)" }}>{idea.problem}</p>
                     </div>
-                  ))}
+                    <div>
+                      <h3 style={{ fontSize: 12, fontWeight: 900, color: "#10B981", letterSpacing: 2, marginBottom: 16 }}>THE SOLUTION</h3>
+                      <p style={{ fontSize: 16, lineHeight: 1.6, color: "rgba(255,255,255,0.85)" }}>{idea.solution}</p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, padding: 32, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div>
+                       <h3 style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 12 }}>MARKET DEPTH</h3>
+                       <p style={{ fontSize: 14, color: "var(--text-primary)", fontWeight: 600 }}>{idea.market_opportunity}</p>
+                    </div>
+                    <div style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", paddingLeft: 32 }}>
+                       <h3 style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 12 }}>REVENUE MODEL</h3>
+                       <p style={{ fontSize: 14, color: "var(--text-primary)", fontWeight: 600 }}>{idea.monetization}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                     <h3 style={{ fontSize: 12, fontWeight: 900, color: "#8B5CF6", letterSpacing: 2, marginBottom: 20 }}>STEROID ARCHITECTURE</h3>
+                     <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                        {idea.tech_stack.map(tech => (
+                          <div key={tech} style={{ padding: "10px 18px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: 12, fontSize: 13, fontWeight: 800, color: "white", display: "flex", alignItems: "center", gap: 8 }}>
+                             <Zap size={14} color="#8B5CF6" /> {tech}
+                          </div>
+                        ))}
+                     </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
+                    {!saved ? (
+                      <button onClick={saveIdea} disabled={saving} className="btn-primary" style={{ flex: 1, padding: "16px", borderRadius: 14, background: "rgba(251,191,36,0.08)", border: "1px solid #FBBF2440", color: "#FBBF24", fontWeight: 900, fontSize: 14 }}>
+                        {saving ? "SAVING BLUEPRINT..." : "💾 PERSIST TO ARCHIVE"}
+                      </button>
+                    ) : (
+                      <div style={{ flex: 1, padding: "16px", borderRadius: 14, background: "rgba(16,185,129,0.1)", color: "#10B981", fontWeight: 900, fontSize: 14, textAlign: "center" }}>✅ ARCHIVED SUCCESSFULLY</div>
+                    )}
+                    <button onClick={() => window.print()} className="btn-ghost" style={{ padding: "16px 24px", borderRadius: 14, fontSize: 14, fontWeight: 900 }}>SHARE PITCH →</button>
+                  </div>
                 </div>
               </div>
-
-            </div>
-            {/* Save Button */}
-            {!saved ? (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={saveIdea}
-                disabled={saving }
-                style={{ margin: "0 40px 24px", padding: "12px", borderRadius: 14, border: "1px solid rgba(255,215,0,0.4)", background: "rgba(255,215,0,0.08)", color: "#FFD700", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-              >
-                {saving ? "Saving..." : "💾 Save This Idea"}
-              </motion.button>
-            ) : (
-              <div style={{ margin: "0 40px 24px", padding: "12px", borderRadius: 14, background: "rgba(67,233,123,0.1)", color: "#43E97B", fontWeight: 700, textAlign: "center" }}>✅ Idea Saved!</div>
-            )}
+            </TiltCard>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Saved Ideas */}
+      {/* History Section */}
       {savedIdeas.length > 0 && (
-        <div style={{ marginTop: 40 }}>
-          <button onClick={() => setShowSaved(!showSaved)} style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-primary)", padding: "10px 20px", borderRadius: 12, cursor: "pointer", fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
-            {showSaved ? "▲" : "▼"} 💾 My Saved Ideas ({savedIdeas.length})
-          </button>
+        <div style={{ marginTop: 64 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyItems: "space-between", marginBottom: 24 }}>
+             <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 2, flex: 1 }}>Historical Archives</h3>
+             <button onClick={() => setShowSaved(!showSaved)} className="btn-ghost" style={{ fontSize: 12, fontWeight: 900 }}>{showSaved ? "CONCEAL" : "REVEAL"} ({savedIdeas.length})</button>
+          </div>
+          
           <AnimatePresence>
             {showSaved && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-                {savedIdeas.map(s => (
-                  <motion.div key={s.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                    style={{ background: "linear-gradient(135deg, rgba(255,107,107,0.08), rgba(255,142,83,0.05))", border: "1px solid rgba(255,107,107,0.2)", borderRadius: 16, padding: 20 }}
-                  >
-                    <div style={{ fontSize: 11, color: "#FF8E53", fontWeight: 700, textTransform: "uppercase", marginBottom: 6 }}>{s.domain}</div>
-                    <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>{s.name}</h3>
-                    <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>{s.problem.slice(0, 100)}...</p>
-                  </motion.div>
-                ))}
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20, paddingBottom: 20 }}>
+                  {savedIdeas.map((s, i) => (
+                    <motion.div key={s.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: i * 0.05 } }}
+                      className="glass-card" style={{ padding: 24, background: "rgba(255,255,255,0.015)", borderColor: "rgba(255,255,255,0.04)" }}
+                    >
+                      <div style={{ fontSize: 10, fontWeight: 900, color: "#F97316", marginBottom: 8 }}>{s.domain}</div>
+                      <h4 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 12 }}>{s.name}</h4>
+                      <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 16 }}>{s.problem.slice(0, 100)}...</p>
+                      <button className="btn-ghost" style={{ fontSize: 11, fontWeight: 900, width: "100%" }}>REINITIALIZE →</button>
+                    </motion.div>
+                  ))}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       )}
-      <style>{`
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-      `}</style>
+
     </div>
   );
 }
