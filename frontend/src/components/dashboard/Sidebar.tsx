@@ -11,7 +11,7 @@ import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
   FileText, Award, BarChart3, FileQuestion, MessageCircle, 
-  Mail, Medal, User, Gift, CreditCard, Activity, Settings
+  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -39,6 +39,7 @@ const NAV_SECTIONS = [
   {
     label: "Tools",
     items: [
+      { icon: Lightbulb,       name: "Project Ideas",   href: "/dashboard/projects" },
       { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
       { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
       { icon: BarChart3,       name: "Analytics",       href: "/dashboard/analytics" },
