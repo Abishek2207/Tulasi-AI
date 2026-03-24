@@ -9,6 +9,7 @@ export function DebugPanel() {
   const [status, setStatus] = useState("SYNCING");
   const [latency, setLatency] = useState(0);
   const [tokenStatus, setTokenStatus] = useState("MISSING");
+  const [aiStatus, setAiStatus] = useState("FETCHING...");
 
   useEffect(() => {
     const checkSystem = async () => {
@@ -19,10 +20,13 @@ export function DebugPanel() {
       try {
         const API = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
         const res = await fetch(`${API}/api/health`);
+        const data = await res.json();
         setLatency(Date.now() - start);
         setStatus(res.ok ? "ONLINE" : "ERROR");
+        setAiStatus(data.ai_configured ? "READY" : "MISSING KEYS");
       } catch (e) {
         setStatus("OFFLINE");
+        setAiStatus("OFFLINE");
       }
     };
 
@@ -91,6 +95,11 @@ export function DebugPanel() {
                 <span style={{ color: tokenStatus.includes("VALID") ? "#8B5CF6" : "var(--text-muted)", fontWeight: 700 }}>{tokenStatus}</span>
               </div>
 
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "var(--text-secondary)" }}>AI ENGINE:</span>
+                <span style={{ color: aiStatus === "READY" ? "#06B6D4" : "#F43F5E", fontWeight: 700 }}>{aiStatus}</span>
+              </div>
+              
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "var(--text-secondary)" }}>ENV:</span>
                 <span style={{ color: "#F59E0B", fontWeight: 700 }}>PRODUCTION</span>

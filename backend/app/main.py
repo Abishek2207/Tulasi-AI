@@ -190,13 +190,16 @@ def api_root():
 @app.get("/api/status")
 def health():
     uptime = int(time.time() - _START_TIME)
+    from app.core.ai_client import ai_client
 
     return {
         "success": True,
         "status": "alive",
         "server": "Tulasi AI backend",
-        "version": "3.0.0",
+        "version": "3.1.0",
         "uptime_seconds": uptime,
+        "ai_configured": bool(ai_client.gemini_key or ai_client.openrouter_key),
+        "primary_provider": "Gemini" if ai_client.gemini_key else "OpenRouter" if ai_client.openrouter_key else "None",
         "services": [
             "chat",
             "code",
