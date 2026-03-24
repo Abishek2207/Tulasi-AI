@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 
-export function TulasiLogo({ className = "", size = 40 }: { className?: string; size?: number }) {
+export function TulasiLogo({ className = "", size = 40, style }: { className?: string; size?: number; style?: React.CSSProperties }) {
   return (
     <div
       className={`relative flex items-center justify-center ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, ...style }}
     >
       {/* Glow Layer */}
       <motion.div
