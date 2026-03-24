@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import confetti from "canvas-confetti";
 import { activityApi } from "@/lib/api";
 import { 
   MessageSquare, BookOpen, Code, Target, Map, FileText, 
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
+import { ActivityMap } from "@/components/dashboard/ActivityMap";
 
 const MODULES = [
   { id: "chat", title: "AI Learning Chat", desc: "Have a conversation with Tulasi AI to learn new concepts.", icon: <MessageSquare size={28} />, link: "/dashboard/chat", color: "#8B5CF6", span: 2 },
@@ -48,6 +50,18 @@ export default function DashboardPage() {
         ]);
         if (statsData) setStats(statsData as any);
         if (lbData?.leaderboard) setLeaderboard(lbData.leaderboard.slice(0, 5));
+        
+        // Gamification: Trigger confetti on load if level > 1
+        if (statsData && (statsData as any).level > 1) {
+          setTimeout(() => {
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ['#8B5CF6', '#06B6D4', '#F43F5E']
+            });
+          }, 600);
+        }
       } catch (e) { /* silent */ }
     };
     fetchStats();
@@ -90,7 +104,20 @@ export default function DashboardPage() {
           
           <div style={{ display: "flex", gap: 16 }}>
             <Link href="/dashboard/chat">
-              <button className="btn-primary" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+              <button 
+                onClick={() => {
+                  try {
+                    const ctx = new window.AudioContext();
+                    const osc = ctx.createOscillator();
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+                    osc.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.1);
+                  } catch(e) {}
+                  confetti({ particleCount: 50, spread: 40, colors: ['#8B5CF6', '#ffffff'] });
+                }}
+                className="btn-primary" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
                 Initiate New Chat <Sparkles size={16} />
               </button>
             </Link>
@@ -184,6 +211,11 @@ export default function DashboardPage() {
         ))}
 
       </div>
+
+      {/* Activity Graph */}
+      <motion.div variants={item}>
+        <ActivityMap />
+      </motion.div>
 
       {/* Mini Streak Tracker */}
       <motion.div variants={item} style={{ marginTop: 40 }} className="glass-card">
