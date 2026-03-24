@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { chatApi, ChatMsg } from "@/lib/api";
+import { X, Send, Bot, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 const BACKEND = "";
 const VIDEOS = [
@@ -86,11 +89,48 @@ export default function YouTubeLearningPage() {
   const [search, setSearch] = useState("");
   const { data: session } = useSession();
 
+  // AI Video Player State
+  const [activeVideo, setActiveVideo] = useState<typeof ALL_VIDEOS[0] | null>(null);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
   const filtered = ALL_VIDEOS.filter(v => {
     const matchesCat = activeCategory === "All" || v.category === activeCategory;
     const matchesSearch = !search || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase());
     return matchesCat && matchesSearch;
   });
+
+  const openVideo = (video: typeof ALL_VIDEOS[0]) => {
+    setActiveVideo(video);
+    setMessages([{ role: "assistant", content: `Hi! I'm your AI Tutor for **${video.title}**. What concepts from the video would you like me to explain?` }]);
+    logWatch(video);
+  };
+
+  const closeVideo = () => {
+    setActiveVideo(null);
+    setMessages([]);
+  };
+
+  const handleChat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || aiLoading || !activeVideo) return;
+
+    const userMsg = input.trim();
+    setInput("");
+    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+    setAiLoading(true);
+
+    try {
+      const prompt = `[Context: The user is currently watching a masterclass video titled "${activeVideo.title}" by ${activeVideo.channel}. Act as their personal expert tutor for this specific topic.]\n\nUser Question: ${userMsg}`;
+      const res = await chatApi.send(prompt, `yt_${activeVideo.id}`, "chat");
+      setMessages(prev => [...prev, { role: "assistant", content: res.response }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I lost my connection. Please try asking again." }]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const logWatch = async (video: typeof ALL_VIDEOS[0]) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
@@ -145,9 +185,9 @@ export default function YouTubeLearningPage() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: Math.min(i * 0.03, 0.3) }} layout
               className="dash-card"
-              style={{ padding: 0, display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
+              style={{ padding: 0, display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", overflow: "hidden" }}
             >
-              <div style={{ position: "relative", paddingTop: "56.25%", background: "#000", cursor: "pointer" }} onClick={() => logWatch(video)}>
+              <div style={{ position: "relative", paddingTop: "56.25%", background: "#000", cursor: "pointer" }} onClick={() => openVideo(video)}>
                 <img
                   src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
                   alt={video.title}
@@ -158,10 +198,10 @@ export default function YouTubeLearningPage() {
                   onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
                   onMouseLeave={e => (e.currentTarget.style.opacity = "0")}
                 >
-                  <a href={`https://youtube.com/watch?v=${video.id}`} target="_blank" rel="noopener noreferrer"
+                  <div
                     style={{ width: 56, height: 56, borderRadius: "50%", background: "#FF0000", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", fontSize: 24 }}>
                     ▶
-                  </a>
+                  </div>
                 </div>
                 <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.8)", color: "white", fontSize: 11, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>
                   {video.duration}
@@ -183,6 +223,112 @@ export default function YouTubeLearningPage() {
           </div>
         )}
       </div>
+
+      {/* AI AI Video Player Modal */}
+      <AnimatePresence>
+        {activeVideo && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{
+              position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)",
+              display: "flex", alignItems: "center", justifyContent: "center", padding: 24
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+              style={{
+                width: "100%", maxWidth: 1400, height: "90vh", background: "#0D0D15", borderRadius: 24,
+                border: "1px solid rgba(255,255,255,0.1)", display: "flex", overflow: "hidden", position: "relative",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.6)"
+              }}
+            >
+              {/* Close Button */}
+              <button
+                onClick={closeVideo}
+                style={{ position: "absolute", top: 16, right: 16, zIndex: 10, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "white", cursor: "pointer", backdropFilter: "blur(4px)" }}
+              >
+                <X size={20} />
+              </button>
+
+              {/* Left: Video Player */}
+              <div style={{ flex: 2, background: "#000", display: "flex", flexDirection: "column" }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1`}
+                  title={activeVideo.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ width: "100%", flex: 1 }}
+                />
+                <div style={{ padding: 24, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                  <h2 style={{ fontSize: 24, fontWeight: 700, color: "white", marginBottom: 8 }}>{activeVideo.title}</h2>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 13, color: "#FFA2A2", fontWeight: 700 }}>{activeVideo.channel}</span>
+                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--text-muted)" }} />
+                    <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{activeVideo.category}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: AI Tutor Pane */}
+              <div style={{ flex: 1, minWidth: 380, display: "flex", flexDirection: "column", borderLeft: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
+                <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #7C3AED, #F43F5E)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(124,58,237,0.3)" }}>
+                    <Bot size={20} color="white" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>AI Tutor</h3>
+                    <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "2px 0 0" }}>Context-aware learning</p>
+                  </div>
+                </div>
+
+                <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                  {messages.map((m, i) => (
+                    <div key={i} style={{ display: "flex", gap: 12, flexDirection: m.role === "user" ? "row-reverse" : "row" }}>
+                      <div style={{
+                        maxWidth: "85%", padding: "12px 16px", borderRadius: 16,
+                        background: m.role === "user" ? "linear-gradient(135deg, #FF0000, #FF6B6B)" : "rgba(255,255,255,0.05)",
+                        border: m.role === "user" ? "none" : "1px solid rgba(255,255,255,0.1)",
+                        color: "white", fontSize: 14, lineHeight: 1.5,
+                        borderTopRightRadius: m.role === "user" ? 4 : 16,
+                        borderTopLeftRadius: m.role === "user" ? 16 : 4,
+                      }}>
+                        <div className="prose prose-invert max-w-none text-sm leading-relaxed">
+                          <ReactMarkdown>{m.content}</ReactMarkdown>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {aiLoading && (
+                    <div style={{ display: "flex", gap: 12 }}>
+                      <div style={{ padding: "12px 16px", borderRadius: 16, background: "rgba(255,255,255,0.05)", display: "flex", gap: 6 }}>
+                        <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text-muted)" }} />
+                        <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text-muted)" }} />
+                        <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text-muted)" }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ padding: 20, borderTop: "1px solid rgba(255,255,255,0.08)", background: "rgba(0,0,0,0.2)" }}>
+                  <form onSubmit={handleChat} style={{ display: "flex", gap: 10, background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: "8px 8px 8px 16px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <input
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      placeholder="Ask the AI Tutor..."
+                      style={{ flex: 1, background: "transparent", border: "none", color: "white", outline: "none", fontSize: 14 }}
+                      disabled={aiLoading}
+                    />
+                    <button type="submit" disabled={!input.trim() || aiLoading} style={{ background: "white", border: "none", width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "0.2s", opacity: !input.trim() || aiLoading ? 0.5 : 1 }}>
+                      <Send size={16} color="#111" />
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
