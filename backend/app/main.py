@@ -109,9 +109,6 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 
-# ── CORS ───────────────────────────────────────────────────────────
-# We keep credentials=True but expand allow_origins to all your deployment URLs.
-# This prevents 'API Offline' errors from Vercel preview deployments.
 ALLOW_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
@@ -120,21 +117,10 @@ ALLOW_ORIGINS = [
     "https://tulasiai-abishek2207.vercel.app",
 ]
 
-# Also dynamically allow any *.vercel.app preview URL
-import re as _re
-
-class DynamicCORSMiddleware(CORSMiddleware):
-    def is_allowed_origin(self, origin: str) -> bool:
-        if super().is_allowed_origin(origin):
-            return True
-        # Allow any Vercel preview URL for this project
-        if _re.match(r"https://tulasiai.*\.vercel\.app", origin):
-            return True
-        return False
-
 app.add_middleware(
-    DynamicCORSMiddleware,
+    CORSMiddleware,
     allow_origins=ALLOW_ORIGINS,
+    allow_origin_regex=r"https://tulasiai.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
