@@ -48,12 +48,18 @@ class HybridAIClient:
         return messages
 
     def _call_gemini(self, contents: List[Dict], model_name: str, stream: bool = False) -> Union[str, Generator]:
-        model = genai.GenerativeModel(model_name)
+        try:
+            # Attempt to initialize with Live Web Surfing (Google Search Grounding)
+            model = genai.GenerativeModel(model_name, tools="google_search_retrieval")
+        except Exception:
+            # Fallback for older google-generativeai SDK versions
+            model = genai.GenerativeModel(model_name)
+            
         if stream:
             response = model.generate_content(contents, stream=True)
             def gen():
                 for chunk in response:
-                    if chunk.text:
+                    if hasattr(chunk, "text") and chunk.text:
                         yield chunk.text
             return gen()
         else:

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatApi, ChatMsg } from "@/lib/api";
-import { Bot, Send, Trash2, RotateCcw, Sparkles } from "lucide-react";
+import { Bot, Send, Trash2, RotateCcw, Sparkles, Globe } from "lucide-react";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -237,7 +237,7 @@ export default function ChatPage() {
             <Bot size={22} color="white" />
           </div>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>
                 Tulasi AI Chat
               </h1>
@@ -245,8 +245,12 @@ export default function ChatPage() {
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
                 <span style={{ fontSize: 10, fontWeight: 700, color: "#10B981", textTransform: "uppercase", letterSpacing: 0.5 }}>Online</span>
               </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(6,182,212,0.15)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(6,182,212,0.3)" }}>
+                <Globe size={10} color="#06B6D4" />
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#06B6D4", textTransform: "uppercase", letterSpacing: 0.5 }}>Live Web Search</span>
+              </div>
             </div>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "2px 0 0 0" }}>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "6px 0 0 0" }}>
               Powered by Gemini — Architecting your intelligence
             </p>
           </div>
