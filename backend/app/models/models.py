@@ -229,3 +229,12 @@ class SavedResume(SQLModel, table=True):
     feedback_json: str = "[]"
     missing_keywords_json: str = "[]"
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Review(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    role: Optional[str] = None
+    review: str
+    rating: int = Field(ge=1, le=5)
+    created_at: datetime = Field(default_factory=datetime.utcnow)

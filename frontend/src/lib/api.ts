@@ -441,6 +441,26 @@ export const paymentApi = {
     ),
 };
 
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+
+export interface ReviewItem {
+  id: number;
+  name: string;
+  role?: string;
+  review: string;
+  rating: number;
+  created_at: string;
+}
+
+export const reviewsApi = {
+  getReviews: () => request<ReviewItem[]>("/api/reviews"),
+  submitReview: (data: { name: string; role?: string; review: string; rating: number }) =>
+    request<ReviewItem>("/api/reviews", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface User {
