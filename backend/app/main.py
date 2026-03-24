@@ -95,13 +95,16 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    print(f"❌ Error on {request.method} {request.url}: {exc}")
+    # Log the full traceback or error for internal debugging
+    print(f"❌ CRITICAL ERROR on {request.method} {request.url}: {exc}")
+    # Return a clean JSON only response as requested
     return JSONResponse(
         status_code=500,
         content={
             "success": False, 
-            "error": str(exc),
-            "detail": "Internal server error"
+            "error": "Internal Server Error",
+            "message": str(exc) if os.environ.get("DEBUG") == "true" else "An unexpected error occurred. Please try again later.",
+            "type": exc.__class__.__name__
         },
     )
 
@@ -207,6 +210,19 @@ def health():
 @app.get("/ping")
 def ping():
     return {"ping": "pong", "uptime_seconds": int(time.time() - _START_TIME)}
+
+
+# ── Keep-Alive Cron ────────────────────────────────────────────────
+@app.get("/api/cron")
+@app.get("/cron")
+async def cron_ping():
+    """Endpoint for Vercel/External cron to keep Railway instance alive."""
+    return {
+        "success": True,
+        "message": "Keep-alive ping received",
+        "timestamp": time.time(),
+        "status": "active"
+    }
 
 
 # ── Local Development ──────────────────────────────────────────────

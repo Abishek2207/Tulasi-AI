@@ -95,9 +95,9 @@ export default function YouTubeLearningPage() {
   const logWatch = async (video: typeof ALL_VIDEOS[0]) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
-      await fetch(`${BACKEND}/api/activity/log`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity/log`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials: "include", mode: "cors",
         body: JSON.stringify({ 
           action_type: "video_watched", 
           title: `Watched: ${video.title}`,

@@ -21,9 +21,10 @@ export function useBackendWake() {
     setState((s) => ({ ...s, isChecking: true }));
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health`, {
+        headers: {"Content-Type":"application/json","Authorization":`Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}`},
+        credentials:"include", mode:"cors",
         signal: AbortSignal.timeout(10_000),
         cache: "no-store",
-        headers: { "x-check": "keepalive" },
       });
       setState({ isOnline: res.ok, isChecking: false, lastChecked: new Date() });
       return res.ok;

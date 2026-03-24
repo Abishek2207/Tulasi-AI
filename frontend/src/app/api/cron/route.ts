@@ -4,8 +4,8 @@ export async function GET() {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}` },
+      credentials: "include", mode: "cors", cache: 'no-store'
     });
     
     if (res.ok) {

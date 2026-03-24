@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { TulasiLogo } from "@/components/TulasiLogo";
+import { Logo as TulasiLogo } from "@/components/Logo";
 import { useState, useEffect } from "react";
 
 import { 
@@ -105,7 +105,7 @@ export default function Sidebar() {
             boxShadow: "0 0 20px rgba(139,92,246,0.4)",
             flexShrink: 0
           }}>
-            <TulasiLogo size={26} />
+            <TulasiLogo size={26} showText={false} />
           </div>
           <div>
             <div style={{

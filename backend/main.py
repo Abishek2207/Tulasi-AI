@@ -106,8 +106,8 @@ async def general_exception_handler(request: Request, exc: Exception):
 async def log_requests(request: Request, call_next):
     start = time.time()
     response = await call_next(request)
-    ms = round((time.time() - start) * 1000, 1)
-    print(f"📡 {request.method} {request.url.path} → {response.status_code} ({ms}ms)")
+    ms = (time.time() - start) * 1000
+    print(f"📡 {request.method} {request.url.path} → {response.status_code} ({ms:.1f}ms)")
     return response
 
 
@@ -166,6 +166,16 @@ def health():
 @app.get("/api/ping")
 def ping():
     return {"ping": "pong"}
+
+
+@app.get("/api/cron")
+def cron_keep_alive():
+    """Endpoint for external cron jobs to ping and keep the server awake."""
+    return {
+        "status": "awake",
+        "time": int(time.time()),
+        "message": "Cron ping successful"
+    }
 
 
 # ── Local Dev ─────────────────────────────────────────────────────

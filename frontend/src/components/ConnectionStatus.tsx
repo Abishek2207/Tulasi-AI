@@ -18,7 +18,7 @@ export function ConnectionStatus() {
 
       // Check API Health
       try {
-        const res = await fetch(`${API_URL}/api/health`, { cache: 'no-store' });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health`, { cache: 'no-store', headers: {"Content-Type":"application/json","Authorization":`Bearer ${localStorage.getItem("token")}`}, credentials:"include", mode:"cors" });
         if (res.ok) {
           setApiOnline(true);
           setLastError(null);

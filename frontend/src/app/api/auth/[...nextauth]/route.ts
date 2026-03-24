@@ -18,7 +18,8 @@ const providers: NextAuthOptions["providers"] = [
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ""` },
+          credentials: "include", mode: "cors",
           body: JSON.stringify({
             email: credentials.email,
             password: credentials.password,
@@ -77,7 +78,8 @@ export const authOptions: NextAuthOptions = {
         const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
         fetch(`${BACKEND}/api/auth/google-oauth`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ""` },
+          credentials: "include", mode: "cors",
           body: JSON.stringify({
             email: user.email,
             name: user.name || user.email?.split("@")[0],

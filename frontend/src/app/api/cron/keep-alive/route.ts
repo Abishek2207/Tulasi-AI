@@ -5,10 +5,10 @@ export async function GET() {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tulasiai.up.railway.app';
     const parsedUrl = backendUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
     
-    // Ping the backend health endpoint
     const response = await fetch(`${parsedUrl}/api/health`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ""` },
+      credentials: "include", mode: "cors"
     });
     
     if (response.ok) {
