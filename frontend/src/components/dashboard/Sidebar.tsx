@@ -11,7 +11,7 @@ import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
   FileText, Award, BarChart3, FileQuestion, MessageCircle, 
-  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit
+  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -71,12 +71,16 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const sessionUser = session?.user;
   const [isPro, setIsPro] = useState(false);
+  const [chatsUsed, setChatsUsed] = useState(0);
+  const [xp, setXp] = useState(0);
 
   useEffect(() => {
     const readPro = () => {
       try {
         const stored = JSON.parse(localStorage.getItem("user") || "{}");
         setIsPro(!!stored.is_pro || !!sessionUser?.is_pro);
+        setChatsUsed(stored.chats_today || 0);
+        setXp(stored.xp || 0);
       } catch { setIsPro(false); }
     };
     readPro();
@@ -85,6 +89,9 @@ export default function Sidebar() {
   }, [sessionUser]);
 
   const user = sessionUser;
+  const chatLimit = 100 + Math.floor(xp / 100);
+  const usagePercent = Math.min((chatsUsed / chatLimit) * 100, 100);
+
 
   return (
     <div style={{
@@ -205,6 +212,45 @@ export default function Sidebar() {
           </div>
         )}
       </nav>
+
+      {/* Usage Limit Tracker (Free Users Only) */}
+      {!isPro && user && user.role !== "admin" && (
+        <div style={{ padding: "0 16px 16px" }}>
+          <div style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+            border: "1px solid rgba(255,255,255,0.05)",
+            borderRadius: 14, padding: "14px",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 4 }}>
+                <Zap size={10} color="#06B6D4" /> Daily AI Usage
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: usagePercent > 90 ? "#F43F5E" : "white" }}>
+                {chatsUsed} / {chatLimit}
+              </span>
+            </div>
+            
+            <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${usagePercent}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                style={{ 
+                  height: "100%", 
+                  background: usagePercent > 90 ? "#F43F5E" : usagePercent > 75 ? "#F59E0B" : "linear-gradient(90deg, #8B5CF6, #06B6D4)",
+                  borderRadius: 3
+                }} 
+              />
+            </div>
+            
+            {usagePercent > 80 && (
+              <p style={{ fontSize: 10, color: "#F59E0B", marginTop: 8, lineHeight: 1.4, fontWeight: 500 }}>
+                You're running low on free chats today.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* User footer */}
       {user && (
