@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { useState, useEffect } from "react";
 import { Menu, X, Search, Command, Zap } from "lucide-react";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 export default function TopBar() {
   const dispatch = useDispatch();
@@ -128,6 +129,7 @@ export default function TopBar() {
         )}
 
         {/* Theme toggle */}
+        <NotificationCenter />
         <ThemeToggle />
 
         {/* Avatar + Sign out */}
