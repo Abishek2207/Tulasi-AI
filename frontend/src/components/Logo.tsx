@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export function Logo({ size = 48, showText = true }: { size?: number, showText?: boolean }) {
   return (
@@ -37,37 +38,15 @@ export function Logo({ size = 48, showText = true }: { size?: number, showText?:
           }}
         />
 
-        {/* SVG Icon: Lotus + Circuit + Brain abstract */}
-        <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ position: "relative", zIndex: 1, color: "white" }}>
-          {/* Circuit nodes */}
-          <circle cx="12" cy="12" r="2" fill="#06B6D4" stroke="none" />
-          <circle cx="6" cy="6" r="1.5" fill="#7C3AED" stroke="none" />
-          <circle cx="18" cy="6" r="1.5" fill="#7C3AED" stroke="none" />
-          <circle cx="6" cy="18" r="1.5" fill="#F43F5E" stroke="none" />
-          <circle cx="18" cy="18" r="1.5" fill="#F43F5E" stroke="none" />
-          
-          {/* Circuit lines connecting to center (brain/lotus base) */}
-          <path d="M7 7l3.5 3.5" stroke="url(#circuit-grad)" />
-          <path d="M17 7l-3.5 3.5" stroke="url(#circuit-grad)" />
-          <path d="M7 17l3.5-3.5" stroke="url(#circuit-grad)" />
-          <path d="M17 17l-3.5-3.5" stroke="url(#circuit-grad)" />
-          <path d="M12 2v8" stroke="url(#circuit-grad)" />
-          <path d="M12 22v-8" stroke="url(#circuit-grad)" />
-
-          {/* Lotus leaves overlay */}
-          <path d="M12 12C12 12 10 7 12 4C14 7 12 12 12 12Z" fill="rgba(124, 58, 237, 0.8)" stroke="none" />
-          <path d="M12 12C12 12 6 10 4 12C6 14 12 12 12 12Z" fill="rgba(6, 182, 212, 0.8)" stroke="none" />
-          <path d="M12 12C12 12 18 10 20 12C18 14 12 12 12 12Z" fill="rgba(244, 63, 94, 0.8)" stroke="none" />
-
-          {/* Defs for gradients */}
-          <defs>
-            <linearGradient id="circuit-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#7C3AED" />
-              <stop offset="0.5" stopColor="#06B6D4" />
-              <stop offset="1" stopColor="#F43F5E" />
-            </linearGradient>
-          </defs>
-        </svg>
+        {/* User's Custom Image */}
+        <Image 
+          src="/images/logo-transparent.png" 
+          alt="Tulasi AI Custom Logo" 
+          width={size * 0.75} 
+          height={size * 0.75} 
+          style={{ position: "relative", zIndex: 1, objectFit: "contain" }}
+          priority
+        />
       </motion.div>
 
       {showText && (
