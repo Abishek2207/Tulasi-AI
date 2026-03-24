@@ -20,7 +20,7 @@ export function useBackendWake() {
   const checkHealth = useCallback(async () => {
     setState((s) => ({ ...s, isChecking: true }));
     try {
-      const res = await fetch("/api/health", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health`, {
         signal: AbortSignal.timeout(10_000),
         cache: "no-store",
         headers: { "x-check": "keepalive" },
