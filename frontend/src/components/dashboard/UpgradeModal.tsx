@@ -210,7 +210,7 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
         >
           {loading
             ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} />
-            : "⚡ Upgrade to Pro — ₹749/mo"
+            : "⚡ Upgrade to Pro — ₹100/mo"
           }
         </motion.button>
 

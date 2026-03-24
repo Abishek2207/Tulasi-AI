@@ -52,7 +52,7 @@ def _razorpay_request(method: str, endpoint: str, **kwargs):
 
 class CreateOrderResponse(BaseModel):
     order_id: str
-    amount: int       # in paise (e.g. 74900 = ₹749)
+    amount: int       # in paise (e.g. 10000 = ₹100)
     currency: str
     key_id: str
 
@@ -75,14 +75,14 @@ def create_order(
     db:   Session = Depends(get_session),
 ):
     """
-    Creates a Razorpay order for the Pro plan (₹749/month).
+    Creates a Razorpay order for the Pro plan (₹100/month).
     Returns order details needed by the Razorpay checkout.js SDK.
     """
     if user.is_pro:
         raise HTTPException(status_code=400, detail="User is already a Pro member.")
 
     try:
-        amount_paise = 74900  # ₹749.00
+        amount_paise = 10000  # ₹100.00
         order = _razorpay_request("POST", "/orders", json={
             "amount":   amount_paise,
             "currency": "INR",
