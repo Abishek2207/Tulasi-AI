@@ -11,6 +11,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 export const metadata: Metadata = {
   title: { default: "Tulasi AI — AI Career & Learning Platform", template: "%s | Tulasi AI" },
   description: "AI-powered mock interviews, learning roadmaps, resume builder, and career acceleration tools for engineers and students.",
+  manifest: "/manifest.json",
   keywords: ["AI interview prep", "career roadmaps", "mock interview", "student platform", "tech prep", "resume analyzer", "coding practice"],
   openGraph: {
     title: "Tulasi AI — AI Career & Learning Platform",
@@ -19,6 +20,10 @@ export const metadata: Metadata = {
     siteName: "Tulasi AI",
   },
   twitter: { card: "summary_large_image", title: "Tulasi AI", description: "AI Career & Learning Platform" },
+};
+
+export const viewport = {
+  themeColor: "#05070D",
 };
 
 import { DebugPanel } from "@/components/DebugPanel";
