@@ -322,19 +322,20 @@ function Footer() {
         </div>
       </div>
       <div style={{ maxWidth: 1280, margin: "0 auto", paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>TULASI AI LABS • © 2026</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", fontWeight: 700 }}>Built by</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 700 }}>TULASI AI</span>
+            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>•</span>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", fontWeight: 700 }}>Built by</span>
             <span style={{
-              fontSize: 14, fontWeight: 900,
+              fontSize: 15, fontWeight: 900,
               background: "linear-gradient(90deg, #A78BFA, #22D3EE)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-              letterSpacing: "-0.3px"
+              letterSpacing: "-0.2px"
             }}>Abishek R</span>
             <span style={{ fontSize: 10, fontWeight: 900, color: "#A78BFA", background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", padding: "2px 8px", borderRadius: 6, letterSpacing: 1 }}>FOUNDER</span>
+            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>•</span>
+            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, fontWeight: 700 }}>© 2026</span>
           </div>
-        </div>
         <div style={{ display: "flex", gap: 24, color: "var(--text-muted)" }}>
            <Link href="#" style={{ color: "var(--text-muted)" }}><Globe size={18} /></Link>
            <Link href="#" style={{ color: "var(--text-muted)" }}><Shield size={18} /></Link>

@@ -113,6 +113,7 @@ ALLOW_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
     "https://tulasiai.vercel.app",
+    "https://tulasiai.vercel.app/",
     "https://tulasi-ai.vercel.app",
     "https://tulasiai-abishek2207.vercel.app",
 ]
