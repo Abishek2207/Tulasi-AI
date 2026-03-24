@@ -92,7 +92,7 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
         user.chats_today = 0
         user.last_reset_date = today
     
-    daily_limit = 10 + (user.xp // 100) if hasattr(user, "xp") else 10
+    daily_limit = 100 + (user.xp // 100) if hasattr(user, "xp") else 100
     
     if not user.is_pro and user.chats_today >= daily_limit:
         return ChatResponse(response=f"🚀 You have reached your daily limit of {daily_limit} free AI chats. Upgrade to Pro for unlimited access.", session_id=session_id, ai_model="tulasi-ai-limit")
@@ -141,7 +141,7 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
         db.add(user)
         db.commit()
     
-    daily_limit = 10 + (user.xp // 100) if hasattr(user, "xp") else 10
+    daily_limit = 100 + (user.xp // 100) if hasattr(user, "xp") else 100
     
     if not user.is_pro and user.chats_today >= daily_limit:
         err_data = json.dumps({"token": f"🚀 You have reached your daily limit of {daily_limit} free AI chats. Upgrade to Pro for unlimited access via the Dashboard.", "session_id": session_id, "done": True, "error": True})

@@ -172,19 +172,27 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
           Unlock <span className="gradient-text">Pro</span> Power
         </h2>
         <p style={{ color: "var(--text-secondary)", marginBottom: 28, lineHeight: 1.6, fontSize: 15 }}>
-          Get unlimited AI chats, advanced Mock Interviews, and premium resume tailoring to land your dream job faster.
+          You get <strong style={{ color: "white" }}>100 free chats/day</strong> and a basic Resume Builder for free.
+          Upgrade to Pro for unlimited everything + advanced AI features.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
+          {/* Free tier summary */}
+          <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#10B981", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>✅ Included Free</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>100 AI chats/day · Basic Resume Builder · All 12 Learning Modules</div>
+          </div>
+          {/* Pro features */}
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#A78BFA", textTransform: "uppercase", letterSpacing: 1, marginTop: 4, marginBottom: 2 }}>⚡ Pro Unlocks</div>
           {[
-            "Unlimited Gemini 2.5 Flash / Pro Context",
-            "Advanced ATS Resume Scanning",
+            "Unlimited AI Chats — No Daily Cap",
+            "Advanced ATS Resume Scanner & Tailoring",
             "Unlimited Deep-Dive Mock Interviews",
             "Priority Support & Zero Ads"
           ].map((feature, i) => (
             <motion.div key={i} initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.1 }}
               style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#E2E8F0" }}>
-              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}>✓</div>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(139,92,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#A78BFA" }}>✓</div>
               {feature}
             </motion.div>
           ))}
