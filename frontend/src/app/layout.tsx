@@ -26,7 +26,8 @@ export const viewport = {
   themeColor: "#05070D",
 };
 
-import { DebugPanel } from "@/components/DebugPanel";
+import { DebugPanel } from "@/components/ui/DebugPanel";
+import { ReviewModal } from "@/components/ui/ReviewModal";
 import { XPNotificationSystem } from "@/components/XPNotification";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
           {children}
+          <ReviewModal />
           <DebugPanel />
           <XPNotificationSystem />
           <OnboardingTour />

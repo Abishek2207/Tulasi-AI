@@ -125,6 +125,9 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
 }
 
 export default function ChatPage() {
+  useEffect(() => {
+    localStorage.setItem("ai_session_count", "1");
+  }, []);
   const { data: session } = useSession();
   const [messages, setMessages] = useState<ChatMsg[]>([
     { role: "assistant", content: GREETING },
