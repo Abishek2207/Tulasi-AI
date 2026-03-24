@@ -75,12 +75,23 @@ app = FastAPI(
 )
 
 # ── CORS ───────────────────────────────────────────────────────────
+# Explicit allowed origins: Vercel production, preview URLs, and local dev
+ALLOWED_ORIGINS = [
+    "https://tulasiai.vercel.app",         # Vercel production
+    "https://tulasi-ai.vercel.app",        # Alternate Vercel domain
+    "http://localhost:3000",               # Local Next.js dev
+    "http://127.0.0.1:3000",              # Local alt
+    "http://localhost:10000",              # Local backend dev
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://tulasi.*\.vercel\.app",  # Cover all Vercel preview deploys
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
 
 
