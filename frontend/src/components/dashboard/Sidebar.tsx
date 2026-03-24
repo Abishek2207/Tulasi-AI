@@ -11,7 +11,7 @@ import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
   FileText, Award, BarChart3, FileQuestion, MessageCircle, 
-  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb
+  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -28,6 +28,7 @@ const NAV_SECTIONS = [
   {
     label: "Learning",
     items: [
+      { icon: BrainCircuit,    name: "Flashcards",      href: "/dashboard/flashcards" },
       { icon: Code,            name: "Code Practice",   href: "/dashboard/code" },
       { icon: Users,           name: "Study Rooms",     href: "/dashboard/study-rooms" },
       { icon: Trophy,          name: "Hackathons",      href: "/dashboard/hackathons" },
