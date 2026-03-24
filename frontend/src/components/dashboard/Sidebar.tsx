@@ -51,7 +51,7 @@ const NAV_SECTIONS = [
     label: "Community",
     items: [
       { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
-      { icon: Mail,            name: "Messages",        href: "/dashboard/messages" },
+      { icon: Mail,            name: "Messages",        href: "mailto:support@tulasiai.com" },
       { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
     ]
   },
@@ -61,7 +61,7 @@ const NAV_SECTIONS = [
       { icon: User,            name: "Profile",         href: "/dashboard/profile" },
       { icon: Gift,            name: "Rewards Store",   href: "/dashboard/rewards" },
       { icon: CreditCard,      name: "Billing & Pro",   href: "/dashboard/billing" },
-      { icon: Activity,        name: "API Status",      href: "/dashboard/api-status" },
+      { icon: Activity,        name: "API Status",      href: "https://tulasiai.up.railway.app/api/health" },
     ]
   }
 ];
@@ -112,7 +112,7 @@ export default function Sidebar() {
               fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 17,
               color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1
             }}>
-              Tulasi<span style={{ color: "#06B6D4" }}>PRO</span>
+              Tulasi<span style={{ color: "#06B6D4" }}>AI</span>
             </div>
             <div style={{
               fontSize: 9, fontWeight: 700, letterSpacing: "1.5px",
@@ -238,7 +238,7 @@ export default function Sidebar() {
             <Link href="/dashboard/billing" style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
               marginTop: 10, padding: "9px 12px", borderRadius: 9,
-              background: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(6,182,212,0.08))",
+              background: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(6,182,212,0.06))",
               border: "1px solid rgba(139,92,246,0.2)",
               textDecoration: "none", fontSize: 12, color: "#8B5CF6", fontWeight: 600,
               transition: "all 0.2s ease",
