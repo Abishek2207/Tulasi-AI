@@ -112,7 +112,7 @@ export default function Sidebar() {
               fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 17,
               color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1
             }}>
-              Tulasi<span style={{ color: "#06B6D4" }}>AI</span>
+              Tulasi<span style={{ color: "#06B6D4" }}>PRO</span>
             </div>
             <div style={{
               fontSize: 9, fontWeight: 700, letterSpacing: "1.5px",
