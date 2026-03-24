@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { interviewApi } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { 
@@ -40,8 +41,11 @@ interface Feedback {
 
 export default function InterviewPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const initialCompany = searchParams.get("company") || COMPANIES[0];
+  
   const [role, setRole] = useState(ROLES[0]);
-  const [company, setCompany] = useState(COMPANIES[0]);
+  const [company, setCompany] = useState(initialCompany);
   const [interviewType, setInterviewType] = useState("Technical");
   const [numQuestions, setNumQuestions] = useState(5);
   const [phase, setPhase] = useState<"setup" | "active" | "feedback">("setup");
