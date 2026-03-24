@@ -325,14 +325,14 @@ function Footer() {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>TULASI AI LABS • © 2026</span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Engineered with precision by</span>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", fontWeight: 700 }}>Built by</span>
             <span style={{
-              fontSize: 13, fontWeight: 900,
+              fontSize: 14, fontWeight: 900,
               background: "linear-gradient(90deg, #A78BFA, #22D3EE)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
               letterSpacing: "-0.3px"
             }}>Abishek R</span>
-            <span style={{ fontSize: 9, fontWeight: 800, color: "#A78BFA", background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", padding: "2px 6px", borderRadius: 6, letterSpacing: 1 }}>FOUNDER</span>
+            <span style={{ fontSize: 10, fontWeight: 900, color: "#A78BFA", background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", padding: "2px 8px", borderRadius: 6, letterSpacing: 1 }}>FOUNDER</span>
           </div>
         </div>
         <div style={{ display: "flex", gap: 24, color: "var(--text-muted)" }}>

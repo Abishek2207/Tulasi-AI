@@ -119,37 +119,56 @@ class HybridAIClient:
         history = history or []
         gemini_contents = self._format_for_gemini(message, history, image_data=image_data)
         
-        # 1. Try Gemini Models
-        for model_name in self.gemini_models:
-            for attempt in range(2): # 2 retries
+        if stream:
+            def master_gen():
+                # 1. Try Gemini Models
+                for model_name in self.gemini_models:
+                    for attempt in range(2):
+                        try:
+                            print(f"📡 [AI] Trying Gemini {model_name} (attempt {attempt + 1})")
+                            model_gen = self._call_gemini(gemini_contents, model_name, stream=True)
+                            yielded_any = False
+                            for chunk in model_gen:
+                                yielded_any = True
+                                yield chunk
+                            # If we survived the yield loop without error, we are done
+                            return
+                        except Exception as e:
+                            print(f"⚠️ [AI] Stream Gemini {model_name} failed: {e}")
+                            if attempt == 1:
+                                break # Move to next model
+                
+                # 2. Fallback to OpenRouter
+                print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
+                or_messages = self._format_for_openrouter(message, history)
                 try:
-                    print(f"📡 [AI] Trying Gemini {model_name} (attempt {attempt + 1})")
-                    return self._call_gemini(gemini_contents, model_name, stream=stream)
+                    or_gen = self._call_openrouter(or_messages, stream=True)
+                    for chunk in or_gen:
+                        yield chunk
+                    return
                 except Exception as e:
-                    err_msg = str(e).lower()
-                    print(f"⚠️ [AI] Gemini {model_name} failed: {e}")
-                    if any(k in err_msg for k in ["429", "quota", "limit", "exhausted"]):
-                        # Quota error, try next model or next attempt
-                        time.sleep(1)
-                        continue
-                    # Non-quota error but might be transient? Retry once.
-                    if attempt == 0:
-                        time.sleep(1)
-                        continue
-                    break # Try next model
-        
-        # 2. Fallback to OpenRouter
-        print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
-        or_messages = self._format_for_openrouter(message, history)
-        try:
-            return self._call_openrouter(or_messages, stream=stream)
-        except Exception as e:
-            print(f"❌ [AI] OpenRouter fallback also failed: {e}")
-            if stream:
-                def gen():
+                    print(f"❌ [AI] OpenRouter stream fallback failed: {e}")
                     yield "⏳ AI is currently unavailable. Please try again in a moment."
-                return gen()
-            return "⏳ AI is currently unavailable. Please try again in a moment."
+            return master_gen()
+        else:
+            # Non-streaming fallback
+            for model_name in self.gemini_models:
+                for attempt in range(2):
+                    try:
+                        print(f"📡 [AI] Trying Gemini {model_name} (attempt {attempt + 1})")
+                        return self._call_gemini(gemini_contents, model_name, stream=False)
+                    except Exception as e:
+                        print(f"⚠️ [AI] Gemini {model_name} failed: {e}")
+                        if attempt == 1:
+                            break
+            
+            print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
+            or_messages = self._format_for_openrouter(message, history)
+            try:
+                return self._call_openrouter(or_messages, stream=False)
+            except Exception as e:
+                print(f"❌ [AI] OpenRouter fallback failed: {e}")
+                return "⏳ AI is currently unavailable. Please try again in a moment."
 
 # Singleton
 ai_client = HybridAIClient()
