@@ -22,11 +22,19 @@ export function ReviewModal() {
     // Check if review has been submitted before
     const isSubmitted = localStorage.getItem("review_submitted");
     const sessionCount = parseInt(localStorage.getItem("ai_session_count") || "0", 10);
+    const lastPrompt = parseInt(localStorage.getItem("last_review_prompt") || "0", 10);
+    const now = Date.now();
     
-    // Auto-trigger logic: Only if they haven't submitted, and they have at least 1 session logged
-    if (!isSubmitted && sessionCount > 0) {
-      // Small delay so it feels natural
-      const timer = setTimeout(() => setIsOpen(true), 1500);
+    // Trigger if:
+    // 1. Not submitted
+    // 2. Haven't been prompted in the last 24 hours
+    // 3. User has at least 1 session OR has been on the site for a while (handled by specific delay)
+    if (!isSubmitted && (now - lastPrompt > 86400000)) {
+      const triggerDelay = sessionCount > 0 ? 2000 : 30000; // 2s if session, 30s as fallback
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+        localStorage.setItem("last_review_prompt", now.toString());
+      }, triggerDelay);
       return () => clearTimeout(timer);
     }
   }, [pathname]);
