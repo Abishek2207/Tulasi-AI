@@ -17,12 +17,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const sidebarOpen = useSelector((s: RootState) => s.ui.sidebarOpen);
   const user = session?.user;
 
+  const hasLocalToken = typeof window !== "undefined" && !!localStorage.getItem("token");
+
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/auth");
+    // Allow access if NextAuth session exists OR a backend JWT token is in localStorage.
+    if (status === "unauthenticated" && !hasLocalToken) router.push("/auth");
     if (status === "authenticated" && user?.role === "admin") router.push("/admin");
-  }, [status, user, router]);
+  }, [status, user, router, hasLocalToken]);
 
   if (status === "loading") return (
+
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
       <motion.div
         animate={{ rotate: 360 }}
@@ -33,7 +37,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 
-  if (!session) return null;
+  // Allow rendering if NextAuth session OR a local backend JWT token exists
+  if (!session && !hasLocalToken) return null;
+
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "transparent" }}>

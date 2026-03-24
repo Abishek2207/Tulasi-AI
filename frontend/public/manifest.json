@@ -2,18 +2,12 @@
   "name": "Tulasi AI",
   "short_name": "Tulasi AI",
   "description": "The SaaS-native engine for engineering excellence.",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#05070D",
   "theme_color": "#05070D",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "icons": [
-    {
-      "src": "/images/logo-transparent.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
     {
       "src": "/images/logo-transparent.png",
       "sizes": "512x512",

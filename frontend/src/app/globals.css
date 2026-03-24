@@ -6,36 +6,36 @@
 
 :root {
   /* Brand - Neon Futuristic */
-  --brand-primary:   #7C3AED; 
-  --brand-secondary: #06B6D4; 
-  --brand-accent:    #F43F5E; 
-  --brand-green:     #10B981; 
-  --brand-yellow:    #F59E0B; 
-  --brand-glow:      rgba(124, 58, 237, 0.2);
+  --brand-primary:   #7C3AED; /* Neon Violet */
+  --brand-secondary: #06B6D4; /* Cyan */
+  --brand-accent:    #F43F5E; /* Rose */
+  --brand-green:     #10B981; /* Emerald */
+  --brand-yellow:    #F59E0B; /* Amber */
+  --brand-glow:      rgba(124, 58, 237, 0.5);
 
-  /* Backgrounds — Apple Clean Light */
-  --bg-primary: #F8FAFC; 
-  --bg-secondary: #F1F5F9;
-  --bg-tertiary: #E2E8F0; 
-  --bg-card:      rgba(255, 255, 255, 0.8);
-  --bg-card-2:    rgba(241, 245, 249, 0.9);
-  --bg-glass:     rgba(255, 255, 255, 0.6);
-  --bg-glass-hover: rgba(255, 255, 255, 0.9);
+  /* Backgrounds — Deep SaaS Dark */
+  --bg-primary: #05070D; /* Apple Deep Black */
+  --bg-secondary: #0A0C14;
+  --bg-tertiary: #111421; /* Slightly lighter for sidebars */
+  --bg-card:      rgba(24, 24, 27, 0.6);
+  --bg-card-2:    rgba(39, 39, 42, 0.7);
+  --bg-glass:     rgba(9, 9, 11, 0.6);
+  --bg-glass-hover: rgba(24, 24, 27, 0.8);
 
-  /* Text — Crisp Dark */
-  --text-primary:   #05070D;
-  --text-secondary: #475569;
-  --text-muted:     #94A3B8;
+  /* Text — Ultra Crisp */
+  --text-primary:   #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted:     #71717A;
 
   /* Borders / Glass */
-  --border:       rgba(0, 0, 0, 0.08);
-  --border-glow:  rgba(124, 58, 237, 0.2);
-  --border-hover: rgba(124, 58, 237, 0.4);
+  --border:       rgba(255, 255, 255, 0.08);
+  --border-glow:  rgba(124, 58, 237, 0.3);
+  --border-hover: rgba(124, 58, 237, 0.5);
 
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
   --gradient-brand:   linear-gradient(135deg, #7C3AED 0%, #F43F5E 50%, #06B6D4 100%);
-  --gradient-card:    linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(6,182,212,0.03) 100%);
+  --gradient-card:    linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(6,182,212,0.04) 100%);
 
   /* Transitions */
   --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
@@ -44,50 +44,9 @@
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-.dark {
-  --brand-glow:      rgba(124, 58, 237, 0.5);
-
-  --bg-primary: #05070D; 
-  --bg-secondary: #0A0C14;
-  --bg-tertiary: #111421; 
-  --bg-card:      rgba(24, 24, 27, 0.6);
-  --bg-card-2:    rgba(39, 39, 42, 0.7);
-  --bg-glass:     rgba(9, 9, 11, 0.6);
-  --bg-glass-hover: rgba(24, 24, 27, 0.8);
-
-  --text-primary:   #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-muted:     #71717A;
-
-  --border:       rgba(255, 255, 255, 0.08);
-  --border-glow:  rgba(124, 58, 237, 0.3);
-  --border-hover: rgba(124, 58, 237, 0.5);
-
-  --gradient-card:    linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(6,182,212,0.04) 100%);
-}
-
-/* Explicit Light Mode Force */
-:root:not(.dark), .light {
-  --bg-primary: #FFFFFF; 
-  --bg-secondary: #F8FAFC;
-  --bg-tertiary: #F1F5F9; 
-  --bg-card:      rgba(255, 255, 255, 0.9);
-  --bg-glass:     rgba(255, 255, 255, 0.7);
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted:     #64748B;
-  --border:       rgba(0, 0, 0, 0.06);
-}
-
 /* ============================
    GLOBAL STYLES
    ============================ */
-html {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
 body {
   font-family: var(--font-inter);
   background-color: var(--bg-primary);

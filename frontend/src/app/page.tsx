@@ -10,7 +10,6 @@ import {
   ArrowRight, Layout, BrainCircuit, Rocket, HardDrive, Cpu
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const Code2 = ({ size, color }: { size: number, color: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -20,17 +19,17 @@ const Code2 = ({ size, color }: { size: number, color: string }) => (
 
 // ── Feature Data (Bento Grid Style) ────────────────────────────────
 const primaryFeatures = [
-  { id: "ai-tutor", title: "Autonomous AI Tutor", desc: "Context-aware mastery. Tulasi AI doesn't just answer; it architects your understanding with deep pedagogical memory.", icon: BrainCircuit, color: "var(--brand-green)", span: 2, bg: "rgba(16,185,129,0.05)" },
-  { id: "pdf-iq", title: "PDF Intelligence", desc: "Ingest textbooks and documentation. Query the source with zero-latency RAG.", icon: FileText, color: "var(--brand-secondary)", span: 1, bg: "rgba(6,182,212,0.05)" },
-  { id: "mock-sim", title: "Simulation Engine", desc: "High-fidelity mock interviews tailored to MAANG standard.", icon: Target, color: "var(--brand-accent)", span: 1, bg: "rgba(244,63,94,0.05)" },
-  { id: "architect", title: "Career Architect", desc: "Dynamic roadmaps that evolve with your progress. From Hello World to Senior Architect.", icon: Map, color: "var(--brand-primary)", span: 2, bg: "rgba(124,58,237,0.05)" },
+  { id: "ai-tutor", title: "Autonomous AI Tutor", desc: "Context-aware mastery. Tulasi AI doesn't just answer; it architects your understanding with deep pedagogical memory.", icon: BrainCircuit, color: "#10B981", span: 2, bg: "rgba(16,185,129,0.05)" },
+  { id: "pdf-iq", title: "PDF Intelligence", desc: "Ingest textbooks and documentation. Query the source with zero-latency RAG.", icon: FileText, color: "#06B6D4", span: 1, bg: "rgba(6,182,212,0.05)" },
+  { id: "mock-sim", title: "Simulation Engine", desc: "High-fidelity mock interviews tailored to MAANG standard.", icon: Target, color: "#F43F5E", span: 1, bg: "rgba(244,63,94,0.05)" },
+  { id: "architect", title: "Career Architect", desc: "Dynamic roadmaps that evolve with your progress. From Hello World to Senior Architect.", icon: Map, color: "#8B5CF6", span: 2, bg: "rgba(139,92,246,0.05)" },
 ];
 
 const secondaryFeatures = [
-  { icon: Code, title: "Coding Arena", desc: "Real-time feedback on complex DS&A.", color: "var(--brand-yellow)" },
-  { icon: Award, title: "Verified Credentials", desc: "Earn proof-of-knowledge certificates.", color: "var(--brand-green)" },
-  { icon: Trophy, title: "Hackathon Nexus", desc: "The pulse of global competitions.", color: "var(--brand-secondary)" },
-  { icon: Users, title: "Study Clusters", desc: "Collaborative focus with Pomodoro sync.", color: "var(--brand-accent)" },
+  { icon: Code, title: "Coding Arena", desc: "Real-time feedback on complex DS&A.", color: "#F59E0B" },
+  { icon: Award, title: "Verified Credentials", desc: "Earn proof-of-knowledge certificates.", color: "#10B981" },
+  { icon: Trophy, title: "Hackathon Nexus", desc: "The pulse of global competitions.", color: "#06B6D4" },
+  { icon: Users, title: "Study Clusters", desc: "Collaborative focus with Pomodoro sync.", color: "#F43F5E" },
 ];
 
 // ── Shared Branding Component ─────────────────────────────────────
@@ -88,8 +87,7 @@ function Navbar() {
         ))}
       </div>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <ThemeToggle />
-        <Link href="/auth" style={{ color: "var(--text-primary)", fontSize: 13, fontWeight: 700, textDecoration: "none", padding: "8px 16px" }}>Login</Link>
+        <Link href="/auth" style={{ color: "white", fontSize: 13, fontWeight: 700, textDecoration: "none", padding: "8px 16px" }}>Login</Link>
         <Link href="/auth" className="btn-primary" style={{ padding: "10px 24px", fontSize: 13, borderRadius: 14, textDecoration: "none", fontWeight: 800 }}>CLAIM ACCESS</Link>
       </div>
     </nav>
@@ -108,14 +106,14 @@ function Hero() {
       {/* Animated Mesh Gradients */}
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
         <motion.div animate={{ x: [-20, 20, -20], y: [-20, 20, -20] }} transition={{ duration: 10, repeat: Infinity }}
-          style={{ position: "absolute", top: "10%", left: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, var(--brand-glow) 0%, transparent 70%)", filter: "blur(80px)" }} />
+          style={{ position: "absolute", top: "10%", left: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)", filter: "blur(80px)" }} />
         <motion.div animate={{ x: [20, -20, 20], y: [20, -20, 20] }} transition={{ duration: 12, repeat: Infinity }}
-          style={{ position: "absolute", bottom: "10%", right: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, var(--brand-glow) 0%, transparent 70%)", filter: "blur(80px)" }} />
+          style={{ position: "absolute", bottom: "10%", right: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)", filter: "blur(80px)" }} />
       </div>
 
       <motion.div style={{ y, opacity, position: "relative", zIndex: 10, textAlign: "center", maxWidth: 1000 }}>
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} style={{ marginBottom: 32 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 18px", borderRadius: 30, background: "var(--brand-glow)", border: "1px solid var(--border-glow)", color: "var(--brand-green)", fontSize: 12, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 18px", borderRadius: 30, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10B981", fontSize: 12, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2 }}>
             <Sparkles size={14} /> THE AUTONOMOUS CAREER ENGINE
           </span>
         </motion.div>
@@ -158,9 +156,9 @@ function Hero() {
 
       {/* Floating Elements (Decorative) */}
       <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        style={{ position: "absolute", left: "10%", top: "30%", opacity: 0.3 }}><Cpu size={64} style={{ color: "var(--brand-secondary)" }} /></motion.div>
+        style={{ position: "absolute", left: "10%", top: "30%", opacity: 0.3 }}><Cpu size={64} className="text-brand" /></motion.div>
       <motion.div animate={{ y: [0, 20, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        style={{ position: "absolute", right: "10%", top: "40%", opacity: 0.3 }}><HardDrive size={64} style={{ color: "var(--brand-primary)" }} /></motion.div>
+        style={{ position: "absolute", right: "10%", top: "40%", opacity: 0.3 }}><HardDrive size={64} style={{ color: "#7C3AED" }} /></motion.div>
     </section>
   );
 }
@@ -218,9 +216,9 @@ function BentoFeatures() {
 // ── Role Selector (Sub-Hero) ─────────────────────────────────────
 function RoleSelector() {
   const roles = [
-    { name: "Software Engineer", desc: "MAANG-level prep system.", icon: Code2, color: "var(--brand-secondary)" },
-    { name: "Product Design", desc: "High-fidelity feedback loops.", icon: Layout, color: "var(--brand-green)" },
-    { name: "ML Architect", desc: "Data-driven career paths.", icon: BrainCircuit, color: "var(--brand-primary)" },
+    { name: "Software Engineer", desc: "MAANG-level prep system.", icon: Code2, color: "#06B6D4" },
+    { name: "Product Design", desc: "High-fidelity feedback loops.", icon: Layout, color: "#10B981" },
+    { name: "ML Architect", desc: "Data-driven career paths.", icon: BrainCircuit, color: "#8B5CF6" },
   ];
   return (
     <div style={{ padding: "80px 24px", background: "rgba(255,255,255,0.01)", borderTop: "1px solid rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
@@ -241,71 +239,31 @@ function RoleSelector() {
 
 // ── Testimonials ─────────────────────────────────────────────────
 function Testimonials() {
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const API = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
-        const res = await fetch(`${API}/api/reviews/`);
-        if (res.ok) {
-          const data = await res.json();
-          setReviews(data);
-        }
-      } catch (e) {
-        console.error("Failed to fetch live reviews", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchReviews();
-  }, []);
-
-  // Fallback to initial seed if DB is empty
-  const displayReviews = reviews.length > 0 ? reviews : [
-    { review: "Tulasi AI completely re-engineered my interview mindset. I secured a Senior role at Stripe using the simulation engine.", name: "Arjun M.", role: "SDE @ Stripe" },
-    { review: "The roadmaps are surgical in their precision. It's like having a Principal Engineer as a personal mentor 24/7.", name: "Sarah L.", role: "CS Student at MIT" },
-    { review: "The most high-fidelity learning workspace I've ever encountered. The UX is genuinely at Apple's level.", name: "Chen W.", role: "Founding Engineer" },
+  const reviews = [
+    { quote: "Tulasi AI completely re-engineered my interview mindset. I secured a Senior role at Stripe using the simulation engine.", author: "Arjun M.", title: "SDE @ Stripe" },
+    { quote: "The roadmaps are surgical in their precision. It's like having a Principal Engineer as a personal mentor 24/7.", author: "Sarah L.", title: "CS Student at MIT" },
+    { quote: "The most high-fidelity learning workspace I've ever encountered. The UX is genuinely at Apple's level.", author: "Chen W.", title: "Founding Engineer" },
   ];
-
   return (
     <section id="testimonials" style={{ padding: "120px 24px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        {loading ? (
-           <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px" }}>Syncing global feedback...</div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 32 }}>
-            <AnimatePresence>
-              {displayReviews.slice(0, 6).map((r, i) => (
-                <TiltCard key={r.id || i}>
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
-                    className="glass-card" 
-                    style={{ padding: 48, background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column", height: "100%" }}
-                  >
-                    <div style={{ display: "flex", gap: 4, marginBottom: 32 }}>
-                      {Array.from({ length: r.rating || 5 }).map((_, n) => <Star key={n} size={16} color="var(--brand-yellow)" fill="var(--brand-yellow)" />)}
-                    </div>
-                    <p style={{ fontSize: 18, color: "var(--text-primary)", lineHeight: 1.7, marginBottom: 40, fontWeight: 500 }}>"{r.review}"</p>
-                    <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white" }}>
-                        {(r.name || "U")[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <h4 style={{ color: "white", fontWeight: 800, fontSize: 15 }}>{r.name}</h4>
-                        <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{r.role}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </TiltCard>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 32 }}>
+          {reviews.map((r, i) => (
+            <TiltCard key={r.author}>
+              <div className="glass-card" style={{ padding: 48, background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column", height: "100%" }}>
+                <div style={{ display: "flex", gap: 4, marginBottom: 32 }}>{[1,2,3,4,5].map(n => <Star key={n} size={16} color="#F59E0B" fill="#F59E0B" />)}</div>
+                <p style={{ fontSize: 18, color: "var(--text-primary)", lineHeight: 1.7, marginBottom: 40, fontWeight: 500 }}>"{r.quote}"</p>
+                <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 16 }}>
+                   <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, #06B6D4, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white" }}>{r.author[0]}</div>
+                   <div>
+                     <h4 style={{ color: "white", fontWeight: 800, fontSize: 15 }}>{r.author}</h4>
+                     <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{r.title}</span>
+                   </div>
+                </div>
+              </div>
+            </TiltCard>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -339,14 +297,26 @@ function Footer() {
            <div style={{ padding: 24, background: "rgba(255,255,255,0.03)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.05)" }}>
               <h5 style={{ fontSize: 14, fontWeight: 900, marginBottom: 12 }}>SYSTEM STATUS</h5>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--brand-green)" }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--brand-green)" }}>ALL SYSTEMS OPERATIONAL</span>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#10B981" }}>ALL SYSTEMS OPERATIONAL</span>
               </div>
            </div>
         </div>
       </div>
-      <div style={{ maxWidth: 1280, margin: "0 auto", paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>DESIGNED BY TULASI AI LABS • © 2026</span>
+      <div style={{ maxWidth: 1280, margin: "0 auto", paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>TULASI AI LABS • © 2026</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Engineered with precision by</span>
+            <span style={{
+              fontSize: 13, fontWeight: 900,
+              background: "linear-gradient(90deg, #A78BFA, #22D3EE)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              letterSpacing: "-0.3px"
+            }}>Abishek R</span>
+            <span style={{ fontSize: 9, fontWeight: 800, color: "#A78BFA", background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", padding: "2px 6px", borderRadius: 6, letterSpacing: 1 }}>FOUNDER</span>
+          </div>
+        </div>
         <div style={{ display: "flex", gap: 24, color: "var(--text-muted)" }}>
            <Link href="#" style={{ color: "var(--text-muted)" }}><Globe size={18} /></Link>
            <Link href="#" style={{ color: "var(--text-muted)" }}><Shield size={18} /></Link>
@@ -360,9 +330,9 @@ function Footer() {
 // ── Main Page Component ──────────────────────────────────────────
 export default function LandingPage() {
   return (
-    <main style={{ background: "var(--bg-primary)", minHeight: "100vh", color: "var(--text-primary)", position: "relative" }}>
-      {/* Apple-style Noise Texture (Local Override) */}
-      <div style={{ position: "fixed", inset: 0, opacity: 0.03, pointerEvents: "none", zIndex: 50, backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.65\" numOctaves=\"3\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\"/%3E%3C/svg%3E')" }} />
+    <main style={{ background: "#05070D", minHeight: "100vh", color: "white", position: "relative" }}>
+      {/* Apple-style Noise Texture */}
+      <div style={{ position: "fixed", inset: 0, opacity: 0.03, pointerEvents: "none", zIndex: 50, background: "url('https://grainy-gradients.vercel.app/noise.svg')" }} />
       <Navbar />
       <Hero />
       <RoleSelector />

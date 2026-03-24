@@ -13,7 +13,6 @@ import {
   FileText, Award, BarChart3, FileQuestion, MessageCircle, 
   Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit
 } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const NAV_SECTIONS = [
   {
@@ -90,14 +89,14 @@ export default function Sidebar() {
   return (
     <div style={{
       width: 260, height: "100vh",
-      background: "var(--bg-secondary)",
-      borderRight: "1px solid var(--border)",
+      background: "linear-gradient(180deg, #09090f 0%, #0b0d14 100%)",
+      borderRight: "1px solid rgba(255,255,255,0.04)",
       display: "flex", flexDirection: "column",
       overflow: "hidden",
-      boxShadow: "4px 0 24px rgba(0,0,0,0.1)",
+      boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
     }}>
       {/* Logo */}
-      <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid var(--border)" }}>
+      <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <motion.div whileHover={{ scale: 1.02 }} style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
             width: 42, height: 42, borderRadius: 12,
@@ -111,9 +110,9 @@ export default function Sidebar() {
           <div>
             <div style={{
               fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 17,
-              color: "var(--text-primary)", letterSpacing: "-0.5px", lineHeight: 1.1
+              color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1
             }}>
-              Tulasi<span style={{ color: "var(--brand-secondary)" }}>AI</span>
+              Tulasi<span style={{ color: "#06B6D4" }}>AI</span>
             </div>
             <div style={{
               fontSize: 9, fontWeight: 700, letterSpacing: "1.5px",
@@ -150,21 +149,21 @@ export default function Sidebar() {
                       display: "flex", alignItems: "center", gap: 10,
                       padding: "8px 10px", borderRadius: 9, marginBottom: 1,
                       textDecoration: "none",
-                      color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                      color: active ? "#fff" : "rgba(255,255,255,0.45)",
                       background: active
-                        ? "var(--gradient-card)"
+                        ? "linear-gradient(90deg, rgba(139,92,246,0.18), rgba(6,182,212,0.06))"
                         : "transparent",
-                      borderLeft: active ? "2px solid var(--brand-primary)" : "2px solid transparent",
+                      borderLeft: active ? "2px solid #8B5CF6" : "2px solid transparent",
                       transition: "all 0.15s ease",
                       fontSize: 13, fontWeight: active ? 600 : 400,
                       opacity: isLocked ? 0.55 : 1,
                     }}
                     onMouseEnter={e => {
-                      if (!active) (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
-                      if (!active) (e.currentTarget as HTMLElement).style.background = "var(--border-glow)";
+                      if (!active) (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.75)";
+                      if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
                     }}
                     onMouseLeave={e => {
-                      if (!active) (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                      if (!active) (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.45)";
                       if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
                     }}
                   >
@@ -209,7 +208,7 @@ export default function Sidebar() {
 
       {/* User footer */}
       {user && (
-        <div style={{ padding: "12px 12px 16px", borderTop: "1px solid var(--border)" }}>
+        <div style={{ padding: "12px 12px 16px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
               width: 34, height: 34, borderRadius: "50%",
@@ -221,10 +220,10 @@ export default function Sidebar() {
               {(user.name || user.email || "U")[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user.name || "Student"}
               </div>
-              <div style={{ fontSize: 10, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user.email}
               </div>
             </div>
@@ -233,8 +232,6 @@ export default function Sidebar() {
             ) : (
               <span style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>Free</span>
             )}
-            
-            <ThemeToggle />
           </div>
 
           {!isPro && user.role !== "admin" && (
