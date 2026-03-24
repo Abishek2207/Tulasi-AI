@@ -1,37 +1,36 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ReactNode, useRef } from "react";
+import { ReactNode, MouseEvent } from "react";
 
-export function TiltCard({ children, className = "", style = {} }: { children: ReactNode; className?: string; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null);
+interface TiltCardProps {
+  children: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: () => void;
+  intensity?: number;
+}
 
+export const TiltCard = ({ children, className = "", style = {}, onClick, intensity = 15 }: TiltCardProps) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  // Smooth out the motion
-  const mouseXSpring = useSpring(x, { stiffness: 300, damping: 20 });
-  const mouseYSpring = useSpring(y, { stiffness: 300, damping: 20 });
+  const mouseXSpring = useSpring(x);
+  const mouseYSpring = useSpring(y);
 
-  // Map mouse position to degree rotation
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["9deg", "-9deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-9deg", "9deg"]);
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], [intensity, -intensity]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], [-intensity, intensity]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
-    
-    // Calculate mouse position relative to center of element
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    
-    // Convert to percentage (-0.5 to 0.5)
-    // -0.5 is left/top edge, 0.5 is right/bottom edge
+
     const xPct = mouseX / width - 0.5;
     const yPct = mouseY / height - 0.5;
-    
+
     x.set(xPct);
     y.set(yPct);
   };
@@ -43,21 +42,21 @@ export function TiltCard({ children, className = "", style = {} }: { children: R
 
   return (
     <motion.div
-      ref={ref}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onClick={onClick}
       style={{
-        transformStyle: "preserve-3d",
-        transformPerspective: 1200,
         rotateX,
         rotateY,
-        ...style
+        transformStyle: "preserve-3d",
+        ...style,
       }}
-      className={className}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      className={`glass-card ${className}`}
     >
-      <div style={{ transform: "translateZ(30px)", width: "100%", height: "100%", borderRadius: "inherit" }}>
+      <div style={{ transform: "translateZ(20px)", transformStyle: "preserve-3d" }}>
         {children}
       </div>
     </motion.div>
   );
-}
+};
