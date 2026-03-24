@@ -150,6 +150,7 @@ def get_me(current_user: User = Depends(get_current_user)):
         "xp": current_user.xp,
         "level": current_user.level,
         "invite_code": current_user.invite_code,
+        "chats_today": getattr(current_user, "chats_today", 0),
     }
 
 
