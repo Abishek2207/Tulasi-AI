@@ -11,7 +11,7 @@ import {
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award, 
   Flame, Zap, Linkedin, Share2, MessageCircle, Terminal, 
   CheckCircle2, Star, Sparkles, BrainCircuit, Lightbulb, 
-  LayoutDashboard, TrendingUp, ArrowRight
+  LayoutDashboard, TrendingUp, ArrowRight, Share
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
@@ -117,18 +117,19 @@ const MODULES = [
 export default function DashboardPage() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Student";
-  const [stats, setStats] = useState({ streak: 0, xp: 0, level: 1, problems_solved: 0, videos_watched: 0, hackathons_joined: 0 });
+  const [stats, setStats] = useState({ streak: 0, xp: 0, level: 1, problems_solved: 0, videos_watched: 0, hackathons_joined: 0, invite_code: "" });
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-        const [statsData, lbData] = await Promise.all([
+        const [statsData, lbData, meData] = await Promise.all([
           activityApi.getStats(token).catch(() => null),
-          activityApi.getLeaderboard(token).catch(() => null)
+          activityApi.getLeaderboard(token).catch(() => null),
+          fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => ({}))
         ]);
-        if (statsData) setStats(statsData as any);
+        if (statsData) setStats(prev => ({ ...prev, ...(statsData as any), invite_code: meData?.invite_code || "TULASI25" }));
         if (lbData?.leaderboard) setLeaderboard(lbData.leaderboard.slice(0, 5));
         
         // Gamification: Trigger confetti on load if level > 1
@@ -267,6 +268,49 @@ export default function DashboardPage() {
         <motion.div variants={item} style={{ gridColumn: "span 1" }}>
           <TiltCard intensity={3} style={{ height: "100%" }}>
              <LiveActivityFeed />
+          </TiltCard>
+        </motion.div>
+
+        {/* Gamified Referral Card */}
+        <motion.div variants={item} style={{ gridColumn: "span 1" }}>
+          <TiltCard intensity={5} style={{ height: "100%" }}>
+            <div className="glass-card" style={{ 
+              padding: 28, height: "100%", display: "flex", flexDirection: "column", 
+              background: "linear-gradient(135deg, rgba(255,255,255,0.02), rgba(16,185,129,0.05))",
+              position: "relative", overflow: "hidden" 
+            }}>
+              <div style={{ position: "absolute", top: -50, right: -50, width: 150, height: 150, background: "radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%)", filter: "blur(40px)" }} />
+              
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}>
+                  <Gift size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 900, color: "white", letterSpacing: "-0.5px" }}>Earn +500 XP</h3>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>Invite a friend to unlock more chats.</p>
+                </div>
+              </div>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: "auto", background: "rgba(0,0,0,0.2)", padding: 6, borderRadius: 12, border: "1px dashed rgba(255,255,255,0.15)" }}>
+                <div style={{ flex: 1, textAlign: "center", fontSize: 15, fontWeight: 800, color: "white", letterSpacing: 2, fontFamily: "monospace" }}>
+                  {stats.invite_code || "TULASI25"}
+                </div>
+                <button 
+                  onClick={() => {
+                    const code = stats.invite_code || "TULASI25";
+                    const text = `Hey! I'm using Tulasi AI to engineer my career and bypass the ATS. Use my invite code ${code} to get 500 XP instantly! Sign up here: https://tulasiai.vercel.app`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.8 }, colors: ['#10B981', '#ffffff', '#34D399'] });
+                  }}
+                  style={{
+                    padding: "8px 16px", borderRadius: 8, background: "#10B981", color: "black",
+                    fontWeight: 800, fontSize: 13, display: "flex", alignItems: "center", gap: 6, border: "none", cursor: "pointer"
+                  }}
+                >
+                  <Share size={14} /> Send
+                </button>
+              </div>
+            </div>
           </TiltCard>
         </motion.div>
 
