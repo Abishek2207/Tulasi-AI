@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Inter, Outfit, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "react-hot-toast";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -35,6 +38,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
+        {/* Google Analytics */}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-PLACEHOLDER" strategy="afterInteractive" />
+        <Script id="ga-init" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-PLACEHOLDER');
+        ` }} />
         <Providers>
           <Toaster
             position="top-center"
@@ -57,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <XPNotificationSystem />
           <OnboardingTour />
           <CommandPalette />
+          <PWAInstallPrompt />
         </Providers>
       </body>
     </html>
