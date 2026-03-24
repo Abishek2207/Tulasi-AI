@@ -13,14 +13,21 @@ router = APIRouter()
 
 @router.get("/stats")
 def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    from datetime import date
     users = db.exec(select(User)).all()
     total = len(users)
     students = [u for u in users if u.role == "student"]
+    pro_users = [u for u in users if u.is_pro]
+    
+    today_str = date.today().isoformat()
+    active_today = len([u for u in users if u.last_activity_date == today_str])
+
     return {
         "total_users": total,
         "students": len(students),
         "admins": total - len(students),
-        "active_today": max(1, total // 3),  # placeholder
+        "pro_users": len(pro_users),
+        "active_today": active_today,
     }
 
 
@@ -36,10 +43,12 @@ def get_all_users(db: Session = Depends(get_session), admin: User = Depends(get_
                 "role": u.role,
                 "xp": u.xp,
                 "streak": u.streak,
+                "is_pro": u.is_pro,
                 "created_at": u.created_at.isoformat(),
                 "is_active": u.is_active,
             }
             for u in users
+
         ]
     }
 
