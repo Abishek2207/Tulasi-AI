@@ -422,7 +422,7 @@ function Footer() {
                 <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }}
                   style={{ width: 10, height: 10, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981", flexShrink: 0 }}
                 />
-                <span style={{ fontSize: 11, fontWeight: 900, color: "#10B981", letterSpacing: 1, textTransform: "uppercase" }}>All Systems Operational</span>
+                <span style={{ fontSize: 11, fontWeight: 900, color: "#10B981", letterSpacing: 1, textTransform: "uppercase" }}>● ALL SYSTEMS OPERATIONAL</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {["API", "Auth", "AI Engine", "Database"].map(s => (
@@ -436,15 +436,9 @@ function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div style={{ paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center" }}>
           <span style={{ color: "var(--text-muted)", fontSize: 13, fontWeight: 600 }}>
-            Founded & Built by{" "}
-            <span style={{ background: "linear-gradient(90deg, #A78BFA, #22D3EE)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 900 }}>
-              Abishek R
-            </span>
-            {" "}•{" "}
-            © 2026 Tulasi AI Labs
+            Founded & Built by Abishek R • © 2026 Tulasi AI Labs
           </span>
         </div>
       </div>
