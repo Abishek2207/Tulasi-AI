@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { BrainCircuit } from "lucide-react";
 
 const COMPANIES = [
   // FAANG / MAANG
@@ -180,6 +182,7 @@ const COMPANIES = [
 ];
 
 export default function CompanyPrepPage() {
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState("google");
   const [filter, setFilter] = useState("All");
   const [tab, setTab] = useState("coding");
@@ -241,12 +244,29 @@ export default function CompanyPrepPage() {
             className="dash-card"
             style={{ flex: 1, padding: 32, background: "rgba(255,255,255,0.02)", border: `1px solid ${selected.color}40` }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: selected.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "white" }}>{selected.logo}</div>
-              <div>
-                <h2 style={{ fontSize: 28, fontWeight: 800, margin: 0, color: "white" }}>{selected.name}</h2>
-                <span style={{ background: `${selected.color}20`, color: selected.color, padding: "2px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700 }}>{selected.type}</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ width: 60, height: 60, borderRadius: 16, background: selected.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "white" }}>{selected.logo}</div>
+                <div>
+                  <h2 style={{ fontSize: 28, fontWeight: 800, margin: 0, color: "white" }}>{selected.name}</h2>
+                  <span style={{ background: `${selected.color}20`, color: selected.color, padding: "2px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700 }}>{selected.type}</span>
+                </div>
               </div>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push(`/dashboard/interview?company=${encodeURIComponent(selected.name)}`)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", borderRadius: 14,
+                  background: `linear-gradient(135deg, ${selected.color}, ${selected.color}dd)`,
+                  color: "white", fontWeight: 800, fontSize: 14, border: "none", cursor: "pointer",
+                  boxShadow: `0 4px 20px ${selected.color}40`,
+                }}
+              >
+                <BrainCircuit size={18} />
+                Simulate {selected.name} Interview
+              </motion.button>
             </div>
 
             <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.6, marginBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: 20 }}>{selected.desc}</p>
