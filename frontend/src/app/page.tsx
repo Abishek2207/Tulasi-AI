@@ -38,9 +38,20 @@ function BrandText({ size = 40 }: { size?: number }) {
     <div style={{ display: "flex", alignItems: "center", gap: size * 0.3 }}>
       <TulasiLogo size={size * 1.3} />
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 900, fontSize: size * 0.65, color: "white", letterSpacing: "-1.5px", lineHeight: 1 }}>
+        <motion.span 
+          style={{ 
+            fontFamily: "var(--font-outfit)", fontWeight: 900, fontSize: size * 0.65, 
+            color: "white", letterSpacing: "-1.5px", lineHeight: 1,
+            background: "linear-gradient(90deg, #fff 0%, rgba(255,255,255,0.4) 50%, #fff 100%)",
+            backgroundSize: "200% 100%",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent"
+          }}
+          animate={{ backgroundPosition: ["100% 0", "-100% 0"] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        >
           Tulasi<span style={{ color: "var(--brand-primary)" }}>AI</span>
-        </span>
+        </motion.span>
         <span style={{ fontSize: size * 0.22, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 2.5, textTransform: "uppercase", marginTop: 2 }}>Orbit v2</span>
       </div>
     </div>
@@ -107,10 +118,20 @@ function Hero() {
           </span>
         </motion.div>
         
-        <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1 }}
+        <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
           style={{ fontSize: "clamp(56px, 10vw, 108px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 0.9, letterSpacing: "-0.05em", marginBottom: 32 }}>
-          Architect Your <br />
-          <span className="gradient-text" style={{ background: "linear-gradient(135deg, #10B981, #06B6D4, #7C3AED)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Trajectory.</span>
+          {["Architect", "Your", "Trajectory."].map((w, i) => (
+             <motion.span 
+               key={i} 
+               initial={{ y: 40, opacity: 0 }} 
+               animate={{ y: 0, opacity: 1 }} 
+               transition={{ type: "spring", stiffness: 100, damping: 12, delay: 0.2 + i * 0.1 }}
+               style={{ display: "inline-block", marginRight: "0.2em" }}
+               className={i === 2 ? "gradient-text" : ""}
+             >
+               {w}
+             </motion.span>
+          ))}
         </motion.h1>
 
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
@@ -297,7 +318,9 @@ function Footer() {
 // ── Main Page Component ──────────────────────────────────────────
 export default function LandingPage() {
   return (
-    <main style={{ background: "#05070D", minHeight: "100vh", color: "white" }}>
+    <main style={{ background: "#05070D", minHeight: "100vh", color: "white", position: "relative" }}>
+      {/* Apple-style Noise Texture */}
+      <div style={{ position: "fixed", inset: 0, opacity: 0.03, pointerEvents: "none", zIndex: 50, background: "url('https://grainy-gradients.vercel.app/noise.svg')" }} />
       <Navbar />
       <Hero />
       <RoleSelector />
