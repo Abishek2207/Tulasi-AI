@@ -19,7 +19,7 @@ class HybridAIClient:
         if self.gemini_key:
             genai.configure(api_key=self.gemini_key)
         
-        self.gemini_models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.0-pro"]
+        self.gemini_models = ["gemini-1.5-flash", "gemini-1.5-pro"]
 
     def _format_for_gemini(self, message: str, history: List[Dict], image_data: Optional[bytes] = None) -> List[Dict]:
         contents = []
@@ -118,15 +118,15 @@ class HybridAIClient:
             for attempt in range(2): # 2 retries
                 try:
                     print(f"📡 [AI] Trying Gemini {model_name} (attempt {attempt + 1})")
+                    if not self.gemini_key:
+                        raise AIClientError("Gemini API key is missing.")
                     return self._call_gemini(gemini_contents, model_name, stream=stream)
                 except Exception as e:
                     err_msg = str(e).lower()
                     print(f"⚠️ [AI] Gemini {model_name} failed: {e}")
                     if any(k in err_msg for k in ["429", "quota", "limit", "exhausted"]):
-                        # Quota error, try next model or next attempt
                         time.sleep(1)
                         continue
-                    # Non-quota error but might be transient? Retry once.
                     if attempt == 0:
                         time.sleep(1)
                         continue
@@ -136,14 +136,20 @@ class HybridAIClient:
         print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
         or_messages = self._format_for_openrouter(message, history)
         try:
+            if not self.openrouter_key:
+                raise AIClientError("OpenRouter API key is missing.")
             return self._call_openrouter(or_messages, stream=stream)
         except Exception as e:
             print(f"❌ [AI] OpenRouter fallback also failed: {e}")
+            final_err = f"⏳ Tulasi AI is currently under high load (All providers exhausted). Please try again in 5 minutes."
+            if not self.gemini_key and not self.openrouter_key:
+                final_err = "⚠️ AI Engine Error: No API keys configured on server."
+            
             if stream:
                 def gen():
-                    yield "⏳ AI is currently unavailable. Please try again in a moment."
+                    yield final_err
                 return gen()
-            return "⏳ AI is currently unavailable. Please try again in a moment."
+            return final_err
 
 # Singleton
 ai_client = HybridAIClient()

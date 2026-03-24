@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Star, X, CheckCircle2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 
 export function ReviewModal() {
   const { data: session } = useSession();
@@ -14,6 +15,8 @@ export function ReviewModal() {
   const [review, setReview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const pathname = usePathname();
 
   useEffect(() => {
     // Check if review has been submitted before
@@ -26,7 +29,7 @@ export function ReviewModal() {
       const timer = setTimeout(() => setIsOpen(true), 1500);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [pathname]);
 
   const handleSubmit = async () => {
     if (!review.trim()) return;

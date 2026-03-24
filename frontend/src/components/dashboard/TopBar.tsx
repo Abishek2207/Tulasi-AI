@@ -31,8 +31,8 @@ export default function TopBar() {
   return (
     <div style={{
       height: 64,
-      borderBottom: "1px solid rgba(255,255,255,0.04)",
-      background: "rgba(9,9,15,0.85)",
+      borderBottom: "1px solid var(--border)",
+      background: "var(--bg-secondary)",
       backdropFilter: "blur(20px)",
       WebkitBackdropFilter: "blur(20px)",
       display: "flex",
@@ -66,10 +66,10 @@ export default function TopBar() {
           }}
           style={{
             width: "100%",
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.06)",
+            background: "var(--border-glow)",
+            border: "1px solid var(--border)",
             borderRadius: 9, padding: "8px 16px 8px 36px",
-            color: "rgba(255,255,255,0.4)", fontSize: 13, outline: "none",
+            color: "var(--text-secondary)", fontSize: 13, outline: "none",
             fontFamily: "var(--font-inter)",
             cursor: "pointer", textAlign: "left",
             display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -80,9 +80,9 @@ export default function TopBar() {
             Search features, topics...
           </span>
           <span style={{
-            fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "var(--font-mono)",
-            background: "rgba(255,255,255,0.04)", padding: "4px 6px", borderRadius: 5,
-            border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 2
+            fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)",
+            background: "var(--border-glow)", padding: "4px 6px", borderRadius: 5,
+            border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 2
           }}><Command size={10} />K</span>
         </button>
       </div>
@@ -141,8 +141,8 @@ export default function TopBar() {
             style={{
               display: "flex", alignItems: "center", gap: 8,
               padding: "5px 12px", borderRadius: 9,
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-              color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: 12, fontWeight: 500,
+              background: "var(--border-glow)", border: "1px solid var(--border)",
+              color: "var(--text-secondary)", cursor: "pointer", fontSize: 12, fontWeight: 500,
               transition: "all 0.15s ease",
             }}
           >
