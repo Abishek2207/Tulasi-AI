@@ -13,6 +13,7 @@ import {
   FileText, Award, BarChart3, FileQuestion, MessageCircle, 
   Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const NAV_SECTIONS = [
   {
@@ -232,6 +233,8 @@ export default function Sidebar() {
             ) : (
               <span style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>Free</span>
             )}
+            
+            <ThemeToggle />
           </div>
 
           {!isPro && user.role !== "admin" && (

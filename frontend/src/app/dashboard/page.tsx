@@ -17,6 +17,86 @@ import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
 import { ActivityMap } from "@/components/dashboard/ActivityMap";
 
+const MOCK_ACTIVITIES = [
+  { id: 1, user: "Elena M.", action: "mastered", target: "Binary Search Trees", type: "code", time: "Just now" },
+  { id: 2, user: "David K.", action: "completed", target: "AWS Architecture Roadmap", type: "roadmap", time: "2m ago" },
+  { id: 3, user: "Sarah L.", action: "aced", target: "Google Mock Interview", type: "interview", time: "5m ago" },
+  { id: 4, user: "Alex J.", action: "reached", target: "Power Level 5! 🏆", type: "level", time: "12m ago" },
+  { id: 5, user: "Priya S.", action: "generated", target: "Fintech Startup Architecture", type: "startup", time: "15m ago" },
+];
+
+function LiveActivityFeed() {
+  const [activities, setActivities] = useState(MOCK_ACTIVITIES);
+
+  useEffect(() => {
+    const cycle = setInterval(() => {
+      setActivities((prev) => {
+        const newArr = [...prev];
+        const last = newArr.pop();
+        if (last) newArr.unshift({ ...last, time: "Just now" });
+        return newArr;
+      });
+    }, 4500);
+    return () => clearInterval(cycle);
+  }, []);
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "code": return <Code size={14} color="#10B981" />;
+      case "roadmap": return <Map size={14} color="#8B5CF6" />;
+      case "interview": return <Target size={14} color="#F43F5E" />;
+      case "level": return <Trophy size={14} color="#FFD93D" />;
+      case "startup": return <Rocket size={14} color="#06B6D4" />;
+      default: return <Sparkles size={14} color="#A78BFA" />;
+    }
+  };
+
+  return (
+    <div style={{ padding: "24px 28px", background: "rgba(255,255,255,0.015)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.04)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
+          <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Global Live Feed</h3>
+        </div>
+        <span style={{ fontSize: 11, color: "var(--brand-primary)", fontWeight: 700, background: "rgba(124,58,237,0.1)", padding: "4px 10px", borderRadius: 12 }}>SYNCING</span>
+      </div>
+      
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative", height: 260, overflow: "hidden" }}>
+        <AnimatePresence>
+          {activities.map((act, i) => (
+            <motion.div
+              key={act.id + act.time}
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1 - (i * 0.2), y: 0, scale: 1 - (i * 0.02) }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.05)",
+                boxShadow: i === 0 ? "0 4px 20px rgba(0,0,0,0.1)" : "none",
+                position: "absolute", top: i * 68, left: 0, right: 0, zIndex: 10 - i
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {getIcon(act.type)}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                    <span style={{ fontWeight: 800, color: "white" }}>{act.user}</span> {act.action} <span style={{ fontWeight: 700, color: "var(--brand-primary)" }}>{act.target}</span>
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", opacity: 0.6 }}>{act.time}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+
 const MODULES = [
   { id: "chat", title: "AI Learning Chat", desc: "Have a conversation with Tulasi AI to learn new concepts.", icon: <MessageSquare size={28} />, link: "/dashboard/chat", color: "#8B5CF6", span: 2 },
   { id: "interview", title: "Mock Interview", desc: "Live voice & chat simulation with an AI Hiring Manager.", icon: <Target size={28} />, link: "/dashboard/interview", color: "#06B6D4", span: 2 },
@@ -180,6 +260,13 @@ export default function DashboardPage() {
                  )) : <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "10px 0" }}>Syncing global rankings...</div>}
                </div>
             </div>
+          </TiltCard>
+        </motion.div>
+
+        {/* Global Live Feed */}
+        <motion.div variants={item} style={{ gridColumn: "span 1" }}>
+          <TiltCard intensity={3} style={{ height: "100%" }}>
+             <LiveActivityFeed />
           </TiltCard>
         </motion.div>
 

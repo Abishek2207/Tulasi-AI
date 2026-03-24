@@ -10,6 +10,7 @@ import {
   ArrowRight, Layout, BrainCircuit, Rocket, HardDrive, Cpu
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const Code2 = ({ size, color }: { size: number, color: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -87,7 +88,8 @@ function Navbar() {
         ))}
       </div>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <Link href="/auth" style={{ color: "white", fontSize: 13, fontWeight: 700, textDecoration: "none", padding: "8px 16px" }}>Login</Link>
+        <ThemeToggle />
+        <Link href="/auth" style={{ color: "var(--text-primary)", fontSize: 13, fontWeight: 700, textDecoration: "none", padding: "8px 16px" }}>Login</Link>
         <Link href="/auth" className="btn-primary" style={{ padding: "10px 24px", fontSize: 13, borderRadius: 14, textDecoration: "none", fontWeight: 800 }}>CLAIM ACCESS</Link>
       </div>
     </nav>
@@ -239,31 +241,71 @@ function RoleSelector() {
 
 // ── Testimonials ─────────────────────────────────────────────────
 function Testimonials() {
-  const reviews = [
-    { quote: "Tulasi AI completely re-engineered my interview mindset. I secured a Senior role at Stripe using the simulation engine.", author: "Arjun M.", title: "SDE @ Stripe" },
-    { quote: "The roadmaps are surgical in their precision. It's like having a Principal Engineer as a personal mentor 24/7.", author: "Sarah L.", title: "CS Student at MIT" },
-    { quote: "The most high-fidelity learning workspace I've ever encountered. The UX is genuinely at Apple's level.", author: "Chen W.", title: "Founding Engineer" },
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const API = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
+        const res = await fetch(`${API}/api/reviews/`);
+        if (res.ok) {
+          const data = await res.json();
+          setReviews(data);
+        }
+      } catch (e) {
+        console.error("Failed to fetch live reviews", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  // Fallback to initial seed if DB is empty
+  const displayReviews = reviews.length > 0 ? reviews : [
+    { review: "Tulasi AI completely re-engineered my interview mindset. I secured a Senior role at Stripe using the simulation engine.", name: "Arjun M.", role: "SDE @ Stripe" },
+    { review: "The roadmaps are surgical in their precision. It's like having a Principal Engineer as a personal mentor 24/7.", name: "Sarah L.", role: "CS Student at MIT" },
+    { review: "The most high-fidelity learning workspace I've ever encountered. The UX is genuinely at Apple's level.", name: "Chen W.", role: "Founding Engineer" },
   ];
+
   return (
     <section id="testimonials" style={{ padding: "120px 24px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 32 }}>
-          {reviews.map((r, i) => (
-            <TiltCard key={r.author}>
-              <div className="glass-card" style={{ padding: 48, background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column", height: "100%" }}>
-                <div style={{ display: "flex", gap: 4, marginBottom: 32 }}>{[1,2,3,4,5].map(n => <Star key={n} size={16} color="#F59E0B" fill="#F59E0B" />)}</div>
-                <p style={{ fontSize: 18, color: "var(--text-primary)", lineHeight: 1.7, marginBottom: 40, fontWeight: 500 }}>"{r.quote}"</p>
-                <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-                   <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, #06B6D4, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white" }}>{r.author[0]}</div>
-                   <div>
-                     <h4 style={{ color: "white", fontWeight: 800, fontSize: 15 }}>{r.author}</h4>
-                     <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{r.title}</span>
-                   </div>
-                </div>
-              </div>
-            </TiltCard>
-          ))}
-        </div>
+        {loading ? (
+           <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px" }}>Syncing global feedback...</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 32 }}>
+            <AnimatePresence>
+              {displayReviews.slice(0, 6).map((r, i) => (
+                <TiltCard key={r.id || i}>
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                    className="glass-card" 
+                    style={{ padding: 48, background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column", height: "100%" }}
+                  >
+                    <div style={{ display: "flex", gap: 4, marginBottom: 32 }}>
+                      {Array.from({ length: r.rating || 5 }).map((_, n) => <Star key={n} size={16} color="#F59E0B" fill="#F59E0B" />)}
+                    </div>
+                    <p style={{ fontSize: 18, color: "var(--text-primary)", lineHeight: 1.7, marginBottom: 40, fontWeight: 500 }}>"{r.review}"</p>
+                    <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 16 }}>
+                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, #06B6D4, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white" }}>
+                        {(r.name || "U")[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 style={{ color: "white", fontWeight: 800, fontSize: 15 }}>{r.name}</h4>
+                        <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{r.role}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </TiltCard>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </section>
   );
