@@ -4,24 +4,33 @@ import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { activityApi, profileApi } from "@/lib/api";
+import { Zap, Flame, Code, Target, Trophy, Award, Edit3, Check, X } from "lucide-react";
 
 interface UserStats {
-  xp?: number;
-  level?: number;
-  problems_solved?: number;
-  interviews_completed?: number;
-  streak?: number;
+  xp?: number; level?: number; problems_solved?: number;
+  interviews_completed?: number; streak?: number;
   badges?: Array<{ name: string; icon?: string }>;
-  progress?: {
-    coding?: number;
-    interview?: number;
-    videos?: number;
-    roadmap?: number;
-  };
+  progress?: { coding?: number; interview?: number; videos?: number; roadmap?: number };
+}
+
+function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass-card"
+      style={{ padding: "22px 24px", borderRadius: 20, border: `1px solid ${color}18`, position: "relative", overflow: "hidden" }}
+    >
+      <div style={{ position: "absolute", top: -16, right: -16, width: 80, height: 80, borderRadius: "50%", background: `radial-gradient(circle, ${color}20 0%, transparent 70%)` }} />
+      <div style={{ color, background: `${color}15`, width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>{icon}</div>
+      <div style={{ fontSize: 30, fontWeight: 900, color, fontFamily: "var(--font-outfit)", marginBottom: 4 }}>{value}</div>
+      <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{label}</div>
+    </motion.div>
+  );
 }
 
 export default function ProfilePage() {
-  const { data: session, update: updateSession } = useSession();
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<"overview" | "settings">("overview");
   const [stats, setStats] = useState<UserStats | null>(null);
   const [saving, setSaving] = useState(false);
@@ -31,147 +40,162 @@ export default function ProfilePage() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   useEffect(() => {
-    if (session) fetchStats();
-  }, [session]);
-
-  const fetchStats = async () => {
-        try {
-      const data = await activityApi.getStats(token);
-      setStats(data);
-    } catch (e) {}
-  };
-
-  useEffect(() => {
+    if (session) activityApi.getStats(token).then(setStats).catch(() => {});
     if (session?.user) {
       const u = session.user as { name?: string; bio?: string; skills?: string };
-      setFormData({
-        name: u.name || "",
-        bio: u.bio || "",
-        skills: u.skills || "",
-      });
+      setFormData({ name: u.name || "", bio: u.bio || "", skills: u.skills || "" });
     }
   }, [session]);
 
   const handleSave = async () => {
-        setSaving(true);
-    setSaveStatus("idle");
+    setSaving(true);
     try {
       await profileApi.update(formData, token);
       setSaveStatus("success");
-      setTimeout(() => setSaveStatus("idle"), 3000);
-    } catch (e) {
-      setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
-    }
+    } catch { setSaveStatus("error"); }
     setSaving(false);
+    setTimeout(() => setSaveStatus("idle"), 3000);
   };
 
-  const UI_STATS = [
-    { label: "XP Points", value: stats?.xp || 0, icon: "⚡", color: "#6C63FF" },
-    { label: "Current Level", value: stats?.level || 1, icon: "🏆", color: "#FFD93D" },
-    { label: "Coding Challenges", value: stats?.problems_solved || 0, icon: "💻", color: "#43E97B" },
-    { label: "Interviews Done", value: stats?.interviews_completed || 0, icon: "🎯", color: "#FF6B6B" },
-    { label: "🔥 Streak", value: `${stats?.streak || 0} days`, icon: "🔥", color: "#F97316" },
-    { label: "Badges Earned", value: stats?.badges?.length || 0, icon: "🎖️", color: "#EC4899" },
+  const user = session?.user;
+  const initials = (user?.name || user?.email || "U").charAt(0).toUpperCase();
+
+  const STAT_CARDS = [
+    { icon: <Zap size={18} />, label: "Total XP", value: `${stats?.xp || 0} xp`, color: "#8B5CF6" },
+    { icon: <Trophy size={18} />, label: "Power Level", value: stats?.level || 1, color: "#FFD93D" },
+    { icon: <Code size={18} />, label: "Problems Solved", value: stats?.problems_solved || 0, color: "#4ECDC4" },
+    { icon: <Target size={18} />, label: "Interviews Done", value: stats?.interviews_completed || 0, color: "#06B6D4" },
+    { icon: <Flame size={18} />, label: "Day Streak", value: `${stats?.streak || 0}🔥`, color: "#F43F5E" },
+    { icon: <Award size={18} />, label: "Badges Earned", value: stats?.badges?.length || 1, color: "#EC4899" },
   ];
 
-  type BadgeItem = { name: string; icon: string; bg: string; color: string };
-  const rawBadges = stats?.badges as Array<{ name: string; icon?: string }> | undefined;
-  const BADGES: BadgeItem[] = rawBadges && rawBadges.length > 0
-    ? rawBadges.map((b) => ({ name: b.name, icon: b.icon || "✨", bg: "rgba(108,99,255,0.1)", color: "#6C63FF" }))
-    : [
-        { name: "Early Adopter", icon: "🚀", bg: "rgba(108,99,255,0.1)", color: "#6C63FF" },
-      ];
+  const PROGRESS_BARS = [
+    { label: "Coding Progress", pct: stats?.progress?.coding || 0, color: "#06B6D4" },
+    { label: "Interview Readiness", pct: stats?.progress?.interview || 0, color: "#FBBF24" },
+    { label: "Videos Watched", pct: stats?.progress?.videos || 0, color: "#A78BFA" },
+    { label: "Roadmap Completion", pct: stats?.progress?.roadmap || 0, color: "#34D399" },
+  ];
+
+  const skillsList = formData.skills.split(",").map(s => s.trim()).filter(Boolean);
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 60 }}>
-      
-      {/* Profile Header */}
-      <div className="dash-card" style={{ padding: 40, border: "1px solid var(--border)", display: "flex", gap: 32, alignItems: "center", marginBottom: 32, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, right: 0, width: 300, height: 300, background: "radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 70%)", transform: "translate(30%, -30%)" }} />
-        
-        <div style={{ width: 120, height: 120, borderRadius: 60, background: "linear-gradient(135deg, #6C63FF, #4ECDC4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, fontWeight: 900, color: "white", boxShadow: "0 10px 30px rgba(108,99,255,0.3)", zIndex: 1, flexShrink: 0 }}>
-          {session?.user?.name?.charAt(0) || "U"}
-        </div>
-        
-        <div style={{ zIndex: 1, flex: 1 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 800, margin: "0 0 4px 0" }}>{session?.user?.name || "Student User"}</h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: 15, margin: "0 0 8px 0" }}>{session?.user?.email}</p>
-          {(session?.user as { bio?: string })?.bio && (
-            <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: "0 0 12px 0", fontStyle: "italic" }}>{(session?.user as { bio?: string }).bio}</p>
-          )}
-          {(session?.user as { skills?: string })?.skills && (
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-              {((session?.user as { skills?: string }).skills as string).split(",").filter(Boolean).map((skill: string, i: number) => (
-                <span key={i} style={{ padding: "3px 10px", background: "rgba(78,205,196,0.1)", color: "#4ECDC4", borderRadius: 20, fontSize: 12, fontWeight: 600, border: "1px solid rgba(78,205,196,0.2)" }}>
-                  {skill.trim()}
-                </span>
-              ))}
+    <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 80 }}>
+
+      {/* Hero Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card"
+        style={{
+          padding: "48px 48px", marginBottom: 32, borderRadius: 28,
+          background: "linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(6,182,212,0.06) 100%)",
+          border: "1px solid rgba(255,255,255,0.05)", position: "relative", overflow: "hidden"
+        }}
+      >
+        {/* BG glows */}
+        <div style={{ position: "absolute", top: -60, right: -60, width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -60, left: -40, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 32, position: "relative", zIndex: 1 }}>
+          {/* Animated Avatar Ring */}
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+              style={{
+                position: "absolute", inset: -4, borderRadius: "50%",
+                background: "conic-gradient(from 0deg, #8B5CF6, #06B6D4, #F43F5E, #8B5CF6)",
+                zIndex: 0
+              }}
+            />
+            <div style={{
+              width: 110, height: 110, borderRadius: "50%",
+              background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 44, fontWeight: 900, color: "white",
+              position: "relative", zIndex: 1,
+              border: "3px solid #05070D",
+            }}>
+              {initials}
             </div>
-          )}
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {BADGES.slice(0, 4).map((b: BadgeItem, i: number) => (
-              <div key={i} style={{ padding: "5px 12px", background: b.bg, color: b.color, borderRadius: 20, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, border: `1px solid ${b.color}40` }}>
-                <span>{b.icon}</span> {b.name}
-              </div>
-            ))}
-            {(stats?.level ?? 0) > 1 && (
-              <div style={{ padding: "5px 12px", background: "rgba(108,99,255,0.1)", color: "#6C63FF", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "1px solid #6C63FF40" }}>
-                ⭐ Level {stats?.level} Achiever
+            {/* Online indicator */}
+            <div style={{
+              position: "absolute", bottom: 4, right: 4, width: 18, height: 18,
+              borderRadius: "50%", background: "#43E97B",
+              border: "3px solid #05070D", zIndex: 2,
+              boxShadow: "0 0 12px #43E97B"
+            }} />
+          </div>
+
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+              Orbit Profile
+            </div>
+            <h1 style={{ fontSize: 36, fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 4, letterSpacing: "-1px" }}>
+              {user?.name || "Student User"}
+            </h1>
+            <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 16 }}>{user?.email}</p>
+
+            {/* Skill Chips */}
+            {skillsList.length > 0 && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                {skillsList.map((skill, i) => (
+                  <span key={i} style={{ padding: "4px 12px", background: "rgba(6,182,212,0.1)", color: "#06B6D4", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "1px solid rgba(6,182,212,0.2)" }}>
+                    {skill}
+                  </span>
+                ))}
               </div>
             )}
+
+            {/* Badges */}
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ padding: "5px 12px", background: "rgba(139,92,246,0.1)", color: "#8B5CF6", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "1px solid rgba(139,92,246,0.2)" }}>🚀 Early Adopter</span>
+              {(stats?.level ?? 0) >= 2 && <span style={{ padding: "5px 12px", background: "rgba(255,215,0,0.08)", color: "#FFD700", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "1px solid rgba(255,215,0,0.2)" }}>⭐ Level {stats?.level}</span>}
+              {(stats?.streak ?? 0) >= 3 && <span style={{ padding: "5px 12px", background: "rgba(244,63,94,0.1)", color: "#F43F5E", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "1px solid rgba(244,63,94,0.2)" }}>🔥 On Fire</span>}
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 32, borderBottom: "1px solid var(--border)", marginBottom: 32 }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 32, background: "rgba(255,255,255,0.02)", borderRadius: 14, padding: 4, width: "fit-content", border: "1px solid rgba(255,255,255,0.05)" }}>
         {(["overview", "settings"] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            style={{ background: "transparent", border: "none", padding: "0 0 16px 0", fontSize: 15, fontWeight: 700, textTransform: "capitalize", cursor: "pointer",
-              color: activeTab === tab ? "white" : "var(--text-secondary)",
-              borderBottom: activeTab === tab ? "2px solid #6C63FF" : "2px solid transparent",
-              transition: "all 0.2s",
-            }}>
+          <button key={tab} onClick={() => setActiveTab(tab)} style={{
+            padding: "8px 20px", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", border: "none",
+            background: activeTab === tab ? "rgba(139,92,246,0.15)" : "transparent",
+            color: activeTab === tab ? "#8B5CF6" : "var(--text-secondary)",
+            outline: activeTab === tab ? "1px solid rgba(139,92,246,0.3)" : "none",
+            transition: "all 0.2s",
+          }}>
             {tab === "overview" ? "📊 Overview" : "⚙️ Settings"}
           </button>
         ))}
       </div>
 
+      {/* Overview Tab */}
       {activeTab === "overview" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 20 }}>
-            {UI_STATS.map((stat, i) => (
-              <div key={i} className="dash-card" style={{ padding: 22, display: "flex", flexDirection: "column", gap: 10, border: "1px solid rgba(255,255,255,0.05)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 22 }}>{stat.icon}</span>
-                  <span style={{ fontSize: 26, fontWeight: 800, color: stat.color }}>{stat.value}</span>
-                </div>
-                <div style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>{stat.label}</div>
-              </div>
-            ))}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16 }}>
+            {STAT_CARDS.map((s, i) => <StatCard key={i} {...s} />)}
           </div>
 
-          <div className="dash-card" style={{ padding: 28 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 20 }}>Activity Progress</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {[
-                { label: "Coding Progress", pct: stats?.progress?.coding || 0, color: "#06B6D4" },
-                { label: "Interview Progress", pct: stats?.progress?.interview || 0, color: "#FBBF24" },
-                { label: "Videos Watched", pct: stats?.progress?.videos || 0, color: "#A78BFA" },
-                { label: "Roadmap Progress", pct: stats?.progress?.roadmap || 0, color: "#34D399" },
-              ].map((prog, i) => (
+          <div className="glass-card" style={{ padding: 32, borderRadius: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}>
+              <Zap size={16} color="#8B5CF6" /> Activity Progress
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {PROGRESS_BARS.map((p, i) => (
                 <div key={i}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>{prog.label}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: prog.color }}>{prog.pct}%</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13 }}>
+                    <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>{p.label}</span>
+                    <span style={{ fontWeight: 800, color: p.color }}>{p.pct}%</span>
                   </div>
-                  <div style={{ height: 8, borderRadius: 6, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                  <div style={{ height: 8, background: "rgba(255,255,255,0.05)", borderRadius: 8, overflow: "hidden" }}>
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${prog.pct}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.1 }}
-                      style={{ height: "100%", background: prog.color, borderRadius: 6 }}
+                      animate={{ width: `${p.pct}%` }}
+                      transition={{ duration: 1, ease: "easeOut", delay: i * 0.1 }}
+                      style={{ height: "100%", background: `linear-gradient(90deg, ${p.color}80, ${p.color})`, borderRadius: 8, boxShadow: `0 0 8px ${p.color}40` }}
                     />
                   </div>
                 </div>
@@ -181,70 +205,41 @@ export default function ProfilePage() {
         </motion.div>
       )}
 
+      {/* Settings Tab */}
       {activeTab === "settings" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="dash-card" style={{ padding: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 28 }}>Edit Profile</h2>
-          
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: 40, borderRadius: 24 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 28, display: "flex", alignItems: "center", gap: 8 }}><Edit3 size={18} color="#8B5CF6" /> Edit Profile</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 22, maxWidth: 560 }}>
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>Display Name</label>
-              <input
-                value={formData.name}
-                onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                className="input-field" style={{ width: "100%", padding: "12px 14px", fontSize: 15 }} />
+              <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Display Name</label>
+              <input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 15, borderRadius: 12 }} />
             </div>
-
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>Bio</label>
-              <textarea
-                value={formData.bio}
-                onChange={e => setFormData(p => ({ ...p, bio: e.target.value }))}
-                rows={3}
-                placeholder="Tell others about yourself..."
-                className="input-field"
-                style={{ width: "100%", padding: "12px 14px", fontSize: 14, resize: "vertical" }} />
+              <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Bio</label>
+              <textarea value={formData.bio} onChange={e => setFormData(p => ({ ...p, bio: e.target.value }))} rows={3} placeholder="Tell others about yourself..." className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12, resize: "vertical" }} />
             </div>
-
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>
-                Skills <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(comma-separated)</span>
-              </label>
-              <input
-                value={formData.skills}
-                onChange={e => setFormData(p => ({ ...p, skills: e.target.value }))}
-                placeholder="e.g. React, Python, Machine Learning"
-                className="input-field" style={{ width: "100%", padding: "12px 14px", fontSize: 14 }} />
-              {formData.skills && (
+              <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Skills <span style={{ fontSize: 10, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(comma-separated)</span></label>
+              <input value={formData.skills} onChange={e => setFormData(p => ({ ...p, skills: e.target.value }))} placeholder="React, Python, Machine Learning..." className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12 }} />
+              {skillsList.length > 0 && (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-                  {formData.skills.split(",").filter(s => s.trim()).map((skill, i) => (
-                    <span key={i} style={{ padding: "3px 10px", background: "rgba(78,205,196,0.1)", color: "#4ECDC4", borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
-                      {skill.trim()}
-                    </span>
-                  ))}
+                  {skillsList.map((s, i) => <span key={i} style={{ padding: "3px 10px", background: "rgba(6,182,212,0.1)", color: "#06B6D4", borderRadius: 20, fontSize: 12, fontWeight: 600 }}>{s}</span>)}
                 </div>
               )}
             </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="btn btn-primary"
-                style={{ padding: "13px 28px", borderRadius: 12, fontSize: 15, fontWeight: 700 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saving} className="btn-primary" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 14, fontWeight: 800 }}>
                 {saving ? "Saving..." : "Save Changes"}
-              </button>
-
+              </motion.button>
               {saveStatus === "success" && (
-                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                  style={{ color: "#43E97B", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                  ✓ Profile saved successfully!
-                </motion.div>
+                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: "#43E97B", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                  <Check size={14} /> Saved!
+                </motion.span>
               )}
               {saveStatus === "error" && (
-                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                  style={{ color: "#FF6B6B", fontSize: 14, fontWeight: 600 }}>
-                  ✕ Save failed. Please try again.
-                </motion.div>
+                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: "#F43F5E", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                  <X size={14} /> Save failed.
+                </motion.span>
               )}
             </div>
           </div>
