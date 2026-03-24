@@ -360,9 +360,9 @@ function Footer() {
 // ── Main Page Component ──────────────────────────────────────────
 export default function LandingPage() {
   return (
-    <main style={{ background: "#05070D", minHeight: "100vh", color: "white", position: "relative" }}>
-      {/* Apple-style Noise Texture */}
-      <div style={{ position: "fixed", inset: 0, opacity: 0.03, pointerEvents: "none", zIndex: 50, background: "url('https://grainy-gradients.vercel.app/noise.svg')" }} />
+    <main style={{ background: "var(--bg-primary)", minHeight: "100vh", color: "var(--text-primary)", position: "relative" }}>
+      {/* Apple-style Noise Texture (Local Override) */}
+      <div style={{ position: "fixed", inset: 0, opacity: 0.03, pointerEvents: "none", zIndex: 50, backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.65\" numOctaves=\"3\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\"/%3E%3C/svg%3E')" }} />
       <Navbar />
       <Hero />
       <RoleSelector />
