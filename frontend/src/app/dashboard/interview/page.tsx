@@ -38,12 +38,8 @@ interface Feedback {
   recommendation: string;
 }
 
-export default function MockInterview() {
-  useEffect(() => {
-    localStorage.setItem("ai_session_count", "1");
-  }, []);
+export default function InterviewPage() {
   const { data: session } = useSession();
-  const [isStarted, setIsStarted] = useState(false);
   const [role, setRole] = useState(ROLES[0]);
   const [company, setCompany] = useState(COMPANIES[0]);
   const [interviewType, setInterviewType] = useState("Technical");

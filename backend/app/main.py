@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 import time
 
-from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews
+from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment
 from app.core.database import init_db
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
@@ -155,7 +155,6 @@ app.include_router(study.router,        prefix="/api/study",        tags=["Study
 app.include_router(groups.router,       prefix="/api/groups",       tags=["Group Chat"])
 app.include_router(stripe.router,       prefix="/api/stripe",       tags=["Monetization"])
 app.include_router(payment.router,      prefix="/api/payment",      tags=["Payment"])
-app.include_router(reviews.router,      prefix="/api/reviews",      tags=["Reviews"])
 
 
 # ── WebSocket Router ───────────────────────────────────────────────
@@ -190,16 +189,13 @@ def api_root():
 @app.get("/api/status")
 def health():
     uptime = int(time.time() - _START_TIME)
-    from app.core.ai_client import ai_client
 
     return {
         "success": True,
         "status": "alive",
         "server": "Tulasi AI backend",
-        "version": "3.1.0",
+        "version": "3.0.0",
         "uptime_seconds": uptime,
-        "ai_configured": bool(ai_client.gemini_key or ai_client.openrouter_key),
-        "primary_provider": "Gemini" if ai_client.gemini_key else "OpenRouter" if ai_client.openrouter_key else "None",
         "services": [
             "chat",
             "code",
