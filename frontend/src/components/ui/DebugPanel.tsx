@@ -66,7 +66,7 @@ export function DebugPanel() {
               position: "fixed", bottom: 84, left: 24, zIndex: 9999,
               width: 320, background: "var(--bg-card)", backdropFilter: "blur(24px)",
               borderRadius: 16, border: "1px solid var(--border)",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.5)", overflow: "hidden",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.5)",
               fontFamily: "var(--font-mono)", fontSize: 12
             }}
           >
