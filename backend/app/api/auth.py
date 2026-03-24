@@ -11,6 +11,8 @@ from app.core.security import verify_password, get_password_hash, create_access_
 from app.core.config import settings
 from app.models.models import User
 from app.core.rate_limit import limiter
+from app.services.email import email_service
+from fastapi import BackgroundTasks
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -54,7 +56,7 @@ def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
 
 @router.post("/register")
 @limiter.limit("5/minute")
-def register(request: Request, req: RegisterRequest, db: Session = Depends(get_session)):
+def register(request: Request, req: RegisterRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
     print("Incoming password length:", len(req.password))
     existing = db.exec(select(User).where(User.email == req.email)).first()
     if existing:
@@ -83,6 +85,10 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_s
     db.commit()
     db.refresh(user)
     
+    # ── EMAIL NOTIFICATION ───────────────────────────────────────
+    background_tasks.add_task(email_service.send_welcome_email, user.email, user.name)
+    # ─────────────────────────────────────────────────────────────
+
     token = create_access_token({"sub": user.email})
     return {
         "access_token": token,
