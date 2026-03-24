@@ -163,3 +163,17 @@ def payment_status(user: User = Depends(get_current_user)):
         "is_pro":  user.is_pro,
         "plan":    "Pro" if user.is_pro else "Free",
     }
+
+@router.post("/simulate")
+def simulate_payment(user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+    """MVP Simulation: Instantly upgrades the user to Pro without a credit card."""
+    db_user = db.get(User, user.id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    db_user.is_pro = True
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    return {"success": True, "message": "Simulated payment successful. You are now a Pro member! 🎉", "is_pro": True}

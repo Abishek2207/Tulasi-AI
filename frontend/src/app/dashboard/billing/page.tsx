@@ -11,17 +11,32 @@ export default function BillingPage() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   const handleSubscribe = async () => {
-    
     setLoading(true);
     try {
       const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.up.railway.app";
-      const res = await fetch(`${RENDER_BACKEND_URL}/api/stripe/create-checkout-session`, {
+      const res = await fetch(`${RENDER_BACKEND_URL}/api/payment/simulate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, credentials:"include", mode:"cors"
       });
       const data = await res.json();
-      if (res.ok && data.checkout_url) {
-        window.location.href = data.checkout_url;
+      if (res.ok && data.success) {
+        toast.success("Payment Successful! You are now a PRO member! 🎉");
+        
+        // Trigger massive confetti
+        import("canvas-confetti").then((confetti) => {
+          confetti.default({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: ["#8B5CF6", "#D946EF", "#06B6D4"] });
+        });
+
+        // Update local storage to force UI update immediately
+        try {
+           const stored = JSON.parse(localStorage.getItem("user") || "{}");
+           stored.is_pro = true;
+           localStorage.setItem("user", JSON.stringify(stored));
+        } catch(e) {}
+
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 2000);
       } else {
         toast.error(data.detail || "Failed to initiate checkout");
         setLoading(false);
@@ -72,7 +87,7 @@ export default function BillingPage() {
             disabled={loading}
             style={{ width: "100%", padding: 14, borderRadius: 12, background: "linear-gradient(135deg, #8B5CF6, #D946EF)", color: "white", fontWeight: 700, border: "none", cursor: loading ? "wait" : "pointer" }}
           >
-            {loading ? "Redirecting to Stripe..." : "Upgrade to Pro"}
+            {loading ? "Processing Secure Payment..." : "Upgrade to Pro"}
           </button>
         </motion.div>
 
