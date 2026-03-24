@@ -94,7 +94,7 @@ export default function MessagesPage() {
   const fetchDirectory = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
-      const res = await fetch(`/api/messages/users/directory`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/users/directory`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -111,7 +111,7 @@ export default function MessagesPage() {
   const fetchMessages = async (userId: number) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
-      const res = await fetch(`/api/messages/${userId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -133,7 +133,7 @@ export default function MessagesPage() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     
     try {
-      const res = await fetch(`/api/messages`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
