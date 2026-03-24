@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 import time
 
-from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment
+from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews
 from app.core.database import init_db
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
@@ -155,6 +155,7 @@ app.include_router(study.router,        prefix="/api/study",        tags=["Study
 app.include_router(groups.router,       prefix="/api/groups",       tags=["Group Chat"])
 app.include_router(stripe.router,       prefix="/api/stripe",       tags=["Monetization"])
 app.include_router(payment.router,      prefix="/api/payment",      tags=["Payment"])
+app.include_router(reviews.router,      prefix="/api/reviews",      tags=["Reviews"])
 
 
 # ── WebSocket Router ───────────────────────────────────────────────
