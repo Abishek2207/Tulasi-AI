@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
-import { TulasiLogo } from "@/components/TulasiLogo";
+import { Logo as TulasiLogo } from "@/components/Logo";
 import { 
   Bot, FileText, Target, Map, Code, Award, Trophy, Users, 
   Check, Sparkles, ChevronRight, Zap, Shield, Globe, Terminal, Star, Briefcase,
@@ -36,7 +36,7 @@ const secondaryFeatures = [
 function BrandText({ size = 40 }: { size?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: size * 0.3 }}>
-      <TulasiLogo size={size * 1.3} />
+      <TulasiLogo size={size * 1.3} showText={false} />
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
         <motion.span 
           style={{ 

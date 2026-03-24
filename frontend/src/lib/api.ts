@@ -97,7 +97,7 @@ async function request<T>(
   const fullUrl = `${API_URL}${path}`;
 
     try {
-      const res = await fetchWithRetry(fullUrl, { ...options, headers, mode: "cors" });
+      const res = await fetchWithRetry(fullUrl, { credentials: "include", ...options, headers, mode: "cors" });
       log(`← ${res.status} ${fullUrl}`);
 
     if (!res.ok) {
