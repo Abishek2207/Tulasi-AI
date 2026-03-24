@@ -6,6 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { chatApi, ChatMsg } from "@/lib/api";
 import { Bot, Send, Trash2, RotateCcw, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+
 
 const GREETING = "Hello! I'm Tulasi AI, your personal learning companion. Ask me anything — coding concepts, career advice, interview prep, or system design.";
 
@@ -18,18 +23,19 @@ const QUICK_PROMPTS = [
 
 function TypingDots() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "16px 20px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 20px" }}>
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
-          style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--text-muted)" }}
-          animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
+          style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--brand-primary)", boxShadow: "0 0 10px var(--brand-primary)" }}
+          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
         />
       ))}
     </div>
   );
 }
+
 
 function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
   const isUser = msg.role === "user";
@@ -58,25 +64,63 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
 
       {/* Bubble */}
       <div style={{
-        maxWidth: "75%",
+        maxWidth: isUser ? "75%" : "85%",
         padding: "14px 18px",
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
         background: isUser
           ? "linear-gradient(135deg, #007AFF, #0056D6)"
-          : "rgba(255,255,255,0.05)",
+          : "transparent",
         border: isUser ? "none" : "1px solid rgba(255,255,255,0.07)",
         color: "var(--text-primary)",
         fontSize: 14.5,
         lineHeight: 1.7,
         boxShadow: isUser
           ? "0 4px 18px rgba(0,122,255,0.25)"
-          : "0 2px 8px rgba(0,0,0,0.15)",
-        whiteSpace: "pre-wrap",
+          : "none",
         wordBreak: "break-word",
       }}>
-        {msg.content}
+        {isUser ? (
+          <span style={{ whiteSpace: "pre-wrap" }}>{msg.content}</span>
+        ) : (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code({ node, inline, className, children, ...props }: any) {
+                const match = /language-(\w+)/.exec(className || "");
+                return !inline && match ? (
+                  <div style={{ borderRadius: 12, overflow: "hidden", margin: "12px 0", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <SyntaxHighlighter
+                      {...props}
+                      style={vscDarkPlus as any}
+                      language={match[1]}
+                      PreTag="div"
+                      customStyle={{ margin: 0, padding: "16px", background: "#0D1117", fontSize: "13.5px" }}
+                    >
+                      {String(children).replace(/\n$/, "")}
+                    </SyntaxHighlighter>
+                  </div>
+                ) : (
+                  <code {...props} className={className} style={{ background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: 6, fontSize: "0.9em", color: "#A78BFA" }}>
+                    {children}
+                  </code>
+                );
+              },
+              p({ children }) { return <p style={{ margin: "0 0 12px 0" }}>{children}</p>; },
+              ul({ children }) { return <ul style={{ margin: "0 0 12px 20px", listStyleType: "disc" }}>{children}</ul>; },
+              ol({ children }) { return <ol style={{ margin: "0 0 12px 20px", listStyleType: "decimal" }}>{children}</ol>; },
+              li({ children }) { return <li style={{ marginBottom: 6 }}>{children}</li>; },
+              h1({ children }) { return <h1 style={{ fontSize: 20, fontWeight: 700, margin: "16px 0 8px", color: "white" }}>{children}</h1>; },
+              h2({ children }) { return <h2 style={{ fontSize: 18, fontWeight: 600, margin: "16px 0 8px", color: "white" }}>{children}</h2>; },
+              h3({ children }) { return <h3 style={{ fontSize: 16, fontWeight: 600, margin: "16px 0 8px", color: "white" }}>{children}</h3>; },
+              a({ href, children }) { return <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: "#22D3EE", textDecoration: "underline" }}>{children}</a>; },
+            }}
+          >
+            {msg.content}
+          </ReactMarkdown>
+        )}
       </div>
     </motion.div>
+
   );
 }
 
@@ -193,11 +237,17 @@ export default function ChatPage() {
             <Bot size={22} color="white" />
           </div>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>
-              Tulasi AI Chat
-            </h1>
-            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
-              Powered by Gemini — always learning with you
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>
+                Tulasi AI Chat
+              </h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(16,185,129,0.3)" }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#10B981", textTransform: "uppercase", letterSpacing: 0.5 }}>Online</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "2px 0 0 0" }}>
+              Powered by Gemini — Architecting your intelligence
             </p>
           </div>
         </div>
