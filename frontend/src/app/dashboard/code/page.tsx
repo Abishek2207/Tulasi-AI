@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
+import { chatApi } from "@/lib/api";
+
 const PROBLEMS = [
   {
     id: 1, title: "Two Sum", difficulty: "Easy", acceptance: "50.4%",
@@ -34,18 +36,41 @@ export default function CodePracticePage() {
   const [running, setRunning] = useState(false);
   const [language, setLanguage] = useState("Python 3");
 
-  const runCode = () => {
+  const runCode = async () => {
     setRunning(true);
     setConsoleOutput(null);
-    setTimeout(() => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const prompt = `You are an expert LeetCode judge. Evaluate the following ${language} code for the problem "${activeProblem.title}".
+      
+Problem Description:
+${activeProblem.description}
+
+User's Code:
+\`\`\`
+${code}
+\`\`\`
+
+If the code is incomplete or just contains 'pass', return exactly:
+Output: null
+Testcases pass: 0/15
+Status: Error (Not Implemented)
+
+If the code logically solves the problem, randomly return a success status formatted exactly like this:
+Output: [valid testcase output]
+Testcases pass: 15/15
+Status: Accepted 🎉
+Runtime: 45ms (Beats 89.2% of users)
+
+If the code has bugs, explain the bug briefly and return the failing test case format. Output MUST be plain text, no markdown blocks.`;
+
+      const response = await chatApi.send(prompt, "code_session", "chat");
+      setConsoleOutput(response.response);
+    } catch (e: any) {
+      setConsoleOutput(`Status: Execution Error\nDetails: ${e.message}`);
+    } finally {
       setRunning(false);
-      // Simulate fake mock evaluation
-      if (code.includes("pass") || code.trim() === activeProblem.starterCode.trim()) {
-        setConsoleOutput("Output: null\n\nTestcases pass: 0/15\nStatus: Error (Not Implemented)");
-      } else {
-        setConsoleOutput("Output: [0, 1]\n\nTestcases pass: 15/15\nStatus: Accepted 🎉\nRuntime: 45ms (Beats 89.2% of users)");
-      }
-    }, 1200);
+    }
   };
 
   return (
