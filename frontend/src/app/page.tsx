@@ -20,17 +20,17 @@ const Code2 = ({ size, color }: { size: number, color: string }) => (
 
 // ── Feature Data (Bento Grid Style) ────────────────────────────────
 const primaryFeatures = [
-  { id: "ai-tutor", title: "Autonomous AI Tutor", desc: "Context-aware mastery. Tulasi AI doesn't just answer; it architects your understanding with deep pedagogical memory.", icon: BrainCircuit, color: "#10B981", span: 2, bg: "rgba(16,185,129,0.05)" },
-  { id: "pdf-iq", title: "PDF Intelligence", desc: "Ingest textbooks and documentation. Query the source with zero-latency RAG.", icon: FileText, color: "#06B6D4", span: 1, bg: "rgba(6,182,212,0.05)" },
-  { id: "mock-sim", title: "Simulation Engine", desc: "High-fidelity mock interviews tailored to MAANG standard.", icon: Target, color: "#F43F5E", span: 1, bg: "rgba(244,63,94,0.05)" },
-  { id: "architect", title: "Career Architect", desc: "Dynamic roadmaps that evolve with your progress. From Hello World to Senior Architect.", icon: Map, color: "#8B5CF6", span: 2, bg: "rgba(139,92,246,0.05)" },
+  { id: "ai-tutor", title: "Autonomous AI Tutor", desc: "Context-aware mastery. Tulasi AI doesn't just answer; it architects your understanding with deep pedagogical memory.", icon: BrainCircuit, color: "var(--brand-green)", span: 2, bg: "rgba(16,185,129,0.05)" },
+  { id: "pdf-iq", title: "PDF Intelligence", desc: "Ingest textbooks and documentation. Query the source with zero-latency RAG.", icon: FileText, color: "var(--brand-secondary)", span: 1, bg: "rgba(6,182,212,0.05)" },
+  { id: "mock-sim", title: "Simulation Engine", desc: "High-fidelity mock interviews tailored to MAANG standard.", icon: Target, color: "var(--brand-accent)", span: 1, bg: "rgba(244,63,94,0.05)" },
+  { id: "architect", title: "Career Architect", desc: "Dynamic roadmaps that evolve with your progress. From Hello World to Senior Architect.", icon: Map, color: "var(--brand-primary)", span: 2, bg: "rgba(124,58,237,0.05)" },
 ];
 
 const secondaryFeatures = [
-  { icon: Code, title: "Coding Arena", desc: "Real-time feedback on complex DS&A.", color: "#F59E0B" },
-  { icon: Award, title: "Verified Credentials", desc: "Earn proof-of-knowledge certificates.", color: "#10B981" },
-  { icon: Trophy, title: "Hackathon Nexus", desc: "The pulse of global competitions.", color: "#06B6D4" },
-  { icon: Users, title: "Study Clusters", desc: "Collaborative focus with Pomodoro sync.", color: "#F43F5E" },
+  { icon: Code, title: "Coding Arena", desc: "Real-time feedback on complex DS&A.", color: "var(--brand-yellow)" },
+  { icon: Award, title: "Verified Credentials", desc: "Earn proof-of-knowledge certificates.", color: "var(--brand-green)" },
+  { icon: Trophy, title: "Hackathon Nexus", desc: "The pulse of global competitions.", color: "var(--brand-secondary)" },
+  { icon: Users, title: "Study Clusters", desc: "Collaborative focus with Pomodoro sync.", color: "var(--brand-accent)" },
 ];
 
 // ── Shared Branding Component ─────────────────────────────────────
@@ -108,14 +108,14 @@ function Hero() {
       {/* Animated Mesh Gradients */}
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
         <motion.div animate={{ x: [-20, 20, -20], y: [-20, 20, -20] }} transition={{ duration: 10, repeat: Infinity }}
-          style={{ position: "absolute", top: "10%", left: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)", filter: "blur(80px)" }} />
+          style={{ position: "absolute", top: "10%", left: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, var(--brand-glow) 0%, transparent 70%)", filter: "blur(80px)" }} />
         <motion.div animate={{ x: [20, -20, 20], y: [20, -20, 20] }} transition={{ duration: 12, repeat: Infinity }}
-          style={{ position: "absolute", bottom: "10%", right: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)", filter: "blur(80px)" }} />
+          style={{ position: "absolute", bottom: "10%", right: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, var(--brand-glow) 0%, transparent 70%)", filter: "blur(80px)" }} />
       </div>
 
       <motion.div style={{ y, opacity, position: "relative", zIndex: 10, textAlign: "center", maxWidth: 1000 }}>
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} style={{ marginBottom: 32 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 18px", borderRadius: 30, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10B981", fontSize: 12, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 18px", borderRadius: 30, background: "var(--brand-glow)", border: "1px solid var(--border-glow)", color: "var(--brand-green)", fontSize: 12, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2 }}>
             <Sparkles size={14} /> THE AUTONOMOUS CAREER ENGINE
           </span>
         </motion.div>
@@ -158,9 +158,9 @@ function Hero() {
 
       {/* Floating Elements (Decorative) */}
       <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        style={{ position: "absolute", left: "10%", top: "30%", opacity: 0.3 }}><Cpu size={64} className="text-brand" /></motion.div>
+        style={{ position: "absolute", left: "10%", top: "30%", opacity: 0.3 }}><Cpu size={64} style={{ color: "var(--brand-secondary)" }} /></motion.div>
       <motion.div animate={{ y: [0, 20, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        style={{ position: "absolute", right: "10%", top: "40%", opacity: 0.3 }}><HardDrive size={64} style={{ color: "#7C3AED" }} /></motion.div>
+        style={{ position: "absolute", right: "10%", top: "40%", opacity: 0.3 }}><HardDrive size={64} style={{ color: "var(--brand-primary)" }} /></motion.div>
     </section>
   );
 }
@@ -218,9 +218,9 @@ function BentoFeatures() {
 // ── Role Selector (Sub-Hero) ─────────────────────────────────────
 function RoleSelector() {
   const roles = [
-    { name: "Software Engineer", desc: "MAANG-level prep system.", icon: Code2, color: "#06B6D4" },
-    { name: "Product Design", desc: "High-fidelity feedback loops.", icon: Layout, color: "#10B981" },
-    { name: "ML Architect", desc: "Data-driven career paths.", icon: BrainCircuit, color: "#8B5CF6" },
+    { name: "Software Engineer", desc: "MAANG-level prep system.", icon: Code2, color: "var(--brand-secondary)" },
+    { name: "Product Design", desc: "High-fidelity feedback loops.", icon: Layout, color: "var(--brand-green)" },
+    { name: "ML Architect", desc: "Data-driven career paths.", icon: BrainCircuit, color: "var(--brand-primary)" },
   ];
   return (
     <div style={{ padding: "80px 24px", background: "rgba(255,255,255,0.01)", borderTop: "1px solid rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
@@ -288,11 +288,11 @@ function Testimonials() {
                     style={{ padding: 48, background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column", height: "100%" }}
                   >
                     <div style={{ display: "flex", gap: 4, marginBottom: 32 }}>
-                      {Array.from({ length: r.rating || 5 }).map((_, n) => <Star key={n} size={16} color="#F59E0B" fill="#F59E0B" />)}
+                      {Array.from({ length: r.rating || 5 }).map((_, n) => <Star key={n} size={16} color="var(--brand-yellow)" fill="var(--brand-yellow)" />)}
                     </div>
                     <p style={{ fontSize: 18, color: "var(--text-primary)", lineHeight: 1.7, marginBottom: 40, fontWeight: 500 }}>"{r.review}"</p>
                     <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, #06B6D4, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white" }}>
+                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white" }}>
                         {(r.name || "U")[0].toUpperCase()}
                       </div>
                       <div>
@@ -339,8 +339,8 @@ function Footer() {
            <div style={{ padding: 24, background: "rgba(255,255,255,0.03)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.05)" }}>
               <h5 style={{ fontSize: 14, fontWeight: 900, marginBottom: 12 }}>SYSTEM STATUS</h5>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#10B981" }}>ALL SYSTEMS OPERATIONAL</span>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--brand-green)" }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--brand-green)" }}>ALL SYSTEMS OPERATIONAL</span>
               </div>
            </div>
         </div>
