@@ -56,6 +56,16 @@ def get_reviews(session: Session = Depends(get_session)):
     return reviews
 
 
+@router.get("/init-db")
+def force_init_db():
+    from app.core.database import engine
+    from sqlmodel import SQLModel
+    try:
+        SQLModel.metadata.create_all(engine)
+        return {"success": True, "message": "Schema forced"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @router.post("", response_model=ReviewOut, status_code=201)
 def submit_review(data: ReviewCreate, session: Session = Depends(get_session)):
     """Submit a new review."""
