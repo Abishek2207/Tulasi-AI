@@ -5,7 +5,13 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "react-hot-toast";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
-
+import { DebugPanel } from "@/components/DebugPanel";
+import { XPNotificationSystem } from "@/components/XPNotification";
+import { OnboardingTour } from "@/components/OnboardingTour";
+import { CommandPalette } from "@/components/CommandPalette";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -28,11 +34,6 @@ export const metadata: Metadata = {
 export const viewport = {
   themeColor: "#05070D",
 };
-
-import { DebugPanel } from "@/components/DebugPanel";
-import { XPNotificationSystem } from "@/components/XPNotification";
-import { OnboardingTour } from "@/components/OnboardingTour";
-import { CommandPalette } from "@/components/CommandPalette";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -69,6 +70,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <OnboardingTour />
           <CommandPalette />
           <PWAInstallPrompt />
+          <ServiceWorkerRegistrar />
+          <Analytics />
+          <SpeedInsights />
         </Providers>
       </body>
     </html>
