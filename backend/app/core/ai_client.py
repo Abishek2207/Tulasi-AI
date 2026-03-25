@@ -147,8 +147,9 @@ class HybridAIClient:
                         yield chunk
                     return
                 except Exception as e:
+                    import traceback
                     print(f"❌ [AI] OpenRouter stream fallback failed: {e}")
-                    yield "⏳ AI is currently unavailable. Please try again in a moment."
+                    yield f"⏳ AI is currently unavailable. Debug Trace: {e} | {traceback.format_exc()}"
             return master_gen()
         else:
             # Non-streaming fallback
@@ -167,8 +168,9 @@ class HybridAIClient:
             try:
                 return self._call_openrouter(or_messages, stream=False)
             except Exception as e:
+                import traceback
                 print(f"❌ [AI] OpenRouter fallback failed: {e}")
-                return "⏳ AI is currently unavailable. Please try again in a moment."
+                return f"⏳ AI is currently unavailable. Debug Trace: {e} | {traceback.format_exc()}"
 
 # Singleton
 ai_client = HybridAIClient()
