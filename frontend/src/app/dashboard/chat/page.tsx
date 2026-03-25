@@ -4,12 +4,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatApi, ChatMsg } from "@/lib/api";
-import { Bot, Send, Trash2, RotateCcw, Sparkles, Globe } from "lucide-react";
+import { Bot, Send, Trash2, RotateCcw, Sparkles, Globe, Mic } from "lucide-react";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { VoiceButton } from "@/components/VoiceButton";
 
 
 const GREETING = "Hello! I'm Tulasi AI, your personal learning companion. Ask me anything — coding concepts, career advice, interview prep, or system design.";
@@ -396,6 +397,17 @@ export default function ChatPage() {
             maxHeight: 160,
           }}
         />
+
+        {/* Voice Input Button */}
+        {hasToken && (
+          <VoiceButton
+            onTranscript={(text) => {
+              setInput((prev) => (prev ? prev + " " + text : text));
+              setTimeout(() => inputRef.current?.focus(), 50);
+            }}
+            size="sm"
+          />
+        )}
 
         <motion.button
           whileHover={{ scale: 1.08, boxShadow: "0 0 24px rgba(124,58,237,0.45)" }}

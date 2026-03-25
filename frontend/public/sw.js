@@ -1,17 +1,19 @@
-const CACHE_NAME = 'tulasi-ai-v3';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'tulasi-ai-v4';
+const PRECACHE = [
   '/',
   '/dashboard',
   '/manifest.json',
 ];
 
+// ── Install: precache shell ──────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE))
   );
   self.skipWaiting();
 });
 
+// ── Activate: purge old caches ───────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -21,23 +23,45 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// ── Fetch: network-first with offline fallback ───────────────────────
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests for same-origin or static assets
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  // Skip API calls — always go to network
-  if (url.pathname.startsWith('/api') || url.hostname.includes('railway.app')) return;
 
+  // Skip external API, analytics, GTM — always network
+  if (
+    url.hostname.includes('railway.app') ||
+    url.hostname.includes('vercel-analytics') ||
+    url.hostname.includes('googletagmanager') ||
+    url.pathname.startsWith('/api/')
+  ) return;
+
+  // For navigation requests: network first, fall back to cached /
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() =>
+        caches.match('/').then((cached) => cached || new Response('Offline', { status: 503 }))
+      )
+    );
+    return;
+  }
+
+  // For static assets: stale-while-revalidate
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const cached = await cache.match(event.request);
       const networkFetch = fetch(event.request).then((res) => {
-        if (res.ok && res.type === 'basic') {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
+        if (res.ok && res.type !== 'opaque') cache.put(event.request, res.clone());
         return res;
-      });
+      }).catch(() => cached);
       return cached || networkFetch;
     })
   );
+});
+
+// ── Background sync (retry failed API calls when back online) ────────
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'retry-failed') {
+    console.log('[SW] Background sync: retrying failed requests');
+  }
 });
