@@ -1,10 +1,10 @@
 # Tulasi AI Production Deployment Checklist
 
-Everything in the code is fully implemented to run beautifully on Vercel (Frontend) and Railway (Backend). We replaced the memory-hungry vector database with a lightweight alternative.
+Everything in the code is fully implemented to run beautifully on Vercel (Frontend) and Render (Backend). We replaced the memory-hungry vector database with a lightweight alternative.
 
-## 1. Railway Dashboard (Backend)
-Go to [Railway Dashboard](https://railway.app). Find your backend service.
-In the **Variables** tab, set these variables:
+## 1. Render Dashboard (Backend)
+Go to [Render Dashboard](https://dashboard.render.com). Find your backend service.
+In the **Environment** tab, set these variables:
 
 | Key | Value (Example) | Required |
 |-----|-----------------|----------|
@@ -12,7 +12,7 @@ In the **Variables** tab, set these variables:
 | `SECRET_KEY` | *(Any long random string)* | Yes (for JWT Auth) |
 | `DATABASE_URL` | *(Postgres connection string)* | Yes |
 | `STRIPE_SECRET_KEY` | `sk_test_...` | Yes |
-| `PORT` | `8000` | Yes (Railway auto-binds) |
+| `PORT` | `10000` | Yes (Render auto-binds) |
 
 ## 2. Vercel Dashboard (Frontend)
 Go to [Vercel Dashboard](https://vercel.com). Find the Tulasi AI project. 
@@ -20,8 +20,8 @@ In Settings -> Environment Variables, ensure these are set:
 
 | Key | Value | Required |
 |-----|-------|----------|
-| `NEXT_PUBLIC_API_URL` | `https://tulasi-backend.up.railway.app` | Yes |
-| `NEXT_PUBLIC_BACKEND_URL` | `https://tulasi-backend.up.railway.app` | Yes |
+| `NEXT_PUBLIC_API_URL` | `https://tulasi-backend.onrender.com` | Yes |
+| `NEXT_PUBLIC_BACKEND_URL` | `https://tulasi-backend.onrender.com` | Yes |
 | `NEXTAUTH_URL` | `https://tulasiai.vercel.app` (or your domain) | Yes |
 | `NEXTAUTH_SECRET` | *(Any long random string)* | Yes |
 | `GOOGLE_CLIENT_ID` | `6607689850...` | Optional (For Google Auth) |

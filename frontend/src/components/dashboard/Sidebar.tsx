@@ -61,7 +61,7 @@ const NAV_SECTIONS = [
       { icon: User,            name: "Profile",         href: "/dashboard/profile" },
       { icon: Gift,            name: "Rewards Store",   href: "/dashboard/rewards" },
       { icon: CreditCard,      name: "Billing & Pro",   href: "/dashboard/billing" },
-      { icon: Activity,        name: "API Status",      href: "https://tulasiai.up.railway.app/api/health" },
+      { icon: Activity,        name: "API Status",      href: "https://tulasi-backend.onrender.com/api/health" },
     ]
   }
 ];

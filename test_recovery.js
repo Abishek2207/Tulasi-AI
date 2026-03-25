@@ -1,4 +1,4 @@
-const API_URL = "https://tulasiai.up.railway.app";
+const API_URL = "https://tulasi-backend.onrender.com";
 
 const tests = [
   { name: "Health Check", url: "/api/health", method: "GET" },
