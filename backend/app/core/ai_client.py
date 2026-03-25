@@ -58,7 +58,7 @@ class HybridAIClient:
             "Authorization": f"Bearer {groq_key}",
             "Content-Type": "application/json"
         }
-        payload = {"model": "llama3-8b-8192", "messages": messages, "stream": stream}
+        payload = {"model": "llama-3.1-8b-instant", "messages": messages, "stream": stream}
         if stream:
             def gen():
                 with httpx.stream("POST", url, headers=headers, json=payload, timeout=30.0) as response:
@@ -186,7 +186,7 @@ class HybridAIClient:
                     if err_msg not in errors: errors.append(err_msg)
 
                 # 3. Fallback to Groq
-                print(f"🔄 [AI] Falling back to Groq (llama3-8b-8192)")
+                print(f"🔄 [AI] Falling back to Groq (llama-3.1-8b-instant)")
                 try:
                     groq_gen = self._call_groq(or_messages, stream=True)
                     for chunk in groq_gen:
@@ -222,7 +222,7 @@ class HybridAIClient:
                 if err_msg not in errors: errors.append(err_msg)
 
             # 3. Groq fallback
-            print(f"🔄 [AI] Falling back to Groq (llama3-8b-8192)")
+            print(f"🔄 [AI] Falling back to Groq (llama-3.1-8b-instant)")
             try:
                 return self._call_groq(or_messages, stream=False)
             except Exception as e:
