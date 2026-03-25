@@ -15,6 +15,7 @@ class HybridAIClient:
         self.gemini_key = settings.effective_gemini_key
         self.openrouter_key = settings.OPENROUTER_API_KEY
         self.openrouter_model = settings.OPENROUTER_MODEL or "mistralai/mistral-7b-instruct:free"
+        self.groq_key = settings.GROQ_API_KEY
         
         if self.gemini_key:
             genai.configure(api_key=self.gemini_key)
@@ -47,6 +48,36 @@ class HybridAIClient:
             messages.append({"role": role, "content": m.get("content", "")})
         messages.append({"role": "user", "content": message})
         return messages
+
+    def _call_groq(self, messages: List[Dict], stream: bool = False) -> Union[str, Generator]:
+        if not self.groq_key:
+            raise AIClientError("Groq API key is missing.")
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.groq_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {"model": "llama3-8b-8192", "messages": messages, "stream": stream}
+        if stream:
+            def gen():
+                with httpx.stream("POST", url, headers=headers, json=payload, timeout=30.0) as response:
+                    if response.status_code != 200:
+                        raise AIClientError(f"Groq error: {response.status_code}")
+                    for line in response.iter_lines():
+                        if line.startswith("data: "):
+                            data_str = line[6:]
+                            if data_str == "[DONE]": break
+                            try:
+                                content = json.loads(data_str)["choices"][0]["delta"].get("content", "")
+                                if content: yield content
+                            except: continue
+            return gen()
+        else:
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(url, headers=headers, json=payload)
+                if response.status_code != 200:
+                    raise AIClientError(f"Groq error: {response.text}")
+                return response.json()["choices"][0]["message"]["content"]
 
     def _call_gemini(self, contents: List[Dict], model_name: str, stream: bool = False) -> Union[str, Generator]:
         try:
@@ -148,9 +179,18 @@ class HybridAIClient:
                         yield chunk
                     return
                 except Exception as e:
-                    import traceback
-                    print(f"❌ [AI] OpenRouter stream fallback failed: {e}")
-                    yield f"⏳ AI is currently unavailable. Debug Trace: {e} | {traceback.format_exc()}"
+                    print(f"❌ [AI] OpenRouter stream failed: {e}")
+
+                # 3. Fallback to Groq
+                print(f"🔄 [AI] Falling back to Groq (llama3-8b-8192)")
+                try:
+                    groq_gen = self._call_groq(or_messages, stream=True)
+                    for chunk in groq_gen:
+                        yield chunk
+                    return
+                except Exception as e:
+                    print(f"❌ [AI] Groq stream failed: {e}")
+                    yield "⏳ AI is currently unavailable. Please try again in a moment."
             return master_gen()
         else:
             # Non-streaming fallback
@@ -169,9 +209,15 @@ class HybridAIClient:
             try:
                 return self._call_openrouter(or_messages, stream=False)
             except Exception as e:
-                import traceback
                 print(f"❌ [AI] OpenRouter fallback failed: {e}")
-                return f"⏳ AI is currently unavailable. Debug Trace: {e} | {traceback.format_exc()}"
+
+            # 3. Groq fallback
+            print(f"🔄 [AI] Falling back to Groq (llama3-8b-8192)")
+            try:
+                return self._call_groq(or_messages, stream=False)
+            except Exception as e:
+                print(f"❌ [AI] Groq fallback failed: {e}")
+                return "⏳ AI is currently unavailable. Please try again in a moment."
 
 # Singleton
 ai_client = HybridAIClient()

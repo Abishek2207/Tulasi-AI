@@ -215,53 +215,57 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
           ))}
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-          onClick={handleUpgrade} disabled={loading}
-          style={{
-            width: "100%", padding: "16px", borderRadius: 14, border: "none", cursor: loading ? "not-allowed" : "pointer",
-            background: "linear-gradient(135deg, #8B5CF6, #38BDF8)", color: "#fff", fontSize: 16, fontWeight: 600,
-            boxShadow: "0 8px 20px rgba(139, 92, 246, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-            opacity: loading ? 0.7 : 1
-          }}
-        >
-          {loading
-            ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} />
-            : "⚡ Upgrade to Pro — ₹100/mo"
-          }
-        </motion.button>
+        <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            onClick={handleUpgrade} disabled={loading}
+            style={{
+              width: "100%", maxWidth: 320, padding: "16px", borderRadius: 14, border: "none", cursor: loading ? "not-allowed" : "pointer",
+              background: "linear-gradient(135deg, #8B5CF6, #38BDF8)", color: "#fff", fontSize: 16, fontWeight: 600,
+              boxShadow: "0 8px 20px rgba(139, 92, 246, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              opacity: loading ? 0.7 : 1, margin: "0 auto"
+            }}
+          >
+            {loading
+              ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} />
+              : "⚡ Upgrade to Pro — ₹100/mo"
+            }
+          </motion.button>
+        </div>
 
         {/* ── REFERRAL UI ───────────────────────────── */}
         {refStats && (
-          <div style={{ marginTop: 24, padding: "16px", borderRadius: 14, background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.1)" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "white", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
-              <span>🎁 Refer 10 friends, Get 2 Mos Free</span>
-              <span style={{ color: "#A78BFA" }}>{refStats.total_referrals}/10</span>
-            </div>
-            
-            {/* Progress bar */}
-            <div style={{ height: 6, width: "100%", background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden", marginBottom: 12 }}>
-              <div style={{ 
-                height: "100%", 
-                width: `${Math.min(100, (refStats.total_referrals / 10) * 100)}%`, 
-                background: "linear-gradient(90deg, #8B5CF6, #38BDF8)",
-                borderRadius: 3 
-              }} />
-            </div>
-
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ flex: 1, padding: "8px 12px", background: "rgba(0,0,0,0.4)", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", fontFamily: "var(--font-mono)" }}>
-                {refStats.invite_code}
+          <div style={{ display: "flex", justifyContent: "center", width: "100%", marginTop: 24 }}>
+            <div style={{ width: "100%", maxWidth: 360, padding: "16px", borderRadius: 14, background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.1)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "white", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
+                <span>🎁 Refer 10 friends, Get 2 Mos Free</span>
+                <span style={{ color: "#A78BFA" }}>{refStats.total_referrals}/10</span>
               </div>
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(refStats.invite_code);
-                  toast.success("Invite code copied!");
-                }}
-                style={{ padding: "0 12px", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, color: "white", cursor: "pointer" }}
-              >
-                <Copy size={14} />
-              </button>
+              
+              {/* Progress bar */}
+              <div style={{ height: 6, width: "100%", background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden", marginBottom: 12 }}>
+                <div style={{ 
+                  height: "100%", 
+                  width: `${Math.min(100, (refStats.total_referrals / 10) * 100)}%`, 
+                  background: "linear-gradient(90deg, #8B5CF6, #38BDF8)",
+                  borderRadius: 3 
+                }} />
+              </div>
+
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ flex: 1, padding: "8px 12px", background: "rgba(0,0,0,0.4)", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-mono)" }}>
+                  {refStats.invite_code}
+                </div>
+               <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(refStats.invite_code);
+                    toast.success("Invite code copied!");
+                  }}
+                  style={{ padding: "0 12px", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, color: "white", cursor: "pointer" }}
+                >
+                  <Copy size={14} />
+                </button>
+              </div>
             </div>
           </div>
         )}
