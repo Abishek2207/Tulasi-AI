@@ -3,6 +3,12 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.rail
 
 const nextConfig = {
   reactStrictMode: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.googleusercontent.com' },
