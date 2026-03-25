@@ -28,6 +28,7 @@ class User(SQLModel, table=True):
     stripe_subscription_id: Optional[str] = None
     chats_today: int = 0
     last_reset_date: Optional[str] = None
+    pro_expiry_date: Optional[str] = None  # Tracks 2-month free pro rewards
 
 
 class ChatSession(SQLModel, table=True):
