@@ -111,7 +111,7 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={
             "success": False, 
             "error": "Internal Server Error",
-            "message": str(exc) if os.environ.get("DEBUG") == "true" else "An unexpected error occurred. Please try again later.",
+            "message": str(exc),
             "type": exc.__class__.__name__
         },
         headers=headers
