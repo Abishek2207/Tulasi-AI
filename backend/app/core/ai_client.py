@@ -14,13 +14,13 @@ class HybridAIClient:
     def __init__(self):
         self.gemini_key = settings.effective_gemini_key
         self.openrouter_key = settings.OPENROUTER_API_KEY
-        self.openrouter_model = settings.OPENROUTER_MODEL or "mistralai/mistral-7b-instruct:free"
+        self.openrouter_model = settings.OPENROUTER_MODEL or "meta-llama/llama-3-8b-instruct:free"
         self.groq_key = settings.GROQ_API_KEY
         
         if self.gemini_key:
             genai.configure(api_key=self.gemini_key)
         
-        self.gemini_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
+        self.gemini_models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-pro", "gemini-1.0-pro"]
 
     def _format_for_gemini(self, message: str, history: List[Dict], image_data: Optional[bytes] = None) -> List[Dict]:
         contents = []
