@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tulasi-ai-v4';
+const CACHE_NAME = 'tulasi-ai-v5';
 const PRECACHE = [
   '/',
   '/dashboard',
@@ -23,7 +23,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ── Fetch: network-first with offline fallback ───────────────────────
+// ── Fetch: Cache-first for assets, Network-first for navigation ──────
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
@@ -33,28 +33,41 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('railway.app') ||
     url.hostname.includes('vercel-analytics') ||
     url.hostname.includes('googletagmanager') ||
-    url.pathname.startsWith('/api/')
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/_next/data/')
   ) return;
 
-  // For navigation requests: network first, fall back to cached /
+  // For HTML navigation requests (changing pages)
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match('/').then((cached) => cached || new Response('Offline', { status: 503 }))
-      )
+      fetch(event.request)
+        .then((response) => {
+          // Cache the latest version of the HTML on success
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => {
+          // If network fails (offline), return the cached page or fallback to root
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match('/');
+          });
+        })
     );
     return;
   }
 
-  // For static assets: stale-while-revalidate
+  // For static assets (JS, CSS, Images): Cache First -> Network Fallback
   event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      const cached = await cache.match(event.request);
-      const networkFetch = fetch(event.request).then((res) => {
-        if (res.ok && res.type !== 'opaque') cache.put(event.request, res.clone());
-        return res;
-      }).catch(() => cached);
-      return cached || networkFetch;
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((response) => {
+        if (response.ok && response.type !== 'opaque') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      });
     })
   );
 });
