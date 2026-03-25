@@ -80,12 +80,9 @@ class HybridAIClient:
                 return response.json()["choices"][0]["message"]["content"]
 
     def _call_gemini(self, contents: List[Dict], model_name: str, stream: bool = False) -> Union[str, Generator]:
-        try:
-            # Attempt to initialize with Live Web Surfing (Google Search Grounding)
-            model = genai.GenerativeModel(model_name, tools="google_search_retrieval")
-        except Exception:
-            # Fallback for older google-generativeai SDK versions
-            model = genai.GenerativeModel(model_name)
+        if not self.gemini_key:
+            raise AIClientError("Gemini API key is missing.")
+        model = genai.GenerativeModel(model_name)
             
         if stream:
             response = model.generate_content(contents, stream=True)
