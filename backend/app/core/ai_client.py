@@ -43,7 +43,8 @@ class HybridAIClient:
     def _format_for_openrouter(self, message: str, history: List[Dict]) -> List[Dict]:
         messages = []
         for m in (history or []):
-            messages.append({"role": m.get("role"), "content": m.get("content", "")})
+            role = "assistant" if m.get("role") == "model" else m.get("role", "user")
+            messages.append({"role": role, "content": m.get("content", "")})
         messages.append({"role": "user", "content": message})
         return messages
 
