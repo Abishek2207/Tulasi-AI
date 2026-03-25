@@ -240,6 +240,20 @@ def ping():
     return {"ping": "pong", "uptime_seconds": int(time.time() - _START_TIME)}
 
 
+# ── AI Key Debug Endpoint ──────────────────────────────────────────
+@app.get("/api/debug/ai-env")
+def debug_ai_env():
+    """Diagnostic: checks which AI API keys are currently set (values masked)."""
+    import os
+    keys = {
+        "GOOGLE_API_KEY": bool(os.getenv("GOOGLE_API_KEY")),
+        "GEMINI_API_KEY": bool(os.getenv("GEMINI_API_KEY")),
+        "OPENROUTER_API_KEY": bool(os.getenv("OPENROUTER_API_KEY")),
+        "GROQ_API_KEY": bool(os.getenv("GROQ_API_KEY")),
+    }
+    return {"ai_env_vars": keys, "any_key_set": any(keys.values())}
+
+
 # ── Keep-Alive Cron ────────────────────────────────────────────────
 @app.get("/api/cron")
 @app.get("/cron")
