@@ -59,20 +59,12 @@ def get_reviews(session: Session = Depends(get_session)):
 @router.get("/init-db")
 def force_init_db():
     from app.core.database import engine
-    from sqlmodel import text
+    from sqlmodel import SQLModel, text
     try:
         with engine.begin() as conn:
-            conn.execute(text('''
-                CREATE TABLE IF NOT EXISTS review (
-                    id SERIAL PRIMARY KEY,
-                    name VARCHAR NOT NULL,
-                    role VARCHAR,
-                    review VARCHAR NOT NULL,
-                    rating INTEGER NOT NULL,
-                    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            '''))
-        return {"success": True, "message": "Raw SQL schema applied successfully"}
+            conn.execute(text('DROP TABLE IF EXISTS review CASCADE;'))
+        SQLModel.metadata.create_all(engine)
+        return {"success": True, "message": "Table dropped and recreated via SQLModel"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
