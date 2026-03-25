@@ -73,6 +73,8 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    origin = request.headers.get("origin", "*")
+    headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
     return JSONResponse(
         status_code=422,
         content={
@@ -81,16 +83,20 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "detail": exc.errors(),
             "message": "Validation failed. Check your request payload.",
         },
+        headers=headers
     )
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
+    origin = request.headers.get("origin", "*")
+    headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
     return JSONResponse(
         status_code=exc.status_code,
         content={
             "success": False,
             "error": exc.detail,
         },
+        headers=headers
     )
 
 @app.exception_handler(Exception)
@@ -98,6 +104,8 @@ async def general_exception_handler(request: Request, exc: Exception):
     # Log the full traceback or error for internal debugging
     print(f"❌ CRITICAL ERROR on {request.method} {request.url}: {exc}")
     # Return a clean JSON only response as requested
+    origin = request.headers.get("origin", "*")
+    headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
     return JSONResponse(
         status_code=500,
         content={
@@ -106,6 +114,7 @@ async def general_exception_handler(request: Request, exc: Exception):
             "message": str(exc) if os.environ.get("DEBUG") == "true" else "An unexpected error occurred. Please try again later.",
             "type": exc.__class__.__name__
         },
+        headers=headers
     )
 
 
