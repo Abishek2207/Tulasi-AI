@@ -56,7 +56,6 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2): P
          throw new Error("API error / Server waking up");
       }
       if (res.status >= 500) {
-         if (retries === 0) toast.error(`Server error: ${res.status}`);
          throw new Error(`API error: ${res.status}`);
       }
       return res; // return early for 4xx errors
@@ -68,10 +67,8 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2): P
     if (retries === 0 || error.name === 'AbortError') {
       toast.dismiss("retry-toast");
       if (error.name === 'AbortError') {
-        toast.error("Request timed out. Please try again.");
         throw new Error("Request timed out.");
       }
-      toast.error("Connection failed. Check your network.");
       throw error;
     }
     // Exponential backoff for the 2 retries
