@@ -80,8 +80,11 @@ class HybridAIClient:
                 return response.json()["choices"][0]["message"]["content"]
 
     def _call_gemini(self, contents: List[Dict], model_name: str, stream: bool = False) -> Union[str, Generator]:
-        if not self.gemini_key:
+        # Read key fresh from env on EVERY call to avoid pydantic caching at boot
+        gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or self.gemini_key
+        if not gemini_key:
             raise AIClientError("Gemini API key is missing.")
+        genai.configure(api_key=gemini_key)
         model = genai.GenerativeModel(model_name)
             
         if stream:
@@ -98,7 +101,8 @@ class HybridAIClient:
             return "No response generated."
 
     def _call_openrouter(self, messages: List[Dict], stream: bool = False) -> Union[str, Generator]:
-        if not self.openrouter_key:
+        openrouter_key = os.getenv("OPENROUTER_API_KEY") or self.openrouter_key
+        if not openrouter_key:
             raise AIClientError("OpenRouter API key is missing.")
 
         url = "https://openrouter.ai/api/v1/chat/completions"
