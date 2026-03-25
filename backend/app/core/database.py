@@ -75,4 +75,4 @@ def get_session():
             yield session
     except Exception as e:
         print(f"DB session error: {e}")
-        yield None
+        raise
