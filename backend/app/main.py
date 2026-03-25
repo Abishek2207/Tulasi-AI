@@ -254,6 +254,11 @@ def debug_ai_env():
     return {"ai_env_vars": keys, "any_key_set": any(keys.values())}
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 # ── Keep-Alive Cron ────────────────────────────────────────────────
 @app.get("/api/cron")
 @app.get("/cron")

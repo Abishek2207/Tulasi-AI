@@ -50,11 +50,12 @@ class HybridAIClient:
         return messages
 
     def _call_groq(self, messages: List[Dict], stream: bool = False) -> Union[str, Generator]:
-        if not self.groq_key:
-            raise AIClientError("Groq API key is missing.")
+        groq_key = os.getenv("GROQ_API_KEY") or self.groq_key
+        if not groq_key:
+            raise AIClientError("Missing GROQ_API_KEY environment variable")
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
-            "Authorization": f"Bearer {self.groq_key}",
+            "Authorization": f"Bearer {groq_key}",
             "Content-Type": "application/json"
         }
         payload = {"model": "llama3-8b-8192", "messages": messages, "stream": stream}
@@ -62,7 +63,7 @@ class HybridAIClient:
             def gen():
                 with httpx.stream("POST", url, headers=headers, json=payload, timeout=30.0) as response:
                     if response.status_code != 200:
-                        raise AIClientError(f"Groq error: {response.status_code}")
+                        raise AIClientError(f"Groq API error ({response.status_code}): {response.text}")
                     for line in response.iter_lines():
                         if line.startswith("data: "):
                             data_str = line[6:]
@@ -76,7 +77,7 @@ class HybridAIClient:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(url, headers=headers, json=payload)
                 if response.status_code != 200:
-                    raise AIClientError(f"Groq error: {response.text}")
+                    raise AIClientError(f"Groq API error ({response.status_code}): {response.text}")
                 return response.json()["choices"][0]["message"]["content"]
 
     def _call_gemini(self, contents: List[Dict], model_name: str, stream: bool = False) -> Union[str, Generator]:
@@ -103,11 +104,11 @@ class HybridAIClient:
     def _call_openrouter(self, messages: List[Dict], stream: bool = False) -> Union[str, Generator]:
         openrouter_key = os.getenv("OPENROUTER_API_KEY") or self.openrouter_key
         if not openrouter_key:
-            raise AIClientError("OpenRouter API key is missing.")
+            raise AIClientError("Missing OPENROUTER_API_KEY environment variable")
 
         url = "https://openrouter.ai/api/v1/chat/completions"
         headers = {
-            "Authorization": f"Bearer {self.openrouter_key}",
+            "Authorization": f"Bearer {openrouter_key}",
             "HTTP-Referer": "https://tulasiai.vercel.app",
             "X-Title": "Tulasi AI",
             "Content-Type": "application/json"
@@ -122,7 +123,7 @@ class HybridAIClient:
             def gen():
                 with httpx.stream("POST", url, headers=headers, json=payload, timeout=30.0) as response:
                     if response.status_code != 200:
-                        raise AIClientError(f"OpenRouter error: {response.status_code}")
+                        raise AIClientError(f"OpenRouter API error ({response.status_code}): {response.text}")
                     for line in response.iter_lines():
                         if line.startswith("data: "):
                             data_str = line[6:]
@@ -140,7 +141,7 @@ class HybridAIClient:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(url, headers=headers, json=payload)
                 if response.status_code != 200:
-                    raise AIClientError(f"OpenRouter error: {response.text}")
+                    raise AIClientError(f"OpenRouter API error ({response.status_code}): {response.text}")
                 data = response.json()
                 return data["choices"][0]["message"]["content"]
 
@@ -191,7 +192,7 @@ class HybridAIClient:
                     return
                 except Exception as e:
                     print(f"❌ [AI] Groq stream failed: {e}")
-                    yield "⏳ AI is currently unavailable. Please try again in a moment."
+                    yield f"⏳ AI is currently unavailable. (Error: {str(e)})"
             return master_gen()
         else:
             # Non-streaming fallback
@@ -218,7 +219,7 @@ class HybridAIClient:
                 return self._call_groq(or_messages, stream=False)
             except Exception as e:
                 print(f"❌ [AI] Groq fallback failed: {e}")
-                return "⏳ AI is currently unavailable. Please try again in a moment."
+                return f"⏳ AI is currently unavailable. (Error: {str(e)})"
 
 # Singleton
 ai_client = HybridAIClient()
