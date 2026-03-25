@@ -4,7 +4,7 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://tulasi-backend.onrender.com",
+    "NEXT_PUBLIC_API_URL": "https://tulasiai.up.railway.app",
     "NEXTAUTH_URL": "https://tulasiai.vercel.app"
   },
   "headers": [

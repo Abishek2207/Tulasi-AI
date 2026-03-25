@@ -16,7 +16,7 @@ const STACK = [
   { name: "Next.js 16", color: "#fff", cat: "Frontend" },
   { name: "FastAPI", color: "#009688", cat: "Backend" },
   { name: "Gemini AI", color: "#4285F4", cat: "AI Engine" },
-  { name: "Render", color: "#8B5CF6", cat: "Infrastructure" },
+  { name: "Railway", color: "#8B5CF6", cat: "Infrastructure" },
   { name: "Vercel", color: "#fff", cat: "Deployment" },
   { name: "PostgreSQL", color: "#336791", cat: "Database" },
   { name: "Framer Motion", color: "#d259ff", cat: "Animation" },

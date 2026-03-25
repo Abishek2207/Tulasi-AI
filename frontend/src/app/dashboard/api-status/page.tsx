@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.onrender.com";
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
 const FRONTEND = typeof window !== "undefined" ? window.location.origin : "";
 
 const BACKEND_ENDPOINTS = [

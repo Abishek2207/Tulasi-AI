@@ -122,7 +122,7 @@ Instead of simple prompts, implement a **Supervisor Agent** (via LangGraph) that
    * Define `NEXT_PUBLIC_API_URL=[Railway URL]` and `NEXTAUTH_URL=[Vercel URL]`.
    * Enable CI/CD via GitHub.
 4. **AI Models (Ollama):** 
-   * *Challenge*: Running Ollama on Render's free tier is RAM restrictive. 
+   * *Challenge*: Running Ollama on Railway's free tier is RAM restrictive. 
    * *Zero-Cost Solution*: Use Hugging Face Inference API (Free tier) or Groq API (extremely fast and generous free tier for Llama3) as the backend model engine until scaled.
 
 ## 10. GitHub Repository Setup
@@ -191,4 +191,4 @@ services:
 5. **Phase 5: Hackathons & Roadmaps** 
    Fleshing out dynamic data scraping or manual DB entry structures for external content.
 6. **Phase 6: CI/CD & Deploy** 
-   Wire Vercel and Render endpoints, run final integration tests, publish `tulasi.ai`.
+   Wire Vercel and Railway endpoints, run final integration tests, publish `tulasi.ai`.

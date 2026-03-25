@@ -13,7 +13,7 @@ export default function BillingPage() {
   const handleSubscribe = async () => {
     setLoading(true);
     try {
-      const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.onrender.com";
+      const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
       const res = await fetch(`${RENDER_BACKEND_URL}/api/payment/simulate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, credentials:"include", mode:"cors"

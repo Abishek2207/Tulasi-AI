@@ -75,7 +75,7 @@ export function ConnectionStatus() {
 
       {!apiOnline && apiOnline !== null && (
         <div className="mt-1 text-[9px] text-white/30 italic">
-          Render may be sleeping...
+          Railway may be sleeping...
         </div>
       )}
     </motion.div>
