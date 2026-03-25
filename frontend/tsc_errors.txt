@@ -1,0 +1,1 @@
+.next/dev/types/validator.ts(359,39): error TS2307: Cannot find module '../../../src/app/pdf/page.js' or its corresponding type declarations.

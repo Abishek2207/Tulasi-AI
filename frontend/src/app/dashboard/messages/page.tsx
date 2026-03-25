@@ -34,15 +34,30 @@ export default function MessagesPage() {
     }
   }, [session]);
 
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const connectWebSocket = () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-    if ( socketRef.current?.readyState === WebSocket.OPEN) return;
+    
+    // Prevent duplicate connections if already open or connecting
+    if (
+      socketRef.current?.readyState === WebSocket.OPEN || 
+      socketRef.current?.readyState === WebSocket.CONNECTING
+    ) {
+      return;
+    }
 
-    // Use absolute WSS URL for Render backend
-    const wsUrl = `wss://tulasi-backend.up.railway.app/api/messages/ws/${token}`;
+    // Use dynamic WSS URL based on the environment api url
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
+    const wsBaseUrl = baseUrl.replace(/^http/, "ws");
+    const wsUrl = `${wsBaseUrl}/api/messages/ws/${token}`;
+    
     const ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => console.log("✅ WebSocket Connected");
+    ws.onopen = () => {
+      console.log("✅ WebSocket Connected");
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+    };
     
     ws.onmessage = (event) => {
       try {
@@ -64,8 +79,10 @@ export default function MessagesPage() {
     };
 
     ws.onclose = () => {
-      console.log("❌ WebSocket Disconnected. Retrying in 3s...");
-      setTimeout(connectWebSocket, 3000);
+      console.log("❌ WebSocket Disconnected. Retrying in 5s...");
+      socketRef.current = null;
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
     };
 
     ws.onerror = (err) => console.error("WebSocket Error:", err);

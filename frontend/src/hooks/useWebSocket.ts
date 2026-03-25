@@ -37,7 +37,7 @@ export function useWebSocket({
   token,
   roomId = "global",
   reconnectDelay = 3000,
-  maxRetries = 10,
+  maxRetries = 999999,
   onMessage,
 }: UseWebSocketOptions) {
   const [status, setStatus] = useState<WSStatus>("closed");

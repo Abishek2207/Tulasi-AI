@@ -59,3 +59,15 @@ npm install
 npm run dev
 ```
 The application will be accessible at `http://localhost:3000`.
+
+## 4. 24/7 Production Keep-Alive Setup (Vercel & Railway)
+Because Vercel Hobby accounts strictly prohibit automated cron jobs running more frequently than once a day, you must configure a **free external pinger** to keep your Railway backend awake and connected 24/7.
+
+1. Go to [Cron-job.org](https://cron-job.org/) and create a free account.
+2. Click **Create Cronjob**.
+3. Set the **Title** to `Tulasi AI Keep-Alive`.
+4. Set the **URL** to: `https://tulasiai.vercel.app/api/cron/keep-alive`
+5. Set the **Execution schedule** to every **5 minutes**.
+6. Save and enable it. 
+
+This guarantees your app remains instantly responsive at all times and avoids Railway cold-starts without violating Vercel's tier limits.
