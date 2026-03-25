@@ -30,6 +30,18 @@ async def lifespan(app: FastAPI):
         try:
             init_db()
             print("✅ Database initialised")
+            
+            # ── 🚨 DATABASE AUTO-MIGRATION 🚨 ────────────────────
+            from app.core.database import engine
+            from sqlalchemy import text
+            with engine.begin() as conn:
+                try:
+                    conn.execute(text('ALTER TABLE "user" ADD COLUMN pro_expiry_date VARCHAR;'))
+                    print("[Migration] Added 'pro_expiry_date' column successfully.")
+                except Exception as e:
+                    pass # Column likely already exists
+            # ───────────────────────────────────────────────────
+            
         except Exception as e:
             print(f"❌ Database init failed: {e}")
             
