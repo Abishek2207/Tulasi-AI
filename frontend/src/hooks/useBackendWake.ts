@@ -8,7 +8,7 @@ interface BackendState {
   lastChecked: Date | null;
 }
 
-const HEALTH_INTERVAL_MS = 4 * 60 * 1000; // 4 minutes — prevents Render cold starts
+const HEALTH_INTERVAL_MS = 90 * 1000; // 90 seconds — keeps Railway alive aggressively
 
 export function useBackendWake() {
   const [state, setState] = useState<BackendState>({
@@ -40,10 +40,23 @@ export function useBackendWake() {
     checkHealth();
   }, [checkHealth]);
 
-  // Keep-alive every 4 minutes — prevents Render sleep
+  // Keep-alive every 90 seconds — prevents Railway cold starts
   useEffect(() => {
     const interval = setInterval(checkHealth, HEALTH_INTERVAL_MS);
     return () => clearInterval(interval);
+  }, [checkHealth]);
+
+  // Wake backend instantly when device wakes from sleep or tab regains focus
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") checkHealth();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", checkHealth);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", checkHealth);
+    };
   }, [checkHealth]);
 
   return {

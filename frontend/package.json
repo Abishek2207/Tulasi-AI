@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "cross-env NEXT_PRIVATE_SKIP_TURBOPACK=1 next build",
     "start": "next start",
     "lint": "eslint",
     "backend": "cd ../backend && .\\venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --port 10000",
@@ -46,6 +46,7 @@
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
     "babel-plugin-react-compiler": "1.0.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "eslint-formatter-compact": "^9.0.1",

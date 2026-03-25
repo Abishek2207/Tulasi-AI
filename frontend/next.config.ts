@@ -17,6 +17,11 @@ const nextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
+  experimental: {
+    turbo: {
+      enabled: false,
+    },
+  },
 };
 
 export default nextConfig;
