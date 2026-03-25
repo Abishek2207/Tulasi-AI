@@ -77,14 +77,23 @@ export default function AuthPage() {
 
     if (isLogin) {
       try {
+        // Call backend directly first to get token, then sync to NextAuth session
         const data = await authApi.login(email, password);
         if (data.access_token) {
           localStorage.setItem("token", data.access_token);
         }
-        await signIn("credentials", { email, password, redirect: false });
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+        // Also create a NextAuth session so useSession() works in components
+        const result = await signIn("credentials", { email, password, redirect: false });
+        if (result?.error) {
+          // NextAuth failed but we have backend token — still allow login
+          console.warn("NextAuth session creation warning:", result.error);
+        }
         router.push("/dashboard");
       } catch (err: unknown) {
-      const error = err as Error;
+        const error = err as Error;
         setError(error.message || "Invalid email or password.");
       }
     } else {
@@ -93,10 +102,17 @@ export default function AuthPage() {
         if (data.access_token) {
           localStorage.setItem("token", data.access_token);
         }
-        await signIn("credentials", { email, password, redirect: false });
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+        // Also create a NextAuth session
+        const result = await signIn("credentials", { email, password, redirect: false });
+        if (result?.error) {
+          console.warn("NextAuth session creation warning:", result.error);
+        }
         router.push("/dashboard");
       } catch (err: unknown) {
-      const error = err as Error;
+        const error = err as Error;
         setError(error.message || "Registration failed");
       }
     }
