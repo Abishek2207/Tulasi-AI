@@ -72,31 +72,43 @@ export const authOptions: NextAuthOptions = {
   providers,
   callbacks: {
     async signIn({ user, account }) {
-      // For OAuth providers, auto-register/login with FastAPI backend via fire-and-forget
+      // For OAuth providers (Google/GitHub), register/login with FastAPI backend
+      // and store the backend JWT in user.accessToken so it flows into the JWT token
       if (account && account.provider !== "credentials") {
-        const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.onrender.com";
-        fetch(`${BACKEND}/api/auth/google-oauth`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: user.email,
-            name: user.name || user.email?.split("@")[0],
-            provider: account.provider,
-          }),
-        }).catch(e => console.error("OAuth backend sync failed:", e));
-        
-        // Don't wait for backend response or store access token to speed up login
+        const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
+        try {
+          const res = await fetch(`${BACKEND}/api/auth/google-oauth`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name || user.email?.split("@")[0],
+              provider: account.provider,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            // Store the backend JWT on user so jwt() callback can pick it up
+            if (data.access_token) {
+              (user as unknown as Record<string, unknown>).accessToken = data.access_token;
+            }
+          }
+        } catch (e) {
+          console.error("OAuth backend sync failed:", e);
+          // Still allow sign in even if backend sync fails
+        }
       }
       return true;
     },
     async jwt({ token, user, account }) {
+      const u = user as unknown as Record<string, unknown>;
       if (user) {
-        token.role = user.role || (user.email === ADMIN_EMAIL ? "admin" : "student");
-        if (user.accessToken) {
-            token.accessToken = user.accessToken;
+        token.role = u.role as string || (user.email === ADMIN_EMAIL ? "admin" : "student");
+        if (u.accessToken) {
+          token.accessToken = u.accessToken as string;
         }
-        if (user.inviteCode) {
-            token.inviteCode = user.inviteCode;
+        if (u.inviteCode) {
+          token.inviteCode = u.inviteCode as string;
         }
       }
       // OAuth providers — auto-assign role
@@ -107,9 +119,9 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.role = token.role;
-        session.user.accessToken = token.accessToken;
-        session.user.inviteCode = token.inviteCode;
+        session.user.role = token.role as string;
+        session.user.accessToken = token.accessToken as string;
+        session.user.inviteCode = token.inviteCode as string;
       }
       return session;
     },
