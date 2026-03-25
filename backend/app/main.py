@@ -109,13 +109,17 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 
-ALLOW_ORIGINS = ["*"]
+ALLOW_ORIGINS = [
+    "http://localhost:3000",
+    "https://tulasiai.vercel.app",
+    "https://tulasi-ai.vercel.app"
+]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOW_ORIGINS,
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
