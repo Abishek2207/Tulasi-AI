@@ -1,4 +1,4 @@
-const API_URL = "https://tulasiai.up.railway.app";
+const API_URL = "https://tulasi-backend.onrender.com";
 const email = `debug.${Date.now()}@example.com`;
 const password = "Password123!";
 

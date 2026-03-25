@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: tulasi-backend
+    env: python
+    repo: https://github.com/Abishek2207/Tulasi-AI
+    branch: main
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        value: developement_secret_key_change_in_production

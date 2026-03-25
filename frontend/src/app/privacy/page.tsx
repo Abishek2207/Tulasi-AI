@@ -29,7 +29,7 @@ export default function PrivacyPolicy() {
           <p>Your session history, uploaded PDFs, and coding metrics are utilized exclusively to power your personalized gamification systems (XP, Streaks) and AI contextual memory. We NEVER sell your data to third-party advertisers.</p>
 
           <h2 style={{ color: "white", fontSize: 24, marginTop: 40 }}>3. Data Security & Encryption</h2>
-          <p>All traffic between your browser and our Railway backend is AES-256 encrypted natively over HTTPS. Your passwords are one-way hashed using bcrypt. Our databases are strictly siloed behind VPCs.</p>
+          <p>All traffic between your browser and our Render backend is AES-256 encrypted natively over HTTPS. Your passwords are one-way hashed using bcrypt. Our databases are strictly siloed behind VPCs.</p>
 
           <h2 style={{ color: "white", fontSize: 24, marginTop: 40 }}>4. Your Rights</h2>
           <p>You reserve the right to delete your Tulasi AI account natively from your dashboard, which automatically purges all your associated Chat, Document, and API records within 24 hours.</p>

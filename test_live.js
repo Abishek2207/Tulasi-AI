@@ -1,4 +1,4 @@
-const API_URL = "https://tulasiai.up.railway.app";
+const API_URL = "https://tulasi-backend.onrender.com";
 
 async function run() {
   console.log("🚀 Starting Live E2E Verification...");

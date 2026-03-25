@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 // ─── API Base URL ─────────────────────────────────────────────────────────────
 // Env var is baked in at Vercel build time; fallback ensures local dev always works.
 // We strip any trailing slashes or /api suffixes to prevent /api/api duplication.
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app")
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-backend.onrender.com")
   .replace(/\/api\/?$/, "")
   .replace(/\/$/, "");
 

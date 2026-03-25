@@ -4,7 +4,7 @@ import sys
 import json
 import time
 
-BASE_URL = 'https://tulasi-backend.up.railway.app/api'
+BASE_URL = 'https://tulasi-backend.onrender.com/api'
 
 report = {
     'working': [],
