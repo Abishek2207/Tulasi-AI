@@ -148,10 +148,11 @@ class HybridAIClient:
     def get_response(self, message: str, history: List[Dict] = None, image_data: Optional[bytes] = None, stream: bool = False) -> Union[str, Generator]:
         """
         Main entry point for AI responses.
-        Tries Gemini models first (with retries), falls back to OpenRouter.
+        Tries Gemini models first (with retries), falls back to OpenRouter, then Groq.
         """
         history = history or []
         gemini_contents = self._format_for_gemini(message, history, image_data=image_data)
+        errors = []
         
         if stream:
             def master_gen():
@@ -161,27 +162,28 @@ class HybridAIClient:
                         try:
                             print(f"📡 [AI] Trying Gemini {model_name} (attempt {attempt + 1})")
                             model_gen = self._call_gemini(gemini_contents, model_name, stream=True)
-                            yielded_any = False
                             for chunk in model_gen:
-                                yielded_any = True
                                 yield chunk
-                            # If we survived the yield loop without error, we are done
                             return
                         except Exception as e:
-                            print(f"⚠️ [AI] Stream Gemini {model_name} failed: {e}")
+                            err_msg = f"Gemini {model_name}: {str(e)}"
+                            print(f"⚠️ [AI] {err_msg}")
+                            if err_msg not in errors: errors.append(err_msg)
                             if attempt == 1:
-                                break # Move to next model
+                                break
                 
                 # 2. Fallback to OpenRouter
-                print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
                 or_messages = self._format_for_openrouter(message, history)
+                print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
                 try:
                     or_gen = self._call_openrouter(or_messages, stream=True)
                     for chunk in or_gen:
                         yield chunk
                     return
                 except Exception as e:
-                    print(f"❌ [AI] OpenRouter stream failed: {e}")
+                    err_msg = f"OpenRouter: {str(e)}"
+                    print(f"❌ [AI] {err_msg}")
+                    if err_msg not in errors: errors.append(err_msg)
 
                 # 3. Fallback to Groq
                 print(f"🔄 [AI] Falling back to Groq (llama3-8b-8192)")
@@ -191,8 +193,10 @@ class HybridAIClient:
                         yield chunk
                     return
                 except Exception as e:
-                    print(f"❌ [AI] Groq stream failed: {e}")
-                    yield f"⏳ AI is currently unavailable. (Error: {str(e)})"
+                    err_msg = f"Groq: {str(e)}"
+                    print(f"❌ [AI] {err_msg}")
+                    if err_msg not in errors: errors.append(err_msg)
+                    yield f"⏳ AI is currently unavailable. (Errors: {'; '.join(errors)})"
             return master_gen()
         else:
             # Non-streaming fallback
@@ -202,24 +206,30 @@ class HybridAIClient:
                         print(f"📡 [AI] Trying Gemini {model_name} (attempt {attempt + 1})")
                         return self._call_gemini(gemini_contents, model_name, stream=False)
                     except Exception as e:
-                        print(f"⚠️ [AI] Gemini {model_name} failed: {e}")
+                        err_msg = f"Gemini {model_name}: {str(e)}"
+                        print(f"⚠️ [AI] {err_msg}")
+                        if err_msg not in errors: errors.append(err_msg)
                         if attempt == 1:
                             break
             
-            print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
             or_messages = self._format_for_openrouter(message, history)
+            print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
             try:
                 return self._call_openrouter(or_messages, stream=False)
             except Exception as e:
-                print(f"❌ [AI] OpenRouter fallback failed: {e}")
+                err_msg = f"OpenRouter: {str(e)}"
+                print(f"❌ [AI] {err_msg}")
+                if err_msg not in errors: errors.append(err_msg)
 
             # 3. Groq fallback
             print(f"🔄 [AI] Falling back to Groq (llama3-8b-8192)")
             try:
                 return self._call_groq(or_messages, stream=False)
             except Exception as e:
-                print(f"❌ [AI] Groq fallback failed: {e}")
-                return f"⏳ AI is currently unavailable. (Error: {str(e)})"
+                err_msg = f"Groq: {str(e)}"
+                print(f"❌ [AI] {err_msg}")
+                if err_msg not in errors: errors.append(err_msg)
+                return f"⏳ AI is currently unavailable. (Errors: {'; '.join(errors)})"
 
 # Singleton
 ai_client = HybridAIClient()
