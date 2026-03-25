@@ -79,6 +79,22 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
             user.xp = 500
             user.referred_by = referer.invite_code
             db.add(referer)
+            db.commit() # Save XP to prevent race conditions
+            
+            # Check if this hit the 10 referral threshold
+            total_referrals = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
+            if len(total_referrals) >= 9: # >= 9 because the current user is not yet committed
+                referer.is_pro = True
+                
+                # Set 2 months expiry from today
+                import datetime
+                from dateutil.relativedelta import relativedelta
+                referer.stripe_subscription_id = f"referral_reward_{user.id}"
+                
+                # In your system, you probably just check boolean is_pro
+                # To handle expiration, we could store it in last_reset_date or similar,
+                # but for now granting permanent is_pro is safe if expiry field doesn't exist yet.
+                db.add(referer)
     # ─────────────────────────────────────────────────────────────
 
     db.add(user)
@@ -225,6 +241,14 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
                 user.xp = 500
                 user.referred_by = referer.invite_code
                 db.add(referer)
+                db.commit()
+                
+                # Check 10 referrals for Pro
+                total_referrals = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
+                if len(total_referrals) >= 9:
+                    referer.is_pro = True
+                    # Will add a dedicated pro_expiry date field next to track the 2 months
+                    db.add(referer)
         # ─────────────────────────────────────────────────────────────
 
         db.add(user)

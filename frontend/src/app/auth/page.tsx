@@ -64,6 +64,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [oAuthLoading, setOAuthLoading] = useState<string | null>(null);
@@ -88,7 +89,7 @@ export default function AuthPage() {
       }
     } else {
       try {
-        const data = await authApi.register(email, password, name);
+        const data = await authApi.register(email, password, name, inviteCode);
         if (data.access_token) {
           localStorage.setItem("token", data.access_token);
         }
@@ -193,6 +194,13 @@ export default function AuthPage() {
                   <motion.input whileFocus={{ scale: 1.02 }} value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required 
                     style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}
                     onFocus={e => { e.target.style.borderColor = "#4ECDC4"; e.target.style.background = "rgba(78,205,196,0.05)" }}
+                    onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.background = "rgba(255,255,255,0.03)" }}
+                  />
+
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", display: "block", marginTop: 20, marginBottom: 8, transition: "color 0.2s" }}>Invite Code (Optional)</label>
+                  <motion.input whileFocus={{ scale: 1.02 }} value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())} placeholder="e.g. A1B2C3D4" 
+                    style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)", textTransform: "uppercase" }}
+                    onFocus={e => { e.target.style.borderColor = "#8B5CF6"; e.target.style.background = "rgba(139,92,246,0.05)" }}
                     onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.background = "rgba(255,255,255,0.03)" }}
                   />
                 </motion.div>

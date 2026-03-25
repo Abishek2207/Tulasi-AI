@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { paymentApi } from "@/lib/api";
 import toast from "react-hot-toast";
+import { Copy } from "lucide-react";
 
 // ── Razorpay type declarations (checkout.js is loaded at runtime) ──────────
 declare global {
@@ -53,6 +54,22 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
   onUpgradeSuccess?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
+  const [refStats, setRefStats] = useState<{
+    invite_code: string;
+    total_referrals: number;
+    referrals_needed_for_pro: number;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app"}/api/users/referrals`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      })
+      .then(res => res.json())
+      .then(data => setRefStats(data))
+      .catch(console.error);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -213,6 +230,42 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
             : "⚡ Upgrade to Pro — ₹100/mo"
           }
         </motion.button>
+
+        {/* ── REFERRAL UI ───────────────────────────── */}
+        {refStats && (
+          <div style={{ marginTop: 24, padding: "16px", borderRadius: 14, background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.1)" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "white", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
+              <span>🎁 Refer 10 friends, Get 2 Mos Free</span>
+              <span style={{ color: "#A78BFA" }}>{refStats.total_referrals}/10</span>
+            </div>
+            
+            {/* Progress bar */}
+            <div style={{ height: 6, width: "100%", background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden", marginBottom: 12 }}>
+              <div style={{ 
+                height: "100%", 
+                width: `${Math.min(100, (refStats.total_referrals / 10) * 100)}%`, 
+                background: "linear-gradient(90deg, #8B5CF6, #38BDF8)",
+                borderRadius: 3 
+              }} />
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1, padding: "8px 12px", background: "rgba(0,0,0,0.4)", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", fontFamily: "var(--font-mono)" }}>
+                {refStats.invite_code}
+              </div>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(refStats.invite_code);
+                  toast.success("Invite code copied!");
+                }}
+                style={{ padding: "0 12px", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, color: "white", cursor: "pointer" }}
+              >
+                <Copy size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+        {/* ──────────────────────────────────────────── */}
 
         <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted)", marginTop: 16 }}>
           🔒 Secure Checkout via Razorpay · Cancel anytime

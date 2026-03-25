@@ -29,3 +29,30 @@ def get_all_users(
         raise HTTPException(status_code=403, detail="Admin only")
     users = db.exec(select(User)).all()
     return [{"id": u.id, "email": u.email, "name": u.name, "role": u.role} for u in users]
+
+
+@router.get("/referrals")
+def get_referral_stats(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Returns the user's invite code and how many people have used it."""
+    if not current_user.invite_code:
+        import uuid
+        current_user.invite_code = uuid.uuid4().hex[:8].upper()
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+        
+    referred_users = db.exec(
+        select(User).where(User.referred_by == current_user.invite_code)
+    ).all()
+    
+    return {
+        "invite_code": current_user.invite_code,
+        "total_referrals": len(referred_users),
+        "is_pro": current_user.is_pro,
+        "pro_expiry_date": current_user.pro_expiry_date,
+        "referrals_needed_for_pro": max(0, 10 - len(referred_users))
+    }
+
