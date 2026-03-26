@@ -25,24 +25,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (status === "authenticated" && user?.role === "admin") router.push("/admin");
   }, [status, user, router, hasLocalToken]);
 
-  // Sync NextAuth session token → localStorage so all API calls and DebugPanel work
-  // This is critical for OAuth users (Google/GitHub) who never go through the email login flow
-  useEffect(() => {
-    if (status === "authenticated" && user) {
-      const sessionToken = (user as { accessToken?: string }).accessToken;
-      if (sessionToken && !localStorage.getItem("token")) {
-        localStorage.setItem("token", sessionToken);
-      }
-      if (!localStorage.getItem("user")) {
-        localStorage.setItem("user", JSON.stringify({
-          id: (user as { id?: string }).id,
-          email: user.email,
-          name: user.name,
-          role: (user as { role?: string }).role,
-        }));
-      }
-    }
-  }, [status, user]);
+  // Token sync is handled globally in src/components/providers.tsx
+  // No need to duplicate the logic here.
 
   if (status === "loading") return (
 
