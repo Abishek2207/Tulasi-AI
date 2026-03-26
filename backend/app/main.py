@@ -40,7 +40,17 @@ async def lifespan(app: FastAPI):
                     conn.execute(text('ALTER TABLE "user" ADD COLUMN pro_expiry_date VARCHAR;'))
                     print("[Migration] Added 'pro_expiry_date' column successfully.")
                 except Exception as e:
-                    pass # Column likely already exists
+                    pass
+                
+                # Auto-migrate Review table
+                try:
+                    conn.execute(text('ALTER TABLE review ADD COLUMN role VARCHAR;'))
+                except:
+                    pass
+                try:
+                    conn.execute(text('ALTER TABLE review ADD COLUMN created_at TIMESTAMP;'))
+                except:
+                    pass
             # ───────────────────────────────────────────────────
             
         except Exception as e:

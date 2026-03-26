@@ -23,7 +23,7 @@ def init_db():
         print("⚠️  Skipping DB init: No engine available.")
         return
 
-    from app.models.models import Hackathon, StudyRoom, Review  # Local import to avoid circular dependencies
+    from app.models.models import Hackathon, StudyRoom, Review, UserFeedback, UserMemoryChunk, GroupMessage, SavedResume, HackathonBookmark
     try:
         SQLModel.metadata.create_all(engine)
     except Exception as e:
