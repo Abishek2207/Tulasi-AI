@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { startupApi } from "@/lib/api";
+import { startupApi, StartupIdea as ApiStartupIdea } from "@/lib/api";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { 
   Rocket, Lightbulb, Users, BarChart3, 
@@ -11,7 +11,7 @@ import {
   ArrowRight, Zap, Target, Globe
 } from "lucide-react";
 
-interface StartupIdea {
+interface DisplayStartupIdea {
   name: string;
   problem: string;
   solution: string;
@@ -20,7 +20,7 @@ interface StartupIdea {
   monetization: string;
 }
 
-interface SavedIdea extends StartupIdea {
+interface DisplaySavedIdea extends DisplayStartupIdea {
   id: number;
   domain: string;
   created_at: string;
@@ -31,11 +31,11 @@ export default function StartupLabPage() {
   const [domain, setDomain] = useState("");
   const [audience, setAudience] = useState("");
   const [loading, setLoading] = useState(false);
-  const [idea, setIdea] = useState<StartupIdea | null>(null);
+  const [idea, setIdea] = useState<DisplayStartupIdea | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [savedIdeas, setSavedIdeas] = useState<SavedIdea[]>([]);
+  const [savedIdeas, setSavedIdeas] = useState<DisplaySavedIdea[]>([]);
   const [showSaved, setShowSaved] = useState(false);
 
   const domains = [
@@ -55,7 +55,7 @@ export default function StartupLabPage() {
   const fetchSavedIdeas = async () => {
     try {
       const data = await startupApi.ideas(token);
-      setSavedIdeas((data.ideas as unknown as SavedIdea[]) || []);
+      setSavedIdeas((data.ideas as unknown as DisplaySavedIdea[]) || []);
     } catch (e) {}
   };
 
@@ -83,7 +83,7 @@ export default function StartupLabPage() {
 
     try {
       const data = await startupApi.generate(domain, audience, token);
-      setIdea(data.idea as unknown as StartupIdea);
+      setIdea(data.idea as unknown as DisplayStartupIdea);
       setSaved(false);
     } catch (err: any) {
       setError(err.message || "Failed to reach the AI servers.");

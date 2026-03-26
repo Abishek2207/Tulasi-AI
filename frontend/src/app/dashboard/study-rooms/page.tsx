@@ -3,31 +3,24 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { studyApi } from "@/lib/api";
+import { studyApi, StudyRoom, StudyMessage } from "@/lib/api";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Users, Timer, MessageSquare, Plus, ArrowRight, DoorOpen } from "lucide-react";
 
-interface Room {
-  id: number;
-  name: string;
+interface DisplayRoom extends StudyRoom {
   description: string;
   tag: string;
   color: string;
   active?: number;
 }
 
-interface Message {
-  id: number;
-  user_name: string;
-  content: string;
-  created_at: string;
-}
+interface DisplayRoomMessage extends StudyMessage {}
 
 export default function StudyRoomsPage() {
   const { data: session } = useSession();
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [activeRoom, setActiveRoom] = useState<Room | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [rooms, setRooms] = useState<DisplayRoom[]>([]);
+  const [activeRoom, setActiveRoom] = useState<DisplayRoom | null>(null);
+  const [messages, setMessages] = useState<DisplayRoomMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -45,7 +38,7 @@ export default function StudyRoomsPage() {
   const fetchRooms = async () => {
     try {
       const data = await studyApi.rooms();
-      setRooms((data.rooms as unknown as Room[]) || []);
+      setRooms((data.rooms as unknown as DisplayRoom[]) || []);
     } catch (e) {
       console.error("Rooms fetch failed:", e);
     } finally {
@@ -56,7 +49,7 @@ export default function StudyRoomsPage() {
   const fetchMessages = async (roomId: number) => {
     try {
       const data = await studyApi.messages(roomId.toString(), token);
-      setMessages((data.messages as unknown as Message[]) || []);
+      setMessages((data.messages as unknown as DisplayRoomMessage[]) || []);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (e) {}
   };
@@ -87,7 +80,7 @@ export default function StudyRoomsPage() {
       .toString()
       .padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const joinRoom = async (room: Room) => {
+  const joinRoom = async (room: DisplayRoom) => {
     setActiveRoom(room);
     setMessages([]);
     if (token) {
@@ -580,7 +573,7 @@ export default function StudyRoomsPage() {
           <TiltCard
             key={room.id}
             intensity={8}
-            style={{ padding: 32, cursor: "pointer", border: `1px solid ${room.color}30` }}
+            style={{ padding: 32, cursor: "pointer", border: `1px solid ${String(room.color)}30` }}
             onClick={() => joinRoom(room)}
           >
             <div
@@ -639,7 +632,7 @@ export default function StudyRoomsPage() {
                 marginTop: "auto",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: room.color, fontWeight: 700 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: String(room.color), fontWeight: 700 }}>
                 Join Focus <ArrowRight size={14} />
               </div>
               <div style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>

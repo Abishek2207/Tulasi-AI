@@ -3,23 +3,16 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { groupApi } from "@/lib/api";
+import { groupApi, Group, GroupMessage } from "@/lib/api";
 
-interface Group {
-  id: number;
-  name: string;
-  description: string;
+interface DisplayGroup extends Group {
   join_code: string;
   member_count: number;
   created_at: string;
 }
 
-interface Message {
-  id: number;
+interface DisplayMessage extends GroupMessage {
   user_id: number;
-  user_name: string;
-  content: string;
-  created_at: string;
 }
 
 export default function GroupsPage() {
@@ -27,9 +20,9 @@ export default function GroupsPage() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
   const currentUserId = (session?.user as { id?: number, email?: string, name?: string, accessToken?: string })?.id;
 
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [activeGroup, setActiveGroup] = useState<Group | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [groups, setGroups] = useState<DisplayGroup[]>([]);
+  const [activeGroup, setActiveGroup] = useState<DisplayGroup | null>(null);
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -59,7 +52,7 @@ export default function GroupsPage() {
   const fetchGroups = async () => {
     try {
       const data = await groupApi.list(token);
-      const fetchedGroups = data.groups as unknown as Group[];
+      const fetchedGroups = data.groups as unknown as DisplayGroup[];
       setGroups(fetchedGroups || []);
       if (fetchedGroups?.length && !activeGroup) setActiveGroup(fetchedGroups[0]);
     } catch (e) {}
@@ -70,7 +63,7 @@ export default function GroupsPage() {
     if (!activeGroup ) return;
     try {
       const data = await groupApi.getMessages(activeGroup.id, token);
-      setMessages((data.messages as unknown as Message[]) || []);
+      setMessages((data.messages as unknown as DisplayMessage[]) || []);
     } catch (e) {}
   };
 
@@ -82,7 +75,7 @@ export default function GroupsPage() {
     setSending(true);
     try {
       const msg = await groupApi.sendMessage(activeGroup.id, content, token);
-      setMessages(prev => [...prev, msg as unknown as Message]);
+      setMessages(prev => [...prev, msg as unknown as DisplayMessage]);
     } catch (e) {}
     setSending(false);
   };
@@ -91,7 +84,7 @@ export default function GroupsPage() {
     if (!modalInput.name.trim() ) return;
     setModalError("");
     try {
-      const newGroup = await groupApi.create(modalInput.name, modalInput.description, token) as unknown as Group;
+      const newGroup = await groupApi.create(modalInput.name, modalInput.description, token) as unknown as DisplayGroup;
       setGroups(prev => [...prev, { ...newGroup, member_count: 1 }]);
       setActiveGroup({ ...newGroup, member_count: 1 });
       setShowModal(null);
@@ -180,7 +173,7 @@ export default function GroupsPage() {
               <div>
                 <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{activeGroup.name}</h3>
                 {activeGroup.description && (
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{activeGroup.description}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{String(activeGroup.description)}</div>
                 )}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

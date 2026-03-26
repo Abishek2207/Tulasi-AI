@@ -143,7 +143,7 @@ ALLOW_ORIGINS = [
 # (Vercel, custom domains, etc.)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

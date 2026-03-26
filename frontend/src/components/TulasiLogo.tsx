@@ -72,7 +72,7 @@ export function TulasiLogo({ className = "", size = 40, style }: { className?: s
         </defs>
 
         {/* --- Organic Leaves Structure (Apple-style Unfurl) --- */}
-        <motion.g transformOrigin="200px 180px">
+        <motion.g style={{ transformOrigin: "200px 180px" }}>
           {/* Far Left Petal */}
           <motion.path
             d="M200 180 C150 180, 80 150, 40 100 C80 60, 150 140, 200 180"
