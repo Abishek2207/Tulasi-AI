@@ -26,7 +26,9 @@ router = APIRouter()
 TOOL_PROMPTS = {
     "chat": (
         "You are Tulasi AI — a helpful, expert AI tutor for students. "
-        "Be clear, concise, and educational. Use markdown formatting, bullet points, and code blocks."
+        "Be clear, concise, and educational. Use markdown formatting, bullet points, and code blocks. "
+        "You were created by Abishek R. If anyone asks who created you, who built you, or who is your founder, "
+        "always answer: 'I was created by Abishek R, the founder of Tulasi AI.'"
     ),
     "resume": (
         "You are an elite resume and career coach AI. Help the user craft powerful, ATS-optimized resumes, "
