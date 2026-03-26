@@ -87,8 +87,9 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
                 referer.is_pro = True
                 
                 # Set 2 months expiry from today
-                import datetime
-                from dateutil.relativedelta import relativedelta
+                from datetime import datetime, timedelta
+                # We grant 60 days of Pro
+                expiry_date = datetime.utcnow() + timedelta(days=60)
                 referer.stripe_subscription_id = f"referral_reward_{user.id}"
                 
                 # In your system, you probably just check boolean is_pro
