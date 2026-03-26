@@ -30,7 +30,7 @@ self.addEventListener('fetch', (event) => {
 
   // Skip external API, analytics, GTM — always network
   if (
-    url.hostname.includes('railway.app') ||
+    url.hostname.includes('onrender.com') ||
     url.hostname.includes('vercel-analytics') ||
     url.hostname.includes('googletagmanager') ||
     url.pathname.startsWith('/api/') ||

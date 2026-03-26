@@ -197,7 +197,7 @@ export default function CertificatesPage() {
 <body>
   <div class="cert">
     <div class="logo-container">
-      <img src="https://tulasiai.up.railway.app/health" onerror="this.src='/images/logo-transparent.png'" class="logo-img" />
+      <img src="https://tulasi-ai-wgwl.onrender.com/health" onerror="this.src='/images/logo-transparent.png'" class="logo-img" />
     </div>
     <div class="issuer">Tulasi AI Platform</div>
     <div class="label">This certifies that</div>

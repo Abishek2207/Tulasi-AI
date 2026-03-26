@@ -16,7 +16,8 @@ const providers: NextAuthOptions["providers"] = [
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) return null;
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+        const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+        const res = await fetch(`${BACKEND}/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -71,49 +72,45 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
 export const authOptions: NextAuthOptions = {
   providers,
   callbacks: {
-    async signIn({ user, account }) {
-      // For OAuth providers (Google/GitHub), register/login with FastAPI backend
-      // and store the backend JWT in user.accessToken so it flows into the JWT token
-      if (account && account.provider !== "credentials") {
-        const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
-        try {
-          const res = await fetch(`${BACKEND}/api/auth/google-oauth`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name || user.email?.split("@")[0],
-              provider: account.provider,
-            }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            // Store the backend JWT on user so jwt() callback can pick it up
-            if (data.access_token) {
-              (user as unknown as Record<string, unknown>).accessToken = data.access_token;
-            }
-          }
-        } catch (e) {
-          console.error("OAuth backend sync failed:", e);
-          // Still allow sign in even if backend sync fails
-        }
-      }
+    async signIn() {
+      // Always allow sign in, token sync happens in jwt callback
       return true;
     },
     async jwt({ token, user, account }) {
       const u = user as unknown as Record<string, unknown>;
-      if (user) {
-        token.role = u.role as string || (user.email === ADMIN_EMAIL ? "admin" : "student");
-        if (u.accessToken) {
+      
+      // If user & account exists, this is the very first login
+      if (account && user) {
+        if (account.provider === "credentials") {
+          // It's email/password, backend already gave us the access_token
+          token.role = u.role as string || (user.email === ADMIN_EMAIL ? "admin" : "student");
           token.accessToken = u.accessToken as string;
-        }
-        if (u.inviteCode) {
           token.inviteCode = u.inviteCode as string;
+        } else {
+          // For OAuth providers (Google/GitHub), register/login with FastAPI backend
+          const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+          try {
+            const res = await fetch(`${BACKEND}/api/auth/google-oauth`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: user.email,
+                name: user.name || user.email?.split("@")[0],
+                provider: account.provider,
+              }),
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.access_token) {
+                token.accessToken = data.access_token;
+                token.role = data.user?.role || "student";
+                token.inviteCode = data.user?.invite_code;
+              }
+            }
+          } catch (e) {
+            console.error("OAuth backend sync failed:", e);
+          }
         }
-      }
-      // OAuth providers — auto-assign role
-      if (account && account.provider !== "credentials") {
-        token.role = token.email === ADMIN_EMAIL ? "admin" : "student";
       }
       return token;
     },
