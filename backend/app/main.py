@@ -15,6 +15,7 @@ from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certi
 from app.core.database import init_db
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
+from fastapi.responses import RedirectResponse
 
 # ── Track startup time ─────────────────────────────────────────────
 _START_TIME = time.time()
@@ -132,13 +133,17 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 ALLOW_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:3001",
     "https://tulasiai.vercel.app",
-    "https://tulasi-ai.vercel.app"
+    "https://tulasi-ai.vercel.app",
+    "https://tulasi-ai-wgwl.onrender.com",
 ]
 
+# Allow all origins in production so Render backend works with any frontend
+# (Vercel, custom domains, etc.)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOW_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -197,6 +202,11 @@ def root():
         "docs": "/api/docs",
     }
 
+@app.get("/docs", include_in_schema=False)
+def docs_redirect():
+    """Redirects /docs to the actual docs URL /api/docs"""
+    return RedirectResponse(url="/api/docs")
+
 
 # ── API Root ───────────────────────────────────────────────────────
 @app.get("/api")
@@ -254,16 +264,14 @@ def debug_ai_env():
     return {"ai_env_vars": keys, "any_key_set": any(keys.values())}
 
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+# /health is already registered above with full detail (lines 212-234)
 
 
 # ── Keep-Alive Cron ────────────────────────────────────────────────
 @app.get("/api/cron")
 @app.get("/cron")
 async def cron_ping():
-    """Endpoint for Vercel/External cron to keep Railway instance alive."""
+    """Endpoint for Vercel/External cron to keep Render instance alive."""
     return {
         "success": True,
         "message": "Keep-alive ping received",

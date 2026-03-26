@@ -10,9 +10,7 @@ import toast from "react-hot-toast";
 // ─── API Base URL ─────────────────────────────────────────────────────────────
 // Env var is baked in at Vercel build time; fallback ensures local dev always works.
 // We strip any trailing slashes or /api suffixes to prevent /api/api duplication.
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app")
-  .replace(/\/api\/?$/, "")
-  .replace(/\/$/, "");
+export const API_URL = "https://tulasi-ai-wgwl.onrender.com";
 
 /** Centralised debug logger — always prints in dev; silent in prod unless token missing */
 function log(label: string, data?: unknown) {
@@ -26,6 +24,11 @@ function resolveToken(): string | undefined {
   if (isBrowser) {
     const stored = localStorage.getItem("token");
     if (stored) return stored;
+    
+    const path = window.location.pathname;
+    if (!path.startsWith("/auth") && path !== "/") {
+      window.location.href = "/auth";
+    }
   }
   return undefined;
 }

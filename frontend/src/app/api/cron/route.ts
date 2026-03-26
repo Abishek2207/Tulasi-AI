@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 // This is a server-side Route Handler — localStorage is unavailable here.
 // We ping the backend health endpoint without a user token (public endpoint).
 export async function GET() {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
   try {
     const res = await fetch(`${backendUrl}/api/health`, {
       method: 'GET',

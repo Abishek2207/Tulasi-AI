@@ -48,7 +48,7 @@ export default function MessagesPage() {
     }
 
     // Use dynamic WSS URL based on the environment api url
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://tulasiai.up.railway.app";
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
     const wsBaseUrl = baseUrl.replace(/^http/, "ws");
     const wsUrl = `${wsBaseUrl}/api/messages/ws/${token}`;
     
