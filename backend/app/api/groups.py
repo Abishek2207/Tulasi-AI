@@ -45,6 +45,7 @@ class JoinGroupRequest(BaseModel):
 
 class SendMessageRequest(BaseModel):
     content: str
+    is_encrypted: bool = False
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -185,6 +186,7 @@ def get_messages(
                 "user_id": msg.user_id,
                 "user_name": msg.user_name,
                 "content": msg.content,
+                "is_encrypted": getattr(msg, "is_encrypted", False),
                 "created_at": msg.created_at.isoformat(),
             }
             for msg in messages
@@ -217,6 +219,7 @@ def send_message(
         user_id=current_user.id,
         user_name=current_user.name or current_user.email.split("@")[0],
         content=req.content.strip(),
+        is_encrypted=req.is_encrypted,
     )
     db.add(msg)
     db.commit()
@@ -227,6 +230,7 @@ def send_message(
         "user_id": msg.user_id,
         "user_name": msg.user_name,
         "content": msg.content,
+        "is_encrypted": msg.is_encrypted,
         "created_at": msg.created_at.isoformat(),
     }
 

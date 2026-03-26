@@ -206,6 +206,25 @@ class GroupMessage(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     user_name: str = ""
     content: str
+    is_encrypted: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class UserFeedback(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    message_id: str
+    rating: int = Field(ge=1, le=5)  # e.g., 1 for bad, 5 for good
+    context: str = ""
+    expected_better: str = ""
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class UserMemoryChunk(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    content: str
+    embedding_json: str  # Storing as stringified JSON representation of array for simple compat
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

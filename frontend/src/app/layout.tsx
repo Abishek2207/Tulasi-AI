@@ -19,7 +19,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: { default: "Tulasi AI — AI Career & Learning Platform", template: "%s | Tulasi AI" },
-  description: "AI-powered mock interviews, learning roadmaps, resume builder, and career acceleration tools for engineers and students.",
+  description: "AI-powered mock interviews and career acceleration tools for engineers and students. Led by CEO Akshaya R, building the tech of 2026.",
   manifest: "/manifest.json",
   keywords: ["AI interview prep", "career roadmaps", "mock interview", "student platform", "tech prep", "resume analyzer", "coding practice"],
   openGraph: {
