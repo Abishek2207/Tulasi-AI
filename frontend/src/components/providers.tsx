@@ -10,19 +10,18 @@ import { useEffect } from "react";
  *  regardless of whether the user logged in via credentials or OAuth.
  */
 function TokenSync() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   useEffect(() => {
-    if (session?.user?.accessToken) {
+    if (status === "authenticated" && session?.user?.accessToken) {
       // Save the backend JWT so resolveToken() in api.ts can find it
       localStorage.setItem("token", session.user.accessToken as string);
       // Also keep the user object fresh for dashboard components
       const stored = (() => { try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; } })();
       localStorage.setItem("user", JSON.stringify({ ...stored, ...session.user }));
-    } else if (session === null) {
-      // Session is explicitly null means user is logged out — clear token
-      localStorage.removeItem("token");
     }
-  }, [session]);
+    // We intentionally do NOT clear token on session === null anymore. 
+    // This allows backend jwt tokens from credentials login to persist until an explicit signOut.
+  }, [session, status]);
   return null;
 }
 
