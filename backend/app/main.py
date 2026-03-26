@@ -274,6 +274,16 @@ def debug_db():
     except Exception as e:
         return {"status": "error", "error_type": e.__class__.__name__, "error_detail": str(e)}
 
+@app.get("/api/debug/rag")
+def debug_rag():
+    import traceback
+    try:
+        from app.services.vector_service import vector_service
+        vec = vector_service.embed_documents("Testing Memory Load")
+        return {"status": "success", "vector_len": len(vec)}
+    except Exception as e:
+        return {"status": "error", "error_type": e.__class__.__name__, "traceback": traceback.format_exc()}
+
 
 # ── AI Key Debug Endpoint ──────────────────────────────────────────
 @app.get("/api/debug/ai-env")
