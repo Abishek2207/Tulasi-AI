@@ -60,7 +60,7 @@ export default function AboutPage() {
               background: "linear-gradient(90deg, #A78BFA, #22D3EE)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
             }}>
-              Abishek R
+              Akshaya R, CEO
             </span>
           </h1>
 

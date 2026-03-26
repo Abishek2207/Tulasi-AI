@@ -189,7 +189,9 @@ app.include_router(users.router,        prefix="/api/users",        tags=["Users
 
 # ── WebSocket Router ───────────────────────────────────────────────
 from app.api import ws as ws_router
+from app.websockets import signaling
 app.include_router(ws_router.router, tags=["WebSocket Chat"])
+app.include_router(signaling.router, prefix="/api/voice/signal", tags=["WebRTC Signaling"])
 
 
 # ── Root Endpoint ──────────────────────────────────────────────────

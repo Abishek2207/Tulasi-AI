@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { groupApi, Group, GroupMessage } from "@/lib/api";
+import { encryptMessage, decryptMessage } from "@/lib/crypto";
 
 interface DisplayGroup extends Group {
   join_code: string;
@@ -13,6 +14,7 @@ interface DisplayGroup extends Group {
 
 interface DisplayMessage extends GroupMessage {
   user_id: number;
+  is_encrypted?: boolean;
 }
 
 export default function GroupsPage() {
@@ -40,6 +42,25 @@ export default function GroupsPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (!activeGroup || messages.length === 0) return;
+    
+    // Async decrypt any encrypted messages
+    const decryptAll = async () => {
+      let changed = false;
+      const decrypted = await Promise.all(messages.map(async (m) => {
+        if (m.is_encrypted && m.content.includes(":")) {
+          const plain = await decryptMessage(m.content, activeGroup.join_code);
+          if (plain !== m.content) changed = true;
+          return { ...m, content: plain, is_encrypted: false };
+        }
+        return m;
+      }));
+      if (changed) setMessages(decrypted);
+    };
+    decryptAll();
+  }, [messages, activeGroup]);
 
   useEffect(() => {
     if (activeGroup && token) {
@@ -70,11 +91,18 @@ export default function GroupsPage() {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !activeGroup  || sending) return;
-    const content = input.trim();
+    const plaintext = input.trim();
     setInput("");
     setSending(true);
     try {
-      const msg = await groupApi.sendMessage(activeGroup.id, content, token);
+      // 🔐 End-to-End Encrypt before sending
+      const { ciphertext, iv } = await encryptMessage(plaintext, activeGroup.join_code);
+      const payload = `${iv}:${ciphertext}`;
+      
+      const msg = await groupApi.sendMessage(activeGroup.id, payload, token, true);
+      // Immediately display our own plaintext to avoid a visual flash
+      msg.content = plaintext; 
+      msg.is_encrypted = false;
       setMessages(prev => [...prev, msg as unknown as DisplayMessage]);
     } catch (e) {}
     setSending(false);
@@ -217,7 +245,9 @@ export default function GroupsPage() {
                         border: isMe ? "none" : "1px solid var(--border)",
                         boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                       }}>
-                        {msg.content}
+                        {msg.content === "🔐 [Encrypted Message]" || (msg.is_encrypted && msg.content.includes(":")) ? (
+                          <span style={{opacity: 0.5}}>🔐 Decrypting...</span>
+                        ) : msg.content}
                       </div>
                       <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4, textAlign: isMe ? "right" : "left", padding: "0 4px" }}>
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

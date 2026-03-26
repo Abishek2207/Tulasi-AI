@@ -391,10 +391,10 @@ export const groupApi = {
     }, token),
   getMessages: (groupId: number, token: string) =>
     request<{ group_id: number; messages: GroupMessage[] }>(`/api/groups/${groupId}/messages`, {}, token),
-  sendMessage: (groupId: number, content: string, token: string) =>
+  sendMessage: (groupId: number, content: string, token: string, is_encrypted: boolean = false) =>
     request<GroupMessage>(`/api/groups/${groupId}/messages`, {
       method: "POST",
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, is_encrypted }),
     }, token),
 };
 
