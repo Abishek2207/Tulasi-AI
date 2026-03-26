@@ -263,6 +263,18 @@ def ping():
     return {"ping": "pong", "uptime_seconds": int(time.time() - _START_TIME)}
 
 
+@app.get("/api/debug/db")
+def debug_db():
+    from app.core.database import engine
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            res = conn.execute(text("SELECT * FROM review LIMIT 1"))
+            return {"status": "success", "data": [dict(r) for r in res.mappings()]}
+    except Exception as e:
+        return {"status": "error", "error_type": e.__class__.__name__, "error_detail": str(e)}
+
+
 # ── AI Key Debug Endpoint ──────────────────────────────────────────
 @app.get("/api/debug/ai-env")
 def debug_ai_env():
