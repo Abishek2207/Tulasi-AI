@@ -112,10 +112,23 @@ const MODULES = [
   { id: "certs", title: "Certificates", desc: "Download verified learning credentials.", icon: <Award size={28} />, link: "/dashboard/certificates", color: "#34D399", span: 2 },
 ];
 
+interface DashboardStats {
+  streak: number;
+  xp: number;
+  level: number;
+  problems_solved: number;
+  videos_watched: number;
+  hackathons_joined: number;
+  invite_code: string;
+}
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Student";
-  const [stats, setStats] = useState({ streak: 0, xp: 0, level: 1, problems_solved: 0, videos_watched: 0, hackathons_joined: 0, invite_code: "" });
+  const [stats, setStats] = useState<DashboardStats>({ 
+    streak: 0, xp: 0, level: 1, problems_solved: 0, 
+    videos_watched: 0, hackathons_joined: 0, invite_code: "" 
+  });
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {

@@ -3,21 +3,22 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { certificateApi } from "@/lib/api";
+import { certificateApi, Certificate, Milestone } from "@/lib/api";
 
-interface Milestone {
-  id: string; title: string; desc: string; icon: string; category: string;
+// Local UI-specific extensions if needed, otherwise use the API types.
+interface DisplayMilestone extends Milestone {
+  desc: string; icon: string; category: string;
   current_pct: number; can_generate: boolean; already_earned: boolean;
 }
 
-interface Certificate {
-  id: number; title: string; issuer: string; type: string; issued_at: string;
+interface DisplayCertificate extends Certificate {
+  issuer: string; type: string; issued_at: string;
 }
 
 export default function CertificatesPage() {
   const { data: session } = useSession();
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [certificates, setCertificates] = useState<DisplayCertificate[]>([]);
+  const [milestones, setMilestones] = useState<DisplayMilestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -30,8 +31,8 @@ export default function CertificatesPage() {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
       
       const data = await certificateApi.list(token);
-      setCertificates((data.certificates as unknown as Certificate[]) || []);
-      setMilestones((data.milestones as unknown as Milestone[]) || []);
+      setCertificates((data.certificates as unknown as DisplayCertificate[]) || []);
+      setMilestones((data.milestones as unknown as DisplayMilestone[]) || []);
     } catch (e) {
       setError("Could not load certificates. The backend might be sleeping (takes ~50s to wake up). Please try again.");
     } finally { setLoading(false); }
@@ -126,7 +127,8 @@ export default function CertificatesPage() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
             {milestones.map((m, i) => {
-              const color = CATEGORY_COLOR[m.category] || "#6C63FF";
+              const categoryStr = String(m.category || "");
+              const color = CATEGORY_COLOR[categoryStr] || "#6C63FF";
               const locked = !m.can_generate;
               const earned = m.already_earned;
               return (
@@ -170,7 +172,7 @@ export default function CertificatesPage() {
                         opacity: generating === m.id ? 0.7 : 1,
                       }}
                     >
-                      {generating === m.id ? "Generating..." : m.can_generate ? "🎓 Generate Certificate" : `🔒 Need ${100 - m.current_pct}% more`}
+                      {generating === m.id ? "Generating..." : m.can_generate ? "🎓 Generate Certificate" : `🔒 Need ${100 - Number(m.current_pct || 0)}% more`}
                     </motion.button>
                   )}
                   {earned && (

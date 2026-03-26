@@ -1,0 +1,77 @@
+﻿
+> frontend@0.1.0 build
+> cross-env NEXT_PRIVATE_SKIP_TURBOPACK=1 next build
+
+node.exe : ⚠ `eslint` configuration in 
+next.config.ts is no longer supported. See more 
+info here: https://nextjs.org/docs/app/api-reference
+/cli/next#next-lint-options
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Users\Admin\AppData\Roaming\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (⚠ `esl 
+   int` conf...xt-lint-options:String) [], RemoteE  
+  xception
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⚠ Invalid next.config.ts options detected: 
+⚠     Unrecognized key(s) in object: 'turbo' at 
+"experimental"
+⚠     Unrecognized key(s) in object: 'eslint'
+⚠ See more info here: 
+https://nextjs.org/docs/messages/invalid-next-config
+⚠ Warning: Next.js inferred your workspace root, 
+but it may not be correct.
+ We detected multiple lockfiles and selected the 
+directory of C:\Users\Admin\Downloads\Desktop\Projec
+t\TulasiAI\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in 
+your Next.js config, or consider removing one of 
+the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/con
+fig/next-config-js/turbopack#root-directory for 
+more information.
+ Detected additional lockfiles: 
+   * C:\Users\Admin\Downloads\Desktop\Project\Tulasi
+AI\frontend\package-lock.json
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ? turbo (invalid experimental key)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 6.9s
+  Running TypeScript ...
+Failed to compile.
+
+./src/components/TulasiLogo.tsx:75:19
+Type error: Type '{ children: Element[]; 
+transformOrigin: string; }' is not assignable to 
+type 'IntrinsicAttributes & 
+SVGMotionProps<SVGGElement> & 
+RefAttributes<SVGGElement>'.
+  Property 'transformOrigin' does not exist on type 
+'IntrinsicAttributes & SVGMotionProps<SVGGElement> 
+& RefAttributes<SVGGElement>'.
+
+[0m [90m 73 |[39m
+ [90m 74 |[39m         {[90m/* --- Organic 
+Leaves Structure (Apple-style Unfurl) --- */[39m}
+[31m[1m>[22m[39m[90m 75 |[39m         
+[33m<[39m[33mmotion[39m[33m.[39mg 
+transformOrigin[33m=[39m[32m"200px 
+180px"[39m[33m>[39m
+ [90m    |[39m                   
+[31m[1m^[22m[39m
+ [90m 76 |[39m           {[90m/* Far Left Petal 
+*/[39m}
+ [90m 77 |[39m           
+[33m<[39m[33mmotion[39m[33m.[39mpath
+ [90m 78 |[39m             d[33m=[39m[32m"M200 
+180 C150 180, 80 150, 40 100 C80 60, 150 140, 200 
+180"[39m[0m
+Next.js build worker exited with code: 1 and 
+signal: null
