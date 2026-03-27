@@ -1,1 +1,1 @@
-from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin
