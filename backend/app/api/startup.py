@@ -112,30 +112,34 @@ def get_saved_ideas(
     }
 
 
-@router.get("-ideas")
-def get_startup_ideas_alias(
-    db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
-):
-    """Alias for /api/startup-ideas to match frontend usage if it exists as such."""
-    ideas = db.exec(
-        select(SavedStartupIdea)
-        .where(SavedStartupIdea.user_id == current_user.id)
-        .order_by(SavedStartupIdea.created_at.desc())
-    ).all()
-    return {
-        "ideas": [
-            {
-                "id": i.id,
-                "name": i.name,
-                "problem": i.problem,
-                "solution": i.solution,
-                "market_opportunity": i.market_opportunity,
-                "tech_stack": json.loads(i.tech_stack) if i.tech_stack else [],
-                "monetization": i.monetization,
-                "domain": i.domain,
-                "created_at": i.created_at.isoformat(),
-            }
-            for i in ideas
-        ]
-    }
+class PitchDeckRequest(BaseModel):
+    name: str
+    problem: str
+    solution: str
+    market_opportunity: str
+    monetization: str
+
+
+@router.post("/pitch-deck")
+@limiter.limit("5/minute")
+def generate_pitch_deck(request: Request, req: PitchDeckRequest, current_user: User = Depends(get_current_user)):
+    """Generate a 10-slide investor pitch deck in Markdown format."""
+    prompt = f"""Create an elite 10-slide startup pitch deck based on this idea:
+    
+Startup: {req.name}
+Problem: {req.problem}
+Solution: {req.solution}
+Market: {req.market_opportunity}
+Business Model: {req.monetization}
+
+Output a professional Markdown document. Use ## for slide titles.
+Include: Hook, Problem, Solution, Market, Product, Revenue, Competition, GTM Strategy, Team, and The Ask.
+Be extremely persuasive and professional."""
+
+    try:
+        # Using the system_instruction feature we just implemented
+        system_instruction = "You are an Elite Silicon Valley VC and Pitch Deck Architect. Provide exhaustive, professional, and visually structured Markdown drafts."
+        response_text = get_ai_response(prompt, system_instruction=system_instruction)
+        return {"status": "success", "pitch_deck": response_text}
+    except Exception as e:
+        raise HTTPException(500, f"Error generating pitch deck: {str(e)}")

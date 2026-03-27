@@ -140,6 +140,7 @@ export default function InterviewPage() {
       setError(e.message || "Error processing response.");
     } finally {
       setLoading(false);
+      setIsListening(false);
     }
   };
 
@@ -237,21 +238,43 @@ export default function InterviewPage() {
                     {COMPANIES.map((c) => <option key={c} value={c} style={{ background: "#05070D" }}>{c}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "var(--text-secondary)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "1.5px" }}>Depth: {numQuestions} Stages</label>
-                  <input type="range" min={3} max={10} value={numQuestions} onChange={(e) => setNumQuestions(+e.target.value)} style={{ width: "100%", marginTop: 12 }} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 32 }}>
+                <div className="glass-card" style={{ padding: 24, textAlign: "left", flex: 1 }}>
+                  <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", display: "block", marginBottom: 12 }}>TOTAL QUESTIONS</label>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    {[3, 5, 8, 10].map(n => (
+                      <button key={n} onClick={() => setNumQuestions(n)} style={{ flex: 1, padding: "10px", borderRadius: 10, background: numQuestions === n ? "#8B5CF615" : "rgba(255,255,255,0.03)", color: numQuestions === n ? "#8B5CF6" : "var(--text-muted)", border: `1px solid ${numQuestions === n ? "#8B5CF6" : "rgba(255,255,255,0.06)"}`, fontWeight: 700, cursor: "pointer" }}>{n}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="glass-card" style={{ padding: 24, textAlign: "left", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", display: "block" }}>VOICE MODE 🎙️</label>
+                        <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>AI will speak and listen</p>
+                      </div>
+                      <button 
+                        onClick={() => setVoiceEnabled(!voiceEnabled)}
+                        style={{ 
+                          width: 50, height: 26, borderRadius: 20, padding: 4, cursor: "pointer", transition: "all 0.3s",
+                          background: voiceEnabled ? "#8B5CF6" : "rgba(255,255,255,0.1)", border: "none"
+                        }}
+                      >
+                        <motion.div animate={{ x: voiceEnabled ? 24 : 0 }} style={{ width: 18, height: 18, background: "white", borderRadius: "50%" }} />
+                      </button>
+                   </div>
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <motion.button 
+                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={startInterview}
                 disabled={loading}
                 className="btn-primary"
-                style={{ width: "100%", padding: "18px", borderRadius: 16, fontSize: 18, fontWeight: 900, boxShadow: "0 10px 30px rgba(124, 58, 237, 0.2)" }}
+                style={{ width: "100%", padding: 18, borderRadius: 16, fontSize: 16, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, boxShadow: "0 10px 30px rgba(124, 58, 237, 0.2)" }}
               >
-                {loading ? "Engaging AI Interlocutor..." : `Begin Session at ${company} →`}
+                {loading ? "Engaging AI Interlocutor..." : `INITIALIZE INTERVIEW ENGINE `} <ArrowRight size={20} />
               </motion.button>
             </div>
           </motion.div>
@@ -260,74 +283,80 @@ export default function InterviewPage() {
         {/* ACTIVE PHASE */}
         {phase === "active" && (
           <motion.div key="active" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                <span style={{ fontSize: 12, fontWeight: 800, color: "var(--brand-primary)", background: "rgba(124, 58, 237, 0.1)", padding: "4px 12px", borderRadius: 20 }}>{role}</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "4px 12px", borderRadius: 20 }}>{company} • {interviewType}</span>
-              </div>
-              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: 20, padding: "6px 16px", fontSize: 13, fontWeight: 900 }}>
-                PROGRESS: <span style={{ color: "var(--brand-secondary)" }}>{questionNum}/{numQuestions}</span>
-              </div>
-            </div>
+            <div className="glass-card" style={{ padding: 40, background: "rgba(0,0,0,0.2)", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "rgba(139,92,246,0.1)" }}>
+                   <motion.div animate={{ width: `${(timeLeft / 120) * 100}%` }} style={{ height: "100%", background: "#8B5CF6" }} />
+                </div>
 
-            <div className="glass-card card-padding" style={{ marginBottom: 24, background: "rgba(124, 58, 237, 0.02)", border: "1px solid rgba(124, 58, 237, 0.15)" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
-                <motion.div 
-                  animate={{ boxShadow: ["0 0 0px var(--brand-primary)", "0 0 20px var(--brand-primary)", "0 0 0px var(--brand-primary)"] }}
-                  transition={{ repeat: Infinity, duration: 3 }}
-                  style={{ width: 64, height: 64, borderRadius: 20, background: "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}
-                >
-                  🤖
-                </motion.div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>Interviewer Context</div>
-                    <div style={{ fontSize: 14, fontWeight: 900, color: timeLeft < 30 ? "#FF6B6B" : "white", display: "flex", alignItems: "center", gap: 6 }}>
-                      <Timer size={14} /> {timeLeft}s
-                    </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+                  <span style={{ fontSize: 12, fontWeight: 900, color: "#8B5CF6", letterSpacing: 2 }}>QUESTION {questionNum} / {numQuestions}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, color: timeLeft < 30 ? "#F43F5E" : "var(--text-secondary)", fontWeight: 800, fontSize: 14 }}>
+                    <Timer size={18} /> {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}
                   </div>
-                  <p style={{ fontSize: 18, lineHeight: 1.7, fontWeight: 600, color: "white", margin: 0 }}>{currentQuestion}</p>
+                </div>
+
+                <div style={{ textAlign: "left", marginBottom: 40 }}>
+                   <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+                      <div style={{ 
+                         width: 48, height: 48, borderRadius: 16, flexShrink: 0,
+                         background: isSpeaking ? "#8B5CF6" : "rgba(139,92,246,0.1)", 
+                         display: "flex", alignItems: "center", justifyContent: "center",
+                         boxShadow: isSpeaking ? "0 0 20px #8B5CF650" : "none"
+                      }}>
+                         <Volume2 size={24} color={isSpeaking ? "white" : "#8B5CF6"} />
+                         {isSpeaking && (
+                            <motion.div 
+                               animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                               transition={{ repeat: Infinity, duration: 1 }}
+                               style={{ position: "absolute", width: 48, height: 48, borderRadius: 16, border: "2px solid #8B5CF6" }}
+                            />
+                         )}
+                      </div>
+                      <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>{currentQuestion}</h2>
+                   </div>
+                </div>
+
+                <div style={{ position: "relative", marginBottom: 32 }}>
+                  <textarea 
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder={isListening ? "Listening to your answer..." : "Type your answer here or use the microphone..."}
+                    style={{ width: "100%", minHeight: 180, padding: 24, borderRadius: 20, background: isListening ? "rgba(139,92,246,0.05)" : "rgba(255,255,255,0.03)", border: `1px solid ${isListening ? "#8B5CF6" : "rgba(255,255,255,0.05)"}`, color: "white", fontSize: 16, fontFamily: "inherit", resize: "none", transition: "all 0.3s" }}
+                  />
+                  
+                  <div style={{ position: "absolute", bottom: 20, right: 20, display: "flex", gap: 12 }}>
+                     <motion.button 
+                        whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                        onClick={voiceEnabled ? () => speakQuestion(currentQuestion) : () => setVoiceEnabled(true)}
+                        style={{ width: 44, height: 44, borderRadius: 12, background: voiceEnabled ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.05)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                     >
+                        {voiceEnabled ? <Volume2 size={20} color="#8B5CF6" /> : <VolumeX size={20} color="var(--text-muted)" />}
+                     </motion.button>
+                     
+                     <motion.button 
+                        whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                        onClick={startListening}
+                        className={isListening ? "pulse" : ""}
+                        style={{ width: 44, height: 44, borderRadius: 12, background: isListening ? "#F43F5E" : "rgba(139,92,246,0.1)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                     >
+                        {isListening ? <MicOff size={20} color="white" /> : <Mic size={20} color="#8B5CF6" />}
+                     </motion.button>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 16 }}>
+                  <button onClick={reset} disabled={loading} className="btn-ghost" style={{ flex: 1, padding: 16, borderRadius: 14 }}>END SESSION</button>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={submitAnswer}
+                    disabled={loading || !answer.trim()}
+                    className="btn-primary"
+                    style={{ flex: 2, padding: 16, borderRadius: 14, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+                  >
+                    {loading ? "ANALYZING..." : (questionNum === numQuestions ? "SUBMIT & FINAL SCORE" : "SUBMIT ANSWER")} <ArrowRight size={18} />
+                  </motion.button>
                 </div>
               </div>
-            </div>
-
-            <div style={{ position: "relative", marginBottom: 24 }}>
-              <textarea
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Synthesize your response here... (Star Method Recommended)"
-                className="input-field"
-                style={{ width: "100%", height: 220, padding: "24px", borderRadius: 20, resize: "none", fontSize: 16, lineHeight: 1.7, background: "rgba(0,0,0,0.3)" }}
-              />
-              <div style={{ position: "absolute", bottom: 20, right: 20, display: "flex", gap: 12 }}>
-                <button
-                  onClick={() => setVoiceEnabled(!voiceEnabled)}
-                  style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: voiceEnabled ? "var(--brand-secondary)" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  {voiceEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-                </button>
-                <button
-                  onClick={startListening}
-                  style={{ width: 44, height: 44, borderRadius: 14, background: isListening ? "#FF6B6B" : "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  {isListening ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity }}><Mic size={20} /></motion.div> : <Mic size={20} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="hero-buttons">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={submitAnswer}
-                disabled={loading || !answer.trim()}
-                className="btn-primary"
-                style={{ flex: 1, padding: "18px", borderRadius: 16, fontWeight: 900, fontSize: 16 }}
-              >
-                {loading ? "Optimizing Transmission..." : questionNum >= numQuestions ? "Review Evaluation 🏁" : "Proceed →"}
-              </motion.button>
-              <button onClick={reset} style={{ padding: "14px 24px", borderRadius: 16, background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.2)", color: "#FF6B6B", fontWeight: 700, cursor: "pointer" }}>Abort</button>
-            </div>
           </motion.div>
         )}
 

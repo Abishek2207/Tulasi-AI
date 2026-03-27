@@ -66,43 +66,56 @@ export default function LeaderboardPage() {
 
       {/* Podium for Top 3 */}
       {!loading && leaderboard.length >= 3 && (
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 24, marginBottom: 64, perspective: 1000 }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 24, marginBottom: 80, perspective: 1000 }}>
           {[leaderboard[1], leaderboard[0], leaderboard[2]].map((user, i) => {
             if (!user) return <div key={i} style={{ width: 180 }} />;
+            // Logic to map podium position (0,1,2) back to actual rank (2,1,3)
             const rank = i === 1 ? 1 : i === 0 ? 2 : 3;
-            const heights = [160, 200, 140];
+            const heights = [180, 240, 160];
             const colors = RANK_COLORS[rank - 1];
             const glows = RANK_GLOWS[rank - 1];
 
             return (
-              <TiltCard
+              <motion.div
                 key={user.id as string}
-                intensity={10}
-                style={{ 
-                  display: "flex", flexDirection: "column", alignItems: "center", width: 180,
-                  background: `rgba(255,255,255,0.03)`, border: `1px solid ${colors}40`, padding: "20px 0 0" 
-                }}>
-                <div style={{ 
-                  width: 64, height: 64, borderRadius: "50%", 
-                  background: `linear-gradient(135deg, ${colors}40, ${colors}80)`, 
-                  border: `2px solid ${colors}`, display: "flex", alignItems: "center", justifyContent: "center", 
-                  fontWeight: 900, fontSize: 24, color: colors, marginBottom: 8, 
-                  boxShadow: `0 0 30px ${glows}` 
-                }}>
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 4 }}>{user.name}</div>
-                <div style={{ fontSize: 14, color: colors, fontWeight: 700 }}>{user.xp.toLocaleString()} XP</div>
-                
-                <div style={{ 
-                  marginTop: 20, width: "100%", height: heights[i], 
-                  background: `linear-gradient(180deg, ${colors}30 0%, transparent 100%)`, 
-                  borderTop: `1px solid ${colors}40`, borderRadius: "12px 12px 0 0", 
-                  display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 16 
-                }}>
-                  <span style={{ fontSize: 32, fontWeight: 900, color: colors, textShadow: `0 0 10px ${colors}80` }}>#{rank}</span>
-                </div>
-              </TiltCard>
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: rank * 0.1 }}
+              >
+                <TiltCard
+                  intensity={10}
+                  style={{ 
+                    display: "flex", flexDirection: "column", alignItems: "center", width: 190,
+                    background: `rgba(255,255,255,0.02)`, border: rank === 1 ? `2px solid ${colors}` : `1px solid ${colors}40`, 
+                    padding: "24px 0 0", borderRadius: 24, boxShadow: rank === 1 ? `0 0 40px ${glows}` : "none"
+                  }}>
+                  <div style={{ position: "relative", marginBottom: 12 }}>
+                    <div style={{ 
+                      width: rank === 1 ? 80 : 64, height: rank === 1 ? 80 : 64, borderRadius: "50%", 
+                      background: `linear-gradient(135deg, ${colors}40, ${colors}80)`, 
+                      border: `2px solid ${colors}`, display: "flex", alignItems: "center", justifyContent: "center", 
+                      fontWeight: 900, fontSize: rank === 1 ? 32 : 24, color: "white", 
+                      boxShadow: `0 0 20px ${glows}` 
+                    }}>
+                      {user.avatar ? <img src={user.avatar} style={{ width: "100%", height: "100%", borderRadius: "50%" }} /> : user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ position: "absolute", bottom: -5, right: -5, width: 28, height: 28, background: colors, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, color: "#000", border: "3px solid #05070D" }}>
+                      {rank}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: "white", marginBottom: 4 }}>{user.name}</div>
+                  <div style={{ fontSize: 14, color: colors, fontWeight: 800, marginBottom: 20 }}>{user.xp.toLocaleString()} XP</div>
+                  
+                  <div style={{ 
+                    width: "100%", height: heights[i], 
+                    background: `linear-gradient(180deg, ${colors}15 0%, transparent 100%)`, 
+                    borderTop: `1px solid ${colors}30`, borderRadius: "12px 12px 24px 24px", 
+                    display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 16 
+                  }}>
+                    <span style={{ fontSize: 44, fontWeight: 950, color: colors, opacity: 0.5 }}>#{rank}</span>
+                  </div>
+                </TiltCard>
+              </motion.div>
             );
           })}
         </div>
