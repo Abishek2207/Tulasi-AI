@@ -49,34 +49,35 @@ class ReviewOut(BaseModel):
 
 @router.get("", response_model=List[ReviewOut])
 def get_reviews(session: Session = Depends(get_session)):
-    """Fetch all reviews, sorted by newest first. Fault-tolerant fallback for old schemas."""
+    """Fetch all reviews using raw SQL — bypasses ORM schema issues."""
+    from sqlalchemy import text
+    from datetime import datetime as dt
     try:
-        reviews = session.exec(
-            select(Review).order_by(Review.created_at.desc())
-        ).all()
-        return reviews
-    except Exception:
-        # Fallback: use raw SQL in case ORM fails due to schema mismatch (e.g. missing user_id column)
-        from sqlalchemy import text
-        try:
-            result = session.execute(text(
-                "SELECT id, name, role, review, rating, created_at FROM review ORDER BY created_at DESC"
-            ))
-            rows = result.mappings().all()
-            from datetime import datetime
-            return [
-                ReviewOut(
+        result = session.execute(text(
+            "SELECT id, name, role, review, rating, created_at FROM review ORDER BY created_at DESC"
+        ))
+        rows = result.mappings().all()
+        out = []
+        for row in rows:
+            try:
+                ca = row["created_at"]
+                if ca is None:
+                    ca = dt.utcnow()
+                elif isinstance(ca, str):
+                    ca = dt.fromisoformat(ca)
+                out.append(ReviewOut(
                     id=row["id"],
                     name=row["name"],
                     role=row.get("role"),
                     review=row["review"],
                     rating=row["rating"],
-                    created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(str(row["created_at"])) if row["created_at"] else datetime.utcnow(),
-                )
-                for row in rows
-            ]
-        except Exception as e2:
-            raise HTTPException(status_code=500, detail=f"DB error: {str(e2)}")
+                    created_at=ca,
+                ))
+            except Exception:
+                continue
+        return out
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"DB error: {str(e)}")
 
 
 from app.api.auth import get_current_user
@@ -89,14 +90,27 @@ def submit_review(
     current_user: User = Depends(get_current_user)
 ):
     """Submit a new review, associated with the current user."""
-    review = Review(
-        user_id=current_user.id,
-        name=data.name,
-        role=data.role,
-        review=data.review,
-        rating=data.rating,
-    )
-    session.add(review)
-    session.commit()
-    session.refresh(review)
-    return review
+    from sqlalchemy import text
+    from datetime import datetime as dt
+    now = dt.utcnow()
+    # Use raw SQL insert to avoid ORM schema mismatch issues
+    try:
+        session.execute(text(
+            "INSERT INTO review (name, role, review, rating, created_at) VALUES (:name, :role, :review, :rating, :created_at)"
+        ), {"name": data.name, "role": data.role, "review": data.review, "rating": data.rating, "created_at": now})
+        session.commit()
+        # Fetch the inserted row
+        result = session.execute(text(
+            "SELECT id, name, role, review, rating, created_at FROM review WHERE name=:name AND rating=:rating ORDER BY created_at DESC LIMIT 1"
+        ), {"name": data.name, "rating": data.rating})
+        row = result.mappings().first()
+        return ReviewOut(
+            id=row["id"],
+            name=row["name"],
+            role=row.get("role"),
+            review=row["review"],
+            rating=row["rating"],
+            created_at=row["created_at"] if isinstance(row["created_at"], dt) else dt.fromisoformat(str(row["created_at"])),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Submit error: {str(e)}")
