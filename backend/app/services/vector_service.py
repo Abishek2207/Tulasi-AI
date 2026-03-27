@@ -22,7 +22,7 @@ class VectorService:
     def embed_documents(self, text: str) -> list[float]:
         """Embed a single text string into a vector."""
         import os
-        # 🚨 Use Gemini API to prevent Render Server PyTorch OOM crashes (Saves 300MB RAM!)
+        # 🚨 Use Gemini API to prevent Render Server PyTorch OOM crashes
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if api_key:
             try:
@@ -30,15 +30,17 @@ class VectorService:
                 # Ensure it's configured in case it wasn't yet
                 genai.configure(api_key=api_key)
                 result = genai.embed_content(
-                    model="models/text-embedding-004",
+                    model="models/embedding-001",
                     content=text,
                     task_type="retrieval_document"
                 )
                 return result['embedding']
             except Exception as e:
                 print(f"Gemini API embed failed: {e}")
+                # NEVER fallback to PyTorch on cloud! It will OOM crash the process!
+                return [0.0] * 768
                 
-        # Fallback to local PyTorch if no API key
+        # Fallback to local PyTorch only if absolutely no API key configured
         return self._get_model().encode(text).tolist()
 
     def store_embeddings(self, user_id: int, text: str, db: Session):
