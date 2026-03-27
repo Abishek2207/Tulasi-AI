@@ -137,7 +137,22 @@ export default function ChatPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { 
+    setMounted(true); 
+    const savedSession = localStorage.getItem("tulasi_chat_session");
+    if (savedSession) {
+      setSessionId(savedSession);
+      chatApi.history(savedSession).then(res => {
+        if (res.messages && res.messages.length > 0) {
+          setMessages([{ role: "assistant", content: GREETING }, ...res.messages]);
+        }
+      }).catch(() => {
+        // If history fails or session doesn't exist, reset it
+        localStorage.removeItem("tulasi_chat_session");
+        setSessionId("");
+      });
+    }
+  }, []);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -175,7 +190,10 @@ export default function ChatPage() {
 
     try {
       const res = await chatApi.send(text, sessionId || undefined);
-      if (res.session_id && !sessionId) setSessionId(res.session_id);
+      if (res.session_id && !sessionId) {
+        setSessionId(res.session_id);
+        localStorage.setItem("tulasi_chat_session", res.session_id);
+      }
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: res.response || "No response received." },
@@ -205,8 +223,10 @@ export default function ChatPage() {
   };
 
   const clearChat = () => {
+    if (sessionId) chatApi.clearHistory(sessionId).catch(()=>null);
     setMessages([{ role: "assistant", content: GREETING }]);
     setSessionId("");
+    localStorage.removeItem("tulasi_chat_session");
   };
 
   const handleQuickPrompt = (value: string) => {

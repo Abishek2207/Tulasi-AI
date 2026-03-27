@@ -9,6 +9,7 @@ export function PWAInstallPrompt() {
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
+      if (localStorage.getItem("tulasi-pwa-dismissed")) return;
       setDeferredPrompt(e);
       setTimeout(() => setShow(true), 3000);
     };
@@ -20,6 +21,7 @@ export function PWAInstallPrompt() {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const result = await deferredPrompt.userChoice;
+    localStorage.setItem("tulasi-pwa-dismissed", "true");
     setShow(false);
     setDeferredPrompt(null);
   };
@@ -52,7 +54,7 @@ export function PWAInstallPrompt() {
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Add to your home screen for instant access</div>
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-            <button onClick={() => setShow(false)} style={{ padding: "8px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>
+            <button onClick={() => { localStorage.setItem("tulasi-pwa-dismissed", "true"); setShow(false); }} style={{ padding: "8px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>
               Later
             </button>
             <button onClick={install} style={{ padding: "8px 16px", borderRadius: 10, background: "linear-gradient(135deg, #A78BFA, #22D3EE)", border: "none", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 800 }}>
