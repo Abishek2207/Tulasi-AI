@@ -245,12 +245,6 @@ function StarRating({ rating, interactive = false, onSet }: { rating: number; in
 
 // ── Reviews Section ──────────────────────────────────────────────
 function ReviewsSection() {
-  const FALLBACK_REVIEWS: ReviewItem[] = [
-    { id: -1, name: "Arjun S.", role: "CSE Student, IIT Madras", review: "Tulasi AI completely changed how I prepare for placements. The AI mock interviews feel incredibly real.", rating: 5, created_at: "2026-03-01T00:00:00" },
-    { id: -2, name: "Priya R.", role: "Software Engineer, Zoho", review: "The roadmaps are amazing — structured, detailed, and actually helped me land my first job!", rating: 5, created_at: "2026-03-02T00:00:00" },
-    { id: -3, name: "Karthik V.", role: "B.Tech Final Year", review: "Best platform for placement prep. The hackathons section is gold — I discovered 3 contests I never knew about.", rating: 5, created_at: "2026-03-03T00:00:00" },
-  ];
-
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -265,14 +259,12 @@ function ReviewsSection() {
           !r.review.toLowerCase().includes("mia kalifa") &&
           !r.name.toLowerCase().includes("mia kalifa")
         );
-        setReviews(filtered.length > 0 ? filtered : FALLBACK_REVIEWS);
+        setReviews(filtered);
       })
       .catch(() => {
-        // On any API error, show the polished static fallback reviews
-        setReviews(FALLBACK_REVIEWS);
+        setReviews([]);
       })
       .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
