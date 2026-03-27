@@ -44,13 +44,14 @@ async def lifespan(app: FastAPI):
                 
                 # Auto-migrate Review table
                 try:
+                    conn.execute(text('ALTER TABLE review ADD COLUMN user_id INTEGER;'))
+                except: pass
+                try:
                     conn.execute(text('ALTER TABLE review ADD COLUMN role VARCHAR;'))
-                except:
-                    pass
+                except: pass
                 try:
                     conn.execute(text('ALTER TABLE review ADD COLUMN created_at TIMESTAMP;'))
-                except:
-                    pass
+                except: pass
             # ───────────────────────────────────────────────────
             
         except Exception as e:
