@@ -164,11 +164,11 @@ export default function InterviewPage() {
         pointerEvents: "none", zIndex: -1 
       }} />
 
-      <div style={{ textAlign: "center", marginBottom: 48 }}>
-        <h1 style={{ fontSize: 44, fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 16, letterSpacing: "-1.5px" }}>
+      <div style={{ textAlign: "center", marginBottom: 48, padding: "0 10px" }}>
+        <h1 className="hero-title" style={{ fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 16, letterSpacing: "-1.5px" }}>
           AI <span className="gradient-text">Mock Interviews</span>
         </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 18, maxWidth: 550, margin: "0 auto", lineHeight: 1.6 }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 2vw, 18px)", maxWidth: 550, margin: "0 auto", lineHeight: 1.6 }}>
           Experience high-fidelity, real-time interviews. Instant scoring across 
           DS&A, behavioral, and system design criteria.
         </p>
@@ -178,7 +178,7 @@ export default function InterviewPage() {
         {/* SETUP PHASE */}
         {phase === "setup" && (
           <motion.div key="setup" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div className="glass-card" style={{ padding: 48, marginBottom: 32, background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div className="glass-card card-padding" style={{ marginBottom: 32, background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(124, 58, 237, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--brand-primary)" }}>
                   <Briefcase size={20} />
@@ -210,7 +210,7 @@ export default function InterviewPage() {
               {/* Type Grid */}
               <div style={{ marginBottom: 32 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "var(--text-secondary)", marginBottom: 16, textTransform: "uppercase", letterSpacing: "1.5px" }}>Assessment Domain</label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 16 }}>
                   {INTERVIEW_TYPES.map((t) => (
                     <TiltCard
                       key={t.id}
@@ -230,7 +230,7 @@ export default function InterviewPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 40 }}>
+              <div className="responsive-grid" style={{ marginBottom: 40 }}>
                 <div>
                   <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "var(--text-secondary)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "1.5px" }}>Simulated Organization</label>
                   <select value={company} onChange={(e) => setCompany(e.target.value)} className="input-field" style={{ width: "100%", height: 50, borderRadius: 12, background: "rgba(0,0,0,0.2)" }}>
@@ -270,7 +270,7 @@ export default function InterviewPage() {
               </div>
             </div>
 
-            <div className="glass-card" style={{ padding: 40, marginBottom: 24, background: "rgba(124, 58, 237, 0.02)", border: "1px solid rgba(124, 58, 237, 0.15)" }}>
+            <div className="glass-card card-padding" style={{ marginBottom: 24, background: "rgba(124, 58, 237, 0.02)", border: "1px solid rgba(124, 58, 237, 0.15)" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
                 <motion.div 
                   animate={{ boxShadow: ["0 0 0px var(--brand-primary)", "0 0 20px var(--brand-primary)", "0 0 0px var(--brand-primary)"] }}
@@ -315,7 +315,7 @@ export default function InterviewPage() {
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 16 }}>
+            <div className="hero-buttons">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -326,7 +326,7 @@ export default function InterviewPage() {
               >
                 {loading ? "Optimizing Transmission..." : questionNum >= numQuestions ? "Review Evaluation 🏁" : "Proceed →"}
               </motion.button>
-              <button onClick={reset} style={{ padding: "0 24px", borderRadius: 16, background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.2)", color: "#FF6B6B", fontWeight: 700, cursor: "pointer" }}>Abort</button>
+              <button onClick={reset} style={{ padding: "14px 24px", borderRadius: 16, background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.2)", color: "#FF6B6B", fontWeight: 700, cursor: "pointer" }}>Abort</button>
             </div>
           </motion.div>
         )}
@@ -334,14 +334,14 @@ export default function InterviewPage() {
         {/* FEEDBACK PHASE */}
         {phase === "feedback" && feedback && (
           <motion.div key="feedback" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div className="glass-card" style={{ padding: 64, textAlign: "center", background: "rgba(255,255,255,0.02)" }}>
+            <div className="glass-card card-padding" style={{ textAlign: "center", background: "rgba(255,255,255,0.02)" }}>
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, delay: 0.2 }} style={{ marginBottom: 24 }}>
                 <CheckCircle2 size={84} color={getScoreColor(feedback.score)} style={{ margin: "0 auto", filter: `drop-shadow(0 0 20px ${getScoreColor(feedback.score)}40)` }} />
               </motion.div>
 
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4 }}>
-                <h2 style={{ fontSize: 96, fontWeight: 900, color: getScoreColor(feedback.score), margin: 0 }}>{feedback.score}</h2>
-                <span style={{ fontSize: 24, fontWeight: 700, color: "var(--text-muted)" }}>/100</span>
+                <h2 style={{ fontSize: "clamp(64px, 15vw, 96px)", fontWeight: 900, color: getScoreColor(feedback.score), margin: 0 }}>{feedback.score}</h2>
+                <span style={{ fontSize: "clamp(18px, 4vw, 24px)", fontWeight: 700, color: "var(--text-muted)" }}>/100</span>
               </div>
 
               <div style={{ 
@@ -357,7 +357,7 @@ export default function InterviewPage() {
                 {feedback.feedback_summary}
               </p>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: 24, textAlign: "left", marginBottom: 48 }}>
+              <div className="responsive-grid" style={{ gap: 16, textAlign: "left", marginBottom: 48 }}>
                 <TiltCard intensity={5} style={{ background: "rgba(67, 233, 123, 0.05)", border: "1px solid rgba(67, 233, 123, 0.2)", padding: 32 }}>
                   <h3 style={{ fontSize: 13, fontWeight: 900, color: "#43E97B", textTransform: "uppercase", letterSpacing: 2, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}><TrendingUp size={16} /> Architectural Strengths</h3>
                   {feedback.strengths.map((s, i) => (
@@ -376,12 +376,12 @@ export default function InterviewPage() {
                 </TiltCard>
               </div>
 
-              <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-                <motion.button whileHover={{ scale: 1.05 }} onClick={reset} className="btn-primary" style={{ padding: "16px 40px", borderRadius: 16, fontWeight: 900 }}>
+              <div className="hero-buttons" style={{ justifyContent: "center" }}>
+                <motion.button whileHover={{ scale: 1.05 }} onClick={reset} className="btn-primary" style={{ padding: "16px 40px", borderRadius: 16, fontWeight: 900, width: "100%" }}>
                   Initialize New Run
                 </motion.button>
-                <a href="/dashboard/certificates" style={{ textDecoration: "none" }}>
-                  <button className="btn-ghost" style={{ padding: "16px 32px", borderRadius: 16, fontWeight: 700 }}>
+                <a href="/dashboard/certificates" style={{ textDecoration: "none", width: "100%" }}>
+                  <button className="btn-ghost" style={{ padding: "16px 32px", borderRadius: 16, fontWeight: 700, width: "100%" }}>
                     Access Archive
                   </button>
                 </a>

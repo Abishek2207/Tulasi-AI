@@ -64,22 +64,23 @@ export default function TopBar() {
           onClick={() => {
             window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }));
           }}
+          className="glass-card"
           style={{
             width: "100%",
             background: "rgba(255,255,255,0.03)",
             border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 9, padding: "8px 16px 8px 36px",
+            borderRadius: 12, padding: "8px 12px",
             color: "rgba(255,255,255,0.4)", fontSize: 13, outline: "none",
             fontFamily: "var(--font-inter)",
             cursor: "pointer", textAlign: "left",
             display: "flex", alignItems: "center", justifyContent: "space-between",
           }}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Search size={14} color="rgba(255,255,255,0.3)" />
-            Search features, topics...
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Search size={16} color="var(--brand-primary)" />
+            <span className="desktop-only">Search features, topics...</span>
           </span>
-          <span style={{
+          <span className="desktop-only" style={{
             fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "var(--font-mono)",
             background: "rgba(255,255,255,0.04)", padding: "4px 6px", borderRadius: 5,
             border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 2
@@ -87,22 +88,22 @@ export default function TopBar() {
         </button>
       </div>
 
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
         <UpgradeModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
 
         {/* XP Badge */}
         {user && (
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
-            padding: "5px 10px", borderRadius: 8,
+            padding: "5px 10px", borderRadius: 10,
             background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.15)",
           }}>
             <Zap size={14} color="#8B5CF6" />
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#8B5CF6", fontFamily: "var(--font-mono)" }}>
-              {xp} XP
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#8B5CF6", fontFamily: "var(--font-mono)" }}>
+              {xp}<span className="desktop-only" style={{ marginLeft: 2 }}>XP</span>
             </span>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>|</span>
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>
+            <span className="desktop-only" style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>|</span>
+            <span className="desktop-only" style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>
               Lv {level}
             </span>
           </div>

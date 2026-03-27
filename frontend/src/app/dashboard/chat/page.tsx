@@ -217,7 +217,7 @@ export default function ChatPage() {
   if (!mounted) return null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)", maxWidth: 900, margin: "0 auto", width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)", maxWidth: 900, margin: "0 auto", width: "100%", padding: "0 12px" }}>
       
       {/* Header */}
       <motion.div
@@ -225,33 +225,30 @@ export default function ChatPage() {
         animate={{ opacity: 1, y: 0 }}
         style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 0 20px",
+          padding: "0 0 16px",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: 44, height: 44, borderRadius: 14,
+            width: 40, height: 40, borderRadius: 12,
             background: "var(--gradient-primary)",
             display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: "0 0 20px rgba(124,58,237,0.35)",
+            flexShrink: 0
           }}>
-            <Bot size={22} color="white" />
+            <Bot size={20} color="white" />
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>
+              <h1 style={{ fontSize: "clamp(16px, 4vw, 20px)", fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>
                 Tulasi AI Chat
               </h1>
-              <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(16,185,129,0.3)" }}>
+              <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(16,185,129,0.3)" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
                 <span style={{ fontSize: 10, fontWeight: 700, color: "#10B981", textTransform: "uppercase", letterSpacing: 0.5 }}>Online</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(6,182,212,0.15)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(6,182,212,0.3)" }}>
-                <Globe size={10} color="#06B6D4" />
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#06B6D4", textTransform: "uppercase", letterSpacing: 0.5 }}>Live Web Search</span>
-              </div>
             </div>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "6px 0 0 0" }}>
+            <p className="desktop-only" style={{ fontSize: 13, color: "var(--text-muted)", margin: "4px 0 0 0" }}>
               Powered by Gemini — Architecting your intelligence
             </p>
           </div>
@@ -278,14 +275,13 @@ export default function ChatPage() {
       {/* Chat window */}
       <div style={{
         flex: 1, overflowY: "auto", display: "flex", flexDirection: "column",
-        gap: 20, padding: "24px",
+        gap: 16, padding: "16px",
         background: "rgba(255,255,255,0.015)",
         borderRadius: 20,
         border: "1px solid rgba(255,255,255,0.06)",
         boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
-        marginBottom: 16,
-        scrollbarWidth: "thin",
-        scrollbarColor: "rgba(255,255,255,0.08) transparent",
+        marginBottom: 12,
+        scrollbarWidth: "none",
       }}>
         <AnimatePresence>
           {messages.map((msg, i) => (
@@ -303,12 +299,12 @@ export default function ChatPage() {
             }}
           >
             <div style={{
-              width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+              width: 32, height: 32, borderRadius: 10, flexShrink: 0,
               background: "var(--gradient-primary)",
               display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 0 16px rgba(124,58,237,0.3)",
             }}>
-              <Bot size={18} color="white" />
+              <Bot size={16} color="white" />
             </div>
             <div style={{
               background: "rgba(255,255,255,0.05)",
@@ -328,7 +324,7 @@ export default function ChatPage() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}
+          style={{ display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none" }}
         >
           {QUICK_PROMPTS.map((p) => (
             <button
@@ -336,7 +332,8 @@ export default function ChatPage() {
               onClick={() => handleQuickPrompt(p.value)}
               disabled={!hasToken}
               style={{
-                padding: "7px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+                flexShrink: 0,
+                padding: "6px 12px", borderRadius: 18, fontSize: 11, fontWeight: 600,
                 cursor: hasToken ? "pointer" : "not-allowed",
                 background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
                 color: "var(--text-secondary)", transition: "all 0.2s", opacity: hasToken ? 1 : 0.4,
@@ -358,16 +355,17 @@ export default function ChatPage() {
         style={{
           background: "rgba(255,255,255,0.035)",
           border: `1px solid ${!hasToken ? "rgba(255,100,100,0.2)" : "rgba(255,255,255,0.08)"}`,
-          borderRadius: 18, padding: "12px 16px",
-          display: "flex", gap: 12, alignItems: "flex-end",
+          borderRadius: 18, padding: "8px 12px",
+          display: "flex", gap: 10, alignItems: "flex-end",
           backdropFilter: "blur(12px)",
+          position: "relative"
         }}
       >
         {!hasToken && (
           <div style={{
             position: "absolute", bottom: "100%", left: 0, right: 0,
-            textAlign: "center", color: "#F43F5E", fontSize: 12,
-            padding: "6px", marginBottom: 4,
+            textAlign: "center", color: "#F43F5E", fontSize: 11,
+            padding: "4px", marginBottom: 2,
           }}>
             Please sign in to start chatting
           </div>
@@ -378,7 +376,7 @@ export default function ChatPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={hasToken ? "Ask me anything... (Enter to send, Shift+Enter for new line)" : "Please log in to chat..."}
+          placeholder={hasToken ? "Ask me anything..." : "Please log in..."}
           disabled={!hasToken || loading}
           rows={1}
           style={{
@@ -387,13 +385,13 @@ export default function ChatPage() {
             border: "none",
             outline: "none",
             color: "var(--text-primary)",
-            fontSize: 14.5,
+            fontSize: 14,
             fontFamily: "var(--font-inter)",
             resize: "none",
-            lineHeight: 1.6,
-            padding: "4px 0",
+            lineHeight: 1.5,
+            padding: "8px 0",
             opacity: !hasToken ? 0.5 : 1,
-            minHeight: 28,
+            minHeight: 36,
             maxHeight: 160,
           }}
         />
@@ -405,29 +403,26 @@ export default function ChatPage() {
               setInput((prev) => (prev ? prev + " " + text : text));
               setTimeout(() => inputRef.current?.focus(), 50);
             }}
-            size="sm"
           />
         )}
 
         <motion.button
-          whileHover={{ scale: 1.08, boxShadow: "0 0 24px rgba(124,58,237,0.45)" }}
-          whileTap={{ scale: 0.94 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={handleSend}
           disabled={!hasToken || loading || !input.trim()}
           style={{
-            width: 42, height: 42, borderRadius: 13, flexShrink: 0,
+            width: 38, height: 38, borderRadius: 12, flexShrink: 0,
             background: input.trim() && hasToken && !loading
               ? "var(--gradient-primary)"
               : "rgba(255,255,255,0.06)",
             border: "none",
             display: "flex", alignItems: "center", justifyContent: "center",
             cursor: input.trim() && hasToken && !loading ? "pointer" : "not-allowed",
-            transition: "all 0.2s var(--ease-premium)",
-            boxShadow: input.trim() && hasToken && !loading
-              ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
+            transition: "all 0.2s",
           }}
         >
-          <Send size={17} color={input.trim() && hasToken && !loading ? "white" : "rgba(255,255,255,0.25)"} />
+          <Send size={16} color={input.trim() && hasToken && !loading ? "white" : "rgba(255,255,255,0.25)"} />
         </motion.button>
       </motion.div>
 

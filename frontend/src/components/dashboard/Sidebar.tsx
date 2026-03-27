@@ -6,6 +6,8 @@ import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Logo as TulasiLogo } from "@/components/Logo";
 import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { toggleSidebar } from "@/store/slices/uiSlice";
 
 import { 
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
@@ -67,6 +69,7 @@ const NAV_SECTIONS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const dispatch = useDispatch();
   const { data: session } = useSession();
   const sessionUser = session?.user;
   const [isPro, setIsPro] = useState(false);
@@ -91,10 +94,16 @@ export default function Sidebar() {
   const chatLimit = 100 + Math.floor(xp / 100);
   const usagePercent = Math.min((chatsUsed / chatLimit) * 100, 100);
 
+  const handleLinkClick = () => {
+    if (window.innerWidth < 1024) {
+      dispatch(toggleSidebar());
+    }
+  };
+
 
   return (
     <div style={{
-      width: 260, height: "100vh",
+      width: 280, height: "100vh",
       background: "linear-gradient(180deg, #09090f 0%, #0b0d14 100%)",
       borderRight: "1px solid rgba(255,255,255,0.04)",
       display: "flex", flexDirection: "column",
@@ -120,17 +129,6 @@ export default function Sidebar() {
             }}>
               Tulasi<span style={{ color: "#06B6D4" }}>AI</span>
             </div>
-            <div style={{
-              fontSize: 9, fontWeight: 700, letterSpacing: "1.5px",
-              textTransform: "uppercase",
-              background: isPro ? "linear-gradient(90deg, #8B5CF6, #D946EF)" : "rgba(255,255,255,0.1)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              marginTop: 2,
-            }}>
-              {isPro ? "Pro Plan" : "Free Plan"}
-            </div>
           </div>
         </motion.div>
       </div>
@@ -151,6 +149,7 @@ export default function Sidebar() {
               return (
                 <motion.div key={item.href} whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
                   <Link href={item.href}
+                    onClick={handleLinkClick}
                     style={{
                       display: "flex", alignItems: "center", gap: 10,
                       padding: "8px 10px", borderRadius: 9, marginBottom: 1,

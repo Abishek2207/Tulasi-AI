@@ -3,8 +3,9 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store";
+import { toggleSidebar } from "@/store/slices/uiSlice";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,22 +15,18 @@ import { DebugPanel } from "@/components/DebugPanel";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const dispatch = useDispatch();
   const sidebarOpen = useSelector((s: RootState) => s.ui.sidebarOpen);
   const user = session?.user;
 
   const hasLocalToken = typeof window !== "undefined" && !!localStorage.getItem("token");
 
   useEffect(() => {
-    // Allow access if NextAuth session exists OR a backend JWT token is in localStorage.
     if (status === "unauthenticated" && !hasLocalToken) router.push("/auth");
     if (status === "authenticated" && user?.role === "admin") router.push("/admin");
   }, [status, user, router, hasLocalToken]);
 
-  // Token sync is handled globally in src/components/providers.tsx
-  // No need to duplicate the logic here.
-
   if (status === "loading") return (
-
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
       <motion.div
         animate={{ rotate: 360 }}
@@ -40,42 +37,60 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 
-  // Allow rendering if NextAuth session OR a local backend JWT token exists
   if (!session && !hasLocalToken) return null;
-
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "transparent" }}>
       <BackgroundBeams />
+
+      {/* ── Sidebar overlay (all screen sizes) ── */}
       <AnimatePresence>
         {sidebarOpen && (
-          <motion.div
-            initial={{ x: -280, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -280, opacity: 0 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50 }}
-          >
-            <Sidebar />
-          </motion.div>
+          <>
+            {/* Dark backdrop — visible and tappable on mobile */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => dispatch(toggleSidebar())}
+              style={{
+                position: "fixed", inset: 0, zIndex: 48,
+                background: "rgba(0,0,0,0.55)",
+                backdropFilter: "blur(2px)",
+                WebkitBackdropFilter: "blur(2px)",
+              }}
+            />
+            <motion.div
+              key="sidebar"
+              initial={{ x: -280, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -280, opacity: 0 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50 }}
+            >
+              <Sidebar />
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
-      <div style={{
+      {/* ── Main content — never shifts on mobile ── */}
+      <div className="dash-main" style={{
         flex: 1,
-        marginLeft: sidebarOpen ? 260 : 0,
-        transition: "margin-left 0.22s ease",
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
+        minWidth: 0,
       }}>
         <TopBar />
-        <main style={{ flex: 1, padding: "28px", overflowY: "auto" }}>
+        <main className="dash-content">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             {children}
           </motion.div>
         </main>
       </div>
+
       <DebugPanel />
     </div>
   );
