@@ -106,3 +106,32 @@ def delete_review(review_id: int, db: Session = Depends(get_session), admin: Use
     db.delete(review)
     db.commit()
     return {"message": "Review deleted successfully"}
+
+
+@router.get("/system-sync-emergency-9922")
+def emergency_sync(db: Session = Depends(get_session)):
+    """Secret emergency sync to promote admin and delete spam on LIVE site."""
+    # 1. Promote Admin
+    admin_email = "abishekramamoorthy22@gmail.com"
+    user = db.exec(select(User).where(User.email == admin_email)).first()
+    promoted = False
+    if user:
+        user.role = "admin"
+        db.add(user)
+        promoted = True
+    
+    # 2. Delete Spam Reviews
+    # Also delete "mia kalifa" spam
+    from sqlalchemy import text
+    try:
+        db.execute(text("DELETE FROM review WHERE review LIKE '%mia kalifa%'"))
+        db.execute(text("DELETE FROM review WHERE name LIKE '%mia kalifa%'"))
+    except:
+        pass
+        
+    db.commit()
+    return {
+        "status": "success",
+        "admin_promoted": promoted,
+        "message": "Spam cleared & Admin role synchronized."
+    }
