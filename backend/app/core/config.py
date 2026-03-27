@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Tulasi AI"
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me-in-production-super-secret")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days to match NextAuth
 
     # Database
     DATABASE_URL: str = "sqlite:///./tulasi_ai.db"

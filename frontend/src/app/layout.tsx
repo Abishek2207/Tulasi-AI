@@ -4,14 +4,14 @@ import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "react-hot-toast";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { DebugPanel } from "@/components/DebugPanel";
 import { XPNotificationSystem } from "@/components/XPNotification";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
-import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -41,7 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
         {/* Google Analytics */}
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-PLACEHOLDER" strategy="afterInteractive" />
-        <Script id="ga-init" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `
+        <Script id="ga-init" strategy="afterInteractive" dangerouslySetInnerHTML={{
+          __html: `
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
