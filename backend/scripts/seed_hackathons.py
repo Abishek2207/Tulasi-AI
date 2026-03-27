@@ -196,6 +196,141 @@ HACKATHONS = [
         "tags": "Startups, Global, Mixed",
         "image_url": "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=60",
         "status": "Upcoming", "participants_count": 15000
+    },
+    {
+        "name": "Generative AI Hackathon by Anthropic & AWS",
+        "organizer": "AWS",
+        "description": "Build next-generation highly-capable assistant features using AWS Bedrock and Claude 3.",
+        "prize": "$150,000 AWS Credits", "deadline": "2026-08-20", "link": "https://aws.amazon.com/events/hackathons/",
+        "tags": "GenAI, Cloud, AWS, Claude",
+        "image_url": "https://images.unsplash.com/photo-1620825937374-87fc7d6aaf8c?w=800&q=60",
+        "status": "Upcoming", "participants_count": 8500
+    },
+    {
+        "name": "Devpost Web3 Foundation Build",
+        "organizer": "Web3 Foundation",
+        "description": "Create novel decentralized protocols on Polkadot.",
+        "prize": "$80,000", "deadline": "2026-11-12", "link": "https://devpost.com/hackathons",
+        "tags": "Web3, Rust, Blockchain",
+        "image_url": "https://images.unsplash.com/photo-1639762681057-408e52192e55?w=800&q=60",
+        "status": "Upcoming", "participants_count": 3000
+    },
+    {
+        "name": "Solana Global Crossroads",
+        "organizer": "Solana Labs",
+        "description": "The largest parallel hackathon combining De-Fi, gaming, and infrastructure.",
+        "prize": "$1,000,000", "deadline": "2026-10-31", "link": "https://solana.com/hackathon",
+        "tags": "Solana, Crypto, Gaming",
+        "image_url": "https://images.unsplash.com/photo-1641580529558-a9601ebb5225?w=800&q=60",
+        "status": "Upcoming", "participants_count": 22000
+    },
+    {
+        "name": "Palo Alto Networks CyberSec Hack",
+        "organizer": "Palo Alto Networks",
+        "description": "Solve modern enterprise security challenges using Zero Trust architectures.",
+        "prize": "$40,000", "deadline": "2026-07-28", "link": "https://paloaltonetworks.com/",
+        "tags": "Cybersecurity, Zero Trust",
+        "image_url": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=60",
+        "status": "Upcoming", "participants_count": 4500
+    },
+    {
+        "name": "HuggingFace Open Source AI Challenge",
+        "organizer": "HuggingFace",
+        "description": "Push the limits of open source models on HuggingFace Hub.",
+        "prize": "GPU Grants", "deadline": "2026-09-05", "link": "https://huggingface.co/competitions",
+        "tags": "Open Source, AI, NLP",
+        "image_url": "https://images.unsplash.com/photo-1525373698358-041e3a460346?w=800&q=60",
+        "status": "Upcoming", "participants_count": 12000
+    },
+    {
+        "name": "NVIDIA Jetson Edge AI Hackathon",
+        "organizer": "NVIDIA",
+        "description": "Deploy deep learning applications locally using the NVIDIA Jetson platform.",
+        "prize": "$25,000 + Jetson Orin Nanos", "deadline": "2026-06-15", "link": "https://developer.nvidia.com/",
+        "tags": "Edge AI, Hardware, IoT",
+        "image_url": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=60",
+        "status": "Open", "participants_count": 2500
+    },
+    {
+        "name": "Y Combinator Build Sprint",
+        "organizer": "Y Combinator",
+        "description": "Build an MVP in 30 days and fast-track your YC application.",
+        "prize": "YC Interview Guaranteed", "deadline": "2026-05-30", "link": "https://ycombinator.com",
+        "tags": "Startup, MVP, Pitch",
+        "image_url": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=60",
+        "status": "Open", "participants_count": 8000
+    },
+    {
+        "name": "ClimateHack Global",
+        "organizer": "Carbon180",
+        "description": "Develop softwares and hardware optimizations to limit carbon emissions.",
+        "prize": "$75,000", "deadline": "2026-08-22", "link": "https://climatehack.io",
+        "tags": "ClimateTech, Sustainability",
+        "image_url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=60",
+        "status": "Upcoming", "participants_count": 6000
+    },
+    {
+        "name": "SpaceX Orbital Logistics Challenge",
+        "organizer": "SpaceX",
+        "description": "Solve optimization problems in orbital fuel scheduling.",
+        "prize": "$50,000", "deadline": "2026-12-10", "link": "https://spacex.com/careers",
+        "tags": "Aerospace, Algorithms, Math",
+        "image_url": "https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=800&q=60",
+        "status": "Upcoming", "participants_count": 2000
+    },
+    {
+        "name": "React Native Global Hackathon",
+        "organizer": "Expo & Meta",
+        "description": "Build stunning cross-platform applications in just 48 hours.",
+        "prize": "$20,000", "deadline": "2026-11-20", "link": "https://expo.dev/hackathon",
+        "tags": "Mobile, React Native, Expo",
+        "image_url": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&q=60",
+        "status": "Upcoming", "participants_count": 10500
+    },
+    {
+        "name": "Healthcare API Challenge (FHIR)",
+        "organizer": "Epic Systems",
+        "description": "Design an app that leverages FHIR APIs to radically improve patient lifecycles.",
+        "prize": "$35,000", "deadline": "2026-10-18", "link": "https://epic.com/dev",
+        "tags": "HealthTech, API, FHIR",
+        "image_url": "https://images.unsplash.com/photo-1538108149393-cebb47acddb2?w=800&q=60",
+        "status": "Upcoming", "participants_count": 3200
+    },
+    {
+        "name": "Unity GameDev Jam",
+        "organizer": "Unity Technologies",
+        "description": "Create a fully playable 3D prototype using Unity 6 over a weekend.",
+        "prize": "$15,000 & Gear", "deadline": "2026-07-05", "link": "https://unity.com/madewithunity",
+        "tags": "Gaming, 3D, Unity",
+        "image_url": "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&q=60",
+        "status": "Open", "participants_count": 18000
+    },
+    {
+        "name": "TikTok Creative Tech Jam",
+        "organizer": "Bytedance",
+        "description": "Design engaging filters and mini-apps within the TikTok creator studio.",
+        "prize": "$60,000", "deadline": "2026-09-12", "link": "https://tiktok.com/creators",
+        "tags": "Social, AR, Creators",
+        "image_url": "https://images.unsplash.com/photo-1611605698335-8b1569810432?w=800&q=60",
+        "status": "Upcoming", "participants_count": 25000
+    },
+    {
+        "name": "Docker Container Dash",
+        "organizer": "Docker Inc.",
+        "description": "Optimize container deployments and build the slimmest secure images.",
+        "prize": "$10,000", "deadline": "2026-08-05", "link": "https://docker.com/community",
+        "tags": "DevOps, Docker, Security",
+        "image_url": "https://images.unsplash.com/photo-1605745341112-85968b19335b?w=800&q=60",
+        "status": "Upcoming", "participants_count": 5500
+    },
+    {
+        "name": "Polygon zkEVM BUIDL",
+        "organizer": "Polygon",
+        "description": "Deploy ZK scaling solutions and dApps on Polygon's zero-knowledge network.",
+        "prize": "$120,000", "deadline": "2026-10-22", "link": "https://polygon.technology",
+        "tags": "Zero Knowledge, Web3",
+        "image_url": "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=800&q=60",
+        "status": "Upcoming", "participants_count": 4800
     }
 ]
 
