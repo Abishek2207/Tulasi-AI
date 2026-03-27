@@ -379,14 +379,24 @@ def get_stats(
     }
 
 
+import time
+
+_LEADERBOARD_CACHE = None
+_LEADERBOARD_CACHE_TIME = 0
+
 @router.get("/leaderboard")
 def get_leaderboard(db: Session = Depends(get_session)):
-    """Returns the top 10 players globally sorted by XP."""
+    """Returns the top 10 players globally sorted by XP. (Cached 60s)"""
+    global _LEADERBOARD_CACHE, _LEADERBOARD_CACHE_TIME
+    
+    if _LEADERBOARD_CACHE and (time.time() - _LEADERBOARD_CACHE_TIME) < 60:
+        return _LEADERBOARD_CACHE
+
     top_users = db.exec(
         select(User).order_by(User.xp.desc()).limit(10)
     ).all()
     
-    return {
+    _LEADERBOARD_CACHE = {
         "leaderboard": [
             {
                 "id": u.id,
@@ -397,3 +407,6 @@ def get_leaderboard(db: Session = Depends(get_session)):
             } for u in top_users
         ]
     }
+    _LEADERBOARD_CACHE_TIME = time.time()
+    
+    return _LEADERBOARD_CACHE
