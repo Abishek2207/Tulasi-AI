@@ -56,10 +56,18 @@ def get_reviews(session: Session = Depends(get_session)):
     return reviews
 
 
+from app.api.auth import get_current_user
+from app.models.models import User
+
 @router.post("", response_model=ReviewOut, status_code=201)
-def submit_review(data: ReviewCreate, session: Session = Depends(get_session)):
-    """Submit a new review."""
+def submit_review(
+    data: ReviewCreate, 
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Submit a new review, associated with the current user."""
     review = Review(
+        user_id=current_user.id,
         name=data.name,
         role=data.role,
         review=data.review,
