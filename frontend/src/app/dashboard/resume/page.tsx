@@ -110,16 +110,60 @@ export default function ResumeBuilderPage() {
     return sections;
   };
 
+  const renderResumeMarkdown = (text: string) => {
+    return text.split("\n").map((line, i) => {
+      const isHeader1 = line.startsWith("# ");
+      const isHeader2 = line.startsWith("## ");
+      const isHeader3 = line.startsWith("### ");
+      const isBullet = line.startsWith("- ") || line.startsWith("* ");
+      
+      let cleanLine = line.replace(/#/g, "").replace(/^- /g, "").replace(/^\* /g, "").trim();
+      
+      // Basic inline bold parsing **text**
+      const boldParsed = cleanLine.split(/(\*\*.*?\*\*)/g).map((part, idx) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return <strong key={idx}>{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      });
+
+      if (!cleanLine) return <div key={i} style={{ height: 8 }} />;
+
+      if (isHeader1) return <h1 key={i} style={{ fontSize: 24, fontWeight: 900, borderBottom: "2px solid #222", paddingBottom: 6, marginTop: 24, marginBottom: 12, color: "black", fontFamily: "Arial, sans-serif" }}>{boldParsed}</h1>;
+      if (isHeader2) return <h2 key={i} style={{ fontSize: 18, fontWeight: 700, marginTop: 16, marginBottom: 8, color: "#333", fontFamily: "Arial, sans-serif" }}>{boldParsed}</h2>;
+      if (isHeader3) return <h3 key={i} style={{ fontSize: 15, fontWeight: 600, fontStyle: "italic", marginTop: 12, color: "#444" }}>{boldParsed}</h3>;
+      if (isBullet) return <li key={i} style={{ marginLeft: 24, marginBottom: 6, fontSize: 13, color: "black", lineHeight: 1.6, fontFamily: "Georgia, serif" }}>{boldParsed}</li>;
+      
+      return <div key={i} style={{ margin: "6px 0", fontSize: 13, color: "black", lineHeight: 1.6, fontFamily: "Georgia, serif" }}>{boldParsed}</div>;
+    });
+  };
+
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto", paddingBottom: 60 }}>
       {/* Print Styles */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          body * { visibility: hidden !important; }
-          #pdf-preview, #pdf-preview * { visibility: visible !important; }
-          #pdf-preview { position: fixed; inset: 0; background: white !important; font-family: 'serif'; }
+          body * { visibility: hidden !important; display: none !important; }
+          #pdf-preview-container, #pdf-preview-container * { visibility: visible !important; display: block !important; }
+          #pdf-preview-container { 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            width: 100% !important; 
+            background: white !important; 
+            margin: 0 !important;
+            padding: 20px !important;
+          }
+          @page { margin: 1cm; }
         }
       `}} />
+      
+      {/* Hidden Pristine PDF Document */}
+      {result && (
+        <div id="pdf-preview-container" style={{ display: "none", color: "black", background: "white", width: "100%", maxWidth: "21cm" }}>
+          {renderResumeMarkdown(result.improved_resume)}
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ marginBottom: 40, display: "flex", justifyContent: "space-between", alignItems: "flex-end", position: "relative" }}>
