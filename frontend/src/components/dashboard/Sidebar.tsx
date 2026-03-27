@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
-  FileText, Award, BarChart3, FileQuestion, MessageCircle, 
+  FileText, Award, BarChart3, MessageCircle, 
   Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap
 } from "lucide-react";
 
@@ -44,7 +44,6 @@ const NAV_SECTIONS = [
       { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
       { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
       { icon: BarChart3,       name: "Analytics",       href: "/dashboard/analytics" },
-      { icon: FileQuestion,    name: "PDF Q&A",         href: "/pdf" },
     ]
   },
   {

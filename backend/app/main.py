@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 import time
 
-from app.api import auth, chat, pdf, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users
 from app.core.database import init_db
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
@@ -179,7 +179,6 @@ async def log_requests(request: Request, call_next):
 # ── Routers ────────────────────────────────────────────────────────
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
-app.include_router(pdf.router,          prefix="/api/pdf",          tags=["PDF Q&A"])
 app.include_router(interview.router,    prefix="/api/interview",    tags=["Mock Interview"])
 app.include_router(roadmap.router,      prefix="/api/roadmap",      tags=["Roadmaps"])
 app.include_router(hackathons.router,   prefix="/api/hackathons",   tags=["Hackathons"])
