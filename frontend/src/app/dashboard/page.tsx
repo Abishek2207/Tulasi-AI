@@ -177,8 +177,8 @@ export default function DashboardPage() {
     <motion.div initial="hidden" animate="show" variants={container} style={{ maxWidth: 1400, margin: "0 auto", paddingBottom: 60 }}>
 
       {/* Dynamic Welcome Banner */}
-      <motion.div variants={item} className="glass-card" style={{
-        padding: "60px 48px", borderRadius: 32, marginBottom: 40, border: "1px solid rgba(255,255,255,0.06)",
+      <motion.div variants={item} className="glass-card banner-card" style={{
+        marginBottom: 40, border: "1px solid rgba(255,255,255,0.06)",
         position: "relative", overflow: "hidden",
         background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.08) 100%)"
       }}>
@@ -198,8 +198,8 @@ export default function DashboardPage() {
             and track your XP velocity below.
           </p>
 
-          <div style={{ display: "flex", gap: 16 }}>
-            <Link href="/dashboard/chat">
+          <div className="hero-buttons">
+            <Link href="/dashboard/chat" style={{ flex: 1 }}>
               <button
                 onClick={() => {
                   try {
@@ -213,12 +213,12 @@ export default function DashboardPage() {
                   } catch (e) { }
                   confetti({ particleCount: 50, spread: 40, colors: ['#8B5CF6', '#ffffff'] });
                 }}
-                className="btn-primary" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+                className="btn-primary" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700, width: "100%" }}>
                 Initiate New Chat <Sparkles size={16} />
               </button>
             </Link>
-            <Link href="/dashboard/analytics">
-              <button className="btn-ghost" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+            <Link href="/dashboard/analytics" style={{ flex: 1 }}>
+              <button className="btn-ghost" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700, width: "100%" }}>
                 Audit Stats <TrendingUp size={16} />
               </button>
             </Link>
