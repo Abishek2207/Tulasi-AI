@@ -121,11 +121,14 @@ def emergency_sync(db: Session = Depends(get_session)):
         promoted = True
     
     # 2. Delete Spam Reviews
-    # Also delete "mia kalifa" spam
+    # Also delete "mia kalifa" spam variations
     from sqlalchemy import text
     try:
         db.execute(text("DELETE FROM review WHERE review LIKE '%mia kalifa%'"))
         db.execute(text("DELETE FROM review WHERE name LIKE '%mia kalifa%'"))
+        db.execute(text("DELETE FROM review WHERE review LIKE '%mia khalifa%'"))
+        db.execute(text("DELETE FROM review WHERE name LIKE '%mia khalifa%'"))
+        db.execute(text("DELETE FROM review WHERE role LIKE '%corn actor%'"))
     except:
         pass
         
