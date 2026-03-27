@@ -41,11 +41,15 @@ async def upload_pdf(file: UploadFile = File(...), current_user: User = Depends(
 
         full_text = "\n\n".join(pages_text)
 
-        # Store in RAG vector store for indexed retrieval
-        from app.services.ai_agents.vector_store.faiss_store import vector_store_manager
-        from app.services.ai_agents.agents.rag_agent import rag_agent
-        vector_store_manager.process_document(full_text, metadata={"session_id": session_id, "user_id": current_user.id, "filename": file.filename})
-        rag_agent.reset_retriever()  # Refresh retriever so new docs are available immediately
+        # Store in RAG vector store using cloud-native centralized SQLite memory
+        from app.services.vector_service import vector_service
+        from app.core.database import engine
+        from sqlmodel import Session
+        
+        with Session(engine) as db:
+            # Safe token limit chunking 
+            chunks = [full_text[i:i+800] for i in range(0, len(full_text), 750)]
+            vector_service.store_batch_embeddings(current_user.id, chunks, db)
 
         pdf_sessions[session_id] = {
             "filename": file.filename,
@@ -73,8 +77,8 @@ def ask_pdf(req: PDFQuestionRequest, current_user: User = Depends(get_current_us
 
     try:
         from app.services.ai_agents.agents.rag_agent import rag_agent
-        # RAG agent will automatically use the vector store we populated during upload
-        answer = rag_agent.get_answer(req.question)
+        # RAG agent dynamically searches SQLite
+        answer = rag_agent.get_answer(req.question, current_user.id)
         return {"answer": answer, "source": session["filename"]}
     except Exception as e:
         return {"answer": f"Error: {str(e)}", "source": session["filename"]}

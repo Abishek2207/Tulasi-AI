@@ -54,6 +54,32 @@ class VectorService:
         db.add(chunk)
         db.commit()
 
+    def store_batch_embeddings(self, user_id: int, texts: list[str], db: Session):
+        """Batch generates embeddings to completely bypass 429 Rate Limits on free cloud APIs."""
+        if not texts: return
+        import os
+        api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        if api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                result = genai.embed_content(
+                    model="models/embedding-001",
+                    content=texts,
+                    task_type="retrieval_document"
+                )
+                embeddings = result['embedding']
+            except Exception as e:
+                print(f"Batch embed failed: {e}")
+                return
+        else:
+            embeddings = [self._get_model().encode(t).tolist() for t in texts]
+
+        for i, text in enumerate(texts):
+            chunk = UserMemoryChunk(user_id=user_id, content=text, embedding_json=json.dumps(embeddings[i]))
+            db.add(chunk)
+        db.commit()
+
     def retrieve_context(self, user_id: int, query: str, db: Session, top_k: int = 3) -> str:
         """Retrieves top_k relevant memory chunks for the user."""
         if not faiss:
