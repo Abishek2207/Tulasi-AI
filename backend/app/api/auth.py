@@ -142,6 +142,14 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_session
         db.add(user)
         db.commit()
         db.refresh(user)
+
+    # ── Auto-elevate to admin if email matches ─────────────────────────
+    if user.email == settings.ADMIN_EMAIL and user.role != "admin":
+        user.role = "admin"
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    # ─────────────────────────────────────────────────────────────────
     # ─────────────────────────────────────────────────────────────────
 
     token = create_access_token({"sub": user.email})
@@ -270,6 +278,14 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
         db.add(user)
         db.commit()
         db.refresh(user)
+
+    # ── Auto-elevate to admin if email matches ─────────────────────────
+    if user.email == settings.ADMIN_EMAIL and user.role != "admin":
+        user.role = "admin"
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    # ─────────────────────────────────────────────────────────────────
     # ─────────────────────────────────────────────────────────────────
 
     token = create_access_token({"sub": user.email})
