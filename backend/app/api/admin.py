@@ -6,7 +6,7 @@ from typing import List
 
 from app.core.database import get_session
 from app.api.auth import get_admin_user, get_current_user
-from app.models.models import User
+from app.models.models import User, Review
 
 router = APIRouter()
 
@@ -69,3 +69,40 @@ def toggle_user(req: ToggleUserRequest, db: Session = Depends(get_session), admi
     db.add(user)
     db.commit()
     return {"message": f"User {'enabled' if req.is_active else 'disabled'} successfully"}
+
+
+@router.get("/reviews")
+def get_admin_reviews(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Fetch all reviews with user details for admin moderation."""
+    # Perform a join to get user email
+    results = db.exec(
+        select(Review, User.email)
+        .join(User, Review.user_id == User.id, isouter=True)
+        .order_by(Review.created_at.desc())
+    ).all()
+    
+    return {
+        "reviews": [
+            {
+                "id": r[0].id,
+                "name": r[0].name,
+                "role": r[0].role,
+                "review": r[0].review,
+                "rating": r[0].rating,
+                "created_at": r[0].created_at.isoformat(),
+                "user_email": r[1] or "Anonymous"
+            }
+            for r in results
+        ]
+    }
+
+
+@router.delete("/reviews/{review_id}")
+def delete_review(review_id: int, db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Delete a review (Admin Only)."""
+    review = db.get(Review, review_id)
+    if not review:
+        return {"error": "Review not found"}
+    db.delete(review)
+    db.commit()
+    return {"message": "Review deleted successfully"}

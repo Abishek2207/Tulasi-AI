@@ -253,6 +253,7 @@ class SavedResume(SQLModel, table=True):
 
 class Review(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", index=True)
     name: str = Field(index=True)
     role: Optional[str] = None
     review: str
