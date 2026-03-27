@@ -195,7 +195,7 @@ export default function Sidebar() {
           </div>
         ))}
 
-        {user?.role === "admin" && (
+        {(user?.role === "admin" || user?.email === "abishekramamoorthy22@gmail.com") && (
           <div>
             <div style={{ height: 1, background: "rgba(255,255,255,0.05)", margin: "8px 0 12px" }} />
             <Link href="/admin" style={{
