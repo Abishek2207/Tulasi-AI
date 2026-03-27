@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import ReactMarkdown from "react-markdown";
 import { startupApi, StartupIdea as ApiStartupIdea } from "@/lib/api";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { 
@@ -37,6 +38,8 @@ export default function StartupLabPage() {
   const [saved, setSaved] = useState(false);
   const [savedIdeas, setSavedIdeas] = useState<DisplaySavedIdea[]>([]);
   const [showSaved, setShowSaved] = useState(false);
+  const [pitchDeck, setPitchDeck] = useState<string | null>(null);
+  const [generatingDeck, setGeneratingDeck] = useState(false);
 
   const domains = [
     "Artificial Intelligence", "EdTech", "FinTech", "HealthTech", 
@@ -80,6 +83,7 @@ export default function StartupLabPage() {
     setError("");
     setLoading(true);
     setIdea(null);
+    setPitchDeck(null);
 
     try {
       const data = await startupApi.generate(domain, audience, token);
@@ -89,6 +93,30 @@ export default function StartupLabPage() {
       setError(err.message || "Failed to reach the AI servers.");
     }
     setLoading(false);
+  };
+
+  const handleGenerateDeck = async () => {
+    if (!idea) return;
+    setGeneratingDeck(true);
+    setError("");
+    try {
+      const res = await startupApi.generatePitchDeck({
+        name: idea.name,
+        problem: idea.problem,
+        solution: idea.solution,
+        market_opportunity: idea.market_opportunity,
+        monetization: idea.monetization
+      }, token);
+      setPitchDeck(res.pitch_deck);
+      // Wait a bit to scroll
+      setTimeout(() => {
+        const el = document.getElementById("pitch-deck-container");
+        el?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } catch (err: any) {
+      setError("Failed to generate pitch deck. AI might be busy.");
+    }
+    setGeneratingDeck(false);
   };
 
   return (
@@ -244,6 +272,43 @@ export default function StartupLabPage() {
                       <div style={{ flex: 1, padding: "16px", borderRadius: 14, background: "rgba(16,185,129,0.1)", color: "#10B981", fontWeight: 900, fontSize: 14, textAlign: "center" }}>✅ ARCHIVED SUCCESSFULLY</div>
                     )}
                     <button onClick={() => window.print()} className="btn-ghost" style={{ padding: "16px 24px", borderRadius: 14, fontSize: 14, fontWeight: 900 }}>SHARE PITCH →</button>
+                  </div>
+
+                  {/* Pitch Deck Section */}
+                  <div id="pitch-deck-container" style={{ marginTop: 24, paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                     {!pitchDeck ? (
+                        <motion.button 
+                           whileHover={{ scale: 1.01 }} 
+                           whileTap={{ scale: 0.99 }}
+                           onClick={handleGenerateDeck}
+                           disabled={generatingDeck}
+                           style={{ 
+                              width: "100%", padding: "20px", borderRadius: 16, 
+                              background: "rgba(139,92,246,0.05)", border: "1px dashed rgba(139,92,246,0.4)", 
+                              color: "#A78BFA", fontWeight: 800, fontSize: 15, cursor: "pointer",
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 12
+                           }}
+                        >
+                           {generatingDeck ? (
+                              <>
+                                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: 16, height: 16, border: "2px solid rgba(167,139,250,0.2)", borderTopColor: "#A78BFA", borderRadius: "50%" }} />
+                                 DRAFTING 10-SLIDE INVESTOR DECK...
+                              </>
+                           ) : (
+                              <>📊 GENERATE PROFESSIONAL PITCH DECK</>
+                           )}
+                        </motion.button>
+                     ) : (
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: 40, background: "rgba(0,0,0,0.3)", borderRadius: 24, border: "1px solid rgba(139,92,246,0.2)" }}>
+                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+                              <h3 style={{ fontSize: 14, fontWeight: 900, color: "#A78BFA", letterSpacing: 2 }}>INVESTOR PITCH DECK v1.0</h3>
+                              <button onClick={() => setPitchDeck(null)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✕ CLOSE DECK</button>
+                           </div>
+                           <div className="prose prose-invert max-w-none" style={{ color: "rgba(255,255,255,0.85)", lineHeight: 1.8 }}>
+                              <ReactMarkdown>{pitchDeck}</ReactMarkdown>
+                           </div>
+                        </motion.div>
+                     )}
                   </div>
                 </div>
               </div>

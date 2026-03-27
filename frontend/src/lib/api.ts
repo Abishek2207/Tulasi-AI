@@ -293,6 +293,8 @@ export const startupApi = {
   save: (idea: Partial<StartupIdea>, token: string) =>
     request<{ message: string; id: number }>("/api/startup/save", { method: "POST", body: JSON.stringify(idea) }, token),
   ideas: (token: string) => request<{ ideas: StartupIdea[] }>("/api/startup/ideas", {}, token),
+  generatePitchDeck: (data: { name: string; problem: string; solution: string; market_opportunity: string; monetization: string }, token: string) =>
+    request<{ status: string; pitch_deck: string }>("/api/startup/pitch-deck", { method: "POST", body: JSON.stringify(data) }, token),
 };
 
 // ─── Certificates ────────────────────────────────────────────────────────────
