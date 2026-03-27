@@ -49,11 +49,34 @@ class ReviewOut(BaseModel):
 
 @router.get("", response_model=List[ReviewOut])
 def get_reviews(session: Session = Depends(get_session)):
-    """Fetch all reviews, sorted by newest first."""
-    reviews = session.exec(
-        select(Review).order_by(Review.created_at.desc())
-    ).all()
-    return reviews
+    """Fetch all reviews, sorted by newest first. Fault-tolerant fallback for old schemas."""
+    try:
+        reviews = session.exec(
+            select(Review).order_by(Review.created_at.desc())
+        ).all()
+        return reviews
+    except Exception:
+        # Fallback: use raw SQL in case ORM fails due to schema mismatch (e.g. missing user_id column)
+        from sqlalchemy import text
+        try:
+            result = session.execute(text(
+                "SELECT id, name, role, review, rating, created_at FROM review ORDER BY created_at DESC"
+            ))
+            rows = result.mappings().all()
+            from datetime import datetime
+            return [
+                ReviewOut(
+                    id=row["id"],
+                    name=row["name"],
+                    role=row.get("role"),
+                    review=row["review"],
+                    rating=row["rating"],
+                    created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(str(row["created_at"])) if row["created_at"] else datetime.utcnow(),
+                )
+                for row in rows
+            ]
+        except Exception as e2:
+            raise HTTPException(status_code=500, detail=f"DB error: {str(e2)}")
 
 
 from app.api.auth import get_current_user

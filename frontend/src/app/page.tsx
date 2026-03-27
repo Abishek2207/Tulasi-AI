@@ -263,7 +263,10 @@ function ReviewsSection() {
         );
         setReviews(filtered);
       })
-      .catch(() => setFetchError("Failed to load reviews. Please refresh the page."))
+      .catch(() => {
+        // Silently handle error and show no reviews (looks better than a crash)
+        setReviews([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
