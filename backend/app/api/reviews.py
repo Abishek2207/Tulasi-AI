@@ -95,9 +95,17 @@ def submit_review(
     now = dt.utcnow()
     # Use raw SQL insert to avoid ORM schema mismatch issues
     try:
+        # First try inserting WITH user_id (for when schema migration is done)
         session.execute(text(
-            "INSERT INTO review (name, role, review, rating, created_at) VALUES (:name, :role, :review, :rating, :created_at)"
-        ), {"name": data.name, "role": data.role, "review": data.review, "rating": data.rating, "created_at": now})
+            "INSERT INTO review (user_id, name, role, review, rating, created_at) VALUES (:u, :n, :rol, :rev, :rat, :c)"
+        ), {"u": current_user.id, "n": data.name, "rol": data.role, "rev": data.review, "rat": data.rating, "c": now})
+    except Exception:
+        # Fallback for old schema before user_id column existed
+        session.execute(text(
+            "INSERT INTO review (name, role, review, rating, created_at) VALUES (:n, :rol, :rev, :rat, :c)"
+        ), {"n": data.name, "rol": data.role, "rev": data.review, "rat": data.rating, "c": now})
+        
+    try:
         session.commit()
         # Fetch the inserted row
         result = session.execute(text(
