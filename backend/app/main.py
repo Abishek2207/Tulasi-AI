@@ -36,13 +36,24 @@ async def lifespan(app: FastAPI):
             from app.core.database import engine
             from sqlalchemy import text
             with engine.begin() as conn:
+                # Step 1: Force create Review table if SQLModel failed it
                 try:
-                    conn.execute(text('ALTER TABLE "user" ADD COLUMN pro_expiry_date VARCHAR;'))
-                    print("[Migration] Added 'pro_expiry_date' column successfully.")
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS review (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            user_id INTEGER,
+                            name VARCHAR NOT NULL,
+                            role VARCHAR,
+                            review TEXT NOT NULL,
+                            rating INTEGER NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """))
+                    print("[Migration] Ensuring 'review' table exists.")
                 except Exception as e:
-                    pass
-                
-                # Auto-migrate Review table
+                    print(f"[Migration Error] Table creation: {e}")
+
+                # Step 2: Add missing columns if table already existed but was old
                 try:
                     conn.execute(text('ALTER TABLE review ADD COLUMN user_id INTEGER;'))
                 except: pass
@@ -51,6 +62,11 @@ async def lifespan(app: FastAPI):
                 except: pass
                 try:
                     conn.execute(text('ALTER TABLE review ADD COLUMN created_at TIMESTAMP;'))
+                except: pass
+                
+                # Step 3: Handle User table migrations
+                try:
+                    conn.execute(text('ALTER TABLE "user" ADD COLUMN pro_expiry_date VARCHAR;'))
                 except: pass
             # ───────────────────────────────────────────────────
             
