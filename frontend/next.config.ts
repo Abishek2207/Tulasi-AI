@@ -18,9 +18,7 @@ const nextConfig = {
     ],
   },
   experimental: {
-    turbo: {
-      enabled: false,
-    },
+    optimizePackageImports: ["lucide-react", "framer-motion", "recharts"],
   },
 };
 
