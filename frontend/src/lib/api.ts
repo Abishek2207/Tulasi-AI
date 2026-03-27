@@ -194,28 +194,6 @@ export const chatApi = {
     request<{ message: string }>(`/api/chat/history/${session_id}`, { method: "DELETE" }),
 };
 
-// ─── PDF / RAG ───────────────────────────────────────────────────────────────
-
-export const pdfApi = {
-  upload: async (file: File, token: string) => {
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetchWithRetry(`${API_URL}/api/pdf/upload`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    });
-    if (!res.ok) throw new Error((await res.json()).detail || "Upload failed");
-    return res.json() as Promise<{ session_id: string; pages: number; filename: string }>;
-  },
-
-  ask: (question: string, session_id: string, token: string) =>
-    request<{ answer: string; source: string }>(
-      "/api/pdf/ask",
-      { method: "POST", body: JSON.stringify({ question, session_id }) },
-      token
-    ),
-};
 
 // ─── Roadmap ─────────────────────────────────────────────────────────────────
 

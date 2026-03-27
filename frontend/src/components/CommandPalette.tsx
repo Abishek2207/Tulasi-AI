@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare, BookOpen, Code, Target, Map, FileText,
+  MessageSquare, Code, Target, Map, FileText,
   Rocket, Users, Trophy, Youtube, BarChart3, Award,
   Zap, Home, Search, X, ArrowRight, Command
 } from "lucide-react";
@@ -39,7 +39,6 @@ export function CommandPalette() {
     { id: "flashcards", label: "Flashcard Studio", description: "3D study deck creator", icon: <Zap size={18} />, color: "#F43F5E", action: () => navigate("/dashboard/flashcards"), keywords: ["study", "cards", "memory", "review"] },
     { id: "roadmaps", label: "Career Roadmaps", description: "Week-by-week learning paths", icon: <Map size={18} />, color: "#8B5CF6", action: () => navigate("/dashboard/roadmaps"), keywords: ["path", "plan", "learn", "guide"] },
     { id: "code", label: "Coding Arena", description: "Practice Data Structures", icon: <Code size={18} />, color: "#10B981", action: () => navigate("/dashboard/code"), keywords: ["dsa", "algorithm", "leetcode", "problem"] },
-    { id: "pdf", label: "PDF Q&A", description: "Query your textbooks instantly", icon: <BookOpen size={18} />, color: "#F43F5E", action: () => navigate("/dashboard/pdf"), keywords: ["upload", "document", "summarize", "notes"] },
     { id: "resume", label: "Resume Builder", description: "ATS-optimised resume engine", icon: <FileText size={18} />, color: "#3B82F6", action: () => navigate("/dashboard/resume"), keywords: ["cv", "job", "ats", "linkedin"] },
     { id: "startup", label: "Startup Lab", description: "Generate pitch decks & ideas", icon: <Rocket size={18} />, color: "#F97316", action: () => navigate("/dashboard/startup-lab"), keywords: ["idea", "saas", "pitch", "business"] },
     { id: "study", label: "Study Rooms", description: "Focus sessions with Pomodoro", icon: <Users size={18} />, color: "#EC4899", action: () => navigate("/dashboard/study-rooms"), keywords: ["pomodoro", "focus", "group", "timer"] },

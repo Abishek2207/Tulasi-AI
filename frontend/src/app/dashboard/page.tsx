@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { activityApi } from "@/lib/api";
 import {
-  MessageSquare, BookOpen, Code, Target, Map, FileText,
+  MessageSquare, Code, Target, Map, FileText,
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award,
   Flame, Zap, Linkedin, Share2, MessageCircle, Terminal,
   CheckCircle2, Star, Sparkles, BrainCircuit, Lightbulb,
@@ -107,7 +107,6 @@ const MODULES = [
   { id: "projects", title: "Project Ideas", desc: "Generate portfolio-ready SaaS project architectures.", icon: <Lightbulb size={28} />, link: "/dashboard/projects", color: "#FFD93D", span: 1 },
   { id: "roadmaps", title: "Career Roadmaps", desc: "Personalized week-by-week learning paths.", icon: <Map size={28} />, link: "/dashboard/roadmaps", color: "#8B5CF6", span: 1 },
   { id: "code", title: "Coding Arena", desc: "Practice Data Structures with real-time feedback.", icon: <Code size={28} />, link: "/dashboard/code", color: "#10B981", span: 1 },
-  { id: "pdf", title: "PDF Q&A", desc: "Query your textbooks and papers instantly.", icon: <BookOpen size={28} />, link: "/dashboard/pdf", color: "#F43F5E", span: 1 },
   { id: "study", title: "Study Rooms", desc: "Join focus sessions with Pomodoro & live chat.", icon: <Users size={28} />, link: "/dashboard/study-rooms", color: "#EC4899", span: 1 },
   { id: "resume", title: "Resume Builder", desc: "Precision-engineered ATS bypass for engineers.", icon: <FileText size={28} />, link: "/dashboard/resume", color: "#3B82F6", span: 1 },
   { id: "startup", title: "Startup LAB", desc: "Ideate and generate full startup pitch decks.", icon: <Rocket size={28} />, link: "/dashboard/startup-lab", color: "#F97316", span: 1 },
