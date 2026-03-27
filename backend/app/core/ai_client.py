@@ -41,8 +41,10 @@ class HybridAIClient:
         contents.append({"role": "user", "parts": current_parts})
         return contents
 
-    def _format_for_openrouter(self, message: str, history: List[Dict]) -> List[Dict]:
+    def _format_for_openrouter(self, message: str, history: List[Dict], system_instruction: Optional[str] = None) -> List[Dict]:
         messages = []
+        if system_instruction:
+            messages.append({"role": "system", "content": system_instruction})
         for m in (history or []):
             role = "assistant" if m.get("role") == "model" else m.get("role", "user")
             messages.append({"role": role, "content": m.get("content", "")})
@@ -80,13 +82,18 @@ class HybridAIClient:
                     raise AIClientError(f"Groq API error ({response.status_code}): {response.text}")
                 return response.json()["choices"][0]["message"]["content"]
 
-    def _call_gemini(self, contents: List[Dict], model_name: str, stream: bool = False) -> Union[str, Generator]:
+    def _call_gemini(self, contents: List[Dict], model_name: str, stream: bool = False, system_instruction: Optional[str] = None) -> Union[str, Generator]:
         # Read key fresh from env on EVERY call to avoid pydantic caching at boot
         gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or self.gemini_key
         if not gemini_key:
             raise AIClientError("Gemini API key is missing.")
         genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel(model_name)
+        
+        model_kwargs = {}
+        if system_instruction:
+            model_kwargs["system_instruction"] = system_instruction
+            
+        model = genai.GenerativeModel(model_name, **model_kwargs)
             
         if stream:
             response = model.generate_content(contents, stream=True)
@@ -145,7 +152,7 @@ class HybridAIClient:
                 data = response.json()
                 return data["choices"][0]["message"]["content"]
 
-    def get_response(self, message: str, history: List[Dict] = None, image_data: Optional[bytes] = None, stream: bool = False) -> Union[str, Generator]:
+    def get_response(self, message: str, history: List[Dict] = None, image_data: Optional[bytes] = None, stream: bool = False, system_instruction: Optional[str] = None) -> Union[str, Generator]:
         """
         Main entry point for AI responses.
         Tries Gemini models first (with retries), falls back to OpenRouter, then Groq.
@@ -161,7 +168,7 @@ class HybridAIClient:
                     for attempt in range(2):
                         try:
                             print(f"📡 [AI] Trying Gemini {model_name} (attempt {attempt + 1})")
-                            model_gen = self._call_gemini(gemini_contents, model_name, stream=True)
+                            model_gen = self._call_gemini(gemini_contents, model_name, stream=True, system_instruction=system_instruction)
                             for chunk in model_gen:
                                 yield chunk
                             return
@@ -173,7 +180,7 @@ class HybridAIClient:
                                 break
                 
                 # 2. Fallback to OpenRouter
-                or_messages = self._format_for_openrouter(message, history)
+                or_messages = self._format_for_openrouter(message, history, system_instruction=system_instruction)
                 print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
                 try:
                     or_gen = self._call_openrouter(or_messages, stream=True)
@@ -204,7 +211,7 @@ class HybridAIClient:
                 for attempt in range(2):
                     try:
                         print(f"📡 [AI] Trying Gemini {model_name} (attempt {attempt + 1})")
-                        return self._call_gemini(gemini_contents, model_name, stream=False)
+                        return self._call_gemini(gemini_contents, model_name, stream=False, system_instruction=system_instruction)
                     except Exception as e:
                         err_msg = f"Gemini {model_name}: {str(e)}"
                         print(f"⚠️ [AI] {err_msg}")
@@ -212,7 +219,7 @@ class HybridAIClient:
                         if attempt == 1:
                             break
             
-            or_messages = self._format_for_openrouter(message, history)
+            or_messages = self._format_for_openrouter(message, history, system_instruction=system_instruction)
             print(f"🔄 [AI] Falling back to OpenRouter ({self.openrouter_model})")
             try:
                 return self._call_openrouter(or_messages, stream=False)

@@ -27,8 +27,10 @@ router = APIRouter()
 # ── Tool-specific system prompts ───────────────────────────────────
 TOOL_PROMPTS = {
     "chat": (
-        "You are Tulasi AI — a helpful, expert AI tutor for students. "
-        "Be clear, concise, and educational. Use markdown formatting, bullet points, and code blocks. "
+        "You are Tulasi AI — an Elite Software Engineer, Tech Lead, and Master AI Tutor. "
+        "Your goal is to provide world-class, exhaustive, step-by-step explanations to any question. "
+        "Make heavy use of beautiful Markdown formatting, code blocks, tables, and bullet points. "
+        "Never give lazy, brief, or simplified answers unless explicitly requested. Always think deeply and provide top-tier industry expertise. "
         "You were created by Abishek R. If anyone asks who created you, who built you, or who is your founder, "
         "always answer: 'I was created by Abishek R, the founder of Tulasi AI.'"
     ),
@@ -101,7 +103,6 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
     if not user.is_pro and user.chats_today >= daily_limit:
         return ChatResponse(response=f"🚀 You have reached your daily limit of {daily_limit} free AI chats. Upgrade to Pro for unlimited access.", session_id=session_id, ai_model="tulasi-ai-limit")
 
-    # Build system-primed message
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     
     # Check memory for context
@@ -109,11 +110,11 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
     context_str = f"\n[Previous Context & Memory:\n{rag_context}\n]" if rag_context else ""
     awareness = "You are operating in the year 2026. The CEO of Tulasi AI is Akshaya R. Answer accordingly."
     
-    primed_message = f"[System: {system_prompt}. {awareness}{context_str}]\n\nUser: {req.message}"
+    system_instruction = f"{system_prompt}. {awareness}{context_str}"
 
     # Generate AI Response (with fallback chain)
     try:
-        response_text = get_ai_response(primed_message, history, image_data=image_data)
+        response_text = get_ai_response(req.message, history, image_data=image_data, system_instruction=system_instruction)
     except Exception as e:
         print(f"Error generating AI response: {e}")
         response_text = "⏳ AI is temporarily busy. Please try again."
@@ -168,14 +169,7 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
     context_str = f"\n[Previous Context & Memory:\n{rag_context}\n]" if rag_context else ""
     awareness = "You are operating in the year 2026. The CEO of Tulasi AI is Akshaya R. Answer accordingly."
     
-    primed_message = f"[System: {system_prompt}. {awareness}{context_str}]\n\nUser: {req.message}"
-
-    # Build contents
-    contents = []
-    for m in history[-10:]:
-        role = "user" if m["role"] == "user" else "model"
-        contents.append({"role": role, "parts": [m["content"]]})
-    contents.append({"role": "user", "parts": [primed_message]})
+    system_instruction = f"{system_prompt}. {awareness}{context_str}"
 
     from app.core.ai_client import ai_client
 
@@ -183,7 +177,7 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
         full_response = ""
         try:
             # Use unified hybrid client with streaming
-            stream_gen = ai_client.get_response(primed_message, history=history, stream=True)
+            stream_gen = ai_client.get_response(req.message, history=history, stream=True, system_instruction=system_instruction)
             
             for token in stream_gen:
                 if token:

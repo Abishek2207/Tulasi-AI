@@ -24,11 +24,11 @@ def get_ai_response(
     history: Optional[List[dict]] = None,
     image_data: Optional[bytes] = None,
     force_model: Optional[str] = None,
+    system_instruction: Optional[str] = None,
 ) -> str:
     """
     Generate an AI response with full resilience via HybridAIClient.
     """
     # HybridAIClient now handles text and image-based recovery paths
-    response = ai_client.get_response(message, history=history, image_data=image_data)
+    response = ai_client.get_response(message, history=history, image_data=image_data, system_instruction=system_instruction)
     return str(response)
-
