@@ -20,7 +20,25 @@ class VectorService:
         return self.model
 
     def embed_documents(self, text: str) -> list[float]:
-        """Embed a single text string into a 384-dimensional vector."""
+        """Embed a single text string into a vector."""
+        import os
+        # 🚨 Use Gemini API to prevent Render Server PyTorch OOM crashes (Saves 300MB RAM!)
+        api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        if api_key:
+            try:
+                import google.generativeai as genai
+                # Ensure it's configured in case it wasn't yet
+                genai.configure(api_key=api_key)
+                result = genai.embed_content(
+                    model="models/text-embedding-004",
+                    content=text,
+                    task_type="retrieval_document"
+                )
+                return result['embedding']
+            except Exception as e:
+                print(f"Gemini API embed failed: {e}")
+                
+        # Fallback to local PyTorch if no API key
         return self._get_model().encode(text).tolist()
 
     def store_embeddings(self, user_id: int, text: str, db: Session):
@@ -62,6 +80,11 @@ class VectorService:
         
         query_vec = self.embed_documents(query)
         query_np = np.array([query_vec]).astype('float32')
+        
+        # Prevent FAISS crash if old chunks used 384d (MiniLM) and new use 768d (Gemini)
+        if vectors_np.shape[1] != query_np.shape[1]:
+            print("Vector dimension mismatch! Wiping old context to prevent FAISS crash.")
+            return ""
         
         # Prevent out-of-bounds error if less chunks than top_k
         k = min(top_k, len(valid_chunks))
