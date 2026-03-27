@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "")
 
     # Admin
-    ADMIN_EMAIL: str = "admin@tulasi.ai"
+    ADMIN_EMAIL: str = "abishekramamoorthy22@gmail.com"
 
     @property
     def effective_gemini_key(self) -> str:
