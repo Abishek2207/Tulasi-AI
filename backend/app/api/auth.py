@@ -256,6 +256,22 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
         db.commit()
         db.refresh(user)
 
+    # ── Update streak on oauth login ──────────────────────────────────
+    today = date.today().isoformat()
+    last = user.last_activity_date
+    if last != today:
+        from datetime import date as _date
+        if last and (_date.today() - _date.fromisoformat(last)).days == 1:
+            user.streak = (user.streak or 0) + 1
+        elif not last or (_date.today() - _date.fromisoformat(last)).days > 1:
+            user.streak = 1
+        user.longest_streak = max(user.longest_streak or 0, user.streak)
+        user.last_activity_date = today
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    # ─────────────────────────────────────────────────────────────────
+
     token = create_access_token({"sub": user.email})
     return {
         "access_token": token,

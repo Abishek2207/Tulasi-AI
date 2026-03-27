@@ -6,16 +6,21 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { activityApi } from "@/lib/api";
-import { 
-  MessageSquare, BookOpen, Code, Target, Map, FileText, 
-  Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award, 
-  Flame, Zap, Linkedin, Share2, MessageCircle, Terminal, 
-  CheckCircle2, Star, Sparkles, BrainCircuit, Lightbulb, 
+import {
+  MessageSquare, BookOpen, Code, Target, Map, FileText,
+  Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award,
+  Flame, Zap, Linkedin, Share2, MessageCircle, Terminal,
+  CheckCircle2, Star, Sparkles, BrainCircuit, Lightbulb,
   LayoutDashboard, TrendingUp, ArrowRight, Share
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
-import { ActivityMap } from "@/components/dashboard/ActivityMap";
+import dynamic from "next/dynamic";
+
+const ActivityMap = dynamic(() => import("@/components/dashboard/ActivityMap").then(mod => mod.ActivityMap), {
+  ssr: false,
+  loading: () => <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 13 }}>Loading Real-time Activity...</div>
+});
 
 function LiveActivityFeed() {
   const [activities, setActivities] = useState<any[]>([]);
@@ -52,7 +57,7 @@ function LiveActivityFeed() {
         </div>
         <span style={{ fontSize: 11, color: "var(--brand-primary)", fontWeight: 700, background: "rgba(124,58,237,0.1)", padding: "4px 10px", borderRadius: 12 }}>SYNCING</span>
       </div>
-      
+
       <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative", height: 260, overflow: "hidden" }}>
         {activities.length === 0 ? (
           <div style={{ textAlign: "center", paddingTop: 80, fontSize: 13, color: "var(--text-muted)", fontWeight: 500 }}>
@@ -125,9 +130,9 @@ interface DashboardStats {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Student";
-  const [stats, setStats] = useState<DashboardStats>({ 
-    streak: 0, xp: 0, level: 1, problems_solved: 0, 
-    videos_watched: 0, hackathons_joined: 0, invite_code: "" 
+  const [stats, setStats] = useState<DashboardStats>({
+    streak: 0, xp: 0, level: 1, problems_solved: 0,
+    videos_watched: 0, hackathons_joined: 0, invite_code: ""
   });
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
@@ -142,7 +147,7 @@ export default function DashboardPage() {
         ]);
         if (statsData) setStats(prev => ({ ...prev, ...(statsData as any), invite_code: meData?.invite_code || "TULASI25" }));
         if (lbData?.leaderboard) setLeaderboard(lbData.leaderboard.slice(0, 5));
-        
+
         // Gamification: Trigger confetti on load if level > 1
         if (statsData && (statsData as any).level > 1) {
           setTimeout(() => {
@@ -171,32 +176,32 @@ export default function DashboardPage() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={container} style={{ maxWidth: 1400, margin: "0 auto", paddingBottom: 60 }}>
-      
+
       {/* Dynamic Welcome Banner */}
-      <motion.div variants={item} className="glass-card" style={{ 
-        padding: "60px 48px", borderRadius: 32, marginBottom: 40, border: "1px solid rgba(255,255,255,0.06)", 
-        position: "relative", overflow: "hidden", 
-        background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.08) 100%)" 
+      <motion.div variants={item} className="glass-card" style={{
+        padding: "60px 48px", borderRadius: 32, marginBottom: 40, border: "1px solid rgba(255,255,255,0.06)",
+        position: "relative", overflow: "hidden",
+        background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.08) 100%)"
       }}>
         <div style={{ position: "absolute", top: -100, right: -100, width: 400, height: 400, background: "radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)", filter: "blur(60px)" }} />
         <div style={{ position: "absolute", bottom: -80, left: -50, width: 300, height: 300, background: "radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%)", filter: "blur(50px)" }} />
-        
+
         <div style={{ position: "relative", zIndex: 1, maxWidth: 800 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-             <span style={{ fontSize: 13, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>Command Center</span>
-             <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.1)" }} />
+            <span style={{ fontSize: 13, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>Command Center</span>
+            <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.1)" }} />
           </div>
           <h1 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 12, letterSpacing: "-1.5px", lineHeight: 1.1 }}>
             Vanguard of Learning, <span className="gradient-text">{userName}</span>
           </h1>
           <p style={{ fontSize: 18, color: "var(--text-secondary)", marginBottom: 32, maxWidth: 680, lineHeight: 1.6 }}>
-            The SaaS-native engine for engineering excellence. Access your high-fidelity modules 
+            The SaaS-native engine for engineering excellence. Access your high-fidelity modules
             and track your XP velocity below.
           </p>
-          
+
           <div style={{ display: "flex", gap: 16 }}>
             <Link href="/dashboard/chat">
-              <button 
+              <button
                 onClick={() => {
                   try {
                     const ctx = new window.AudioContext();
@@ -206,7 +211,7 @@ export default function DashboardPage() {
                     osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
                     osc.connect(ctx.destination);
                     osc.start(); osc.stop(ctx.currentTime + 0.1);
-                  } catch(e) {}
+                  } catch (e) { }
                   confetti({ particleCount: 50, spread: 40, colors: ['#8B5CF6', '#ffffff'] });
                 }}
                 className="btn-primary" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
@@ -224,7 +229,7 @@ export default function DashboardPage() {
 
       {/* High Density Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-        
+
         {/* Real-time Stats Loop */}
         <motion.div variants={item} style={{ gridColumn: "span 1" }}>
           <TiltCard intensity={5} style={{ height: "100%" }}>
@@ -234,11 +239,11 @@ export default function DashboardPage() {
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#43E97B", boxShadow: "0 0 10px #43E97B" }} />
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                 <div style={{ width: 64, height: 64, borderRadius: 20, background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 900, color: "white" }}>{stats.level}</div>
-                 <div>
-                    <div style={{ fontSize: 18, fontWeight: 900 }}>Power Level {stats.level}</div>
-                    <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{stats.xp} Total XP Accumulated</div>
-                 </div>
+                <div style={{ width: 64, height: 64, borderRadius: 20, background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 900, color: "white" }}>{stats.level}</div>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 900 }}>Power Level {stats.level}</div>
+                  <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{stats.xp} Total XP Accumulated</div>
+                </div>
               </div>
               <div style={{ marginTop: "auto" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 11, fontWeight: 900 }}>
@@ -257,20 +262,20 @@ export default function DashboardPage() {
         <motion.div variants={item} style={{ gridColumn: "span 1" }}>
           <TiltCard intensity={5} style={{ height: "100%" }}>
             <div className="glass-card" style={{ padding: 28, height: "100%" }}>
-               <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 18, display: "flex", alignItems: "center", gap: 8 }}>
-                 <Trophy size={14} color="#FFD93D" /> Global Velocity
-               </h3>
-               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                 {leaderboard.length > 0 ? leaderboard.map((u, i) => (
-                   <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.02)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.03)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                         <span style={{ fontSize: 12, fontWeight: 900, color: "var(--brand-primary)", width: 14 }}>{i+1}</span>
-                         <span style={{ fontSize: 13, fontWeight: 600 }}>{u.name}</span>
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: "var(--text-muted)" }}>{u.xp} XP</span>
-                   </div>
-                 )) : <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "10px 0" }}>Syncing global rankings...</div>}
-               </div>
+              <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 18, display: "flex", alignItems: "center", gap: 8 }}>
+                <Trophy size={14} color="#FFD93D" /> Global Velocity
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {leaderboard.length > 0 ? leaderboard.map((u, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.02)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.03)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 900, color: "var(--brand-primary)", width: 14 }}>{i + 1}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>{u.name}</span>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: "var(--text-muted)" }}>{u.xp} XP</span>
+                  </div>
+                )) : <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "10px 0" }}>Syncing global rankings...</div>}
+              </div>
             </div>
           </TiltCard>
         </motion.div>
@@ -278,20 +283,20 @@ export default function DashboardPage() {
         {/* Global Live Feed */}
         <motion.div variants={item} style={{ gridColumn: "span 1" }}>
           <TiltCard intensity={3} style={{ height: "100%" }}>
-             <LiveActivityFeed />
+            <LiveActivityFeed />
           </TiltCard>
         </motion.div>
 
         {/* Gamified Referral Card */}
         <motion.div variants={item} style={{ gridColumn: "span 1" }}>
           <TiltCard intensity={5} style={{ height: "100%" }}>
-            <div className="glass-card" style={{ 
-              padding: 28, height: "100%", display: "flex", flexDirection: "column", 
+            <div className="glass-card" style={{
+              padding: 28, height: "100%", display: "flex", flexDirection: "column",
               background: "linear-gradient(135deg, rgba(255,255,255,0.02), rgba(16,185,129,0.05))",
-              position: "relative", overflow: "hidden" 
+              position: "relative", overflow: "hidden"
             }}>
               <div style={{ position: "absolute", top: -50, right: -50, width: 150, height: 150, background: "radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%)", filter: "blur(40px)" }} />
-              
+
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}>
                   <Gift size={22} />
@@ -301,12 +306,12 @@ export default function DashboardPage() {
                   <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>Invite a friend to unlock more chats.</p>
                 </div>
               </div>
-              
+
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: "auto", background: "rgba(0,0,0,0.2)", padding: 6, borderRadius: 12, border: "1px dashed rgba(255,255,255,0.15)" }}>
                 <div style={{ flex: 1, textAlign: "center", fontSize: 15, fontWeight: 800, color: "white", letterSpacing: 2, fontFamily: "monospace" }}>
                   {stats.invite_code || "TULASI25"}
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     const code = stats.invite_code || "TULASI25";
                     const text = `Hey! I'm using Tulasi AI to engineer my career and bypass the ATS. Use my invite code ${code} to get 500 XP instantly! Sign up here: https://tulasiai.vercel.app`;
@@ -330,11 +335,11 @@ export default function DashboardPage() {
           <motion.div key={mod.id} variants={item} style={{ gridColumn: `span ${mod.span}` }}>
             <TiltCard intensity={5} style={{ height: "100%" }}>
               <Link href={mod.link} style={{ textDecoration: "none", display: "block", height: "100%" }}>
-                <div className="glass-card" style={{ 
+                <div className="glass-card" style={{
                   padding: 32, height: "100%", display: "flex", flexDirection: "column", transition: "all 0.3s",
                   background: "rgba(255,255,255,0.02)"
                 }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}>
-                  <div style={{ 
+                  <div style={{
                     width: 56, height: 56, borderRadius: 16, background: `${mod.color}15`, border: `1px solid ${mod.color}30`,
                     display: "flex", alignItems: "center", justifyContent: "center", color: mod.color, marginBottom: 24,
                     boxShadow: `0 8px 16px ${mod.color}10`
@@ -361,14 +366,14 @@ export default function DashboardPage() {
 
       {/* Mini Streak Tracker */}
       <motion.div variants={item} style={{ marginTop: 40 }} className="glass-card">
-         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, padding: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-               <Flame size={20} color="#F43F5E" />
-               <span style={{ fontSize: 14, fontWeight: 900 }}>{stats.streak} DAY STREAK</span>
-            </div>
-            <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.1)" }} />
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Maintain consistency to unlock high-order AI models.</div>
-         </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, padding: "20px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Flame size={20} color="#F43F5E" />
+            <span style={{ fontSize: 14, fontWeight: 900 }}>{stats.streak} DAY STREAK</span>
+          </div>
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.1)" }} />
+          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Maintain consistency to unlock high-order AI models.</div>
+        </div>
       </motion.div>
 
     </motion.div>
