@@ -255,7 +255,14 @@ function ReviewsSection() {
 
   useEffect(() => {
     reviewsApi.getReviews()
-      .then(setReviews)
+      .then(data => {
+        // Instant band-aid: Filter out spam "mia kalifa" reviews in frontend
+        const filtered = data.filter(r => 
+          !r.review.toLowerCase().includes("mia kalifa") && 
+          !r.name.toLowerCase().includes("mia kalifa")
+        );
+        setReviews(filtered);
+      })
       .catch(() => setFetchError("Failed to load reviews. Please refresh the page."))
       .finally(() => setLoading(false));
   }, []);
