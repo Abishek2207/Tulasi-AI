@@ -255,11 +255,18 @@ function ReviewsSection() {
   useEffect(() => {
     reviewsApi.getReviews()
       .then(data => {
-        const filtered = data.filter(r =>
-          !r.review.toLowerCase().includes("mia kalifa") &&
-          !r.name.toLowerCase().includes("mia kalifa")
-        );
+        const filtered = data.filter(r => {
+          const rev = r.review.toLowerCase();
+          const nm = r.name.toLowerCase();
+          const rol = (r.role || "").toLowerCase();
+          return !rev.includes("mia kalifa") && 
+                 !nm.includes("mia kalifa") &&
+                 !rev.includes("mia khalifa") && 
+                 !nm.includes("mia khalifa") &&
+                 !rol.includes("corn actor");
+        });
         setReviews(filtered);
+
       })
       .catch(() => {
         setReviews([]);
