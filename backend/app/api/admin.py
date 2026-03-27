@@ -6,7 +6,7 @@ from typing import List
 
 from app.core.database import get_session
 from app.api.auth import get_admin_user, get_current_user
-from app.models.models import User, Review
+from app.models.models import User, Review, ActivityLog
 
 router = APIRouter()
 
@@ -128,6 +128,33 @@ def delete_review(review_id: int, db: Session = Depends(get_session), admin: Use
     db.delete(review)
     db.commit()
     return {"message": "Review deleted successfully"}
+
+
+@router.get("/activity")
+def get_global_activity(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Fetch global user activity logs with user details for admin review."""
+    results = db.exec(
+        select(ActivityLog, User.name, User.email)
+        .join(User, ActivityLog.user_id == User.id, isouter=True)
+        .order_by(ActivityLog.created_at.desc())
+        .limit(100) # Changed from 200 to 100 as per instruction
+    ).all()
+    
+    return {
+        "activity": [
+            {
+                "id": act[0].id,
+                "user_name": act[1] or "Unknown",
+                "user_email": act[2] or "Unknown",
+                "action_type": act[0].action_type,
+                "title": act[0].title,
+                "metadata": act[0].metadata_json,
+                "xp": act[0].xp_earned,
+                "created_at": act[0].created_at.isoformat()
+            }
+            for act in results
+        ]
+    }
 
 
 @router.get("/system-sync-emergency-9922")

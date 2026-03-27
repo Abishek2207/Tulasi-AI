@@ -34,11 +34,23 @@ interface AdminReview {
   user_email: string;
 }
 
+interface AdminActivity {
+  id: number;
+  user_name: string;
+  user_email: string;
+  action_type: string;
+  title: string;
+  metadata: string;
+  xp: number;
+  created_at: string;
+}
+
 export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
-  const [activeTab, setActiveTab] = useState<"users" | "reviews">("users");
+  const [activity, setActivity] = useState<AdminActivity[]>([]);
+  const [activeTab, setActiveTab] = useState<"users" | "reviews" | "activity">("users");
   const [loading, setLoading] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -56,10 +68,12 @@ export default function AdminPage() {
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/reviews`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-    ]).then(([s, u, r]) => { 
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/activity`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
+    ]).then(([s, u, r, a]) => { 
       setStats(s as AdminStats); 
       setUsers((u.users as AdminUser[]) || []); 
       setReviews((r.reviews as AdminReview[]) || []);
+      setActivity((a.activity as AdminActivity[]) || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [token, user]);
 
@@ -116,6 +130,12 @@ export default function AdminPage() {
               style={{ padding: "8px 24px", borderRadius: 10, border: "none", background: activeTab === "reviews" ? "#6C63FF" : "transparent", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
             >
               Reviews
+            </button>
+            <button 
+              onClick={() => setActiveTab("activity")}
+              style={{ padding: "8px 24px", borderRadius: 10, border: "none", background: activeTab === "activity" ? "#6C63FF" : "transparent", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            >
+              Activity
             </button>
           </div>
         </div>
@@ -194,7 +214,7 @@ export default function AdminPage() {
               </table>
             </div>
           </>
-        ) : (
+        ) : activeTab === "reviews" ? (
           <>
             <h2 style={{ fontSize: 19, fontWeight: 700, fontFamily: "var(--font-outfit)", marginBottom: 20 }}>Review Intelligence ({reviews.length})</h2>
             <div className="glass-card" style={{ overflow: "hidden", padding: 0, background: "rgba(255,255,255,0.015)" }}>
@@ -231,6 +251,49 @@ export default function AdminPage() {
                           style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(244,63,94,0.3)", background: "rgba(244,63,94,0.1)", color: "#F43F5E", fontSize: 12, cursor: "pointer", fontWeight: 700 }}>
                           Delete
                         </motion.button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 style={{ fontSize: 19, fontWeight: 700, fontFamily: "var(--font-outfit)", marginBottom: 20 }}>Live Usage Telemetry ({activity.length})</h2>
+            <div className="glass-card" style={{ overflow: "hidden", padding: 0, background: "rgba(255,255,255,0.015)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    {["User", "Action Map", "Session Details", "XP", "Timestamp"].map(h => (
+                      <th key={h} style={{ padding: "16px 20px", textAlign: "left", fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {activity.map(a => (
+                    <tr key={a.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "rgba(255,255,255,0.03)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
+                    >
+                      <td style={{ padding: "16px 20px" }}>
+                        <div style={{ fontWeight: 700, fontSize: 13 }}>{a.user_name}</div>
+                        <div style={{ color: "var(--brand-secondary)", fontSize: 12, fontWeight: 600 }}>{a.user_email}</div>
+                      </td>
+                      <td style={{ padding: "16px 20px" }}>
+                        <span className="badge badge-purple" style={{ fontSize: 11, display: "inline-block" }}>{a.action_type.replace(/_/g, " ").toUpperCase()}</span>
+                      </td>
+                      <td style={{ padding: "16px 20px", maxWidth: 280 }}>
+                        <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.title || "No Title Logged"}</div>
+                        {a.metadata && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{a.metadata}</div>}
+                      </td>
+                      <td style={{ padding: "16px 20px" }}>
+                        <span style={{ color: a.xp > 0 ? "#10B981" : "var(--text-muted)", fontWeight: 800, fontSize: 13 }}>
+                          {a.xp > 0 ? `+${a.xp} XP` : "—"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "16px 20px", fontSize: 12, color: "var(--text-muted)" }}>
+                        {new Date(a.created_at).toLocaleString()}
                       </td>
                     </tr>
                   ))}
