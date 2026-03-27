@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { groupApi, Group, GroupMessage } from "@/lib/api";
 import { encryptMessage, decryptMessage } from "@/lib/crypto";
+import dynamic from "next/dynamic";
+
+const VoiceRoom = dynamic(() => import("@/components/voice/VoiceRoom"), { ssr: false });
 
 interface DisplayGroup extends Group {
   join_code: string;
@@ -32,6 +35,7 @@ export default function GroupsPage() {
   const [modalInput, setModalInput] = useState({ name: "", description: "", code: "" });
   const [modalError, setModalError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [inVoice, setInVoice] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -205,9 +209,23 @@ export default function GroupsPage() {
                 )}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                  Join Code:
-                </div>
+                {/* Voice Channel Button */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  onClick={() => setInVoice((v) => !v)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer", border: "none",
+                    background: inVoice ? "linear-gradient(135deg,#43E97B,#38f9d7)" : "rgba(124,58,237,0.2)",
+                    color: inVoice ? "#0a0a0a" : "#a78bfa",
+                    boxShadow: inVoice ? "0 0 12px rgba(67,233,123,0.4)" : "none",
+                    display: "flex", alignItems: "center", gap: 6,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  🎙️ {inVoice ? "In Voice" : "Join Voice"}
+                </motion.button>
+
+                <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Code:</div>
                 <button onClick={() => copyCode(activeGroup.join_code)}
                   style={{ background: "rgba(108,99,255,0.15)", border: "1px solid rgba(108,99,255,0.3)", color: "#a78bfa", fontFamily: "monospace", fontWeight: 800, fontSize: 14, padding: "4px 12px", borderRadius: 8, cursor: "pointer", letterSpacing: 2 }}>
                   {activeGroup.join_code}
@@ -215,6 +233,20 @@ export default function GroupsPage() {
                 {copied && <span style={{ fontSize: 12, color: "var(--success)" }}>✓ Copied!</span>}
               </div>
             </div>
+
+            {/* Voice Room Panel */}
+            <AnimatePresence>
+              {inVoice && (
+                <div style={{ padding: "12px 16px 0" }}>
+                  <VoiceRoom
+                    roomId={`group-${activeGroup.id}`}
+                    userId={(session?.user as { id?: number })?.id || 0}
+                    userName={(session?.user as { name?: string })?.name || "Member"}
+                    onLeave={() => setInVoice(false)}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
 
             {/* Messages */}
             <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
