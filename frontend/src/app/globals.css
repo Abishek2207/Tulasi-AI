@@ -23,9 +23,9 @@
   --bg-glass-hover: rgba(24, 24, 27, 0.8);
 
   /* Text — Ultra Crisp */
-  --text-primary:   #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-muted:     #71717A;
+  --text-primary:   #FFFFFF;
+  --text-secondary: #D4D4D8;
+  --text-muted:     #A1A1AA;
 
   /* Borders / Glass */
   --border:       rgba(255, 255, 255, 0.08);
@@ -58,9 +58,9 @@
   --bg-glass-hover: rgba(255, 255, 255, 1);
 
   /* Text — Ultra Crisp Light Mode */
-  --text-primary:   #111827; /* Near black */
-  --text-secondary: #4B5563; /* Dark gray */
-  --text-muted:     #6B7280; /* Medium gray */
+  --text-primary:   #09090B;
+  --text-secondary: #3F3F46;
+  --text-muted:     #71717A;
 
   /* Borders / Glass */
   --border:       rgba(0, 0, 0, 0.08);
@@ -251,18 +251,101 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-.mobile-only {
-  display: block;
-}
-.desktop-only {
-  display: none;
-}
+/* ============================
+   RESPONSIVE VISIBILITY
+   ============================ */
+.mobile-only { display: block; }
+.desktop-only { display: none; }
 
 @media (min-width: 1024px) {
   .mobile-only { display: none; }
   .desktop-only { display: block; }
 }
 
+/* Landing page: show/hide for hamburger */
+.hide-mobile { display: flex; }
+.show-mobile { display: none; }
+
+@media (max-width: 767px) {
+  .hide-mobile { display: none !important; }
+  .show-mobile { display: flex !important; }
+}
+
+/* ============================
+   HERO BUTTONS
+   ============================ */
+.hero-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (min-width: 560px) {
+  .hero-buttons {
+    flex-direction: row;
+    gap: 16px;
+    width: auto;
+  }
+}
+
+/* ============================
+   BENTO FEATURES GRID
+   ============================ */
+.bento-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+/* Tablet: 2-column */
+@media (min-width: 640px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .bento-item { grid-column: span 1; }
+}
+
+/* Desktop: 3-column with spans */
+@media (min-width: 1024px) {
+  .bento-grid { grid-template-columns: repeat(3, 1fr); }
+  .bento-span-2 { grid-column: span 2; }
+  .bento-span-1 { grid-column: span 1; }
+}
+
+/* ============================
+   FOOTER GRID
+   ============================ */
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+@media (min-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1.5fr;
+    gap: 56px;
+  }
+}
+
+/* ============================
+   REVIEW FORM ROW
+   ============================ */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 560px) {
+  .form-row { grid-template-columns: 1fr 1fr; }
+}
+
+/* ============================
+   BANNER / CARD PADDING
+   ============================ */
 .banner-card {
   padding: 32px 20px;
   border-radius: 24px;
@@ -272,21 +355,6 @@ h1, h2, h3, h4, h5, h6 {
   .banner-card {
     padding: 60px 48px;
     border-radius: 32px;
-  }
-}
-
-.hero-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-@media (min-width: 640px) {
-  .hero-buttons {
-    flex-direction: row;
-    gap: 16px;
-    width: auto;
   }
 }
 

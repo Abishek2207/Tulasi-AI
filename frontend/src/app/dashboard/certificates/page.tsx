@@ -182,32 +182,57 @@ export default function CertificatesPage() {
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Certificate – ${m.title}</title>
   <style>
-    body { margin: 0; font-family: Georgia, serif; background: #0a0a0a; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .cert { width: 760px; border: 6px solid #FFD700; padding: 60px; text-align: center; background: linear-gradient(135deg, #0d0d1a, #12122a); border-radius: 16px; }
-    .logo-container { margin-bottom: 20px; }
-    .logo-img { width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(78,205,196,0.3)); }
-    .issuer { font-size: 14px; letter-spacing: 4px; color: #FFD700; text-transform: uppercase; margin-bottom: 40px; }
-    .label { font-size: 13px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-    .name { font-size: 28px; font-weight: bold; color: #FFD700; border-bottom: 1px solid #FFD70040; padding-bottom: 16px; margin-bottom: 24px; }
-    .title { font-size: 38px; font-weight: bold; color: white; margin-bottom: 16px; }
-    .desc { font-size: 14px; color: #ccc; line-height: 1.6; max-width: 540px; margin: 0 auto 40px; }
-    .date { font-size: 13px; color: #888; }
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+    body { margin: 0; font-family: 'Outfit', sans-serif; background: #050505; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .canvas { 
+      width: 900px; height: 600px; padding: 4px; background: linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%); 
+      border-radius: 8px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); position: relative;
+    }
+    .inner { 
+      background: #0A0A0B; width: 100%; height: 100%; border-radius: 6px; box-sizing: border-box;
+      padding: 60px; text-align: center; position: relative; overflow: hidden;
+      border: 1px solid rgba(255,215,0,0.2);
+    }
+    .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 120px; color: rgba(255,215,0,0.03); font-weight: 900; pointer-events: none; white-space: nowrap; }
+    .logo-img { width: 90px; height: 90px; margin-bottom: 24px; filter: drop-shadow(0 0 15px rgba(255,215,0,0.4)); }
+    .issuer { font-size: 16px; letter-spacing: 6px; color: #DAA520; text-transform: uppercase; margin-bottom: 40px; font-weight: 700; }
+    .label { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px; }
+    .name { font-size: 42px; font-weight: 900; color: white; margin: 10px 0 20px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .line { width: 400px; height: 1px; background: linear-gradient(90deg, transparent, #FFD700, transparent); margin: 0 auto 30px; }
+    .title { font-size: 32px; font-weight: 800; color: #FFD700; margin-bottom: 12px; }
+    .desc { font-size: 15px; color: #aaa; line-height: 1.6; max-width: 600px; margin: 0 auto 50px; }
+    .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; }
+    .sign-box { text-align: center; width: 200px; }
+    .sign-line { border-top: 1px solid #444; padding-top: 8px; font-size: 12px; color: #666; font-weight: 700; text-transform: uppercase; }
+    .date { font-size: 12px; color: #DAA520; font-weight: 700; }
+    .stamp { width: 80px; height: 80px; border: 2px solid #DAA520; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #DAA520; font-weight: 900; transform: rotate(-15deg); background: rgba(218,165,32,0.05); }
   </style>
 </head>
 <body>
-  <div class="cert">
-    <div class="logo-container">
-      <img src="https://tulasi-ai-wgwl.onrender.com/health" onerror="this.src='/images/logo-transparent.png'" class="logo-img" />
+  <div class="canvas">
+    <div class="inner">
+      <div class="watermark">TULASI AI CERTIFIED</div>
+      <img src="/images/logo.png" class="logo-img" />
+      <div class="issuer">Tulasi AI Platform</div>
+      <div class="label">Certificate of Achievement</div>
+      <div class="name">${session?.user?.name || session?.user?.email || "Tulasi AI Student"}</div>
+      <div class="line"></div>
+      <div class="label">has successfully mastered</div>
+      <div class="title">${m.title}</div>
+      <div class="desc">${m.desc}</div>
+      <div class="footer">
+        <div class="sign-box">
+          <div style="font-family: cursive; font-size: 24px; color: #ccc; margin-bottom: 5px;">Tulasi Admin</div>
+          <div class="sign-line">Authorized Signatory</div>
+        </div>
+        <div class="stamp">OFFICIAL<br/>VERIFIED</div>
+        <div class="sign-box">
+          <div class="date">${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
+          <div class="sign-line">Date of Issuance</div>
+        </div>
+      </div>
     </div>
-    <div class="issuer">Tulasi AI Platform</div>
-    <div class="label">This certifies that</div>
-    <div class="name">${session?.user?.name || session?.user?.email || "Tulasi AI Student"}</div>
-    <div class="label">has successfully earned</div>
-    <div class="title">${m.title}</div>
-    <div class="desc">${m.desc}</div>
-    <div class="date">Issued by Tulasi AI Platform · ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
   </div>
 </body>
 </html>`;

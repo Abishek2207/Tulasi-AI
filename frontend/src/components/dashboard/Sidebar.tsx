@@ -6,7 +6,8 @@ import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Logo as TulasiLogo } from "@/components/Logo";
 import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store";
 import { toggleSidebar } from "@/store/slices/uiSlice";
 
 import { 
@@ -74,7 +75,6 @@ export default function Sidebar() {
   const sessionUser = session?.user;
   const [isPro, setIsPro] = useState(false);
   const [chatsUsed, setChatsUsed] = useState(0);
-  const [xp, setXp] = useState(0);
 
   useEffect(() => {
     const readPro = () => {
@@ -82,17 +82,17 @@ export default function Sidebar() {
         const stored = JSON.parse(localStorage.getItem("user") || "{}");
         setIsPro(!!stored.is_pro || !!sessionUser?.is_pro);
         setChatsUsed(stored.chats_today || 0);
-        setXp(stored.xp || 0);
       } catch { setIsPro(false); }
     };
     readPro();
-    const interval = setInterval(readPro, 2000);
-    return () => clearInterval(interval);
   }, [sessionUser]);
 
-  const user = sessionUser;
-  const chatLimit = 100 + Math.floor(xp / 100);
-  const usagePercent = Math.min((chatsUsed / chatLimit) * 100, 100);
+  const stats = useSelector((s: RootState) => s.ui.stats);
+  const currentUser = sessionUser;
+  const currentXp = stats.xp;
+  const chatsUsedCurrent = chatsUsed;
+  const chatLimit = 100 + Math.floor(currentXp / 100);
+  const usagePercent = Math.min((chatsUsedCurrent / chatLimit) * 100, 100);
 
   const handleLinkClick = () => {
     if (window.innerWidth < 1024) {
@@ -144,6 +144,9 @@ export default function Sidebar() {
               {section.label}
             </div>
             {section.items.map(item => {
+              // Only show API Status for admins
+              if (item.name === "API Status" && currentUser?.role !== "admin") return null;
+
               const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
               const isLocked = item.requiresPro && !isPro;
               return (
@@ -195,7 +198,7 @@ export default function Sidebar() {
           </div>
         ))}
 
-        {(user?.role === "admin" || user?.email === "abishekramamoorthy22@gmail.com") && (
+        {(currentUser?.role === "admin" || currentUser?.email === "abishekramamoorthy22@gmail.com") && (
           <div>
             <div style={{ height: 1, background: "rgba(255,255,255,0.05)", margin: "8px 0 12px" }} />
             <Link href="/admin" style={{
@@ -212,7 +215,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Usage Limit Tracker (Free Users Only) */}
-      {!isPro && user && user.role !== "admin" && (
+      {!isPro && currentUser && currentUser.role !== "admin" && (
         <div style={{ padding: "0 16px 16px" }}>
           <div style={{
             background: "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
@@ -251,7 +254,7 @@ export default function Sidebar() {
       )}
 
       {/* User footer */}
-      {user && (
+      {currentUser && (
         <div style={{ padding: "12px 12px 16px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
@@ -261,14 +264,14 @@ export default function Sidebar() {
               fontWeight: 700, fontSize: 13, color: "white", flexShrink: 0,
               boxShadow: "0 0 12px rgba(139,92,246,0.3)",
             }}>
-              {(user.name || user.email || "U")[0].toUpperCase()}
+              {(currentUser.name || currentUser.email || "U")[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {user.name || "Student"}
+                {currentUser.name || "Student"}
               </div>
               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {user.email}
+                {currentUser.email}
               </div>
             </div>
             {isPro ? (
@@ -278,7 +281,7 @@ export default function Sidebar() {
             )}
           </div>
 
-          {!isPro && user.role !== "admin" && (
+          {!isPro && currentUser.role !== "admin" && (
             <Link href="/dashboard/billing" style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
               marginTop: 10, padding: "9px 12px", borderRadius: 9,

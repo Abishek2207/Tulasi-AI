@@ -120,10 +120,10 @@ async function request<T>(
     }
     const data = await res.json();
     
-    // XP toast — clean, no emojis
+    // XP toast — cinematographic
     if (data && typeof data === "object" && typeof data.xp_earned === "number" && data.xp_earned > 0) {
-      toast.success(`+${data.xp_earned} XP earned`, { 
-        style: { borderRadius: "14px", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", color: "#10B981" } 
+      import("@/components/XPNotification").then(mod => {
+        mod.showXPGain(data.xp_earned, data.xp_reason || "Learning Milestone");
       });
     }
     
@@ -154,7 +154,7 @@ export const authApi = {
     }),
 
   me: (token: string) =>
-    request<User>("/api/auth/me", {}, token),
+    request<User & { invite_code: string }>("/api/auth/me", {}, token),
 };
 
 // ─── Chat ────────────────────────────────────────────────────────────────────
@@ -191,6 +191,9 @@ export const chatApi = {
 
   clearHistory: (session_id: string) =>
     request<{ message: string }>(`/api/chat/history/${session_id}`, { method: "DELETE" }),
+
+  sessions: () =>
+    request<{ sessions: ChatSession[] }>("/api/chat/sessions"),
 };
 
 
@@ -277,12 +280,14 @@ export const codeApi = {
   },
   getProblem: (id: string, token: string) => request<CodeProblem>(`/api/code/problems/${id}`, {}, token),
   markSolved: (id: string, token: string) =>
-    request<CodeProblem>(`/api/code/problems/${id}/solve`, { method: "POST" }, token),
+    request<{ success: boolean; newly_solved: boolean; problem_id: string; solved_count: number; progress_pct: number; xp_earned: number }>(`/api/code/problems/${id}/solve`, { method: "POST" }, token),
   run: (code: string, language: string, token: string, stdin?: string) =>
-    request<{ output: string; status: string; execution_time_ms?: number }>("/api/code/run", { method: "POST", body: JSON.stringify({ code, language, stdin }) }, token),
+    request<{ stdout: string; stderr: string; output: string; status: string; execution_time_ms?: number }>("/api/code/run", { method: "POST", body: JSON.stringify({ code, language, stdin }) }, token),
   explain: (code: string, language: string, token: string) =>
     request<{ explanation: string; status: string }>("/api/code/explain", { method: "POST", body: JSON.stringify({ code, language }) }, token),
 };
+
+// ─── Auth / User ─────────────────────────────────────────────────────────────
 
 // ─── Startup Lab ─────────────────────────────────────────────────────────────
 
@@ -344,7 +349,8 @@ export const activityApi = {
     leaderboard: LeaderboardUser[]; 
     user_context?: { rank: number; xp: number; streak: number; problems_solved: number; is_pro: boolean } 
   }>("/api/activity/leaderboard", {}, token),
-  getAnalytics: (token: string) => request<{ time_series: AnalyticsSeries[], total_period_xp: number, total_period_problems: number }>("/api/activity/analytics", {}, token)
+  getAnalytics: (token: string) => request<{ time_series: AnalyticsSeries[], total_period_xp: number, total_period_problems: number }>("/api/activity/analytics", {}, token),
+  getPublicFeed: () => request<{ feed: any[] }>("/api/activity/public-feed"),
 };
 
 // ─── Profile ─────────────────────────────────────────────────────────────────
@@ -463,6 +469,12 @@ export interface User {
 export interface ChatMsg {
   role: "user" | "assistant";
   content: string;
+}
+
+export interface ChatSession {
+  session_id: string;
+  title: string;
+  last_active: string;
 }
 
 export interface Hackathon {
