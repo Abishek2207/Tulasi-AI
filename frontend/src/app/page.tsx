@@ -292,9 +292,11 @@ function ReviewsSection() {
       setForm({ name: "", role: "", review: "", rating: 0 });
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 4000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to submit. Please try again.";
+    } catch (err: any) {
+      // 🌐 FRONTEND FIX: Display the actual backend error if available
+      const msg = err.message || "Failed to submit. Please try again.";
       setFormError(msg);
+      console.error("Submission Error:", err);
     } finally {
       setSubmitting(false);
     }
