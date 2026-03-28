@@ -157,6 +157,53 @@ def get_global_activity(db: Session = Depends(get_session), admin: User = Depend
     }
 
 
+@router.get("/analytics")
+def get_admin_analytics(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Fetch 14-day aggregated analytics for user growth and platform pulse."""
+    from datetime import datetime, timedelta
+    
+    # Range: last 14 days
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=13)
+    
+    # 1. User Growth (Daily Signups)
+    users = db.exec(select(User).where(User.created_at >= start_date)).all()
+    
+    # 2. Daily Activity (Pulse)
+    logs = db.exec(select(ActivityLog).where(ActivityLog.created_at >= start_date)).all()
+    
+    # Aggregation mapping
+    daily_stats = {}
+    for i in range(14):
+        date_str = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+        daily_stats[date_str] = {"date": date_str, "signups": 0, "actions": 0}
+        
+    for u in users:
+        day = u.created_at.strftime("%Y-%m-%d")
+        if day in daily_stats:
+            daily_stats[day]["signups"] += 1
+            
+    for log in logs:
+        day = log.created_at.strftime("%Y-%m-%d")
+        if day in daily_stats:
+            daily_stats[day]["actions"] += 1
+            
+    growth_history = [daily_stats[d] for d in sorted(daily_stats.keys())]
+    
+    # 3. User Segmentation (Pro vs Free)
+    all_users = db.exec(select(User)).all()
+    pro_count = sum(1 for u in all_users if u.is_pro)
+    free_count = len(all_users) - pro_count
+    
+    return {
+        "growth": growth_history,
+        "segmentation": [
+            {"name": "Pro 👑", "value": pro_count, "color": "#A78BFA"},
+            {"name": "Free", "value": free_count, "color": "rgba(255,255,255,0.1)"}
+        ]
+    }
+
+
 @router.get("/system-sync-emergency-9922")
 def emergency_sync(db: Session = Depends(get_session)):
     """Secret emergency sync to promote admin and delete spam on LIVE site."""

@@ -5,6 +5,7 @@ import json
 from app.core.config import settings
 from app.api.auth import get_current_user
 from app.models.models import User, SavedStartupIdea
+from app.api.activity import log_activity_internal
 from app.core.database import get_session
 from app.core.rate_limit import limiter
 from sqlmodel import Session, select
@@ -30,7 +31,7 @@ class SaveIdeaRequest(BaseModel):
 
 @router.post("/generate")
 @limiter.limit("10/minute")
-def generate_startup_idea(request: Request, req: StartupRequest, current_user: User = Depends(get_current_user)):
+def generate_startup_idea(request: Request, req: StartupRequest, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
     prompt = f"""You are an elite Y Combinator startup advisor. Generate a highly innovative, realistic, and scalable startup idea for a student founder.
     
 Domain/Interest: {req.domain}
@@ -54,6 +55,12 @@ Return ONLY the raw JSON object, no markdown, no backticks, no introduction."""
             response_text = match.group()
         
         data = json.loads(response_text)
+        
+        # ── 💡 Log Activity ──────────────────────────────────────────
+        log_activity_internal(current_user, db, "startup_saved", f"Generated idea: {data.get('name', 'New Startup')}")
+        db.commit()
+        # ─────────────────────────────────────────────────────────────
+
         return {"status": "success", "idea": data}
 
     except json.JSONDecodeError:
@@ -81,6 +88,11 @@ def save_startup_idea(
     db.add(idea)
     db.commit()
     db.refresh(idea)
+
+    # ── 💡 Log Activity ──────────────────────────────────────────
+    log_activity_internal(current_user, db, "startup_saved", f"Saved idea: {idea.name}")
+    db.commit()
+    # ─────────────────────────────────────────────────────────────
     return {"message": "Idea saved!", "id": idea.id}
 
 

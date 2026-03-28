@@ -10,6 +10,7 @@ from app.core.database import get_session
 from app.core.security import verify_password, get_password_hash, create_access_token, decode_token
 from app.core.config import settings
 from app.models.models import User
+from app.api.activity import log_activity_internal
 from app.core.rate_limit import limiter
 from app.services.email import email_service
 from fastapi import BackgroundTasks
@@ -102,6 +103,10 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
     db.commit()
     db.refresh(user)
     
+    # ── 📝 Log Activity ──────────────────────────────────────────
+    log_activity_internal(user, db, "user_register", f"Signed up for Tulasi AI")
+    # ─────────────────────────────────────────────────────────────
+    
     # ── EMAIL NOTIFICATION ───────────────────────────────────────
     background_tasks.add_task(email_service.send_welcome_email, user.email, user.name)
     # ─────────────────────────────────────────────────────────────
@@ -149,6 +154,11 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_session
         db.add(user)
         db.commit()
         db.refresh(user)
+
+    # ── 🔓 Log Activity ───────────────────────────────────────────
+    log_activity_internal(user, db, "user_login", f"Logged in to platform")
+    db.commit()
+    # ─────────────────────────────────────────────────────────────
     # ─────────────────────────────────────────────────────────────────
     # ─────────────────────────────────────────────────────────────────
 
@@ -285,6 +295,11 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
         db.add(user)
         db.commit()
         db.refresh(user)
+
+    # ── 🔓 Log Activity ───────────────────────────────────────────
+    log_activity_internal(user, db, "user_login", f"Logged in via {req.provider.capitalize()}")
+    db.commit()
+    # ─────────────────────────────────────────────────────────────
     # ─────────────────────────────────────────────────────────────────
     # ─────────────────────────────────────────────────────────────────
 

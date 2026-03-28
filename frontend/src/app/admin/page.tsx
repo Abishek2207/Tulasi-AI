@@ -45,12 +45,23 @@ interface AdminActivity {
   created_at: string;
 }
 
+interface AdminAnalytics {
+  growth: { date: string, signups: number, actions: number }[];
+  segmentation: { name: string, value: number, color: string }[];
+}
+
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  BarChart, Bar, PieChart, Pie, Cell, Legend, AreaChart, Area
+} from "recharts";
+
 export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [activity, setActivity] = useState<AdminActivity[]>([]);
-  const [activeTab, setActiveTab] = useState<"users" | "reviews" | "activity">("users");
+  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
+  const [activeTab, setActiveTab] = useState<"users" | "reviews" | "activity" | "analytics">("users");
   const [loading, setLoading] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -62,19 +73,30 @@ export default function AdminPage() {
     if (status === "authenticated" && user?.role !== "admin") { router.push("/dashboard"); return; }
   }, [status, user, router]);
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!token || user?.role !== "admin") return;
-    Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/reviews`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/activity`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-    ]).then(([s, u, r, a]) => { 
+    try {
+      const [s, u, r, a, an] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/reviews`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/activity`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/analytics`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
+      ]);
       setStats(s as AdminStats); 
       setUsers((u.users as AdminUser[]) || []); 
       setReviews((r.reviews as AdminReview[]) || []);
       setActivity((a.activity as AdminActivity[]) || []);
-    }).catch(() => {}).finally(() => setLoading(false));
+      setAnalytics(an as AdminAnalytics);
+    } catch (e) {
+      console.error("Admin fetch error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [token, user]);
 
   const toggleUser = async (userId: number, isActive: boolean) => {
@@ -136,6 +158,12 @@ export default function AdminPage() {
               style={{ padding: "8px 24px", borderRadius: 10, border: "none", background: activeTab === "activity" ? "#6C63FF" : "transparent", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
             >
               Activity
+            </button>
+            <button 
+              onClick={() => setActiveTab("analytics")}
+              style={{ padding: "8px 24px", borderRadius: 10, border: "none", background: activeTab === "analytics" ? "#6C63FF" : "transparent", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            >
+              Analytics
             </button>
           </div>
         </div>
@@ -258,9 +286,18 @@ export default function AdminPage() {
               </table>
             </div>
           </>
-        ) : (
+        ) : activeTab === "activity" ? (
           <>
-            <h2 style={{ fontSize: 19, fontWeight: 700, fontFamily: "var(--font-outfit)", marginBottom: 20 }}>Live Usage Telemetry ({activity.length})</h2>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <h2 style={{ fontSize: 19, fontWeight: 700, fontFamily: "var(--font-outfit)", margin: 0 }}>Live Usage Telemetry ({activity.length})</h2>
+              <motion.button 
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                onClick={() => fetchData()}
+                style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+              >
+                <span>🔄</span> Refresh
+              </motion.button>
+            </div>
             <div className="glass-card" style={{ overflow: "hidden", padding: 0, background: "rgba(255,255,255,0.015)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
@@ -281,16 +318,25 @@ export default function AdminPage() {
                         <div style={{ color: "var(--brand-secondary)", fontSize: 12, fontWeight: 600 }}>{a.user_email}</div>
                       </td>
                       <td style={{ padding: "16px 20px" }}>
-                        <span className="badge badge-purple" style={{ fontSize: 11, display: "inline-block" }}>{a.action_type.replace(/_/g, " ").toUpperCase()}</span>
+                        <span className={`badge ${
+                          a.action_type.includes("login") ? "badge-green" : 
+                          a.action_type.includes("register") ? "badge-pink" : 
+                          a.action_type.includes("message") ? "badge-purple" : 
+                          "badge-blue"
+                        }`} style={{ fontSize: 10, display: "inline-block", padding: "2px 8px" }}>
+                          {a.action_type.replace(/_/g, " ").toUpperCase()}
+                        </span>
                       </td>
                       <td style={{ padding: "16px 20px", maxWidth: 280 }}>
                         <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.title || "No Title Logged"}</div>
                         {a.metadata && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{a.metadata}</div>}
                       </td>
                       <td style={{ padding: "16px 20px" }}>
-                        <span style={{ color: a.xp > 0 ? "#10B981" : "var(--text-muted)", fontWeight: 800, fontSize: 13 }}>
-                          {a.xp > 0 ? `+${a.xp} XP` : "—"}
-                        </span>
+                        {a.xp > 0 ? (
+                          <span style={{ color: "#10B981", fontWeight: 800, fontSize: 13 }}>+{a.xp} XP</span>
+                        ) : (
+                          <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>System</span>
+                        )}
                       </td>
                       <td style={{ padding: "16px 20px", fontSize: 12, color: "var(--text-muted)" }}>
                         {new Date(a.created_at).toLocaleString()}
@@ -301,6 +347,77 @@ export default function AdminPage() {
               </table>
             </div>
           </>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 24 }}>
+            <div className="glass-card" style={{ padding: 24, height: 400 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>User Growth (14 Days)</h3>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={analytics?.growth || []}>
+                  <defs>
+                    <linearGradient id="colorSignups" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" hide />
+                  <Tooltip 
+                    contentStyle={{ background: "rgba(10,10,20,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
+                    itemStyle={{ color: "#8B5CF6" }}
+                  />
+                  <Area type="monotone" dataKey="signups" stroke="#8B5CF6" fillOpacity={1} fill="url(#colorSignups)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="glass-card" style={{ padding: 24, height: 400 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Platform pulse (14 Days)</h3>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics?.growth || []}>
+                  <XAxis dataKey="date" hide />
+                  <Tooltip 
+                    contentStyle={{ background: "rgba(10,10,20,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
+                    itemStyle={{ color: "#10B981" }}
+                  />
+                  <Bar dataKey="actions" fill="#10B981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="glass-card" style={{ padding: 24, height: 360, gridColumn: "span 2" }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>User Segmentation</h3>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around" }}>
+                <div style={{ width: 250, height: 250 }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={analytics?.segmentation || []}
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {(analytics?.segmentation || []).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ background: "rgba(10,10,20,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {analytics?.segmentation.map(s => (
+                    <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 12, height: 12, borderRadius: "50%", background: s.color }} />
+                      <span style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</span>
+                      <span style={{ fontSize: 14, color: "var(--text-muted)" }}>{s.value} users</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

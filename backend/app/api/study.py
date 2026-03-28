@@ -7,6 +7,7 @@ from datetime import datetime
 from app.core.database import get_session
 from app.api.auth import get_current_user
 from app.models.models import User, StudyRoom, StudyRoomMessage
+from app.api.activity import log_activity_internal
 
 router = APIRouter()
 
@@ -61,6 +62,11 @@ def create_room(
     session.add(room)
     session.commit()
     session.refresh(room)
+
+    # ── 🏗️ Log Activity ──────────────────────────────────────────
+    log_activity_internal(current_user, session, "message_sent", f"Created study room: {room.name}")
+    session.commit()
+    # ─────────────────────────────────────────────────────────────
     return {
         "id": room.id,
         "name": room.name,
@@ -77,9 +83,13 @@ def join_room(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    room = session.get(StudyRoom, room_id)
     if not room:
         raise HTTPException(404, "Room not found")
+
+    # ── 🤝 Log Activity ──────────────────────────────────────────
+    log_activity_internal(current_user, session, "message_sent", f"Joined study room: {room.name}")
+    session.commit()
+    # ─────────────────────────────────────────────────────────────
     return {"room_id": room_id, "status": "joined", "room_name": room.name}
 
 
@@ -136,6 +146,11 @@ def send_message(
     session.add(msg)
     session.commit()
     session.refresh(msg)
+
+    # ── 💬 Log Activity ──────────────────────────────────────────
+    log_activity_internal(current_user, session, "message_sent", f"Sent message in room: {room.name}")
+    session.commit()
+    # ─────────────────────────────────────────────────────────────
     return {
         "id": msg.id,
         "user_name": msg.user_name,
