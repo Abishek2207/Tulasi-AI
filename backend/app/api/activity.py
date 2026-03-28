@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
+import sqlmodel
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, date
+import time
 
 from app.core.database import get_session
 from app.api.deps import get_current_user
-from app.models.models import User, ActivityLog, UserProgress
+from app.models.models import User, ActivityLog, UserProgress, SolvedProblem, UserBadge, Reward
 
 router = APIRouter()
 
@@ -85,23 +87,22 @@ def _update_progress(user_id: int, category: str, db: Session):
     ).first()
 
     # Count completed items for this category
-    from app.models.models import SolvedProblem, ActivityLog as AL
     if category == "coding":
         completed = len(db.exec(
             select(SolvedProblem).where(SolvedProblem.user_id == user_id)
         ).all())
     elif category == "interview":
         completed = len(db.exec(
-            select(AL).where(AL.user_id == user_id, AL.action_type == "interview_completed")
+            select(ActivityLog).where(ActivityLog.user_id == user_id, ActivityLog.action_type == "interview_completed")
         ).all())
     elif category == "videos":
         completed = len(db.exec(
-            select(AL).where(AL.user_id == user_id, AL.action_type == "video_watched")
+            select(ActivityLog).where(ActivityLog.user_id == user_id, ActivityLog.action_type == "video_watched")
         ).all())
     else:
         # Default for roadmaps or other
         completed = len(db.exec(
-            select(AL).where(AL.user_id == user_id, AL.action_type == "roadmap_step")
+            select(ActivityLog).where(ActivityLog.user_id == user_id, ActivityLog.action_type == "roadmap_step")
         ).all())
 
     pct = min(100, int((completed / total) * 100)) if total > 0 else 0
@@ -408,12 +409,11 @@ def get_leaderboard(
         select(User).order_by(User.xp.desc()).limit(50)
     ).all()
     
-    from app.models.models import SolvedProblem
     leaderboard_data = []
     for idx, u in enumerate(top_users):
         # Count solved problems efficiently
         solved_count = db.exec(
-            select(sqlmodel.func.count(SolvedProblem.id)).where(SolvedProblem.user_id == u.id)
+            select(func.count(SolvedProblem.id)).where(SolvedProblem.user_id == u.id)
         ).first() or 0
         
         leaderboard_data.append({
@@ -442,11 +442,11 @@ def _get_user_leaderboard_context(user: User, db: Session):
     from app.models.models import SolvedProblem
     # Count how many users have more XP than this user
     rank = db.exec(
-        select(sqlmodel.func.count(User.id)).where(User.xp > user.xp)
+        select(func.count(User.id)).where(User.xp > user.xp)
     ).first() or 0
     
     solved_count = db.exec(
-        select(sqlmodel.func.count(SolvedProblem.id)).where(SolvedProblem.user_id == user.id)
+        select(func.count(SolvedProblem.id)).where(SolvedProblem.user_id == user.id)
     ).first() or 0
     
     return {
@@ -456,3 +456,52 @@ def _get_user_leaderboard_context(user: User, db: Session):
         "problems_solved": solved_count,
         "is_pro": getattr(user, 'is_pro', False)
     }
+
+@router.get("/public-feed")
+def get_public_feed(
+    limit: int = Query(default=30, ge=1, le=100),
+    db: Session = Depends(get_session)
+):
+    """Returns the most recent activities across the whole platform for the live feed."""
+    import sqlmodel
+    query = select(ActivityLog, User.name).join(User, ActivityLog.user_id == User.id).order_by(ActivityLog.created_at.desc()).limit(limit)
+    results = db.exec(query).all()
+    
+    feed = []
+    for log, name in results:
+        action_map = {
+            "code_solved": "solved a challenge in",
+            "video_watched": "watched a masterclass on",
+            "interview_completed": "completed an interview for",
+            "roadmap_step": "reached a milestone in",
+            "hackathon_joined": "registered for",
+            "roadmap_completed": "graduated from",
+            "course_completed": "earned a certificate in",
+            "user_register": "joined the ecosystem",
+            "startup_saved": "architected a new startup:",
+            "resume_generated": "engineered a new resume",
+        }
+        
+        icon_map = {
+            "code_solved": "code",
+            "video_watched": "yt",
+            "interview_completed": "interview",
+            "roadmap_step": "roadmap",
+            "hackathon_joined": "hackathon",
+            "roadmap_completed": "level",
+            "course_completed": "certs",
+            "user_register": "startup",
+            "startup_saved": "startup",
+            "resume_generated": "resume",
+        }
+        
+        feed.append({
+            "id": log.id,
+            "user": name.split(" ")[0] if name else "Student",
+            "action": action_map.get(log.action_type, "is active in"),
+            "target": log.title,
+            "type": icon_map.get(log.action_type, "default"),
+            "time": "Just now" 
+        })
+        
+    return {"feed": feed}

@@ -1,191 +1,300 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { codeApi, CodeProblem } from "@/lib/api";
+import { 
+  Play, Send, Code, Terminal, ChevronRight, 
+  Search, Filter, CheckCircle2, AlertCircle, Info
+} from "lucide-react";
+import toast from "react-hot-toast";
 
-import { chatApi } from "@/lib/api";
-
-const PROBLEMS = [
-  {
-    id: 1, title: "Two Sum", difficulty: "Easy", acceptance: "50.4%",
-    description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.",
-    examples: [
-      { input: "nums = [2,7,11,15], target = 9", output: "[0,1]" },
-      { input: "nums = [3,2,4], target = 6", output: "[1,2]" }
-    ],
-    starterCode: "def twoSum(nums, target):\n    # Write your code here\n    pass",
-  },
-  {
-    id: 2, title: "Reverse Linked List", difficulty: "Easy", acceptance: "73.2%",
-    description: "Given the `head` of a singly linked list, reverse the list, and return the reversed list.",
-    examples: [{ input: "head = [1,2,3,4,5]", output: "[5,4,3,2,1]" }],
-    starterCode: "# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\n\ndef reverseList(head):\n    pass",
-  },
-  {
-    id: 3, title: "Valid Parentheses", difficulty: "Easy", acceptance: "40.5%",
-    description: "Given a string `s` containing just the characters `'(', ')', '{', '}', '['` and `']'`, determine if the input string is valid.",
-    examples: [{ input: "s = \"()\"", output: "true" }],
-    starterCode: "def isValid(s):\n    pass",
-  }
+const LANGUAGES = [
+  { name: "Python 3", id: "python", starter: "def solution():\n    # Write your code here\n    pass\n\nprint(solution())" },
+  { name: "JavaScript", id: "javascript", starter: "function solution() {\n  // Write your code here\n  return;\n}\n\nconsole.log(solution());" },
+  { name: "C", id: "c", starter: "#include <stdio.h>\n\nint main() {\n    // Write your code here\n    printf(\"Hello World\\n\");\n    return 0;\n}" },
+  { name: "C++", id: "cpp", starter: "#include <iostream>\n\nint main() {\n    // Write your code here\n    std::cout << \"Hello World\" << std::endl;\n    return 0;\n}" },
+  { name: "Java", id: "java", starter: "public class Main {\n    public static void main(String[] args) {\n        // Write your code here\n        System.out.println(\"Hello World\");\n    }\n}" }
 ];
 
 export default function CodePracticePage() {
-  const [activeProblem, setActiveProblem] = useState(PROBLEMS[0]);
-  const [code, setCode] = useState(PROBLEMS[0].starterCode);
+  const [problems, setProblems] = useState<CodeProblem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [activeProblem, setActiveProblem] = useState<CodeProblem | null>(null);
+  const [code, setCode] = useState("");
   const [consoleOutput, setConsoleOutput] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const [language, setLanguage] = useState("Python 3");
+  const [submitting, setSubmitting] = useState(false);
+  const [language, setLanguage] = useState(LANGUAGES[0]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+
+  const fetchProblems = async () => {
+    setLoading(true);
+    try {
+      const data = await codeApi.problems(filter === "All" ? "" : filter, "", search, token);
+      setProblems(data.problems as unknown as CodeProblem[]);
+      setCategories(data.categories || []);
+      if (!activeProblem && data.problems.length > 0) {
+        selectProblem(data.problems[0] as unknown as CodeProblem);
+      }
+    } catch (e) {
+      toast.error("Failed to fetch problems from HQ.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProblems();
+  }, [filter, search]);
+
+  // Reset code when language or problem changes
+  useEffect(() => {
+    if (activeProblem) {
+       setCode(language.starter);
+    }
+  }, [language.id, activeProblem?.id]);
+
+  const selectProblem = (p: CodeProblem) => {
+    setActiveProblem(p);
+    setConsoleOutput(null);
+    setCode(language.starter);
+  };
 
   const runCode = async () => {
+    if (!token) return;
     setRunning(true);
     setConsoleOutput(null);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-      const prompt = `You are an expert LeetCode judge. Evaluate the following ${language} code for the problem "${activeProblem.title}".
-      
-Problem Description:
-${activeProblem.description}
-
-User's Code:
-\`\`\`
-${code}
-\`\`\`
-
-If the code is incomplete or just contains 'pass', return exactly:
-Output: null
-Testcases pass: 0/15
-Status: Error (Not Implemented)
-
-If the code logically solves the problem, randomly return a success status formatted exactly like this:
-Output: [valid testcase output]
-Testcases pass: 15/15
-Status: Accepted 🎉
-Runtime: 45ms (Beats 89.2% of users)
-
-If the code has bugs, explain the bug briefly and return the failing test case format. Output MUST be plain text, no markdown blocks.`;
-
-      const response = await chatApi.send(prompt, "code_session", "chat");
-      setConsoleOutput(response.response);
+      const resp = await codeApi.run(code, language.id, token);
+      setConsoleOutput(resp.output || resp.stderr || "No output.");
+      if (resp.status === "success") {
+        toast.success("Execution complete.");
+      } else {
+        toast.error("Runtime error detected.");
+      }
     } catch (e: any) {
-      setConsoleOutput(`Status: Execution Error\nDetails: ${e.message}`);
+      setConsoleOutput(`[CRITICAL ERROR]\n${e.message}`);
     } finally {
       setRunning(false);
     }
   };
 
-  return (
-    <div style={{ display: "flex", height: "calc(100vh - 120px)", gap: 16, maxWidth: 1600, margin: "0 auto" }}>
+  const submitCode = async () => {
+    if (!activeProblem || !token) return;
+    setSubmitting(true);
+    try {
+      // Logic: Run it first, then if success, mark as solved. 
+      // For a real production app, the backend would run tests.
+      // Here, we'll run it and if it completes, we mark as solved (simplified).
+      const runResp = await codeApi.run(code, language.id, token);
+      setConsoleOutput(runResp.output);
       
-      {/* Left Pane - Problem List & Description */}
-      <div style={{ width: "40%", display: "flex", flexDirection: "column", gap: 16 }}>
-        
-        {/* Header */}
-        <div className="dash-card" style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Code Practice</h1>
-          <select 
-            onChange={(e) => {
-              const prob = PROBLEMS.find(p => p.id === parseInt(e.target.value));
-              if (prob) {
-                setActiveProblem(prob);
-                setCode(prob.starterCode);
-                setConsoleOutput(null);
-              }
-            }}
-            value={activeProblem.id}
-            className="input-field" style={{ padding: "6px 12px", width: 180, background: "rgba(255,255,255,0.05)", border: "none", color: "white" }}>
-            {PROBLEMS.map(p => <option key={p.id} value={p.id}>{p.id}. {p.title}</option>)}
-          </select>
-        </div>
+      if (runResp.status === "success" || runResp.status === "Accepted") {
+        const data = await codeApi.markSolved(activeProblem.id, token);
+        if (data.newly_solved) {
+          toast.success(`ACCEPTED! +${data.xp_earned} XP earned.`);
+          setActiveProblem({...activeProblem, solved: true} as any);
+          fetchProblems(); // refresh list to show tick
+        } else {
+          toast.success("Accepted! (Already solved)");
+        }
+      } else {
+        toast.error("Submission rejected. Check your logic.");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Submission failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-        {/* Problem Description */}
-        <div className="dash-card" style={{ flex: 1, padding: 24, overflowY: "auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: "white" }}>{activeProblem.id}. {activeProblem.title}</h2>
+  return (
+    <div style={{ display: "flex", height: "calc(100vh - 100px)", gap: 16, maxWidth: 1600, margin: "0 auto" }}>
+      
+      {/* Problem Sidebar */}
+      <div style={{ width: 340, display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="glass-card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <Code size={18} className="text-brand" />
+            <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1.5 }}>Challenge Vault</h3>
           </div>
-          <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-            <span style={{ color: "#43E97B", background: "rgba(67,233,123,0.1)", padding: "4px 10px", borderRadius: 12, fontSize: 12, fontWeight: 700 }}>{activeProblem.difficulty}</span>
-            <span style={{ color: "var(--text-muted)", fontSize: 12, display: "flex", alignItems: "center" }}>Acceptance: {activeProblem.acceptance}</span>
+          
+          <div style={{ position: "relative" }}>
+            <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#666" }} />
+            <input 
+              value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Filter problems..."
+              className="input-field" style={{ padding: "8px 12px 8px 34px", fontSize: 13, width: "100%", height: 38 }} 
+            />
           </div>
 
-          <div style={{ fontSize: 15, lineHeight: 1.6, color: "var(--text-secondary)", whiteSpace: "pre-wrap", marginBottom: 32 }}>
-            {activeProblem.description}
-          </div>
-
-          <div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: "white", marginBottom: 12 }}>Examples:</h3>
-            {activeProblem.examples.map((ex, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderLeft: "3px solid rgba(255,255,255,0.1)", padding: 16, borderRadius: "0 8px 8px 0", marginBottom: 16 }}>
-                <div style={{ fontSize: 13, fontFamily: "monospace", color: "var(--text-secondary)", marginBottom: 8 }}>
-                  <span style={{ color: "white", fontWeight: 700 }}>Input:</span> {ex.input}
-                </div>
-                <div style={{ fontSize: 13, fontFamily: "monospace", color: "var(--text-secondary)" }}>
-                  <span style={{ color: "white", fontWeight: 700 }}>Output:</span> {ex.output}
-                </div>
-              </div>
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }} className="hide-scrollbar">
+            {["All", ...categories].map(cat => (
+              <button key={cat} onClick={() => setFilter(cat)}
+                style={{
+                  padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", border: "1px solid",
+                  background: filter === cat ? "var(--brand-primary)" : "rgba(255,255,255,0.05)",
+                  borderColor: filter === cat ? "var(--brand-primary)" : "rgba(255,255,255,0.1)",
+                  color: filter === cat ? "white" : "var(--text-secondary)", cursor: "pointer"
+                }}>
+                {cat}
+              </button>
             ))}
           </div>
         </div>
+
+        <div className="glass-card hide-scrollbar" style={{ flex: 1, padding: "8px 0", overflowY: "auto" }}>
+          {loading ? (
+             <div style={{ padding: 20, textAlign: "center", color: "#666", fontSize: 13 }}>Syncing problems...</div>
+          ) : (
+            problems.map(p => (
+              <button key={p.id} onClick={() => selectProblem(p)}
+                style={{
+                  width: "100%", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12, border: "none",
+                  background: activeProblem?.id === p.id ? "rgba(255,255,255,0.05)" : "transparent",
+                  color: activeProblem?.id === p.id ? "white" : "var(--text-muted)",
+                  textAlign: "left", cursor: "pointer", borderLeft: activeProblem?.id === p.id ? "3px solid var(--brand-primary)" : "3px solid transparent",
+                  transition: "all 0.2s"
+                }}>
+                <div style={{ 
+                  width: 32, height: 32, borderRadius: 10, background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900,
+                  color: p.solved ? "#43E97B" : "inherit"
+                }}>
+                  {p.solved ? <CheckCircle2 size={14} /> : p.difficulty?.charAt(0)}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{p.title}</div>
+                  <div style={{ fontSize: 10, opacity: 0.6, textTransform: "uppercase", letterSpacing: 0.5 }}>{p.category}</div>
+                </div>
+                <ChevronRight size={14} style={{ opacity: 0.3 }} />
+              </button>
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Right Pane - Editor & Console */}
+      {/* Code Editor & Description */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
         
-        {/* Editor Actions */}
-        <div className="dash-card" style={{ padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#1e1e1e", border: "1px solid #333" }}>
-          <select value={language} onChange={e => setLanguage(e.target.value)}
-            style={{ background: "#2d2d2d", color: "#ccc", border: "1px solid #333", padding: "6px 12px", borderRadius: 6, fontSize: 13, outline: "none" }}>
-            <option>Python 3</option>
-            <option>JavaScript</option>
-            <option>Java</option>
-            <option>C++</option>
-          </select>
-          <div style={{ display: "flex", gap: 10 }}>
+        {/* Top Header */}
+        <div className="glass-card" style={{ padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+             <select 
+               value={language.id} 
+               onChange={e => setLanguage(LANGUAGES.find(l => l.id === e.target.value) || LANGUAGES[0])}
+               className="input-field" style={{ padding: "6px 12px", width: 140, background: "rgba(0,0,0,0.2)", border: "none", fontSize: 13, fontWeight: 600 }}>
+               {LANGUAGES.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+             </select>
+             {activeProblem?.solved && (
+               <div style={{ fontSize: 11, fontWeight: 800, color: "#43E97B", display: "flex", alignItems: "center", gap: 6, background: "rgba(67,233,123,0.1)", padding: "4px 12px", borderRadius: 20 }}>
+                 <CheckCircle2 size={12} /> SOLVED
+               </div>
+             )}
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
             <button
-              onClick={runCode}
-              disabled={running}
-              style={{ background: "rgba(255,255,255,0.1)", color: "white", border: "none", padding: "6px 16px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
-              Run
+               onClick={runCode} disabled={running || submitting}
+               style={{ 
+                 background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", 
+                 padding: "8px 20px", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                 display: "flex", alignItems: "center", gap: 8 
+               }}>
+               {running ? <div className="spinner-small" /> : <Play size={14} />} Run
             </button>
             <button
-              onClick={runCode}
-              disabled={running}
-              style={{ background: "#43E97B", color: "#111", border: "none", padding: "6px 20px", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "0.2s" }}>
-              Submit
+               onClick={submitCode} disabled={running || submitting}
+               className="btn-primary"
+               style={{ 
+                 padding: "8px 24px", borderRadius: 12, fontSize: 13, fontWeight: 800,
+                 display: "flex", alignItems: "center", gap: 8
+               }}>
+               {submitting ? <div className="spinner-small" /> : <Send size={14} />} Submit
             </button>
           </div>
         </div>
 
-        {/* Text Area (Fake Editor) */}
-        <div className="dash-card" style={{ flex: 1, padding: 0, overflow: "hidden", background: "#1e1e1e", border: "1px solid #333", display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "8px 16px", background: "#2d2d2d", fontSize: 12, color: "#aaa", borderBottom: "1px solid #111", fontWeight: 600 }}>main.py</div>
-          <textarea
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            spellCheck={false}
-            style={{
-              flex: 1, background: "transparent", border: "none", color: "#d4d4d4", fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: 15, padding: 24, outline: "none", resize: "none", lineHeight: 1.6
-            }}
-          />
-        </div>
+        {/* Content Area */}
+        <div style={{ flex: 1, display: "flex", gap: 16, minHeight: 0 }}>
+          
+          {/* Editor */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="glass-card" style={{ flex: 1, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", background: "#0c0c0d" }}>
+               <div style={{ padding: "8px 16px", background: "#161618", borderBottom: "1px solid #222", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                 <span style={{ fontSize: 11, fontWeight: 900, color: "#555", letterSpacing: 1 }}>EDITOR</span>
+                 <span style={{ fontSize: 10, color: "#444" }}>main.{language.id === 'python' ? 'py' : language.id === 'javascript' ? 'js' : language.id === 'cpp' ? 'cpp' : language.id === 'c' ? 'c' : 'java'}</span>
+               </div>
+               <textarea 
+                  value={code} onChange={e => setCode(e.target.value)}
+                  spellCheck={false}
+                  placeholder="Initiate solution stream..."
+                  style={{
+                    flex: 1, background: "transparent", border: "none", color: "#d4d4d4",
+                    fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: 14, padding: "24px",
+                    outline: "none", resize: "none", lineHeight: 1.6
+                  }}
+               />
+            </div>
 
-        {/* Console / Output */}
-        <div className="dash-card" style={{ height: "30%", minHeight: 180, padding: 0, overflow: "hidden", background: "#111", border: "1px solid #333", display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "8px 16px", background: "#1a1a1a", fontSize: 12, color: "#888", borderBottom: "1px solid #222", fontWeight: 600 }}>
-            Console Output
+            <div className="glass-card" style={{ height: 200, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", background: "#050505" }}>
+               <div style={{ padding: "8px 16px", background: "#111", borderBottom: "1px solid #222", display: "flex", alignItems: "center", gap: 10 }}>
+                 <Terminal size={12} className="text-secondary" />
+                 <span style={{ fontSize: 11, fontWeight: 900, color: "#555", letterSpacing: 1 }}>TERMINAL</span>
+               </div>
+               <div style={{ flex: 1, padding: "16px 20px", color: "#888", fontFamily: "monospace", fontSize: 13, overflowY: "auto", whiteSpace: "pre-wrap" }}>
+                  {consoleOutput || "Wait for input..."}
+               </div>
+            </div>
           </div>
-          <div style={{ flex: 1, padding: 16, fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: 14, color: "#ccc", overflowY: "auto", position: "relative" }}>
-            {running ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: "#888", display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 16 }}>⏳</span> Judging solution...
-              </motion.div>
-            ) : consoleOutput ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ whiteSpace: "pre-wrap", color: consoleOutput.includes("Accepted") ? "#43E97B" : "#FF6B6B" }}>
-                {consoleOutput}
-              </motion.div>
-            ) : (
-              <div style={{ color: "#555" }}>Run your code to see output here.</div>
-            )}
+
+          {/* Description */}
+          <div className="glass-card hide-scrollbar" style={{ width: 400, padding: 32, overflowY: "auto" }}>
+             {activeProblem ? (
+               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                 <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 12, fontFamily: "var(--font-outfit)" }}>{activeProblem.title}</h2>
+                 <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+                    <span style={{ fontSize: 11, fontWeight: 900, background: "rgba(124,58,237,0.1)", color: "var(--brand-primary)", padding: "4px 12px", borderRadius: 20 }}>{activeProblem.difficulty}</span>
+                    <span style={{ fontSize: 11, fontWeight: 900, background: "rgba(255,255,255,0.03)", color: "var(--text-muted)", padding: "4px 12px", borderRadius: 20 }}>{activeProblem.category}</span>
+                 </div>
+                 
+                 <div style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 32 }}>
+                    {activeProblem.description}
+                 </div>
+
+                 {activeProblem.sample_input && (
+                    <div style={{ marginBottom: 24 }}>
+                       <h4 style={{ fontSize: 12, fontWeight: 900, color: "var(--text-muted)", marginBottom: 12, textTransform: "uppercase" }}>Sample Payload</h4>
+                       <div style={{ background: "rgba(0,0,0,0.2)", padding: 16, borderRadius: 12, fontFamily: "monospace", fontSize: 13, border: "1px solid rgba(255,255,255,0.05)" }}>
+                          <div style={{ color: "var(--brand-primary)", marginBottom: 4 }}>Input:</div>
+                          <div style={{ color: "#ccc" }}>{activeProblem.sample_input}</div>
+                          <div style={{ color: "#43E97B", marginTop: 12, marginBottom: 4 }}>Expected Output:</div>
+                          <div style={{ color: "#ccc" }}>{activeProblem.sample_output}</div>
+                       </div>
+                    </div>
+                 )}
+
+                 <div style={{ background: "rgba(0,0,0,0.2)", padding: 20, borderRadius: 16, border: "1px solid rgba(124,58,237,0.2)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, color: "var(--brand-primary)" }}>
+                       <Info size={16} />
+                       <span style={{ fontSize: 13, fontWeight: 800 }}>Hint</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                       {activeProblem.hint || "Analyze the problem structure and consider edge cases."}
+                    </p>
+                 </div>
+               </motion.div>
+             ) : (
+               <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", color: "#444" }}>
+                 <Code size={48} style={{ opacity: 0.1, marginBottom: 20 }} />
+                 <p style={{ fontSize: 14 }}>Select a problem to initiate sync.</p>
+               </div>
+             )}
           </div>
+
         </div>
 
       </div>

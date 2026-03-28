@@ -3,15 +3,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { chatApi, ChatMsg } from "@/lib/api";
-import { Bot, Send, Trash2, RotateCcw, Sparkles, Globe, Mic } from "lucide-react";
+import { chatApi, ChatMsg, ChatSession } from "@/lib/api";
+import { Bot, Send, Trash2, Plus, MessageSquare, Menu, X, Clock, History, BrainCircuit } from "lucide-react";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { VoiceButton } from "@/components/VoiceButton";
-
 
 const GREETING = "Hello! I'm Tulasi AI, your personal learning companion. Ask me anything — coding concepts, career advice, interview prep, or system design.";
 
@@ -37,7 +36,6 @@ function TypingDots() {
   );
 }
 
-
 function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
   const isUser = msg.role === "user";
   return (
@@ -52,7 +50,6 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
         alignItems: "flex-end",
       }}
     >
-      {/* Avatar */}
       <div style={{
         width: 34, height: 34, borderRadius: 10, flexShrink: 0,
         background: isUser ? "rgba(255,255,255,0.08)" : "var(--gradient-primary)",
@@ -63,21 +60,16 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
         {isUser ? "U" : <Bot size={18} />}
       </div>
 
-      {/* Bubble */}
       <div style={{
         maxWidth: isUser ? "75%" : "85%",
         padding: "14px 18px",
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-        background: isUser
-          ? "linear-gradient(135deg, #007AFF, #0056D6)"
-          : "transparent",
+        background: isUser ? "linear-gradient(135deg, #007AFF, #0056D6)" : "rgba(255,255,255,0.03)",
         border: isUser ? "none" : "1px solid rgba(255,255,255,0.07)",
         color: "var(--text-primary)",
         fontSize: 14.5,
         lineHeight: 1.7,
-        boxShadow: isUser
-          ? "0 4px 18px rgba(0,122,255,0.25)"
-          : "none",
+        boxShadow: isUser ? "0 4px 18px rgba(0,122,255,0.25)" : "none",
         wordBreak: "break-word",
       }}>
         {isUser ? (
@@ -121,45 +113,74 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
         )}
       </div>
     </motion.div>
-
   );
 }
 
 export default function ChatPage() {
   const { data: session } = useSession();
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: "assistant", content: GREETING },
-  ]);
+  const [messages, setMessages] = useState<ChatMsg[]>([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { 
-    setMounted(true); 
-    const savedSession = localStorage.getItem("tulasi_chat_session");
-    if (savedSession) {
-      setSessionId(savedSession);
-      chatApi.history(savedSession).then(res => {
-        if (res.messages && res.messages.length > 0) {
-          setMessages([{ role: "assistant", content: GREETING }, ...res.messages]);
-        }
-      }).catch(() => {
-        // If history fails or session doesn't exist, reset it
-        localStorage.removeItem("tulasi_chat_session");
-        setSessionId("");
-      });
+  const fetchSessions = async () => {
+    try {
+      const res = await chatApi.sessions();
+      setSessions(res.sessions || []);
+    } catch {}
+  };
+
+  const loadHistory = async (id: string) => {
+    setLoading(true);
+    setSessionId(id);
+    localStorage.setItem("tulasi_chat_session", id);
+    try {
+      const res = await chatApi.history(id);
+      setMessages([{ role: "assistant", content: GREETING }, ...res.messages]);
+      if (window.innerWidth < 768) setIsSidebarOpen(false);
+    } catch {
+      toast.error("Failed to load chat history");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const startNewChat = () => {
+    setMessages([{ role: "assistant", content: GREETING }]);
+    setSessionId("");
+    localStorage.removeItem("tulasi_chat_session");
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  };
+
+  const deleteSession = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await chatApi.clearHistory(id);
+      setSessions(prev => prev.filter(s => s.session_id !== id));
+      if (sessionId === id) startNewChat();
+      toast.success("Chat deleted");
+    } catch {
+      toast.error("Failed to delete chat");
+    }
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    fetchSessions();
+    const saved = localStorage.getItem("tulasi_chat_session");
+    if (saved) loadHistory(saved);
   }, []);
 
-  // Auto-scroll on new messages
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
@@ -167,288 +188,155 @@ export default function ChatPage() {
     }
   }, [input]);
 
-  const getToken = useCallback((): string | null => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("token");
-  }, []);
-
-  const hasToken = mounted && !!getToken();
-
   const handleSend = async () => {
-    const token = getToken();
     const text = input.trim();
-
     if (!text || loading) return;
-    if (!token) {
-      toast.error("Please log in to use the AI chat.");
-      return;
-    }
-
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
+    setMessages(prev => [...prev, { role: "user", content: text }]);
     setInput("");
     setLoading(true);
-
     try {
       const res = await chatApi.send(text, sessionId || undefined);
       if (res.session_id && !sessionId) {
         setSessionId(res.session_id);
         localStorage.setItem("tulasi_chat_session", res.session_id);
+        fetchSessions();
       }
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: res.response || "No response received." },
-      ]);
-    } catch (err: unknown) {
-      const error = err as Error;
-      const errMsg = error.message || "Failed to connect to backend.";
-      toast.error(errMsg.length > 80 ? "Connection failed. Please try again." : errMsg);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "I'm having trouble connecting right now. Please try again in a moment.",
-        },
-      ]);
+      setMessages(prev => [...prev, { role: "assistant", content: res.response || "..." }]);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send message");
     } finally {
       setLoading(false);
-      inputRef.current?.focus();
     }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const clearChat = () => {
-    if (sessionId) chatApi.clearHistory(sessionId).catch(()=>null);
-    setMessages([{ role: "assistant", content: GREETING }]);
-    setSessionId("");
-    localStorage.removeItem("tulasi_chat_session");
-  };
-
-  const handleQuickPrompt = (value: string) => {
-    setInput(value);
-    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   if (!mounted) return null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)", maxWidth: 900, margin: "0 auto", width: "100%", padding: "0 12px" }}>
+    <div style={{ display: "flex", height: "calc(100vh - 120px)", gap: 20, position: "relative" }}>
       
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 0 16px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 12,
-            background: "var(--gradient-primary)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 0 20px rgba(124,58,237,0.35)",
-            flexShrink: 0
-          }}>
-            <Bot size={20} color="white" />
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <h1 style={{ fontSize: "clamp(16px, 4vw, 20px)", fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>
-                Tulasi AI Chat
-              </h1>
-              <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(16,185,129,0.3)" }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#10B981", textTransform: "uppercase", letterSpacing: 0.5 }}>Online</span>
-              </div>
+      {/* Main Chat Area */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
+        
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="mobile-only"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 8, cursor: "pointer", color: "white" }}
+            >
+              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 20px rgba(124,58,237,0.35)", flexShrink: 0 }}>
+              <Bot size={20} color="white" />
             </div>
-            <p className="desktop-only" style={{ fontSize: 13, color: "var(--text-muted)", margin: "4px 0 0 0" }}>
-              Powered by Gemini — Architecting your intelligence
-            </p>
+            <div>
+              <h1 style={{ fontSize: 20, fontWeight: 900, margin: 0, letterSpacing: "-0.5px" }}>Tulasi AI Chat</h1>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>Active Session: {sessionId ? "History Loaded" : "New Chat"}</p>
+            </div>
+          </div>
+          <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(16,185,129,0.15)", padding: "4px 12px", borderRadius: 20, border: "1px solid rgba(16,185,129,0.3)" }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+            <span style={{ fontSize: 11, fontWeight: 800, color: "#10B981", textTransform: "uppercase", letterSpacing: 0.5 }}>Neural Link Established</span>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={clearChat}
-            title="Clear chat"
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 14px", borderRadius: 10,
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
-              color: "var(--text-secondary)", cursor: "pointer", fontSize: 13, fontWeight: 500,
-            }}
-          >
-            <Trash2 size={14} /> Clear
+        {/* Messages */}
+        <div style={{
+          flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 16, padding: "20px",
+          background: "rgba(255,255,255,0.015)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.06)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.2)", marginBottom: 16, scrollbarWidth: "none"
+        }}>
+          {messages.map((msg, i) => <MessageBubble key={i} msg={msg} index={i} />)}
+          {loading && (
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: "var(--gradient-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Bot size={16} color="white" />
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "18px 18px 18px 4px" }}><TypingDots /></div>
+            </div>
+          )}
+          <div ref={endRef} />
+        </div>
+
+        {/* Input */}
+        <div style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "10px 16px", display: "flex", gap: 12, alignItems: "flex-end", backdropFilter: "blur(12px)" }}>
+          <textarea
+            ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+            placeholder="Ask anything..." rows={1}
+            style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: 15, padding: "8px 0", resize: "none", maxHeight: 150 }}
+          />
+          <VoiceButton onTranscript={(text) => setInput(p => p + " " + text)} />
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleSend} disabled={loading || !input.trim()} style={{ width: 40, height: 40, borderRadius: 12, background: input.trim() ? "var(--gradient-primary)" : "rgba(255,255,255,0.05)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <Send size={18} color="white" />
           </motion.button>
         </div>
-      </motion.div>
-
-      {/* Chat window */}
-      <div style={{
-        flex: 1, overflowY: "auto", display: "flex", flexDirection: "column",
-        gap: 16, padding: "16px",
-        background: "rgba(255,255,255,0.015)",
-        borderRadius: 20,
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
-        marginBottom: 12,
-        scrollbarWidth: "none",
-      }}>
-        <AnimatePresence>
-          {messages.map((msg, i) => (
-            <MessageBubble key={i} msg={msg} index={i} />
-          ))}
-        </AnimatePresence>
-
-        {loading && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            style={{
-              display: "flex", gap: 12, alignItems: "flex-end",
-            }}
-          >
-            <div style={{
-              width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-              background: "var(--gradient-primary)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 16px rgba(124,58,237,0.3)",
-            }}>
-              <Bot size={16} color="white" />
-            </div>
-            <div style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: "18px 18px 18px 4px",
-            }}>
-              <TypingDots />
-            </div>
-          </motion.div>
-        )}
-        <div ref={endRef} />
       </div>
 
-      {/* Quick Prompts */}
-      {messages.length <= 1 && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          style={{ display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none" }}
-        >
-          {QUICK_PROMPTS.map((p) => (
-            <button
-              key={p.label}
-              onClick={() => handleQuickPrompt(p.value)}
-              disabled={!hasToken}
-              style={{
-                flexShrink: 0,
-                padding: "6px 12px", borderRadius: 18, fontSize: 11, fontWeight: 600,
-                cursor: hasToken ? "pointer" : "not-allowed",
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                color: "var(--text-secondary)", transition: "all 0.2s", opacity: hasToken ? 1 : 0.4,
-              }}
-              onMouseEnter={e => { if (hasToken) { e.currentTarget.style.background = "rgba(124,58,237,0.15)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)"; e.currentTarget.style.color = "#A78BFA"; }}}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-            >
-              {p.label}
-            </button>
-          ))}
-        </motion.div>
-      )}
-
-      {/* Input area */}
+      {/* History Sidebar - Right Side */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        animate={{ x: isSidebarOpen || (typeof window !== "undefined" && window.innerWidth >= 768) ? 0 : 320 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
         style={{
-          background: "rgba(255,255,255,0.035)",
-          border: `1px solid ${!hasToken ? "rgba(255,100,100,0.2)" : "rgba(255,255,255,0.08)"}`,
-          borderRadius: 18, padding: "8px 12px",
-          display: "flex", gap: 10, alignItems: "flex-end",
-          backdropFilter: "blur(12px)",
-          position: "relative"
+          width: 280, height: "100%", background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20,
+          display: "flex", flexDirection: "column", overflow: "hidden",
+          position: (typeof window !== "undefined" && window.innerWidth < 768) ? "absolute" : "relative",
+          right: 0, zIndex: 50, backdropFilter: "blur(20px)",
         }}
       >
-        {!hasToken && (
-          <div style={{
-            position: "absolute", bottom: "100%", left: 0, right: 0,
-            textAlign: "center", color: "#F43F5E", fontSize: 11,
-            padding: "4px", marginBottom: 2,
+        <div style={{ padding: 16, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <button onClick={startNewChat} style={{
+            width: "100%", padding: "12px", borderRadius: 12, background: "rgba(139,92,246,0.1)",
+            color: "#A78BFA", border: "1px solid rgba(139,92,246,0.3)",
+            display: "flex", alignItems: "center", gap: 10, fontWeight: 700, cursor: "pointer",
+            transition: "all 0.2s"
           }}>
-            Please sign in to start chatting
+            <Plus size={18} /> New Chat
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 16, paddingLeft: 8 }}>
+            Recent Conversations
           </div>
-        )}
+          {sessions.length === 0 ? (
+            <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+              No history yet
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {sessions.map(s => (
+                <div
+                  key={s.session_id}
+                  onClick={() => loadHistory(s.session_id)}
+                  style={{
+                    padding: "10px 12px", borderRadius: 10, cursor: "pointer",
+                    background: sessionId === s.session_id ? "rgba(139,92,246,0.15)" : "transparent",
+                    border: "1px solid", borderColor: sessionId === s.session_id ? "rgba(139,92,246,0.3)" : "transparent",
+                    display: "flex", alignItems: "center", gap: 10, transition: "0.2s"
+                  }}
+                >
+                  <MessageSquare size={16} color={sessionId === s.session_id ? "#A78BFA" : "var(--text-muted)"} />
+                  <div style={{ flex: 1, overflow: "hidden" }}>
+                    <div style={{ fontSize: 13, fontWeight: sessionId === s.session_id ? 700 : 500, color: sessionId === s.session_id ? "white" : "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {s.title}
+                    </div>
+                  </div>
+                  <Trash2 size={14} className="delete-btn" onClick={(e) => deleteSession(e, s.session_id)} style={{ color: "var(--text-muted)", opacity: 0.5 }} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={hasToken ? "Ask me anything..." : "Please log in..."}
-          disabled={!hasToken || loading}
-          rows={1}
-          style={{
-            flex: 1,
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            color: "var(--text-primary)",
-            fontSize: 14,
-            fontFamily: "var(--font-inter)",
-            resize: "none",
-            lineHeight: 1.5,
-            padding: "8px 0",
-            opacity: !hasToken ? 0.5 : 1,
-            minHeight: 36,
-            maxHeight: 160,
-          }}
-        />
-
-        {/* Voice Input Button */}
-        {hasToken && (
-          <VoiceButton
-            onTranscript={(text) => {
-              setInput((prev) => (prev ? prev + " " + text : text));
-              setTimeout(() => inputRef.current?.focus(), 50);
-            }}
-          />
-        )}
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleSend}
-          disabled={!hasToken || loading || !input.trim()}
-          style={{
-            width: 38, height: 38, borderRadius: 12, flexShrink: 0,
-            background: input.trim() && hasToken && !loading
-              ? "var(--gradient-primary)"
-              : "rgba(255,255,255,0.06)",
-            border: "none",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: input.trim() && hasToken && !loading ? "pointer" : "not-allowed",
-            transition: "all 0.2s",
-          }}
-        >
-          <Send size={16} color={input.trim() && hasToken && !loading ? "white" : "rgba(255,255,255,0.25)"} />
-        </motion.button>
+        <div style={{ padding: 16, borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.01)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "var(--text-muted)" }}>
+            <Clock size={14} /> 2026 Season
+          </div>
+        </div>
       </motion.div>
-
-      <p style={{ textAlign: "center", fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
-        Tulasi AI can make mistakes. Verify important information independently.
-      </p>
     </div>
   );
 }

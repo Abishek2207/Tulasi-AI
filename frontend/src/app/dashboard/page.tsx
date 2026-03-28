@@ -4,8 +4,10 @@ import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 import confetti from "canvas-confetti";
-import { activityApi } from "@/lib/api";
+import { activityApi, authApi } from "@/lib/api";
 import {
   MessageSquare, Code, Target, Map, FileText,
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award,
@@ -22,12 +24,18 @@ const ActivityMap = dynamic(() => import("@/components/dashboard/ActivityMap").t
   loading: () => <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 13 }}>Loading Real-time Activity...</div>
 });
 
-function LiveActivityFeed() {
-  const [activities, setActivities] = useState<any[]>([]);
+function LiveActivityFeed({ activities: initialActivities }: { activities: any[] }) {
+  const [activities, setActivities] = useState<any[]>(initialActivities);
 
   useEffect(() => {
+    setActivities(initialActivities);
+  }, [initialActivities]);
+
+  useEffect(() => {
+    if (activities.length === 0) return;
     const cycle = setInterval(() => {
       setActivities((prev) => {
+        if (prev.length === 0) return prev;
         const newArr = [...prev];
         const last = newArr.pop();
         if (last) newArr.unshift({ ...last, time: "Just now" });
@@ -35,7 +43,7 @@ function LiveActivityFeed() {
       });
     }, 4500);
     return () => clearInterval(cycle);
-  }, []);
+  }, [activities.length]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -129,23 +137,43 @@ interface DashboardStats {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Student";
-  const [stats, setStats] = useState<DashboardStats>({
-    streak: 0, xp: 0, level: 1, problems_solved: 0,
-    videos_watched: 0, hackathons_joined: 0, invite_code: ""
+  const statsFromRedux = useSelector((s: RootState) => s.ui.stats);
+  const [localStats, setLocalStats] = useState<Partial<DashboardStats>>({
+    problems_solved: 0, videos_watched: 0, hackathons_joined: 0, invite_code: ""
   });
+  
+  // Merge Redux stats with local dashboard-specific stats
+  const stats: DashboardStats = {
+    ...statsFromRedux,
+    level: Number(statsFromRedux.level) || 1, // Fallback to 1 if level name is used
+    problems_solved: localStats.problems_solved || 0,
+    videos_watched: localStats.videos_watched || 0,
+    hackathons_joined: localStats.hackathons_joined || 0,
+    invite_code: localStats.invite_code || "TULASI25"
+  };
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [feed, setFeed] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-        const [statsData, lbData, meData] = await Promise.all([
+        const [statsData, lbData, meData, feedData] = await Promise.all([
           activityApi.getStats(token).catch(() => null),
           activityApi.getLeaderboard(token).catch(() => null),
-          fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => ({}))
+          authApi.me(token).catch(() => ({})),
+          activityApi.getPublicFeed().catch(() => null)
         ]);
-        if (statsData) setStats(prev => ({ ...prev, ...(statsData as any), invite_code: meData?.invite_code || "TULASI25" }));
+        if (statsData) {
+          setLocalStats({
+            problems_solved: (statsData as any).problems_solved || 0,
+            videos_watched: (statsData as any).videos_watched || 0,
+            hackathons_joined: (statsData as any).hackathons_joined || 0,
+            invite_code: (meData as any)?.invite_code || "TULASI25"
+          });
+        }
         if (lbData?.leaderboard) setLeaderboard(lbData.leaderboard.slice(0, 5));
+        if (feedData?.feed) setFeed(feedData.feed);
 
         // Gamification: Trigger confetti on load if level > 1
         if (statsData && (statsData as any).level > 1) {
@@ -282,7 +310,7 @@ export default function DashboardPage() {
         {/* Global Live Feed */}
         <motion.div variants={item} style={{ gridColumn: "span 1" }}>
           <TiltCard intensity={3} style={{ height: "100%" }}>
-            <LiveActivityFeed />
+            <LiveActivityFeed activities={feed} />
           </TiltCard>
         </motion.div>
 

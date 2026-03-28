@@ -30,7 +30,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
 }
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [activeTab, setActiveTab] = useState<"overview" | "settings">("overview");
   const [stats, setStats] = useState<UserStats | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,6 +51,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       await profileApi.update(formData, token);
+      await update({ name: formData.name }); // Refresh next-auth session
       setSaveStatus("success");
     } catch { setSaveStatus("error"); }
     setSaving(false);
