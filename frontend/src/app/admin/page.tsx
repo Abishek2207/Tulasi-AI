@@ -83,11 +83,11 @@ export default function AdminPage() {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/activity`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/analytics`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
       ]);
-      setStats(s as AdminStats); 
-      setUsers((u.users as AdminUser[]) || []); 
-      setReviews((r.reviews as AdminReview[]) || []);
-      setActivity((a.activity as AdminActivity[]) || []);
-      setAnalytics(an as AdminAnalytics);
+      if (s && !s.error) setStats(s as AdminStats); 
+      if (u && u.users) setUsers((u.users as AdminUser[]) || []); 
+      if (r && r.reviews) setReviews((r.reviews as AdminReview[]) || []);
+      if (a && a.activity) setActivity((a.activity as AdminActivity[]) || []);
+      if (an && an.growth && an.segmentation) setAnalytics(an as AdminAnalytics);
     } catch (e) {
       console.error("Admin fetch error:", e);
     } finally {
@@ -407,7 +407,7 @@ export default function AdminPage() {
                   </ResponsiveContainer>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {analytics?.segmentation.map(s => (
+                  {analytics?.segmentation?.map(s => (
                     <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 12, height: 12, borderRadius: "50%", background: s.color }} />
                       <span style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</span>
