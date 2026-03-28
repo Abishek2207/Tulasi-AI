@@ -90,35 +90,47 @@ def submit_review(
     current_user: User = Depends(get_current_user)
 ):
     """Submit a new review, associated with the current user."""
-    from sqlalchemy import text
-    from datetime import datetime as dt
-    now = dt.utcnow()
-    # Use raw SQL insert to avoid ORM schema mismatch issues
     try:
-        # First try inserting WITH user_id (for when schema migration is done)
-        session.execute(text(
-            "INSERT INTO review (user_id, name, role, review, rating, created_at) VALUES (:u, :n, :rol, :rev, :rat, :c)"
-        ), {"u": current_user.id, "n": data.name, "rol": data.role, "rev": data.review, "rat": data.rating, "c": now})
-    except Exception:
-        # Fallback for old schema before user_id column existed
-        session.execute(text(
-            "INSERT INTO review (name, role, review, rating, created_at) VALUES (:n, :rol, :rev, :rat, :c)"
-        ), {"n": data.name, "rol": data.role, "rev": data.review, "rat": data.rating, "c": now})
-        
-    try:
-        session.commit()
-        # Fetch the inserted row
-        result = session.execute(text(
-            "SELECT id, name, role, review, rating, created_at FROM review WHERE name=:name AND rating=:rating ORDER BY created_at DESC LIMIT 1"
-        ), {"name": data.name, "rating": data.rating})
-        row = result.mappings().first()
-        return ReviewOut(
-            id=row["id"],
-            name=row["name"],
-            role=row.get("role"),
-            review=row["review"],
-            rating=row["rating"],
-            created_at=row["created_at"] if isinstance(row["created_at"], dt) else dt.fromisoformat(str(row["created_at"])),
+        # Create new Review instance using the ORM for maximum stability
+        new_review = Review(
+            user_id=current_user.id,
+            name=data.name,
+            role=data.role,
+            review=data.review,
+            rating=data.rating,
+            created_at=datetime.utcnow()
         )
+        
+        session.add(new_review)
+        session.commit()
+        session.refresh(new_review)
+        
+        return new_review
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Submit error: {str(e)}")
+        # Rollback in case of error to prevent session corruption
+        session.rollback()
+        
+        # Log the error for admin (though here we just return it)
+        print(f"❌ Review Submission Failed: {e}")
+        
+        # Check if it's a structural issue (missing column)
+        if "user_id" in str(e).lower():
+            # Emergency fallback: Try without user_id if migration failed
+            try:
+                new_review_legacy = Review(
+                    name=data.name,
+                    role=data.role,
+                    review=data.review,
+                    rating=data.rating,
+                    created_at=datetime.utcnow()
+                )
+                session.add(new_review_legacy)
+                session.commit()
+                session.refresh(new_review_legacy)
+                return new_review_legacy
+            except Exception as e2:
+                session.rollback()
+                raise HTTPException(status_code=500, detail=f"Database structure error: {str(e2)}")
+        
+        raise HTTPException(status_code=500, detail=f"Review failed: {str(e)}")
