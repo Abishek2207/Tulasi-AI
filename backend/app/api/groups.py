@@ -13,6 +13,7 @@ from datetime import datetime
 from app.core.database import get_session
 from app.api.auth import get_current_user
 from app.models.models import User, Group, GroupMember, GroupMessage
+from app.api.activity import log_activity_internal
 
 router = APIRouter()
 
@@ -76,6 +77,11 @@ def create_group(
     db.add(member)
     db.commit()
 
+    # ── 🏗️ Log Activity ──────────────────────────────────────────
+    log_activity_internal(current_user, db, "message_sent", f"Created group: {group.name}")
+    db.commit()
+    # ─────────────────────────────────────────────────────────────
+
     return {
         "id": group.id,
         "name": group.name,
@@ -117,6 +123,11 @@ def join_group(
     )
     db.add(member)
     db.commit()
+
+    # ── 🤝 Log Activity ──────────────────────────────────────────
+    log_activity_internal(current_user, db, "message_sent", f"Joined group: {group.name}")
+    db.commit()
+    # ─────────────────────────────────────────────────────────────
 
     return {
         "message": f"Joined group '{group.name}' successfully!",
@@ -224,6 +235,11 @@ def send_message(
     db.add(msg)
     db.commit()
     db.refresh(msg)
+
+    # ── 💬 Log Activity ──────────────────────────────────────────
+    log_activity_internal(current_user, db, "message_sent", f"Sent message in group: {member.group_id}")
+    db.commit()
+    # ─────────────────────────────────────────────────────────────
 
     return {
         "id": msg.id,

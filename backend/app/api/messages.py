@@ -7,6 +7,7 @@ import asyncio
 
 from app.models.models import User, DirectMessage
 from app.api.auth import get_current_user, get_user_from_token
+from app.api.activity import log_activity_internal
 from app.core.database import get_session
 
 router = APIRouter()
@@ -38,6 +39,11 @@ async def send_message(req: MessageSend, current_user: User = Depends(get_curren
     db.add(msg)
     db.commit()
     db.refresh(msg)
+    
+    # ── 💬 Log Activity ───────────────────────────────────────────
+    log_activity_internal(current_user, db, "message_sent", f"Sent a direct message")
+    db.commit()
+    # ─────────────────────────────────────────────────────────────
     
     # Notify recipient via WebSocket if online
     msg_data = {

@@ -30,6 +30,14 @@ ACTION_ICONS = {
     "hackathon_joined": "🏆",
     "roadmap_completed": "🎉",
     "course_completed": "📜",
+    "user_login": "🔑",
+    "user_register": "👋",
+    "profile_update": "👤",
+    "message_sent": "💬",
+    "resume_generated": "📄",
+    "startup_saved": "💡",
+    "roadmap_generated": "🗺️",
+    "hackathon_bookmarked": "🔖",
 }
 
 
@@ -117,10 +125,7 @@ def _update_progress(user_id: int, category: str, db: Session):
 
 def log_activity_internal(user: User, db: Session, action_type: str, title: str, metadata_json: Optional[str] = None):
     """Centralized logic to log activity, update XP, streak, and progress."""
-    if action_type not in XP_TABLE:
-        return None
-
-    xp = XP_TABLE[action_type]
+    xp = XP_TABLE.get(action_type, 0)
 
     log_entry = ActivityLog(
         user_id=user.id,
@@ -131,13 +136,13 @@ def log_activity_internal(user: User, db: Session, action_type: str, title: str,
     )
     db.add(log_entry)
 
-    # Update XP on user
-    user.xp = (user.xp or 0) + xp
+    if xp > 0:
+        # Update XP on user
+        user.xp = (user.xp or 0) + xp
+        # Level up every 500 XP
+        user.level = max(1, (user.xp or 0) // 500 + 1)
 
-    # Level up every 500 XP
-    user.level = max(1, (user.xp or 0) // 500 + 1)
-
-    # Update streak
+    # Update streak for any activity
     _update_streak(user, db)
 
     # Automatic Progress Update

@@ -4,7 +4,9 @@ from typing import List
 from app.core.ai_router import get_ai_response
 from app.core.database import get_session
 from sqlmodel import Session
-from app.models.models import SavedResume
+from app.models.models import SavedResume, User
+from app.api.auth import get_user_from_token
+from app.api.activity import log_activity_internal
 import json
 import re
 
@@ -17,7 +19,7 @@ class ImproveRequest(BaseModel):
     document_type: str = "Resume"
 
 @router.post("/improve")
-def improve_resume(data: ImproveRequest):
+def improve_resume(data: ImproveRequest, db: Session = Depends(get_session)):
     if not data.resume_text.strip() or not data.job_description.strip():
         raise HTTPException(status_code=400, detail="Missing resume text or job description")
 
@@ -118,6 +120,16 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
                     )
                     db.add(saved)
                     db.commit()
+
+                    # ── 📄 Log Activity ──────────────────────────────────────────
+                    # Since user_id is hardcoded to 1 for now, we'll log for user 1
+                    # In a real app we'd get current_user from Depends(get_current_user)
+                    from app.models.models import User
+                    user = db.get(User, 1)
+                    if user:
+                        log_activity_internal(user, db, "resume_generated", f"Generated {data.document_type} (score: {result.get('ats_score', 0)})")
+                        db.commit()
+                    # ─────────────────────────────────────────────────────────────
             except Exception as e:
                 print(f"Failed to save resume to history: {e}")
 
