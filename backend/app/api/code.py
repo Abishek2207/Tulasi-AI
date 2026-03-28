@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 from typing import Optional, List
 
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.models import User, SolvedProblem, ActivityLog, UserProgress
 from app.core.database import get_session
 from app.api.activity import log_activity_internal

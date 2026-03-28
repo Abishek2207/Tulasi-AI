@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 from app.core.config import settings
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.models import User, ActivityLog, UserProgress
 from app.core.database import get_session
 from app.core.rate_limit import limiter

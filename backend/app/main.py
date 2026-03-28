@@ -68,6 +68,14 @@ async def lifespan(app: FastAPI):
                 try:
                     conn.execute(text('ALTER TABLE "user" ADD COLUMN pro_expiry_date VARCHAR;'))
                 except: pass
+                try:
+                    conn.execute(text('ALTER TABLE "user" ADD COLUMN is_pro BOOLEAN DEFAULT 0;'))
+                except: pass
+
+                # Step 4: Handle GroupMessage migrations
+                try:
+                    conn.execute(text('ALTER TABLE groupmessage ADD COLUMN is_encrypted BOOLEAN DEFAULT 0;'))
+                except: pass
             # ───────────────────────────────────────────────────
             
         except Exception as e:

@@ -9,8 +9,7 @@ import toast from "react-hot-toast";
 
 // ─── API Base URL ─────────────────────────────────────────────────────────────
 // Env var is baked in at Vercel build time; fallback ensures local dev always works.
-// We strip any trailing slashes or /api suffixes to prevent /api/api duplication.
-export const API_URL = "https://tulasi-ai-wgwl.onrender.com";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
 
 /** Centralised debug logger — always prints in dev; silent in prod unless token missing */
 function log(label: string, data?: unknown) {
@@ -341,7 +340,10 @@ export const healthCheck = () =>
 
 export const activityApi = {
   getStats: (token: string) => request<Record<string, unknown>>("/api/activity/stats", {}, token),
-  getLeaderboard: (token?: string) => request<{ leaderboard: LeaderboardUser[] }>("/api/activity/leaderboard", {}, token),
+  getLeaderboard: (token?: string) => request<{ 
+    leaderboard: LeaderboardUser[]; 
+    user_context?: { rank: number; xp: number; streak: number; problems_solved: number; is_pro: boolean } 
+  }>("/api/activity/leaderboard", {}, token),
   getAnalytics: (token: string) => request<{ time_series: AnalyticsSeries[], total_period_xp: number, total_period_problems: number }>("/api/activity/analytics", {}, token)
 };
 
@@ -538,7 +540,11 @@ export interface LeaderboardUser {
   rank: number;
   name: string;
   xp: number;
-  [key: string]: string | number | boolean | undefined | null;
+  level: number;
+  avatar?: string;
+  streak: number;
+  problems_solved: number;
+  is_pro: boolean;
 }
 
 export interface Reward {

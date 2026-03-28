@@ -23,7 +23,8 @@ interface LocalLeaderboardUser {
 
 export default function LeaderboardPage() {
   const { data: session } = useSession();
-  const [leaderboard, setLeaderboard] = useState<LocalLeaderboardUser[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [userContext, setUserContext] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const currentUserId = (session?.user as any)?.id;
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
@@ -32,7 +33,8 @@ export default function LeaderboardPage() {
     const fetchLeaderboard = async () => {
       try {
         const data = await activityApi.getLeaderboard(token);
-        setLeaderboard((data.leaderboard as unknown as LocalLeaderboardUser[]) || []);
+        setLeaderboard(data.leaderboard || []);
+        setUserContext(data.user_context || null);
       } catch (e) {}
       setLoading(false);
     };
@@ -183,12 +185,17 @@ export default function LeaderboardPage() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 800, fontSize: 16, color: isCurrentUser ? "white" : "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
                       {user.name}
+                      {user.is_pro && <span style={{ fontSize: 9, background: "rgba(167,139,250,0.15)", color: "#A78BFA", padding: "2px 8px", borderRadius: 4, fontWeight: 900, letterSpacing: 1 }}>PRO 👑</span>}
                       {isCurrentUser && <span style={{ fontSize: 10, background: "var(--brand-primary)", color: "white", padding: "2px 10px", borderRadius: 20, fontWeight: 700, textTransform: "uppercase" }}>YOU</span>}
                     </div>
-                    <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2, display: "flex", alignItems: "center", gap: 12 }}>
                       <span style={{ color: "var(--text-muted)" }}>Level {user.level}</span>
-                      <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--text-muted)" }} />
-                      <span style={{ color: "var(--brand-green)" }}>Elite status</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#F59E0B", fontWeight: 700 }}>
+                         <span>🔥 {user.streak}d streak</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#10B981", fontWeight: 700 }}>
+                         <span>💻 {user.problems_solved} solved</span>
+                      </div>
                     </div>
                   </div>
 
@@ -204,6 +211,43 @@ export default function LeaderboardPage() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* User Spotlight (Sticky) */}
+      {userContext && (
+        <motion.div 
+           initial={{ y: 100 }} animate={{ y: 0 }}
+           className="glass-card"
+           style={{ 
+             position: "sticky", bottom: 20, left: 0, right: 0, zIndex: 10,
+             background: "rgba(15,15,30,0.95)", backdropFilter: "blur(20px)",
+             border: "1px solid var(--brand-primary)", padding: "16px 24px",
+             borderRadius: 24, marginTop: 40, boxShadow: "0 -20px 40px rgba(0,0,0,0.5)"
+           }}
+        >
+           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+             <div style={{ width: 44, height: 44, borderRadius: 14, background: "var(--brand-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 18 }}>
+                #{userContext.rank}
+             </div>
+             <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 2 }}>Your Global Status</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                   <div style={{ fontSize: 18, fontWeight: 800, color: "white" }}>{userContext.xp.toLocaleString()} <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Total XP</span></div>
+                   <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
+                   <div style={{ fontSize: 14, fontWeight: 700, color: "#F59E0B" }}>🔥 {userContext.streak} Day Continuous Sync</div>
+                   <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
+                   <div style={{ fontSize: 14, fontWeight: 700, color: "#10B981" }}>💻 {userContext.problems_solved} Logic Gates Breached</div>
+                </div>
+             </div>
+             <motion.button 
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                className="btn-primary" style={{ padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 800 }}
+             >
+                Share Status 🚀
+             </motion.button>
+           </div>
+        </motion.div>
+      )}
+
       <style>{`
         .spinner { border-top-color: var(--brand-primary); }
         @keyframes spin { 100% { transform: rotate(360deg); } }

@@ -8,7 +8,7 @@ import shutil
 import uuid
 
 from app.core.database import get_session
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.models import User, Certificate, UserProgress
 
 router = APIRouter()

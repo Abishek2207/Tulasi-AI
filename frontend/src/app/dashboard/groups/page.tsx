@@ -37,7 +37,8 @@ export default function GroupsPage() {
   const [copied, setCopied] = useState(false);
   const [inVoice, setInVoice] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+  const [typingUsers, setTypingUsers] = useState<Record<number, string | null>>({});
 
   useEffect(() => {
     if (token) fetchGroups();
@@ -69,10 +70,52 @@ export default function GroupsPage() {
   useEffect(() => {
     if (activeGroup && token) {
       fetchMessages();
-      pollRef.current = setInterval(fetchMessages, 3000);
+      
+      // 🔌 Real-time WebSocket connection
+      const isProd = window.location.hostname !== "localhost";
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const baseUrl = isProd ? "tulasi-ai-backend.render.com" : "localhost:10000";
+      const wsUrl = `${wsProtocol}//${baseUrl}/ws/groups/${activeGroup.id}?token=${token}`;
+      
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+
+      socket.onmessage = async (event) => {
+        const data = json_safe_parse(event.data);
+        if (!data) return;
+
+        if (data.type === "message") {
+          let content = data.content;
+          if (data.is_encrypted && content.includes(":")) {
+            content = await decryptMessage(content, activeGroup.join_code);
+          }
+          const newMsg = { ...data, content, is_encrypted: false };
+          setMessages(prev => {
+            // Avoid duplicates if REST and WS overlap
+            if (prev.find(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+        } else if (data.type === "typing") {
+          setTypingUsers(prev => ({
+            ...prev,
+            [data.user_id]: data.is_typing ? data.user_name : null
+          }));
+        }
+      };
+
+      socket.onclose = () => {
+        console.log("🔌 Group WS Disconnected. Polling fallback... (Actually, let's keep it real-time)");
+      };
+
+      return () => {
+        socket.close();
+      };
     }
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [activeGroup]);
+  }, [activeGroup, token]);
+
+  function json_safe_parse(str: string) {
+    try { return JSON.parse(str); } catch (e) { return null; }
+  }
 
   const fetchGroups = async () => {
     try {
@@ -94,22 +137,41 @@ export default function GroupsPage() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !activeGroup  || sending) return;
+    if (!input.trim() || !activeGroup || sending) return;
     const plaintext = input.trim();
     setInput("");
-    setSending(true);
+    
+    // Notify "stopped typing" immediately after sending
+    socketRef.current?.send(JSON.stringify({ type: "typing", is_typing: false }));
+
     try {
       // 🔐 End-to-End Encrypt before sending
       const { ciphertext, iv } = await encryptMessage(plaintext, activeGroup.join_code);
       const payload = `${iv}:${ciphertext}`;
       
-      const msg = await groupApi.sendMessage(activeGroup.id, payload, token, true);
-      // Immediately display our own plaintext to avoid a visual flash
-      msg.content = plaintext; 
-      msg.is_encrypted = false;
-      setMessages(prev => [...prev, msg as unknown as DisplayMessage]);
+      // Send via WebSocket for instant propagation
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({
+          type: "message",
+          content: payload,
+          is_encrypted: true
+        }));
+      } else {
+        // Fallback to REST if socket is down
+        await groupApi.sendMessage(activeGroup.id, payload, token, true);
+        fetchMessages();
+      }
     } catch (e) {}
-    setSending(false);
+  };
+
+  const handleTyping = (val: string) => {
+    setInput(val);
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        type: "typing",
+        is_typing: val.length > 0
+      }));
+    }
   };
 
   const handleCreate = async () => {
@@ -287,14 +349,27 @@ export default function GroupsPage() {
                     </motion.div>
                   );
                 })}
+                {messages.length > 0 && Object.values(typingUsers).filter(Boolean).length > 0 && (
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", paddingLeft: 4 }}>
+                    <div style={{ display: "flex", gap: 3 }}>
+                      {[0, 1, 2].map(i => (
+                        <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+                          style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--brand-primary)" }}
+                        />
+                      ))}
+                    </div>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" }}>
+                      {Object.values(typingUsers).filter(Boolean).join(", ")} is typing...
+                    </span>
+                  </div>
+                )}
               </AnimatePresence>
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <form onSubmit={sendMessage} style={{ padding: "16px 24px", borderTop: "1px solid var(--border)", display: "flex", gap: 12 }}>
               <input
-                type="text" value={input} onChange={e => setInput(e.target.value)}
+                type="text" value={input} onChange={e => handleTyping(e.target.value)}
                 placeholder={`Message #${activeGroup.name}...`}
                 className="input-field"
                 style={{ flex: 1, borderRadius: 24, padding: "12px 20px" }}

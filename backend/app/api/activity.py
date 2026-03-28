@@ -5,7 +5,7 @@ from typing import Optional
 from datetime import datetime, date
 
 from app.core.database import get_session
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.models import User, ActivityLog, UserProgress
 
 router = APIRouter()
@@ -390,28 +390,69 @@ _LEADERBOARD_CACHE = None
 _LEADERBOARD_CACHE_TIME = 0
 
 @router.get("/leaderboard")
-def get_leaderboard(db: Session = Depends(get_session)):
-    """Returns the top 10 players globally sorted by XP. (Cached 60s)"""
+def get_leaderboard(
+    db: Session = Depends(get_session),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Returns the top 50 players globally sorted by XP. (Cached 60s)"""
     global _LEADERBOARD_CACHE, _LEADERBOARD_CACHE_TIME
     
     if _LEADERBOARD_CACHE and (time.time() - _LEADERBOARD_CACHE_TIME) < 60:
-        return _LEADERBOARD_CACHE
+        data = _LEADERBOARD_CACHE.copy()
+        if current_user:
+            data["user_context"] = _get_user_leaderboard_context(current_user, db)
+        return data
 
+    # Get top 50
     top_users = db.exec(
-        select(User).order_by(User.xp.desc()).limit(10)
+        select(User).order_by(User.xp.desc()).limit(50)
     ).all()
     
-    _LEADERBOARD_CACHE = {
-        "leaderboard": [
-            {
-                "id": u.id,
-                "name": u.name,
-                "xp": u.xp or 0,
-                "level": u.level or 1,
-                "avatar": u.avatar
-            } for u in top_users
-        ]
-    }
+    from app.models.models import SolvedProblem
+    leaderboard_data = []
+    for idx, u in enumerate(top_users):
+        # Count solved problems efficiently
+        solved_count = db.exec(
+            select(sqlmodel.func.count(SolvedProblem.id)).where(SolvedProblem.user_id == u.id)
+        ).first() or 0
+        
+        leaderboard_data.append({
+            "id": u.id,
+            "rank": idx + 1,
+            "name": u.name,
+            "xp": u.xp or 0,
+            "level": u.level or 1,
+            "avatar": u.avatar,
+            "streak": u.streak or 0,
+            "problems_solved": solved_count,
+            "is_pro": getattr(u, 'is_pro', False)
+        })
+    
+    _LEADERBOARD_CACHE = { "leaderboard": leaderboard_data }
     _LEADERBOARD_CACHE_TIME = time.time()
     
-    return _LEADERBOARD_CACHE
+    data = _LEADERBOARD_CACHE.copy()
+    if current_user:
+        data["user_context"] = _get_user_leaderboard_context(current_user, db)
+    return data
+
+
+def _get_user_leaderboard_context(user: User, db: Session):
+    """Helper to find a specific user's rank/stats in the global leaderboard."""
+    from app.models.models import SolvedProblem
+    # Count how many users have more XP than this user
+    rank = db.exec(
+        select(sqlmodel.func.count(User.id)).where(User.xp > user.xp)
+    ).first() or 0
+    
+    solved_count = db.exec(
+        select(sqlmodel.func.count(SolvedProblem.id)).where(SolvedProblem.user_id == user.id)
+    ).first() or 0
+    
+    return {
+        "rank": rank + 1,
+        "xp": user.xp or 0,
+        "streak": user.streak or 0,
+        "problems_solved": solved_count,
+        "is_pro": getattr(user, 'is_pro', False)
+    }

@@ -76,20 +76,39 @@ export default function AdminPage() {
   const fetchData = async () => {
     if (!token || user?.role !== "admin") return;
     try {
+      const fetchWithAuth = (url: string) => 
+        fetch(url, { 
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, 
+          credentials: "include", 
+          mode: "cors" 
+        }).then(async r => {
+          if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+          return r.json();
+        });
+
       const [s, u, r, a, an] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/reviews`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/activity`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/analytics`, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors" }).then(r => r.json()),
+        fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats`),
+        fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`),
+        fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/reviews`),
+        fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/activity`),
+        fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/analytics`),
       ]);
+
       if (s && !s.error) setStats(s as AdminStats); 
       if (u && u.users) setUsers((u.users as AdminUser[]) || []); 
       if (r && r.reviews) setReviews((r.reviews as AdminReview[]) || []);
       if (a && a.activity) setActivity((a.activity as AdminActivity[]) || []);
-      if (an && an.growth && an.segmentation) setAnalytics(an as AdminAnalytics);
+      
+      if (an && !an.error) {
+        setAnalytics(an as AdminAnalytics);
+      } else {
+        // Fallback for analytics if specific error returned
+        console.warn("Analytics error:", an?.error);
+        setAnalytics({ growth: [], segmentation: [] });
+      }
     } catch (e) {
       console.error("Admin fetch error:", e);
+      // Optional: Set some error state to show a "Retry" button
     } finally {
       setLoading(false);
     }

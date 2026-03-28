@@ -80,7 +80,7 @@ def get_reviews(session: Session = Depends(get_session)):
         raise HTTPException(status_code=500, detail=f"DB error: {str(e)}")
 
 
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.models import User
 
 @router.post("", response_model=ReviewOut, status_code=201)
