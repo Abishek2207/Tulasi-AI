@@ -61,6 +61,9 @@ async def lifespan(app: FastAPI):
                     conn.execute(text('ALTER TABLE review ADD COLUMN role VARCHAR;'))
                 except: pass
                 try:
+                    conn.execute(text('ALTER TABLE review ADD COLUMN rating INTEGER;'))
+                except: pass
+                try:
                     conn.execute(text('ALTER TABLE review ADD COLUMN created_at TIMESTAMP;'))
                 except: pass
                 
