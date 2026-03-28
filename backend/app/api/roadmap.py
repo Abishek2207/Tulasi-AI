@@ -7,7 +7,7 @@ from functools import lru_cache
 
 from app.core.config import settings
 from app.core.database import get_session
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.models import User, Roadmap, RoadmapStep, ActivityLog, UserProgress
 from sqlmodel import Session, select
 from app.api.roadmap_data import ROADMAPS

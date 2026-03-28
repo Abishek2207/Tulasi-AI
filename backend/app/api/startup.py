@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import json
 
 from app.core.config import settings
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.models import User, SavedStartupIdea
 from app.api.activity import log_activity_internal
 from app.core.database import get_session

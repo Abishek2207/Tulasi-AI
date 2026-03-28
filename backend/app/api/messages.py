@@ -6,7 +6,7 @@ import json
 import asyncio
 
 from app.models.models import User, DirectMessage
-from app.api.auth import get_current_user, get_user_from_token
+from app.api.deps import get_current_user, get_user_from_token
 from app.api.activity import log_activity_internal
 from app.core.database import get_session
 

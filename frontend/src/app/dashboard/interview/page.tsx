@@ -25,6 +25,21 @@ const INTERVIEW_TYPES = [
   { id: "Coding", icon: <Briefcase size={24} />, desc: "Live walkthrough and debugging" },
 ];
 
+function VoiceWave({ active, color }: { active: boolean; color: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 3, height: 24 }}>
+      {[0.4, 0.7, 1, 0.8, 0.5, 0.9, 0.6].map((h, i) => (
+        <motion.div
+          key={i}
+          animate={active ? { height: [8, 24 * h, 8] } : { height: 8 }}
+          transition={{ repeat: Infinity, duration: 0.5 + i * 0.1, ease: "easeInOut" }}
+          style={{ width: 3, background: color, borderRadius: 2 }}
+        />
+      ))}
+    </div>
+  );
+}
+
 const COMPANIES = [
   "Google", "Amazon", "Meta", "Apple", "Netflix", "Microsoft",
   "Startup", "Any Company", "TCS", "Infosys", "IBM", "Deloitte",
@@ -132,9 +147,9 @@ export default function InterviewPage() {
         setFeedback((data as any).feedback);
         setPhase("feedback");
       } else {
-        setCurrentQuestion(data.next_question || "End of Session");
-        if (data.next_question) setQuestionNum((prev) => prev + 1);
-        else setPhase("feedback");
+        const nextQ = (data as any).question || "End of Session";
+        setCurrentQuestion(nextQ);
+        setQuestionNum((prev) => prev + 1);
       }
     } catch (e: any) {
       setError(e.message || "Error processing response.");
@@ -296,20 +311,18 @@ export default function InterviewPage() {
                 </div>
 
                 <div style={{ textAlign: "left", marginBottom: 40 }}>
-                   <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
                       <div style={{ 
                          width: 48, height: 48, borderRadius: 16, flexShrink: 0,
                          background: isSpeaking ? "#8B5CF6" : "rgba(139,92,246,0.1)", 
                          display: "flex", alignItems: "center", justifyContent: "center",
-                         boxShadow: isSpeaking ? "0 0 20px #8B5CF650" : "none"
+                         position: "relative"
                       }}>
                          <Volume2 size={24} color={isSpeaking ? "white" : "#8B5CF6"} />
                          {isSpeaking && (
-                            <motion.div 
-                               animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                               transition={{ repeat: Infinity, duration: 1 }}
-                               style={{ position: "absolute", width: 48, height: 48, borderRadius: 16, border: "2px solid #8B5CF6" }}
-                            />
+                            <div style={{ position: "absolute", bottom: -12 }}>
+                               <VoiceWave active={true} color="#8B5CF6" />
+                            </div>
                          )}
                       </div>
                       <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>{currentQuestion}</h2>
@@ -337,9 +350,16 @@ export default function InterviewPage() {
                         whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                         onClick={startListening}
                         className={isListening ? "pulse" : ""}
-                        style={{ width: 44, height: 44, borderRadius: 12, background: isListening ? "#F43F5E" : "rgba(139,92,246,0.1)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                        style={{ width: 44, height: 44, borderRadius: 12, background: isListening ? "#F43F5E" : "rgba(139,92,246,0.1)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}
                      >
-                        {isListening ? <MicOff size={20} color="white" /> : <Mic size={20} color="#8B5CF6" />}
+                        {isListening ? (
+                           <>
+                              <MicOff size={20} color="white" />
+                              <div style={{ position: "absolute", bottom: -12 }}>
+                                 <VoiceWave active={true} color="#F43F5E" />
+                              </div>
+                           </>
+                        ) : <Mic size={20} color="#8B5CF6" />}
                      </motion.button>
                   </div>
                 </div>

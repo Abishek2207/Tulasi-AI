@@ -176,8 +176,12 @@ def get_admin_analytics(db: Session = Depends(get_session), admin: User = Depend
         # Helper for SQLite date handling
         def to_day(dt):
             if not dt: return None
+            # If it's already a datetime/date object (e.g. from ORM on Postgres)
             if hasattr(dt, 'strftime'):
                 return dt.strftime("%Y-%m-%d")
+            # If it's a string (e.g. from SQLite)
+            if isinstance(dt, str):
+                return dt.split(" ")[0] # Handles "2024-03-24 15:30:00" -> "2024-03-24"
             return str(dt).split(" ")[0]
 
         # Aggregation mapping
@@ -187,14 +191,20 @@ def get_admin_analytics(db: Session = Depends(get_session), admin: User = Depend
             daily_stats[date_str] = {"date": date_str, "signups": 0, "actions": 0}
             
         for u in users:
-            day = to_day(u.created_at)
-            if day in daily_stats:
-                daily_stats[day]["signups"] += 1
+            try:
+                day = to_day(u.created_at)
+                if day in daily_stats:
+                    daily_stats[day]["signups"] += 1
+            except Exception as e:
+                print(f"User growth aggregation warning: {e}")
                 
         for log in logs:
-            day = to_day(log.created_at)
-            if day in daily_stats:
-                daily_stats[day]["actions"] += 1
+            try:
+                day = to_day(log.created_at)
+                if day in daily_stats:
+                    daily_stats[day]["actions"] += 1
+            except Exception as e:
+                print(f"Log activity aggregation warning: {e}")
                 
         growth_history = [daily_stats[d] for d in sorted(daily_stats.keys())]
         
@@ -208,11 +218,15 @@ def get_admin_analytics(db: Session = Depends(get_session), admin: User = Depend
             "segmentation": [
                 {"name": "Pro 👑", "value": pro_count, "color": "#A78BFA"},
                 {"name": "Free", "value": free_count, "color": "rgba(255,255,255,0.1)"}
-            ]
+            ],
+            "total_users": len(all_users),
+            "pro_percentage": round((pro_count / len(all_users) * 100), 1) if all_users else 0
         }
     except Exception as e:
+        import traceback
         print(f"Analytics aggregation error: {e}")
-        return {"growth": [], "segmentation": [], "error": str(e)}
+        print(traceback.format_exc())
+        return {"growth": [], "segmentation": [], "error": str(e), "success": False}
 
 
 @router.get("/system-sync-emergency-9922")

@@ -121,6 +121,19 @@ export default function StartupLabPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 60 }}>
+      <style>{`
+        @media print {
+          .dash-sidebar, .dash-topbar, .btn-primary, .btn-ghost, .no-print, .no-print * {
+            display: none !important;
+          }
+          body { background: white !important; color: black !important; }
+          .dash-main, .dash-content { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+          .glass-card { background: white !important; border: none !important; box-shadow: none !important; color: black !important; padding: 0 !important; }
+          h1, h2, h3, h4, .gradient-text { background: none !important; -webkit-text-fill-color: black !important; color: black !important; }
+          .prose h2 { page-break-before: always; margin-top: 40px; border-bottom: 2px solid #EEE; padding-bottom: 10px; }
+          .prose h2:first-child { page-break-before: auto; }
+        }
+      `}</style>
       
       {/* Header */}
       <div style={{ marginBottom: 48, textAlign: "left" }}>
@@ -271,7 +284,7 @@ export default function StartupLabPage() {
                     ) : (
                       <div style={{ flex: 1, padding: "16px", borderRadius: 14, background: "rgba(16,185,129,0.1)", color: "#10B981", fontWeight: 900, fontSize: 14, textAlign: "center" }}>✅ ARCHIVED SUCCESSFULLY</div>
                     )}
-                    <button onClick={() => window.print()} className="btn-ghost" style={{ padding: "16px 24px", borderRadius: 14, fontSize: 14, fontWeight: 900 }}>SHARE PITCH →</button>
+                    <button onClick={() => window.print()} className="btn-ghost" style={{ flex: 1, padding: "16px 24px", borderRadius: 14, fontSize: 14, fontWeight: 900 }}>SHARE PITCH →</button>
                   </div>
 
                   {/* Pitch Deck Section */}
@@ -300,9 +313,12 @@ export default function StartupLabPage() {
                         </motion.button>
                      ) : (
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: 40, background: "rgba(0,0,0,0.3)", borderRadius: 24, border: "1px solid rgba(139,92,246,0.2)" }}>
-                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+                           <div className="no-print" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
                               <h3 style={{ fontSize: 14, fontWeight: 900, color: "#A78BFA", letterSpacing: 2 }}>INVESTOR PITCH DECK v1.0</h3>
-                              <button onClick={() => setPitchDeck(null)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✕ CLOSE DECK</button>
+                              <div style={{ display: "flex", gap: 12 }}>
+                                 <button onClick={() => window.print()} style={{ background: "rgba(167,139,250,0.1)", border: "1px solid #A78BFA", color: "#A78BFA", padding: "6px 16px", borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: "pointer" }}>💾 SAVE AS PDF</button>
+                                 <button onClick={() => setPitchDeck(null)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✕ CLOSE</button>
+                              </div>
                            </div>
                            <div className="prose prose-invert max-w-none" style={{ color: "rgba(255,255,255,0.85)", lineHeight: 1.8 }}>
                               <ReactMarkdown>{pitchDeck}</ReactMarkdown>

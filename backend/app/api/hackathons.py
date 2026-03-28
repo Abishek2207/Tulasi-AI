@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from app.core.database import get_session
 from app.models.models import Hackathon, HackathonBookmark
-from app.api.auth import get_current_user, get_admin_user
+from app.api.deps import get_current_user, get_admin_user
 from app.models.models import User
 
 router = APIRouter()
