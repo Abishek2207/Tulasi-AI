@@ -59,10 +59,13 @@ def _update_streak(user: User, db: Session):
 
     yesterday = (date.fromisoformat(last) if last else None)
     from datetime import timedelta
-    if last and (date.today() - date.fromisoformat(last)).days == 1:
-        user.streak = (user.streak or 0) + 1
-    elif not last or (date.today() - date.fromisoformat(last)).days > 1:
-        user.streak = 1  # reset or start
+    try:
+        if last and (date.today() - date.fromisoformat(last)).days == 1:
+            user.streak = (user.streak or 0) + 1
+        elif not last or (date.today() - date.fromisoformat(last)).days > 1:
+            user.streak = 1  # reset or start
+    except ValueError:
+        user.streak = 1 # reset streak if date parsing fails
 
     user.last_activity_date = today
     db.add(user)
@@ -316,7 +319,17 @@ def get_analytics(
     for log in logs:
         if not log.created_at: 
             continue
-        day = log.created_at.strftime("%Y-%m-%d")
+        try:
+            if isinstance(log.created_at, str):
+                from datetime import datetime
+                # Handle possible SQLite string dates gracefully
+                dt = datetime.fromisoformat(log.created_at.replace("Z", "+00:00"))
+                day = dt.strftime("%Y-%m-%d")
+            else:
+                day = log.created_at.strftime("%Y-%m-%d")
+        except Exception:
+            continue # Skip invalid dates gracefully
+            
         if day in daily_stats:
             daily_stats[day]["xp"] = int(daily_stats[day]["xp"]) + (log.xp_earned or 0)
             if log.action_type == "code_solved":

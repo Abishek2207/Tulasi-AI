@@ -314,13 +314,16 @@ function StarRating({ rating, interactive = false, onSet }: { rating: number; in
   );
 }
 
+import { useSession } from "next-auth/react";
+
 // ── Reviews Section ──────────────────────────────────────────────
 function ReviewsSection() {
+  const { data: session } = useSession();
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({ name: "", role: "", review: "", rating: 0 });
+  const [form, setForm] = useState({ role: "", review: "", rating: 0 });
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
@@ -345,19 +348,19 @@ function ReviewsSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
-    if (!form.name.trim()) return setFormError("Name is required.");
+    if (!session?.user?.name) return setFormError("You must be logged in to submit a review.");
     if (!form.review.trim()) return setFormError("Review is required.");
     if (form.rating === 0) return setFormError("Please select a star rating.");
     setSubmitting(true);
     try {
       const newReview = await reviewsApi.submitReview({
-        name: form.name.trim(),
+        name: session.user.name,
         role: form.role.trim() || undefined,
         review: form.review.trim(),
         rating: form.rating,
       });
       setReviews(prev => [newReview, ...prev]);
-      setForm({ name: "", role: "", review: "", rating: 0 });
+      setForm({ role: "", review: "", rating: 0 });
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 4000);
     } catch (err: any) {
@@ -428,14 +431,9 @@ function ReviewsSection() {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {/* Name + Role: columns on desktop, stacked on mobile */}
+              {/* Role */}
               <div className="form-row">
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Name *</label>
-                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your name"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px 16px", color: "white", fontSize: 15, outline: "none", width: "100%", boxSizing: "border-box" }} />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
                   <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Role (optional)</label>
                   <input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. SDE @ Google"
                     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px 16px", color: "white", fontSize: 15, outline: "none", width: "100%", boxSizing: "border-box" }} />
@@ -455,10 +453,19 @@ function ReviewsSection() {
 
               {formError && <p style={{ color: "#F43F5E", fontSize: 13, fontWeight: 700, margin: 0 }}>{formError}</p>}
 
-              <motion.button type="submit" disabled={submitting} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="btn-primary"
-                style={{ padding: "16px 32px", borderRadius: 14, fontWeight: 900, fontSize: 15, opacity: submitting ? 0.7 : 1, cursor: submitting ? "not-allowed" : "pointer" }}>
-                {submitting ? "Submitting..." : "Submit Review →"}
-              </motion.button>
+              {session ? (
+                <motion.button type="submit" disabled={submitting} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="btn-primary"
+                  style={{ padding: "16px 32px", borderRadius: 14, fontWeight: 900, fontSize: 15, opacity: submitting ? 0.7 : 1, cursor: submitting ? "not-allowed" : "pointer", marginTop: 8 }}>
+                  {submitting ? "Submitting..." : `Submit as ${session.user?.name || "User"} →`}
+                </motion.button>
+              ) : (
+                <Link href="/auth" style={{ textDecoration: "none", marginTop: 8 }}>
+                  <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="btn-primary"
+                    style={{ padding: "16px 32px", width: "100%", borderRadius: 14, fontWeight: 900, fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    Authenticate to Review <ArrowRight size={18} />
+                  </motion.button>
+                </Link>
+              )}
             </form>
           </div>
         </motion.div>

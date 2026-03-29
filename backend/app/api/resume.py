@@ -3,9 +3,10 @@ from pydantic import BaseModel
 from typing import List
 from app.core.ai_router import get_ai_response
 from app.core.database import get_session
-from sqlmodel import Session
+from sqlmodel import Session, select
 from app.models.models import SavedResume, User
 from app.api.deps import get_current_user
+from app.api.activity import log_activity_internal
 import json
 import re
 

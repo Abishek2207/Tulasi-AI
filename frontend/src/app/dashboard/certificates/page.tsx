@@ -194,7 +194,6 @@ export default function CertificatesPage() {
       padding: 60px; text-align: center; position: relative; overflow: hidden;
       border: 1px solid rgba(255,215,0,0.2);
     }
-    .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 120px; color: rgba(255,215,0,0.03); font-weight: 900; pointer-events: none; white-space: nowrap; }
     .logo-img { width: 90px; height: 90px; margin-bottom: 24px; filter: drop-shadow(0 0 15px rgba(255,215,0,0.4)); }
     .issuer { font-size: 16px; letter-spacing: 6px; color: #DAA520; text-transform: uppercase; margin-bottom: 40px; font-weight: 700; }
     .label { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px; }
@@ -212,7 +211,6 @@ export default function CertificatesPage() {
 <body>
   <div class="canvas">
     <div class="inner">
-      <div class="watermark">TULASI AI CERTIFIED</div>
       <img src="/images/logo.png" class="logo-img" />
       <div class="issuer">Tulasi AI Platform</div>
       <div class="label">Certificate of Achievement</div>
