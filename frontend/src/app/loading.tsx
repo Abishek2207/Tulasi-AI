@@ -13,86 +13,98 @@ export default function GlobalLoading() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-        fontFamily: "Inter, system-ui, sans-serif",
+        background: "radial-gradient(circle at center, #0B0E14 0%, #05070A 100%)",
+        fontFamily: "var(--font-outfit), Inter, system-ui, sans-serif",
         color: "#e2e8f0",
+        position: "relative",
+        overflow: "hidden"
       }}
     >
-      {/* Animated logo */}
+      {/* Background Ambient Glows */}
+      <div style={{ position: "absolute", top: "20%", left: "15%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%)", filter: "blur(80px)" }} />
+      <div style={{ position: "absolute", bottom: "20%", right: "15%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%)", filter: "blur(80px)" }} />
+
+      {/* Animated logo container */}
       <div
         style={{
-          width: "80px",
-          height: "80px",
-          borderRadius: "50%",
-          background: "rgba(124,58,237,0.1)",
+          width: "100px",
+          height: "100px",
+          borderRadius: "32px",
+          background: "rgba(255,255,255,0.03)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: "1.5rem",
-          animation: "pulse-glow 2s ease-in-out infinite",
-          boxShadow: "0 0 40px rgba(124,58,237,0.3)",
-          border: "1px solid rgba(124,58,237,0.2)",
+          marginBottom: "2rem",
+          animation: "lotus-pulse 3s ease-in-out infinite",
+          boxShadow: "0 0 60px rgba(168, 85, 247, 0.2)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          position: "relative",
+          zIndex: 10
         }}
       >
-        <TulasiLogo size={48} />
+        <TulasiLogo size={56} />
       </div>
 
       <style>{`
-        @keyframes pulse-glow {
-          0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 20px rgba(124,58,237,0.3); }
-          50% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 40px rgba(124,58,237,0.5); }
+        @keyframes lotus-pulse {
+          0%, 100% { transform: scale(1); opacity: 0.9; box-shadow: 0 0 30px rgba(168, 85, 247, 0.2); border-color: rgba(255,255,255,0.08); }
+          50% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 70px rgba(34, 211, 238, 0.4); border-color: rgba(34, 211, 238, 0.3); }
         }
       `}</style>
 
-      <p
-        style={{
-          fontSize: "1.1rem",
-          fontWeight: 600,
-          letterSpacing: "0.05em",
-          background: "linear-gradient(90deg, #a78bfa, #60a5fa)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          marginBottom: "0.5rem",
-        }}
-      >
-        Tulasi AI
-      </p>
+      <div style={{ textAlign: "center", zIndex: 10 }}>
+        <p
+          style={{
+            fontSize: "1.4rem",
+            fontWeight: 900,
+            letterSpacing: "-0.04em",
+            background: "linear-gradient(90deg, #A855F7, #22D3EE, #10B981, #A855F7)",
+            backgroundSize: "300% 100%",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            animation: "shimmer 4s linear infinite",
+            marginBottom: "0.5rem",
+          }}
+        >
+          Tulasi AI
+        </p>
 
-      <p style={{ opacity: 0.45, fontSize: "0.85rem", letterSpacing: "0.03em" }}>
-        Loading…
-      </p>
+        <p style={{ opacity: 0.5, fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "white" }}>
+          Initializing Neural Engine
+        </p>
+      </div>
 
-      {/* Pulsing dots */}
+      {/* Loading bar */}
       <div
         style={{
-          display: "flex",
-          gap: "0.4rem",
-          marginTop: "1.5rem",
+          width: "200px",
+          height: "2px",
+          background: "rgba(255,255,255,0.05)",
+          borderRadius: "4px",
+          marginTop: "2.5rem",
+          overflow: "hidden",
+          position: "relative",
+          zIndex: 10
         }}
       >
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              background: "rgba(167,139,250,0.7)",
-              animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-              display: "inline-block",
-            }}
-          />
-        ))}
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            background: "linear-gradient(90deg, transparent, #A855F7, #22D3EE, transparent)",
+            animation: "progress-shimmer 2s ease-in-out infinite",
+          }}
+        />
       </div>
 
       <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
+        @keyframes progress-shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
         }
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
-          40%            { transform: scale(1.2); opacity: 1;   }
+        @keyframes shimmer {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 300% 50%; }
         }
       `}</style>
     </div>

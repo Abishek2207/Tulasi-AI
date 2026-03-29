@@ -9,36 +9,38 @@ export function TulasiLogo({ className = "", size = 40, style }: { className?: s
       className={`relative flex items-center justify-center ${className}`}
       style={{ width: size, height: size, ...style }}
     >
-      {/* Background Pulse Glow (Apple Soft Light) */}
+      {/* Dynamic Lotus Glow (Vibrant multi-color pulse) */}
       <motion.div
-        className="absolute inset-0 rounded-full blur-2xl opacity-10"
+        className="absolute inset-0 rounded-full blur-2xl"
         style={{
-          background: "radial-gradient(circle, #06B6D4 0%, #7C3AED 40%, #10B981 80%, transparent 100%)",
+          background: "radial-gradient(circle at center, #22D3EE 0%, #A855F7 30%, #EC4899 60%, #10B981 90%, transparent 100%)",
+          opacity: 0.15
         }}
         animate={{
-          scale: [1, 1.8, 0.9, 1.4, 1],
-          opacity: [0.08, 0.25, 0.1, 0.2, 0.08],
-          rotate: [0, 90, 180, 270, 360],
+          scale: [1, 1.4, 1.1, 1.6, 1],
+          opacity: [0.12, 0.25, 0.15, 0.2, 0.12],
+          rotate: [0, 45, -45, 90, 0],
         }}
         transition={{
-          duration: 10,
+          duration: 8,
           repeat: Infinity,
-          ease: "linear",
+          ease: "easeInOut",
         }}
       />
 
       <motion.div
-        whileHover={{ scale: 1.08, filter: "brightness(1.1)" }}
-        transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        className="relative z-10"
+        whileHover={{ scale: 1.1, filter: "brightness(1.2) drop-shadow(0 0 15px rgba(168, 85, 247, 0.4))" }}
+        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+        className="relative z-10 flex items-center justify-center"
         style={{ width: size, height: size }}
       >
         <Image
           src="/images/logo.png"
-          alt="Tulasi AI Logo"
+          alt="Tulasi AI Lotus Logo"
           width={size}
           height={size}
           className="object-contain"
+          style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.5))" }}
           priority
         />
       </motion.div>
