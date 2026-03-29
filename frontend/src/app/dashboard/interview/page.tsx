@@ -345,99 +345,125 @@ export default function InterviewPage() {
           </motion.div>
         )}
 
-        {/* ACTIVE PHASE */}
+        {/* ACTIVE PHASE - PROFESSIONAL VIDEO CALL UI */}
         {phase === "active" && (
-          <motion.div key="active" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-            <div className="glass-card" style={{ padding: 40, background: "rgba(0,0,0,0.2)", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "rgba(139,92,246,0.1)" }}>
-                   <motion.div animate={{ width: `${(timeLeft / 120) * 100}%` }} style={{ height: "100%", background: "#8B5CF6" }} />
+          <motion.div key="active" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+            style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24, height: "calc(100vh - 250px)", minHeight: 600 }}>
+            
+            {/* Primary Video / Interaction Area */}
+            <div className="glass-card" style={{ padding: 0, background: "rgba(0,0,0,0.4)", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                {/* Progress Bar top */}
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "rgba(139,92,246,0.1)", zIndex: 20 }}>
+                   <motion.div animate={{ width: `${(timeLeft / 120) * 100}%` }} style={{ height: "100%", background: "#8B5CF6", boxShadow: "0 0 10px #8B5CF6" }} />
                 </div>
 
-                {cameraEnabled && stream && (
-                  <div style={{ position: "absolute", top: 20, right: 20, width: 160, height: 100, borderRadius: 12, overflow: "hidden", border: "2px solid var(--brand-secondary)", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", zIndex: 10 }}>
-                     <video 
-                       autoPlay muted playsInline 
-                       ref={v => { if (v) v.srcObject = stream; }}
-                       style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
-                     />
-                     <div style={{ position: "absolute", bottom: 4, left: 4, background: "rgba(0,0,0,0.5)", padding: "2px 4px", borderRadius: 2, fontSize: 8, color: "white", fontWeight: 700 }}>YOU</div>
-                  </div>
-                )}
-
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
-                  <span style={{ fontSize: 12, fontWeight: 900, color: "#8B5CF6", letterSpacing: 2 }}>QUESTION {questionNum} / {numQuestions}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, color: timeLeft < 30 ? "#F43F5E" : "var(--text-secondary)", fontWeight: 800, fontSize: 14 }}>
-                    <Timer size={18} /> {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: "left", marginBottom: 40 }}>
-                    <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-                      <div style={{ 
-                         width: 48, height: 48, borderRadius: 16, flexShrink: 0,
-                         background: isSpeaking ? "#8B5CF6" : "rgba(139,92,246,0.1)", 
-                         display: "flex", alignItems: "center", justifyContent: "center",
-                         position: "relative"
-                      }}>
-                         <Volume2 size={24} color={isSpeaking ? "white" : "#8B5CF6"} />
-                         {isSpeaking && (
-                            <div style={{ position: "absolute", bottom: -12 }}>
-                               <VoiceWave active={true} color="#8B5CF6" />
-                            </div>
-                         )}
+                {/* Video Feed or Placeholder */}
+                <div style={{ flex: 1, position: "relative", background: "#05070D", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                   {cameraEnabled && stream ? (
+                      <video 
+                        autoPlay muted playsInline 
+                        ref={v => { if (v) v.srcObject = stream; }}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
+                      />
+                   ) : (
+                      <div style={{ textAlign: "center", opacity: 0.5 }}>
+                         <VideoOff size={64} color="var(--text-muted)" style={{ marginBottom: 16 }} />
+                         <p style={{ fontSize: 14, fontWeight: 700 }}>Camera is Disabled</p>
                       </div>
-                      <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.4, margin: 0 }}>{currentQuestion}</h2>
+                   )}
+
+                   {/* On-video Overlays */}
+                   <div style={{ position: "absolute", top: 24, left: 24, display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(10px)", padding: "6px 14px", borderRadius: 30, border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", gap: 8 }}>
+                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F43F5E", boxShadow: "0 0 6px #F43F5E" }} />
+                         <span style={{ fontSize: 11, fontWeight: 900, color: "white", letterSpacing: 1 }}>SESSION LIVE</span>
+                      </div>
+                      <div style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(10px)", padding: "6px 14px", borderRadius: 30, border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", gap: 8, color: timeLeft < 30 ? "#F43F5E" : "white" }}>
+                         <Timer size={14} />
+                         <span style={{ fontSize: 12, fontWeight: 800 }}>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}</span>
+                      </div>
+                   </div>
+
+                   {/* Self Name Tag */}
+                   <div style={{ position: "absolute", bottom: 24, left: 24, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(10px)", padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", fontSize: 12, fontWeight: 800, color: "white" }}>
+                      {session?.user?.name || "Candidate"} (You)
+                   </div>
+
+                   {/* Interactive Controls Bar Overlay */}
+                   <div style={{ position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 12, zIndex: 30 }}>
+                      <button onClick={() => setCameraEnabled(!cameraEnabled)} style={{ width: 48, height: 48, borderRadius: "50%", background: cameraEnabled ? "rgba(255,255,255,0.1)" : "#F43F5E", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
+                         {cameraEnabled ? <Video size={20} /> : <VideoOff size={20} />}
+                      </button>
+                      <button onClick={startListening} className={isListening ? "pulse" : ""} style={{ width: 48, height: 48, borderRadius: "50%", background: isListening ? "#F43F5E" : "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white", position: "relative" }}>
+                         {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                         {isListening && <div style={{ position: "absolute", bottom: -24 }}><VoiceWave active color="#F43F5E" /></div>}
+                      </button>
+                      <button onClick={() => setVoiceEnabled(!voiceEnabled)} style={{ width: 48, height: 48, borderRadius: "50%", background: voiceEnabled ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
+                         {voiceEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                      </button>
+                      <div style={{ width: 1, height: 48, background: "rgba(255,255,255,0.1)" }} />
+                      <button onClick={reset} style={{ padding: "0 24px", height: 48, borderRadius: 24, background: "#F43F5E", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 900, fontSize: 11, letterSpacing: 1.5 }}>
+                         LEAVE SESSION
+                      </button>
                    </div>
                 </div>
 
-                <div style={{ position: "relative", marginBottom: 32 }}>
-                  <textarea 
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    placeholder={isListening ? "Listening to your answer..." : "Type your answer here or use the microphone..."}
-                    style={{ width: "100%", minHeight: 180, padding: 24, borderRadius: 20, background: isListening ? "rgba(139,92,246,0.05)" : "rgba(255,255,255,0.03)", border: `1px solid ${isListening ? "#8B5CF6" : "rgba(255,255,255,0.05)"}`, color: "white", fontSize: 16, fontFamily: "inherit", resize: "none", transition: "all 0.3s" }}
-                  />
-                  
-                  <div style={{ position: "absolute", bottom: 20, right: 20, display: "flex", gap: 12 }}>
-                     <motion.button 
-                        whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                        onClick={voiceEnabled ? () => speakQuestion(currentQuestion) : () => setVoiceEnabled(true)}
-                        style={{ width: 44, height: 44, borderRadius: 12, background: voiceEnabled ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.05)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-                     >
-                        {voiceEnabled ? <Volume2 size={20} color="#8B5CF6" /> : <VolumeX size={20} color="var(--text-muted)" />}
-                     </motion.button>
-                     
-                     <motion.button 
-                        whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                        onClick={startListening}
-                        className={isListening ? "pulse" : ""}
-                        style={{ width: 44, height: 44, borderRadius: 12, background: isListening ? "#F43F5E" : "rgba(139,92,246,0.1)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}
-                     >
-                        {isListening ? (
-                           <>
-                              <MicOff size={20} color="white" />
-                              <div style={{ position: "absolute", bottom: -12 }}>
-                                 <VoiceWave active={true} color="#F43F5E" />
-                              </div>
-                           </>
-                        ) : <Mic size={20} color="#8B5CF6" />}
-                     </motion.button>
+                {/* Subtitles Overlay */}
+                {isListening && answer && (
+                  <div style={{ position: "absolute", bottom: 100, left: "10%", right: "10%", textAlign: "center", zIndex: 40 }}>
+                     <div style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(10px)", padding: "12px 24px", borderRadius: 12, display: "inline-block", fontSize: 16, border: "1px solid rgba(255,255,255,0.1)", color: "white" }}>
+                        {answer}
+                     </div>
                   </div>
-                </div>
+                )}
+            </div>
 
-                <div style={{ display: "flex", gap: 16 }}>
-                  <button onClick={reset} disabled={loading} className="btn-ghost" style={{ flex: 1, padding: 16, borderRadius: 14 }}>END SESSION</button>
+            {/* AI Interlocutor Sidebar */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+               {/* Question Box */}
+                <div className="glass-card" style={{ flex: 1, padding: 24, display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", position: "relative", overflow: "hidden" }}>
+                   {/* Virtual Interlocutor Avatar */}
+                   <div style={{ height: 180, borderRadius: 12, background: "#0c0e14", marginBottom: 20, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.7, filter: "grayscale(100%) contrast(1.2)" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg, #0c0e14 0%, transparent 50%)" }} />
+                      {isSpeaking && <div style={{ position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)" }}><VoiceWave active color="#8B5CF6" /></div>}
+                      <div style={{ position: "absolute", top: 10, right: 10, background: "rgba(139,92,246,0.3)", padding: "4px 10px", borderRadius: 20, fontSize: 9, fontWeight: 900, color: "white", letterSpacing: 1 }}>AI CORE</div>
+                   </div>
+
+                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                      <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#8B5CF6", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 10, fontWeight: 900 }}>AI</div>
+                      <span style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 1.5 }}>INTERVIEWER</span>
+                   </div>
+                   
+                   <div style={{ flex: 1, overflowY: "auto", fontSize: 18, fontWeight: 800, color: "white", lineHeight: 1.5, marginBottom: 20 }}>
+                     {currentQuestion}
+                  </div>
+
+                  <div style={{ padding: "16px", background: "rgba(139,92,246,0.05)", borderRadius: 12, border: "1px solid rgba(139,92,246,0.1)" }}>
+                     <div style={{ fontSize: 10, fontWeight: 900, color: "var(--text-muted)", marginBottom: 8, letterSpacing: 1 }}>HINT / TIP</div>
+                     <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0, fontStyle: "italic" }}>
+                        Think out loud and structure your response using the STAR method if applicable.
+                     </p>
+                  </div>
+               </div>
+
+               {/* Transcript Box */}
+               <div className="glass-card" style={{ height: 220, padding: "20px", display: "flex", flexDirection: "column", background: "rgba(0,0,0,0.2)" }}>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", marginBottom: 12, letterSpacing: 1 }}>TRANSCRIPT HISTORY</div>
+                  <div style={{ flex: 1, overflowY: "auto", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                     {answer || "Begin speaking to generate transcript..."}
+                  </div>
                   <motion.button 
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={submitAnswer}
                     disabled={loading || !answer.trim()}
                     className="btn-primary"
-                    style={{ flex: 2, padding: 16, borderRadius: 14, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+                    style={{ width: "100%", padding: 12, borderRadius: 10, fontWeight: 900, fontSize: 12, marginTop: 12 }}
                   >
-                    {loading ? "ANALYZING..." : (questionNum === numQuestions ? "SUBMIT & FINAL SCORE" : "SUBMIT ANSWER")} <ArrowRight size={18} />
+                    {loading ? "PROCESSING..." : (questionNum === numQuestions ? "FINISH INTERVIEW" : "SUBMIT ANSWER")}
                   </motion.button>
-                </div>
-              </div>
+               </div>
+            </div>
           </motion.div>
         )}
 

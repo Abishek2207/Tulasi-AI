@@ -51,7 +51,12 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       await profileApi.update(formData, token);
-      await update({ name: formData.name }); // Refresh next-auth session
+      // Refresh next-auth session with all updated fields
+      await update({ 
+        name: formData.name,
+        bio: formData.bio,
+        skills: formData.skills
+      }); 
       setSaveStatus("success");
     } catch { setSaveStatus("error"); }
     setSaving(false);

@@ -34,6 +34,8 @@ def hackathon_to_dict(h: Hackathon, bookmarked: bool = False) -> dict:
 def get_hackathons(
     tag: Optional[str] = None,
     status: Optional[str] = None,
+    limit: int = 12,
+    offset: int = 0,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -44,11 +46,14 @@ def get_hackathons(
     if status and status.lower() not in ("all", ""):
         statement = statement.where(Hackathon.status == status)
 
+    # Get total count before slicing
+    total_count = len(session.exec(statement).all())
+    
+    # Apply pagination
+    statement = statement.order_by(Hackathon.id.desc()).offset(offset).limit(limit)
     results = session.exec(statement).all()
 
     # Get user's bookmarks
-    bookmarked_ids: set = set()
-    # current_user is guaranteed to exist now
     bookmarks = session.exec(
         select(HackathonBookmark).where(HackathonBookmark.user_id == current_user.id)
     ).all()
@@ -56,7 +61,9 @@ def get_hackathons(
 
     return {
         "hackathons": [hackathon_to_dict(h, h.id in bookmarked_ids) for h in results],
-        "total": len(results),
+        "total": total_count,
+        "offset": offset,
+        "limit": limit
     }
 
 

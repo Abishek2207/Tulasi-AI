@@ -169,10 +169,11 @@ async def websocket_group_chat(
     room_id = f"group_{group_id}"
 
     # 2. Verify Membership (using a new session)
-    from app.core.database import SessionLocal
+    from app.core.database import engine
     from app.models.models import GroupMember, GroupMessage, User
+    from sqlmodel import Session
 
-    with SessionLocal() as db:
+    with Session(engine) as db:
         member = db.query(GroupMember).filter(
             GroupMember.group_id == group_id, 
             GroupMember.user_id == user_id
@@ -219,7 +220,7 @@ async def websocket_group_chat(
                 if not content: continue
 
                 # Persist to DB
-                with SessionLocal() as db:
+                with Session(engine) as db:
                     new_msg = GroupMessage(
                         group_id=group_id,
                         user_id=user_id,

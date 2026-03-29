@@ -225,11 +225,16 @@ app.include_router(reviews.router,      prefix="/api/reviews",      tags=["Revie
 app.include_router(users.router,        prefix="/api/users",        tags=["Users"])
 
 
-# ── WebSocket Router ───────────────────────────────────────────────
+# ── WebSocket Router (Standard Legacy Support) ──────────────────────
 from app.api import ws as ws_router
 from app.websockets import signaling
 app.include_router(ws_router.router, tags=["WebSocket Chat"])
 app.include_router(signaling.router, prefix="/api/voice/signal", tags=["WebRTC Signaling"])
+
+
+# ── Socket.io Implementation (Advanced Real-time) ───────────────────
+from app.core.socket_server import socket_app
+app.mount("/socket.io", socket_app)
 
 
 # ── Root Endpoint ──────────────────────────────────────────────────

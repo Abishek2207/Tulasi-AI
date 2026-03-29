@@ -45,18 +45,18 @@ async def send_message(req: MessageSend, current_user: User = Depends(get_curren
     db.commit()
     # ─────────────────────────────────────────────────────────────
     
-    # Notify recipient via WebSocket if online
-    msg_data = {
-        "type": "new_message",
-        "message": {
-            "id": msg.id,
-            "sender_id": msg.sender_id,
-            "receiver_id": msg.receiver_id,
-            "content": msg.content,
-            "created_at": msg.created_at.isoformat() if hasattr(msg.created_at, 'isoformat') else str(msg.created_at)
-        }
+    # Notify recipient via Socket.io if online
+    from app.core.socket_server import push_direct_message
+    
+    msg_dict = {
+        "id": msg.id,
+        "sender_id": msg.sender_id,
+        "receiver_id": msg.receiver_id,
+        "content": msg.content,
+        "created_at": msg.created_at.isoformat() if hasattr(msg.created_at, 'isoformat') else str(msg.created_at)
     }
-    await manager.send_personal_message(msg_data, req.receiver_id)
+    
+    await push_direct_message(req.receiver_id, {"type": "new_message", "message": msg_dict})
     
     return {"status": "success", "message": msg}
 
@@ -89,6 +89,19 @@ def get_conversation(other_user_id: int, current_user: User = Depends(get_curren
 
 @router.get("/users/directory")
 def get_user_directory(current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+    from datetime import datetime, timedelta
     statement = select(User).where(User.id != current_user.id)
     users = db.exec(statement).all()
-    return {"users": [{"id": u.id, "name": u.name or u.email.split("@")[0], "email": u.email, "role": u.role} for u in users]}
+    
+    five_mins_ago = datetime.utcnow() - timedelta(minutes=5)
+    
+    return {"users": [
+        {
+            "id": u.id, 
+            "name": u.name or u.email.split("@")[0], 
+            "email": u.email, 
+            "role": u.role,
+            "last_seen": u.last_seen.isoformat() if u.last_seen else None,
+            "is_online": u.last_seen > five_mins_ago if u.last_seen else False
+        } for u in users
+    ]}

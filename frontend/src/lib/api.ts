@@ -234,11 +234,13 @@ export const interviewApi = {
 // ─── Hackathons ──────────────────────────────────────────────────────────────
 
 export const hackathonApi = {
-  list: (tag?: string, status?: string, token?: string) => {
+  list: (tag?: string, status?: string, token?: string, limit: number = 12, offset: number = 0) => {
     const params = new URLSearchParams();
     if (tag) params.append("tag", tag);
     if (status) params.append("status", status);
-    return request<{ hackathons: Hackathon[]; total: number }>(`/api/hackathons?${params.toString()}`, {}, token);
+    params.append("limit", limit.toString());
+    params.append("offset", offset.toString());
+    return request<{ hackathons: Hackathon[]; total: number; limit: number; offset: number }>(`/api/hackathons?${params.toString()}`, {}, token);
   },
   get: (id: number, token?: string) => request<Hackathon>(`/api/hackathons/${id}`, {}, token),
   create: (data: Partial<Hackathon>, token: string) =>

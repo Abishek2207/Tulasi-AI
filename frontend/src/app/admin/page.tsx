@@ -61,8 +61,9 @@ export default function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [activity, setActivity] = useState<AdminActivity[]>([]);
+  const [hackathons, setHackathons] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
-  const [activeTab, setActiveTab] = useState<"users" | "reviews" | "activity" | "analytics">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "reviews" | "activity" | "hackathons" | "analytics">("users");
   const [loading, setLoading] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -87,18 +88,20 @@ export default function AdminPage() {
           return r.json();
         });
 
-      const [s, u, r, a, an] = await Promise.all([
+      const [s, u, r, a, an, h] = await Promise.all([
         fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats`),
         fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`),
         fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/reviews`),
         fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/activity`),
         fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/analytics`),
+        fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/hackathons`),
       ]);
 
       if (s && !s.error) setStats(s as AdminStats); 
       if (u && u.users) setUsers((u.users as AdminUser[]) || []); 
       if (r && r.reviews) setReviews((r.reviews as AdminReview[]) || []);
       if (a && a.activity) setActivity((a.activity as AdminActivity[]) || []);
+      if (h && h.hackathons) setHackathons(h.hackathons);
       
       if (an && !an.error) {
         setAnalytics(an as AdminAnalytics);
@@ -197,6 +200,12 @@ export default function AdminPage() {
               style={{ padding: "8px 24px", borderRadius: 10, border: "none", background: activeTab === "activity" ? "#6C63FF" : "transparent", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
             >
               Activity
+            </button>
+            <button 
+              onClick={() => setActiveTab("hackathons")}
+              style={{ padding: "8px 24px", borderRadius: 10, border: "none", background: activeTab === "hackathons" ? "#6C63FF" : "transparent", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            >
+              Hackathons
             </button>
             <button 
               onClick={() => setActiveTab("analytics")}
@@ -318,6 +327,71 @@ export default function AdminPage() {
                           style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(244,63,94,0.3)", background: "rgba(244,63,94,0.1)", color: "#F43F5E", fontSize: 12, cursor: "pointer", fontWeight: 700 }}>
                           Delete
                         </motion.button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : activeTab === "hackathons" ? (
+          <>
+             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <h2 style={{ fontSize: 19, fontWeight: 700, fontFamily: "var(--font-outfit)", margin: 0 }}>Hackathon Listings ({hackathons.length})</h2>
+              <button 
+                onClick={() => {
+                  const name = prompt("Hackathon Name?");
+                  const organizer = prompt("Organizer?");
+                  const desc = prompt("Description?");
+                  const prize = prompt("Prize?");
+                  const deadline = prompt("Deadline (YYYY-MM-DD)?");
+                  const link = prompt("Link?");
+                  if (!name || !organizer || !desc) return;
+                  
+                  fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/hackathons`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors",
+                    body: JSON.stringify({ name, organizer, description: desc, prize, deadline, link }),
+                  }).then(r => r.json()).then(h => setHackathons(prev => [h, ...prev]));
+                }}
+                className="btn-primary" style={{ padding: "8px 20px", borderRadius: 10, fontSize: 12, fontWeight: 800 }}
+              >
+                + Add Hackathon
+              </button>
+            </div>
+
+            <div className="glass-card" style={{ overflow: "hidden", padding: 0, background: "rgba(255,255,255,0.015)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    {["Event", "Organizer", "Prize", "Deadline", "Action"].map(h => (
+                      <th key={h} style={{ padding: "16px 20px", textAlign: "left", fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {hackathons.map(h => (
+                    <tr key={h.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                      <td style={{ padding: "16px 20px" }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{h.name}</div>
+                        <div style={{ color: "var(--text-muted)", fontSize: 12 }}>{h.status}</div>
+                      </td>
+                      <td style={{ padding: "16px 20px", fontSize: 13, color: "var(--text-primary)" }}>{h.organizer}</td>
+                      <td style={{ padding: "16px 20px", fontSize: 13, color: "#10B981", fontWeight: 700 }}>{h.prize}</td>
+                      <td style={{ padding: "16px 20px", fontSize: 13, color: "var(--text-muted)" }}>{h.deadline}</td>
+                      <td style={{ padding: "16px 20px" }}>
+                        <button 
+                          onClick={() => {
+                            if (!confirm("Delete hackathon?")) return;
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/hackathons/${h.id}`, {
+                              method: "DELETE",
+                              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials:"include", mode:"cors",
+                            }).then(() => setHackathons(prev => prev.filter(item => item.id !== h.id)));
+                          }}
+                          style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(244,63,94,0.3)", background: "rgba(244,63,94,0.1)", color: "#F43F5E", fontSize: 11, cursor: "pointer", fontWeight: 700 }}
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}

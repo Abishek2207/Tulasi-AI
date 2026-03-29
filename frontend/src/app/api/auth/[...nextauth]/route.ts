@@ -76,9 +76,17 @@ export const authOptions: NextAuthOptions = {
       // Always allow sign in, token sync happens in jwt callback
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
       const u = user as unknown as Record<string, unknown>;
       
+      // Handle manual session updates (profile changes)
+      if (trigger === "update" && session) {
+        if (session.name) token.name = session.name;
+        if (session.bio) token.bio = session.bio;
+        if (session.skills) token.skills = session.skills;
+        return token;
+      }
+
       // If user & account exists, this is the very first login
       if (account && user) {
         if (account.provider === "credentials") {
@@ -86,6 +94,8 @@ export const authOptions: NextAuthOptions = {
           token.role = u.role as string || (user.email === ADMIN_EMAIL ? "admin" : "student");
           token.accessToken = u.accessToken as string;
           token.inviteCode = u.inviteCode as string;
+          token.bio = u.bio as string;
+          token.skills = u.skills as string;
         } else {
           // For OAuth providers (Google/GitHub), register/login with FastAPI backend
           const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
@@ -105,6 +115,9 @@ export const authOptions: NextAuthOptions = {
                 token.accessToken = data.access_token;
                 token.role = data.user?.role || "student";
                 token.inviteCode = data.user?.invite_code;
+                token.name = data.user?.name;
+                token.bio = data.user?.bio;
+                token.skills = data.user?.skills;
               }
             }
           } catch (e) {
@@ -119,6 +132,11 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
         session.user.accessToken = token.accessToken as string;
         session.user.inviteCode = token.inviteCode as string;
+        session.user.name = (token.name as string) || session.user.name;
+        // @ts-ignore
+        session.user.bio = token.bio as string;
+        // @ts-ignore
+        session.user.skills = token.skills as string;
       }
       return session;
     },
