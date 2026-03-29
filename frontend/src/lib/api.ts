@@ -358,7 +358,7 @@ export const activityApi = {
 export const profileApi = {
   update: (data: { name?: string; bio?: string; skills?: string }, token: string) =>
     request<{ message: string; user: User }>("/api/auth/profile", {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify(data),
     }, token),
 };

@@ -234,7 +234,7 @@ export default function ProfilePage() {
               </motion.button>
               {saveStatus === "success" && (
                 <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: "#43E97B", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Check size={14} /> Saved!
+                  <Check size={14} /> Profile Updated
                 </motion.span>
               )}
               {saveStatus === "error" && (

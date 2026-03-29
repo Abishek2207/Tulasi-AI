@@ -110,11 +110,14 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_session
     today = date.today().isoformat()
     last = user.last_activity_date
     if last != today:
-        from datetime import date as _date
-        if last and (_date.today() - _date.fromisoformat(last)).days == 1:
-            user.streak = (user.streak or 0) + 1
-        elif not last or (_date.today() - _date.fromisoformat(last)).days > 1:
-            user.streak = 1
+        try:
+            from datetime import date as _date
+            if last and (_date.today() - _date.fromisoformat(last)).days == 1:
+                user.streak = (user.streak or 0) + 1
+            elif not last or (_date.today() - _date.fromisoformat(last)).days > 1:
+                user.streak = 1
+        except ValueError:
+            user.streak = 1  # Reset if date format invalid
         # Update longest streak
         user.longest_streak = max(user.longest_streak or 0, user.streak)
         user.last_activity_date = today
@@ -175,7 +178,7 @@ class ProfileUpdateRequest(BaseModel):
     skills: Optional[str] = None  # comma-separated
 
 
-@router.put("/profile")
+@router.patch("/profile")
 def update_profile(
     req: ProfileUpdateRequest,
     db: Session = Depends(get_session),
@@ -252,11 +255,15 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
     today = date.today().isoformat()
     last = user.last_activity_date
     if last != today:
-        from datetime import date as _date
-        if last and (_date.today() - _date.fromisoformat(last)).days == 1:
-            user.streak = (user.streak or 0) + 1
-        elif not last or (_date.today() - _date.fromisoformat(last)).days > 1:
-            user.streak = 1
+        try:
+            from datetime import date as _date
+            if last and (_date.today() - _date.fromisoformat(last)).days == 1:
+                user.streak = (user.streak or 0) + 1
+            elif not last or (_date.today() - _date.fromisoformat(last)).days > 1:
+                user.streak = 1
+        except ValueError:
+            user.streak = 1  # Reset streak if invalid
+            
         user.longest_streak = max(user.longest_streak or 0, user.streak)
         user.last_activity_date = today
         db.add(user)

@@ -115,6 +115,18 @@ export default function AdminPage() {
     }
   };
 
+  const safeDate = (dateStr: string | undefined | null) => {
+    if (!dateStr) return "N/A";
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? "Unknown Date" : d.toLocaleDateString();
+  };
+
+  const safeDateTime = (dateStr: string | undefined | null) => {
+    if (!dateStr) return "N/A";
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? "Unknown Time" : d.toLocaleString();
+  };
+
   useEffect(() => {
     fetchData();
   }, [token, user]);
@@ -250,7 +262,7 @@ export default function AdminPage() {
                         <span className={`badge ${u.role === "admin" ? "badge-pink" : "badge-green"}`} style={{ fontSize: 11 }}>{u.role.toUpperCase()}</span>
                       </td>
                       <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>{u.xp}</td>
-                      <td style={{ padding: "16px 20px", fontSize: 13, color: "var(--text-muted)" }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: "16px 20px", fontSize: 13, color: "var(--text-muted)" }}>{safeDate(u.created_at)}</td>
                       <td style={{ padding: "16px 20px" }}>
                         <span className={`badge ${u.is_active ? "badge-green" : "badge-pink"}`} style={{ fontSize: 11 }}>{u.is_active ? "Active" : "Disabled"}</span>
                       </td>
@@ -299,7 +311,7 @@ export default function AdminPage() {
                       <td style={{ padding: "16px 20px", maxWidth: 300 }}>
                         <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>{r.review}</p>
                       </td>
-                      <td style={{ padding: "16px 20px", fontSize: 13, color: "var(--text-muted)" }}>{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: "16px 20px", fontSize: 13, color: "var(--text-muted)" }}>{safeDate(r.created_at)}</td>
                       <td style={{ padding: "16px 20px" }}>
                         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                           onClick={() => deleteReview(r.id)}
@@ -366,7 +378,7 @@ export default function AdminPage() {
                         )}
                       </td>
                       <td style={{ padding: "16px 20px", fontSize: 12, color: "var(--text-muted)" }}>
-                        {new Date(a.created_at).toLocaleString()}
+                        {safeDateTime(a.created_at)}
                       </td>
                     </tr>
                   ))}
