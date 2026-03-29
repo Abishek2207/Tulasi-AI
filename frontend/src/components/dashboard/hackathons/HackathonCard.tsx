@@ -24,7 +24,7 @@ interface Hackathon {
   team_size: string;
   start_date: string;
   end_date: string;
-  registration_deadline: string;
+  registration_deadline?: string;
   domains: string;
   currency: string;
   location?: string;
