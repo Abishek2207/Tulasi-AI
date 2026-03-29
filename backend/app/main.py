@@ -79,6 +79,78 @@ async def lifespan(app: FastAPI):
                 try:
                     conn.execute(text('ALTER TABLE groupmessage ADD COLUMN is_encrypted BOOLEAN DEFAULT 0;'))
                 except: pass
+
+                # Step 5: Hackathon Schema Expansion (Discovery Platform)
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN organizer VARCHAR DEFAULT "Unknown";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN description TEXT DEFAULT "";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN prize_pool VARCHAR DEFAULT "INR 0";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN deadline VARCHAR DEFAULT "";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN registration_deadline VARCHAR;'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN registration_link VARCHAR DEFAULT "#";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN tags VARCHAR DEFAULT "";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN image_url VARCHAR DEFAULT "https://via.placeholder.com/600x400";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN participants_count INTEGER DEFAULT 0;'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN status VARCHAR DEFAULT "Open";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN mode VARCHAR DEFAULT "Online";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN difficulty VARCHAR DEFAULT "Intermediate";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN team_size VARCHAR DEFAULT "1-4 Members";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN start_date VARCHAR;'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN end_date VARCHAR;'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN domains VARCHAR DEFAULT "General";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN currency VARCHAR DEFAULT "INR";'))
+                except: pass
+                try:
+                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN location VARCHAR;'))
+                except: pass
+
+                # Step 6: Create HackathonApplication table if not exists
+                try:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS hackathonapplication (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            user_id INTEGER NOT NULL,
+                            hackathon_id INTEGER NOT NULL,
+                            status VARCHAR DEFAULT "Applied",
+                            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """))
+                    print("[Migration] Ensuring 'hackathonapplication' table exists.")
+                except Exception as e:
+                    print(f"[Migration Error] HackathonApplication: {e}")
+
             # ───────────────────────────────────────────────────
             
         except Exception as e:
