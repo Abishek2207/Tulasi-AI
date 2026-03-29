@@ -1,3 +1,5 @@
+import { TulasiLogo } from "@/components/TulasiLogo";
+
 /**
  * Global Next.js loading page.
  * Shown during navigation while pages are loading.
@@ -19,21 +21,28 @@ export default function GlobalLoading() {
       {/* Animated logo */}
       <div
         style={{
-          width: "64px",
-          height: "64px",
+          width: "80px",
+          height: "80px",
           borderRadius: "50%",
-          background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+          background: "rgba(124,58,237,0.1)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "1.75rem",
           marginBottom: "1.5rem",
-          animation: "spin 1.5s linear infinite",
-          boxShadow: "0 0 30px rgba(124,58,237,0.5)",
+          animation: "pulse-glow 2s ease-in-out infinite",
+          boxShadow: "0 0 40px rgba(124,58,237,0.3)",
+          border: "1px solid rgba(124,58,237,0.2)",
         }}
       >
-        🌿
+        <TulasiLogo size={48} />
       </div>
+
+      <style>{`
+        @keyframes pulse-glow {
+          0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+          50% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 40px rgba(124,58,237,0.5); }
+        }
+      `}</style>
 
       <p
         style={{

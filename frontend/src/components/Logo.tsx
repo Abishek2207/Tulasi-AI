@@ -13,9 +13,9 @@ export function Logo({ size = 48, showText = true }: { size?: number, showText?:
           width: size,
           height: size,
           position: "relative",
-          background: "linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.1))",
+          background: "linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.1), rgba(16,185,129,0.05))",
           borderRadius: size * 0.3,
-          border: "1px solid rgba(255,255,255,0.1)",
+          border: "1px solid rgba(255,255,255,0.08)",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -33,8 +33,8 @@ export function Logo({ size = 48, showText = true }: { size?: number, showText?:
           style={{
             position: "absolute",
             inset: 0,
-            background: "radial-gradient(circle at center, rgba(124,58,237,0.4) 0%, transparent 70%)",
-            filter: "blur(10px)",
+            background: "radial-gradient(circle at center, rgba(124,58,237,0.4) 0%, rgba(6,182,212,0.2) 40%, rgba(16,185,129,0.1) 70%, transparent 100%)",
+            filter: "blur(12px)",
           }}
         />
 

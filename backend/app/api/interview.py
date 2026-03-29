@@ -8,7 +8,7 @@ from datetime import datetime
 
 from app.core.config import settings
 from app.api.deps import get_current_user
-from app.models.models import User, ActivityLog, UserProgress
+from app.models.models import User, ActivityLog, UserProgress, PersistentInterviewSession
 from app.core.database import get_session
 from app.core.rate_limit import limiter
 from app.api.activity import log_activity_internal
@@ -16,8 +16,7 @@ from app.core.ai_router import get_ai_response
 
 router = APIRouter()
 
-# In-memory session store for interview sessions
-interview_sessions: Dict[str, dict] = {}
+
 
 ROLES = [
     "Software Engineer", "AI Engineer", "Data Scientist", "Backend Developer",
@@ -91,16 +90,22 @@ def start_interview(
 
     try:
         question = get_ai_response(prompt)
-        interview_sessions[session_id] = {
-            "role": req.role,
-            "company": req.company,
-            "interview_type": req.interview_type,
-            "num_questions": num_q,
-            "questions_asked": 1,
-            "history": [{"role": "ai", "content": question}],
-            "user_id": current_user.id,
-            "started_at": datetime.utcnow().isoformat(),
-        }
+        
+        # ── 💾 PERSISTENCE: Save session to DB ──
+        session_obj = PersistentInterviewSession(
+            session_id=session_id,
+            user_id=current_user.id,
+            role=req.role,
+            company=req.company,
+            interview_type=req.interview_type,
+            num_questions=num_q,
+            questions_asked=1,
+            history_json=json.dumps([{"role": "ai", "content": question}]),
+            status="in_progress"
+        )
+        db.add(session_obj)
+        db.commit()
+        
         return {
             "session_id": session_id,
             "question": question,
@@ -111,6 +116,7 @@ def start_interview(
             "question_number": 1,
         }
     except Exception as e:
+        db.rollback()
         raise HTTPException(500, f"Error starting interview: {str(e)}")
 
 
@@ -122,22 +128,31 @@ def answer_interview(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    interview_session = interview_sessions.get(req.session_id)
+    # ── 🔍 PERSISTENCE: Retrieve session from DB ──
+    interview_session = db.exec(
+        select(PersistentInterviewSession).where(
+            PersistentInterviewSession.session_id == req.session_id,
+            PersistentInterviewSession.user_id == current_user.id
+        )
+    ).first()
+    
     if not interview_session:
         raise HTTPException(404, "Interview session not found or expired.")
-    if interview_session.get("user_id") != current_user.id:
-        raise HTTPException(403, "Not authorized for this session.")
+    if interview_session.status == "completed":
+        return {"status": "completed", "feedback": json.loads(interview_session.feedback_json or "{}")}
 
-    history = interview_session.get("history", [])
+    history = json.loads(interview_session.history_json)
     history.append({"role": "user", "content": req.answer})
 
-    num_q = interview_session.get("num_questions", 5)
-    questions_asked = int(interview_session.get("questions_asked", 1))
+    num_q = interview_session.num_questions
+    questions_asked = interview_session.questions_asked
+
+    # Prepare history text for the AI
+    history_text = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history])
 
     # Final evaluation
     if questions_asked >= num_q:
-        history_text = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history])
-        prompt = f"""You are an expert interviewer evaluating a {interview_session['interview_type']} interview for {interview_session['role']} at {interview_session['company']}.
+        prompt = f"""You are an expert interviewer evaluating a {interview_session.interview_type} interview for {interview_session.role} at {interview_session.company}.
 
 Interview Transcript:
 {history_text}
@@ -170,15 +185,20 @@ Return ONLY valid JSON, no markdown."""
                 "recommendation": "Hire"
             }
 
-        # Use centralized activity logging
+        # ── 💾 PERSISTENCE: Save completion to DB ──
+        interview_session.status = "completed"
+        interview_session.feedback_json = json.dumps(feedback)
+        interview_session.history_json = json.dumps(history)
+        interview_session.updated_at = datetime.utcnow()
+        db.add(interview_session)
+        
         log_activity_internal(
             current_user, db, "interview_completed", 
-            f"Mock Interview: {interview_session['role']} @ {interview_session['company']} ({interview_session['interview_type']})",
+            f"Mock Interview: {interview_session.role} @ {interview_session.company} ({interview_session.interview_type})",
             req.session_id
         )
         db.commit()
 
-        # Get updated count for the return
         completed_count = len(db.exec(
             select(ActivityLog).where(
                 ActivityLog.user_id == current_user.id,
@@ -188,9 +208,6 @@ Return ONLY valid JSON, no markdown."""
         TARGET = 10
         pct = min(100, int((completed_count / TARGET) * 100))
 
-        # Clean up session
-        interview_sessions.pop(req.session_id, None)
-
         return {
             "status": "completed",
             "feedback": feedback,
@@ -199,11 +216,9 @@ Return ONLY valid JSON, no markdown."""
             "xp_earned": 100,
         }
 
-    # Next question
-    interview_session["questions_asked"] = questions_asked + 1
-    history_text = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history])
-    remaining = num_q - questions_asked - 1
-
+    # ── 💾 PERSISTENCE: Update current session in DB ──
+    interview_session.questions_asked = questions_asked + 1
+    
     role_instructions = {
         "Frontend Developer": "Focus on React, Next.js, CSS architecture, performance optimization, and browser APIs.",
         "Backend Developer": "Focus on database design, building scalable APIs, caching (Redis), background jobs, and concurrency.",
@@ -212,26 +227,34 @@ Return ONLY valid JSON, no markdown."""
         "Full Stack Developer": "Focus on frontend/backend communication, state management, REST/GraphQL design, and deployment pipelines.",
         "DevOps Engineer": "Focus on CI/CD, Kubernetes, Docker, Infrastructure as Code, and monitoring/logging."
     }
-    role_focus = role_instructions.get(interview_session.get('role', ''), '')
+    role_focus = role_instructions.get(interview_session.role, '')
 
-    prompt = f"""You are a {interview_session['interview_type']} interviewer at {interview_session['company']} for {interview_session['role']}.
+    prompt = f"""You are a {interview_session.interview_type} interviewer at {interview_session.company} for {interview_session.role}.
 {role_focus}
 Transcript so far:
 {history_text}
 
 Briefly acknowledge their answer (1 brief sentence), then ask the next question.
-{f"This is question {questions_asked + 1} of {num_q}." if questions_asked + 1 <= num_q else ""}
+{f"This is question {interview_session.questions_asked} of {num_q}." if interview_session.questions_asked <= num_q else ""}
 Do not break character. Keep it professional."""
 
     try:
         next_q = get_ai_response(prompt)
         history.append({"role": "ai", "content": next_q})
+        
+        # Save history update to DB
+        interview_session.history_json = json.dumps(history)
+        interview_session.updated_at = datetime.utcnow()
+        db.add(interview_session)
+        db.commit()
+        
         return {
             "status": "in_progress",
             "question": next_q,
-            "question_number": questions_asked + 1,
+            "question_number": interview_session.questions_asked,
             "total_questions": num_q,
-            "remaining": remaining,
+            "remaining": num_q - interview_session.questions_asked,
         }
     except Exception as e:
+        db.rollback()
         raise HTTPException(500, f"Error generating next question: {str(e)}")
