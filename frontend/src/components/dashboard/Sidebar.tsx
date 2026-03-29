@@ -114,20 +114,23 @@ export default function Sidebar() {
       <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <motion.div whileHover={{ scale: 1.02 }} style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
-            width: 42, height: 42, borderRadius: 12,
-            background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
+            width: 44, height: 44, borderRadius: 14,
+            background: "linear-gradient(135deg, #A855F7, #22D3EE, #EC4899)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 0 20px rgba(139,92,246,0.4)",
+            boxShadow: "0 0 25px rgba(168, 85, 247, 0.5)",
             flexShrink: 0
           }}>
-            <TulasiLogo size={26} showText={false} />
+            <TulasiLogo size={28} showText={false} />
           </div>
           <div>
             <div style={{
-              fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 17,
+              fontFamily: "var(--font-outfit)", fontWeight: 900, fontSize: 18,
               color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1
             }}>
-              Tulasi<span style={{ color: "#06B6D4" }}>AI</span>
+              Tulasi<span style={{ color: "var(--brand-primary)" }}>AI</span>
+            </div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
+              Premium
             </div>
           </div>
         </motion.div>

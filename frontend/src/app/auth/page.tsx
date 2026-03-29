@@ -16,29 +16,30 @@ function TulasiLogoPro() {
       initial={{ scale: 0.9, opacity: 0 }} 
       animate={{ scale: 1, opacity: 1 }} 
       transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
-      style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 36 }}
+      style={{ display: "flex", alignItems: "center", gap: 16, justifyContent: "center", marginBottom: 40 }}
     >
       <div style={{ position: "relative" }}>
-        <TulasiLogo size={64} style={{ filter: "drop-shadow(0 10px 30px rgba(139, 92, 246, 0.4))" }} />
+        <TulasiLogo size={72} style={{ filter: "drop-shadow(0 0 25px rgba(168, 85, 247, 0.4))" }} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 26, color: "white", letterSpacing: "-0.5px", lineHeight: 1 }}>
+        <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 900, fontSize: 32, color: "white", letterSpacing: "-1px", lineHeight: 1 }}>
           Tulasi<span className="gradient-text">AI</span>
         </span>
-        <span style={{ 
-          background: "linear-gradient(135deg, #8B5CF6, #38BDF8)", 
-          padding: "2px 8px", 
-          borderRadius: 4, 
-          fontSize: 10, 
-          fontWeight: 800, 
+        <div style={{ 
+          background: "linear-gradient(135deg, #A855F7, #22D3EE)", 
+          padding: "2px 10px", 
+          borderRadius: 6, 
+          fontSize: 11, 
+          fontWeight: 900, 
           color: "white", 
-          marginTop: 4,
-          letterSpacing: "1px",
+          marginTop: 6,
+          letterSpacing: "1.5px",
           textTransform: "uppercase",
-          boxShadow: "0 0 15px rgba(139, 92, 246, 0.5)"
+          boxShadow: "0 0 20px rgba(168, 85, 247, 0.6)",
+          display: "inline-block"
         }}>
-          Pro
-        </span>
+          Platinum
+        </div>
       </div>
     </motion.div>
   );
