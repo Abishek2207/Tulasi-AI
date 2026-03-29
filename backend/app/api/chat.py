@@ -239,3 +239,44 @@ def clear_history(session_id: str, db: Session = Depends(get_session)):
         db.delete(m)
     db.commit()
     return {"message": "Cleared"}
+
+
+@router.get("/sessions")
+def get_user_sessions(db: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    """List all unique session IDs and their last message snippets for the user."""
+    from sqlmodel import func, desc
+    
+    # Subquery to get unique sessions for the user
+    # We want session_id and the latest timestamp
+    statement = select(
+        ChatMessage.session_id, 
+        func.max(ChatMessage.created_at).label("last_active"),
+        func.min(ChatMessage.content).label("title") # Placeholder for title logic
+    ).where(
+        ChatMessage.user_id == user.id
+    ).group_by(
+        ChatMessage.session_id
+    ).order_by(
+        desc("last_active")
+    )
+    
+    results = db.exec(statement).all()
+    
+    sessions = []
+    for row in results:
+        # Get the first user message as a title if possible
+        first_msg = db.exec(
+            select(ChatMessage)
+            .where(ChatMessage.session_id == row[0], ChatMessage.role == "user")
+            .order_by(ChatMessage.created_at)
+        ).first()
+        
+        title = first_msg.content[:40] + "..." if first_msg else "New Chat"
+        
+        sessions.append({
+            "session_id": row[0],
+            "last_active": row[1].isoformat() if row[1] else None,
+            "title": title
+        })
+        
+    return {"sessions": sessions}

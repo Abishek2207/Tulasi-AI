@@ -259,3 +259,19 @@ class Review(SQLModel, table=True):
     review: str
     rating: int = Field(ge=1, le=5)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class PersistentInterviewSession(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    session_id: str = Field(unique=True, index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    role: str
+    company: str
+    interview_type: str
+    num_questions: int
+    questions_asked: int = 0
+    history_json: str = "[]"
+    status: str = "in_progress" # in_progress, completed
+    feedback_json: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

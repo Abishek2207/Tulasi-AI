@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { TulasiLogo } from "@/components/TulasiLogo";
 
 interface AdminStats {
   total_users: number;
@@ -149,7 +150,14 @@ export default function AdminPage() {
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <div style={{ marginBottom: 40, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg, #FF6B9D, #6C63FF)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>⚙️</div>
+            <div style={{ 
+              width: 56, height: 56, borderRadius: 16, 
+              background: "rgba(108,99,255,0.08)", 
+              border: "1px solid rgba(108,99,255,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center" 
+            }}>
+              <TulasiLogo size={32} />
+            </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <h1 style={{ fontSize: 26, fontWeight: 800, fontFamily: "var(--font-outfit)" }}>Admin Dashboard</h1>

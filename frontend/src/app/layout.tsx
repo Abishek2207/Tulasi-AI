@@ -29,6 +29,11 @@ export const metadata: Metadata = {
     siteName: "Tulasi AI",
   },
   twitter: { card: "summary_large_image", title: "Tulasi AI", description: "AI Career & Learning Platform" },
+  icons: {
+    icon: "/images/logo.png",
+    shortcut: "/images/logo-transparent.png",
+    apple: "/images/logo.png",
+  },
 };
 
 export const viewport = {

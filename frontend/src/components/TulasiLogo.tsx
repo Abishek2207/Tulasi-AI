@@ -16,8 +16,8 @@ export function TulasiLogo({ className = "", size = 40, style }: { className?: s
           background: "radial-gradient(circle, #06B6D4 0%, #7C3AED 40%, #10B981 80%, transparent 100%)",
         }}
         animate={{
-          scale: [1, 1.5, 1],
-          opacity: [0.05, 0.2, 0.05],
+          scale: [1, 1.8, 0.9, 1.4, 1],
+          opacity: [0.08, 0.25, 0.1, 0.2, 0.08],
           rotate: [0, 90, 180, 270, 360],
         }}
         transition={{

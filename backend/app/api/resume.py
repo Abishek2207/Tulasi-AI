@@ -5,8 +5,7 @@ from app.core.ai_router import get_ai_response
 from app.core.database import get_session
 from sqlmodel import Session
 from app.models.models import SavedResume, User
-from app.api.auth import get_user_from_token
-from app.api.activity import log_activity_internal
+from app.api.deps import get_current_user
 import json
 import re
 
@@ -19,7 +18,11 @@ class ImproveRequest(BaseModel):
     document_type: str = "Resume"
 
 @router.post("/improve")
-def improve_resume(data: ImproveRequest, db: Session = Depends(get_session)):
+def improve_resume(
+    data: ImproveRequest, 
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     if not data.resume_text.strip() or not data.job_description.strip():
         raise HTTPException(status_code=400, detail="Missing resume text or job description")
 
@@ -91,7 +94,7 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
   "improved_resume": "YOUR FULLY REWRITTEN AND STRUCTURED RESUME TEXT HERE... (with SUMMARY, EXPERIENCE, SKILLS, PROJECTS)"
 }}"""
 
-    response_text = get_ai_response(prompt, force_model="gemini-2.5-flash")
+    response_text = get_ai_response(prompt)
     
     # Try to parse JSON from the AI response
     try:
@@ -101,35 +104,24 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
             result = json.loads(match.group())
             # ── 💾 Auto-Save to Database ──
             try:
-                # We try to get session from FastAPI dependency in real life, 
-                # but here we'll use a standalone session for simplicity in the API route.
-                from app.core.database import engine
-                with Session(engine) as db:
-                    saved = SavedResume(
-                        user_id=1, # Default to user 1 for now, will dynamic with JWT later
-                        document_type=data.document_type,
-                        mode=data.mode,
-                        original_resume=data.resume_text,
-                        job_description=data.job_description,
-                        improved_resume=result.get("improved_resume", ""),
-                        ats_score=result.get("ats_score", 0),
-                        readability_score=result.get("readability_score", 0),
-                        keyword_match_percent=result.get("keyword_match_percent", 0),
-                        feedback_json=json.dumps(result.get("feedback", [])),
-                        missing_keywords_json=json.dumps(result.get("missing_keywords", []))
-                    )
-                    db.add(saved)
-                    db.commit()
+                saved = SavedResume(
+                    user_id=current_user.id,
+                    document_type=data.document_type,
+                    mode=data.mode,
+                    original_resume=data.resume_text,
+                    job_description=data.job_description,
+                    improved_resume=result.get("improved_resume", ""),
+                    ats_score=result.get("ats_score", 0),
+                    readability_score=result.get("readability_score", 0),
+                    keyword_match_percent=result.get("keyword_match_percent", 0),
+                    feedback_json=json.dumps(result.get("feedback", [])),
+                    missing_keywords_json=json.dumps(result.get("missing_keywords", []))
+                )
+                db.add(saved)
+                db.commit()
 
-                    # ── 📄 Log Activity ──────────────────────────────────────────
-                    # Since user_id is hardcoded to 1 for now, we'll log for user 1
-                    # In a real app we'd get current_user from Depends(get_current_user)
-                    from app.models.models import User
-                    user = db.get(User, 1)
-                    if user:
-                        log_activity_internal(user, db, "resume_generated", f"Generated {data.document_type} (score: {result.get('ats_score', 0)})")
-                        db.commit()
-                    # ─────────────────────────────────────────────────────────────
+                log_activity_internal(current_user, db, "resume_generated", f"Generated {data.document_type} (score: {result.get('ats_score', 0)})")
+                db.commit()
             except Exception as e:
                 print(f"Failed to save resume to history: {e}")
 
@@ -153,29 +145,29 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
     }
 
 @router.get("/history")
-def get_resume_history():
-    from app.core.database import engine
-    with Session(engine) as db:
-        from sqlmodel import select
-        # Use user_id=1 as the current placeholder for the 'main' user
-        statement = select(SavedResume).where(SavedResume.user_id == 1).order_by(SavedResume.created_at.desc())
-        results = db.exec(statement).all()
-        
-        # Convert JSON strings back to lists
-        history = []
-        for r in results:
-            history.append({
-                "id": r.id,
-                "document_type": r.document_type,
-                "mode": r.mode,
-                "original_resume": r.original_resume,
-                "job_description": r.job_description,
-                "improved_resume": r.improved_resume,
-                "ats_score": r.ats_score,
-                "readability_score": r.readability_score,
-                "keyword_match_percent": r.keyword_match_percent,
-                "feedback": json.loads(r.feedback_json),
-                "missing_keywords": json.loads(r.missing_keywords_json),
-                "created_at": r.created_at.isoformat()
-            })
-        return history
+def get_resume_history(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    statement = select(SavedResume).where(SavedResume.user_id == current_user.id).order_by(SavedResume.created_at.desc())
+    results = db.exec(statement).all()
+    
+    # Convert JSON strings back to lists
+    history = []
+    for r in results:
+        history.append({
+            "id": r.id,
+            "document_type": r.document_type,
+            "mode": r.mode,
+            "original_resume": r.original_resume,
+            "job_description": r.job_description,
+            "improved_resume": r.improved_resume,
+            "ats_score": r.ats_score,
+            "readability_score": r.readability_score,
+            "keyword_match_percent": r.keyword_match_percent,
+            "feedback": json.loads(r.feedback_json),
+            "missing_keywords": json.loads(r.missing_keywords_json),
+            "created_at": r.created_at.isoformat()
+        })
+    return history
+
