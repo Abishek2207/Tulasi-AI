@@ -432,11 +432,21 @@ function ReviewsSection() {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {/* Role */}
-              <div className="form-row">
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
-                  <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Role (optional)</label>
-                  <input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. SDE @ Google"
+              {/* Identity Row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Display Name *</label>
+                  <input 
+                    value={session?.user?.name || ""} 
+                    readOnly 
+                    placeholder="Authenticated Name"
+                    style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: "12px 16px", color: "var(--text-muted)", fontSize: 15, outline: "none", cursor: "not-allowed", width: "100%", boxSizing: "border-box" }} 
+                  />
+                  <span style={{ fontSize: 10, color: "var(--brand-primary)", fontWeight: 700 }}>verified identity</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Professional Role (optional)</label>
+                  <input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. Developer @ Meta"
                     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px 16px", color: "white", fontSize: 15, outline: "none", width: "100%", boxSizing: "border-box" }} />
                 </div>
               </div>
