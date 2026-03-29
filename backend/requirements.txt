@@ -41,4 +41,10 @@ slowapi==0.1.9
 
 # ── Payments ───────────────────────────────────────────────────────────
 stripe>=7.0.0
-# Invalidate cache for redeploy 2
+
+# ── Real-time (Socket.io) ─────────────────────────────────────────────
+python-socketio==5.11.0
+python-engineio>=4.8.0
+eventlet==0.33.3
+
+# Invalidate cache for redeploy 3

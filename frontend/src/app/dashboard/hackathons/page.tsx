@@ -70,14 +70,20 @@ export default function HackathonsPage() {
   const [filter, setFilter] = useState("All");
   const [hackathons, setHackathons] = useState<LocalHackathon[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [bookmarking, setBookmarking] = useState<Set<number>>(new Set());
+  const LIMIT = 12;
 
   useEffect(() => {
     const fetchHackathons = async () => {
       setLoading(true);
+      setOffset(0);
       try {
-        const data = await hackathonApi.list(undefined, filter !== "All" ? filter : undefined, token);
+        const data = await hackathonApi.list(undefined, filter !== "All" ? filter : undefined, token, LIMIT, 0);
         const list = data.hackathons ?? [];
+        setTotal(data.total || 0);
         setHackathons(list.length > 0 ? (list as unknown as LocalHackathon[]) : FALLBACK_HACKATHONS);
       } catch (e) {
         setHackathons(FALLBACK_HACKATHONS);
@@ -87,6 +93,19 @@ export default function HackathonsPage() {
     };
     fetchHackathons();
   }, [filter, token]);
+
+  const loadMore = async () => {
+    if (loadingMore || hackathons.length >= total) return;
+    setLoadingMore(true);
+    const nextOffset = offset + LIMIT;
+    try {
+      const data = await hackathonApi.list(undefined, filter !== "All" ? filter : undefined, token, LIMIT, nextOffset);
+      const list = data.hackathons ?? [];
+      setHackathons(prev => [...prev, ...(list as unknown as LocalHackathon[])]);
+      setOffset(nextOffset);
+    } catch (e) {}
+    setLoadingMore(false);
+  };
 
   const toggleBookmark = async (hack: LocalHackathon) => {
         setBookmarking(prev => new Set(prev).add(hack.id));
@@ -210,6 +229,25 @@ export default function HackathonsPage() {
           </AnimatePresence>
         )}
       </div>
+
+      {!loading && hackathons.length < total && (
+        <div style={{ marginTop: 60, textAlign: "center" }}>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={loadMore}
+            disabled={loadingMore}
+            style={{
+              padding: "16px 40px", borderRadius: 24, fontSize: 16, fontWeight: 800,
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+              color: "white", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, margin: "0 auto"
+            }}
+          >
+            {loadingMore ? "Synthesizing Node..." : "Load More Hackathons"}
+            {!loadingMore && <span>↓</span>}
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 }

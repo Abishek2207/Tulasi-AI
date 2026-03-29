@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { activityApi } from "@/lib/api";
 import { TiltCard } from "@/components/ui/TiltCard";
+import confetti from "canvas-confetti";
 
 const RANK_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 const RANK_GLOWS = [
@@ -41,6 +42,41 @@ export default function LeaderboardPage() {
     fetchLeaderboard();
   }, [token]);
 
+  const handleShare = async () => {
+    if (!userContext) return;
+    
+    // 🎉 Confetti Celebration
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ["#7C3AED", "#06B6D4", "#F43F5E", "#FFD700"]
+    });
+
+    const shareText = `🚀 I just reached Rank #${userContext.rank} on Tulasi AI with ${userContext.xp.toLocaleString()} XP! 🔥 Join the elite circle of learners at Tulasi AI. @TulasiAI #TulasiAI #LearningGoal`;
+    const shareUrl = "https://tulasiai.vercel.app";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "My Tulasi AI Progress",
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.log("Share failed:", err);
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`);
+        alert("Status copied to clipboard! 🚀 Share it on your socials.");
+      } catch (err) {
+        console.error("Clipboard failed:", err);
+      }
+    }
+  };
+
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 60, position: "relative" }}>
       
@@ -68,7 +104,7 @@ export default function LeaderboardPage() {
 
       {/* Podium for Top 3 */}
       {!loading && leaderboard.length >= 3 && (
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 24, marginBottom: 80, perspective: 1000 }}>
+        <div className="podium-container" style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 24, marginBottom: 80, perspective: 1000 }}>
           {[leaderboard[1], leaderboard[0], leaderboard[2]].map((user, i) => {
             if (!user) return <div key={i} style={{ width: 180 }} />;
             // Logic to map podium position (0,1,2) back to actual rank (2,1,3)
@@ -224,23 +260,24 @@ export default function LeaderboardPage() {
              borderRadius: 24, marginTop: 40, boxShadow: "0 -20px 40px rgba(0,0,0,0.5)"
            }}
         >
-           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+           <div className="spotlight-container" style={{ display: "flex", alignItems: "center", gap: 20 }}>
              <div style={{ width: 44, height: 44, borderRadius: 14, background: "var(--brand-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 18 }}>
                 #{userContext.rank}
              </div>
              <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 2 }}>Your Global Status</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div className="spotlight-stats" style={{ display: "flex", alignItems: "center", gap: 16 }}>
                    <div style={{ fontSize: 18, fontWeight: 800, color: "white" }}>{userContext.xp.toLocaleString()} <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Total XP</span></div>
-                   <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
+                   <div className="spotlight-divider" style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
                    <div style={{ fontSize: 14, fontWeight: 700, color: "#F59E0B" }}>🔥 {userContext.streak} Day Continuous Sync</div>
-                   <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
+                   <div className="spotlight-divider" style={{ width: 1, height: 16, background: "rgba(255,255,255,0.1)" }} />
                    <div style={{ fontSize: 14, fontWeight: 700, color: "#10B981" }}>💻 {userContext.problems_solved} Logic Gates Breached</div>
                 </div>
              </div>
              <motion.button 
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                className="btn-primary" style={{ padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 800 }}
+                onClick={handleShare}
+                className="btn-primary spotlight-button" style={{ padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 800 }}
              >
                 Share Status 🚀
              </motion.button>
@@ -251,6 +288,26 @@ export default function LeaderboardPage() {
       <style>{`
         .spinner { border-top-color: var(--brand-primary); }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        @media (max-width: 850px) {
+          .podium-container {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 40px !important;
+          }
+          .spotlight-container {
+            flex-direction: column !important;
+            gap: 16px !important;
+            align-items: flex-start !important;
+            text-align: left;
+          }
+          .spotlight-stats {
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+          }
+          .spotlight-divider { display: none !important; }
+          .spotlight-button { width: 100% !important; }
+        }
       `}</style>
     </div>
   );

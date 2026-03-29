@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Logo as TulasiLogo } from "@/components/Logo";
 import {
   FileText, Target, Map, Code, Award, Trophy, Users,
-  Sparkles, ArrowRight, Layout, BrainCircuit, HardDrive, Cpu, Menu, X
+  Sparkles, ArrowRight, Layout, BrainCircuit, HardDrive, Cpu, Menu, X,
+  Phone, Mail, Instagram
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { reviewsApi, ReviewItem } from "@/lib/api";
@@ -508,9 +509,21 @@ function Footer() {
             </div>
           </div>
 
-          {/* RIGHT: System Status */}
+          {/* RIGHT: Contact & Status */}
           <div>
-            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 20, fontSize: 11, textTransform: "uppercase", letterSpacing: 2.5 }}>System Status</h4>
+            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 20, fontSize: 11, textTransform: "uppercase", letterSpacing: 2.5 }}>Contact & Status</h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+              <a href="mailto:abishekramamoorthy22@gmail.com" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
+                <Mail size={16} /> abishekramamoorthy22@gmail.com
+              </a>
+              <a href="tel:6369538345" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
+                <Phone size={16} /> +91 63695 38345
+              </a>
+              <a href="https://www.instagram.com/_.abi22._/" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
+                <Instagram size={16} /> @_.abi22._
+              </a>
+            </div>
+            
             <div style={{ padding: "20px 24px", background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 18 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                 <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }}

@@ -213,8 +213,8 @@ export default function ResumeBuilderPage() {
 
       <div style={{ display: "flex", gap: 32, flexWrap: "wrap", alignItems: "flex-start" }}>
         
-        {/* Left Inputs */}
-        <div style={{ flex: "1 1 480px", display: "flex", flexDirection: "column", gap: 24 }}>
+        {/* Left Inputs - Sticky on Large Screens */}
+        <div style={{ flex: "1 1 480px", display: "flex", flexDirection: "column", gap: 24, position: "sticky", top: 20 }}>
           
           <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", padding: 6, borderRadius: 16, border: "1px solid var(--border)" }}>
             {["Resume", "Cover Letter"].map((type) => (
@@ -229,8 +229,8 @@ export default function ResumeBuilderPage() {
             ))}
           </div>
 
-          <div className="glass-card" style={{ padding: 32 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+          <div className="glass-card" style={{ padding: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <Target size={18} className="text-secondary" />
               <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1.5 }}>Optimization Context</label>
             </div>
@@ -239,27 +239,24 @@ export default function ResumeBuilderPage() {
               value={resumeText} onChange={(e) => setResumeText(e.target.value)}
               placeholder="Paste existing experience data..."
               className="input-field"
-              style={{ width: "100%", height: 320, borderRadius: 16, padding: "20px", fontSize: 14, background: "rgba(0,0,0,0.2)" }}
+              style={{ width: "100%", height: 280, borderRadius: 12, padding: "16px", fontSize: 14, background: "rgba(0,0,0,0.2)" }}
             />
 
             {resumeText.length > 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: 24 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 900, color: "var(--text-secondary)" }}>CONSTRUCTION QUALITY</span>
-                  <span style={{ fontSize: 11, fontWeight: 900, color: getScoreColor(inputStrength) }}>{inputStrength}%</span>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 900, color: "var(--text-secondary)" }}>CONSTRUCTION QUALITY</span>
+                  <span style={{ fontSize: 10, fontWeight: 900, color: getScoreColor(inputStrength) }}>{inputStrength}%</span>
                 </div>
-                <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 10, overflow: "hidden" }}>
+                <div style={{ height: 4, background: "rgba(255,255,255,0.05)", borderRadius: 10, overflow: "hidden" }}>
                   <motion.div animate={{ width: `${inputStrength}%` }} style={{ height: "100%", background: getScoreColor(inputStrength) }} />
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-                  {suggestions.map((h, i) => <span key={i} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 20, background: "rgba(124, 58, 237, 0.1)", color: "var(--brand-primary)", border: "1px solid rgba(124, 58, 237, 0.2)", fontWeight: 700 }}>{h}</span>)}
                 </div>
               </motion.div>
             )}
           </div>
 
-          <div className="glass-card" style={{ padding: 32 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+          <div className="glass-card" style={{ padding: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <ScanEye size={18} className="text-secondary" />
               <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 1.5 }}>Target Role Description</label>
             </div>
@@ -267,7 +264,7 @@ export default function ResumeBuilderPage() {
               value={jobDescription} onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste target job requirements..."
               className="input-field"
-              style={{ width: "100%", height: 200, borderRadius: 16, padding: "20px", fontSize: 14, background: "rgba(0,0,0,0.2)" }}
+              style={{ width: "100%", height: 160, borderRadius: 12, padding: "16px", fontSize: 14, background: "rgba(0,0,0,0.2)" }}
             />
           </div>
 
@@ -278,8 +275,8 @@ export default function ResumeBuilderPage() {
           </motion.button>
         </div>
 
-        {/* Right Results */}
-        <div style={{ flex: "1.5 1 650px", display: "flex", flexDirection: "column", gap: 24 }}>
+        {/* Right Results - Professional Preview Panel */}
+        <div style={{ flex: "1.5 1 650px", display: "flex", flexDirection: "column", gap: 24, minHeight: 800 }}>
           {!result && !loading && (
             <div className="glass-card" style={{ flex: 1, minHeight: 600, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 60 }}>
               <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4 }}>
@@ -340,19 +337,28 @@ export default function ResumeBuilderPage() {
                 </div>
               </TiltCard>
 
-              <div className="glass-card" style={{ padding: 40 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 18, fontWeight: 900, display: "flex", alignItems: "center", gap: 10 }}><CheckCircle2 size={18} className="text-brand" /> Re-Architected Narrative</h3>
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <button onClick={handleCopy} className="btn-ghost" style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><Copy size={14} /> Copy</button>
-                    <button onClick={exportPDF} className="btn-primary" style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><Printer size={14} /> PDF</button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                <div className="glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", minHeight: 600 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <h3 style={{ fontSize: 13, fontWeight: 900, display: "flex", alignItems: "center", gap: 8, letterSpacing: 1 }}>RAW OUTPUT</h3>
+                    <button onClick={handleCopy} className="btn-ghost" style={{ padding: "6px 12px", borderRadius: 8, fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", gap: 6 }}><Copy size={12} /> Copy</button>
+                  </div>
+                   <textarea 
+                    value={result.improved_resume} readOnly
+                    className="input-field" 
+                    style={{ flex: 1, width: "100%", fontSize: 13, fontFamily: "monospace", padding: 16, background: "rgba(0,0,0,0.3)", borderRadius: 12, lineHeight: 1.6, resize: "none" }}
+                  />
+                </div>
+
+                <div className="glass-card" style={{ padding: 24, background: "white", color: "black", minHeight: 600, overflowY: "auto" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, borderBottom: "1px solid #eee", paddingBottom: 12 }}>
+                    <h3 style={{ fontSize: 13, fontWeight: 900, display: "flex", alignItems: "center", gap: 8, letterSpacing: 1, color: "#666" }}>LIVE PREVIEW (A4)</h3>
+                    <button onClick={exportPDF} className="btn-primary" style={{ padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 900, display: "flex", alignItems: "center", gap: 6 }}><Printer size={14} /> EXPORT PDF</button>
+                  </div>
+                  <div style={{ padding: "0 10px" }} className="resume-live-preview">
+                    {renderResumeMarkdown(result.improved_resume)}
                   </div>
                 </div>
-                <textarea 
-                  value={result.improved_resume} readOnly
-                  className="input-field" 
-                  style={{ width: "100%", height: 500, fontSize: 14, fontFamily: "monospace", padding: 24, background: "rgba(0,0,0,0.3)", borderRadius: 16, lineHeight: 1.6 }}
-                />
               </div>
             </motion.div>
           )}

@@ -13,7 +13,7 @@ router = APIRouter()
 from fastapi.responses import JSONResponse
 
 class ReviewCreate(BaseModel):
-    name: str = Field(..., min_length=2, max_length=100)
+    name: Optional[str] = Field(None, max_length=100)
     role: Optional[str] = Field(None, max_length=100)
     review: str = Field(..., min_length=10, max_length=1000)
     rating: int = Field(..., ge=1, le=5)
@@ -94,9 +94,12 @@ def submit_review(
             return JSONResponse(status_code=400, content={"error": "Rating must be between 1 and 5"})
 
         # Save review using ORM
+        # Use the name from the authenticated user to ensure identity
+        reviewer_name = current_user.name or data.name or "Student User"
+        
         new_review = Review(
             user_id=current_user.id,
-            name=data.name,
+            name=reviewer_name,
             role=data.role,
             review=data.review,
             rating=data.rating,
@@ -117,9 +120,10 @@ def submit_review(
             try:
                 from sqlalchemy import text
                 now = datetime.utcnow()
+                reviewer_name = current_user.name or data.name or "Student User"
                 session.execute(text(
-                    "INSERT INTO review (name, role, review, rating, created_at) VALUES (:n, :rol, :rev, :rat, :c)"
-                ), {"n": data.name, "rol": data.role, "rev": data.review, "rat": data.rating, "c": now})
+                    "INSERT INTO review (user_id, name, role, review, rating, created_at) VALUES (:uid, :n, :rol, :rev, :rat, :c)"
+                ), {"uid": current_user.id, "n": reviewer_name, "rol": data.role, "rev": data.review, "rat": data.rating, "c": now})
                 session.commit()
                 res = session.execute(text("SELECT id, name, role, review, rating, created_at FROM review ORDER BY id DESC LIMIT 1"))
                 row = res.mappings().first()

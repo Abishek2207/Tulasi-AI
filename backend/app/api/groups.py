@@ -206,7 +206,7 @@ def get_messages(
 
 
 @router.post("/{group_id}/messages")
-def send_message(
+async def send_message(
     group_id: int,
     req: SendMessageRequest,
     db: Session = Depends(get_session),
@@ -239,6 +239,21 @@ def send_message(
     # ── 💬 Log Activity ──────────────────────────────────────────
     log_activity_internal(current_user, db, "message_sent", f"Sent message in group: {member.group_id}")
     db.commit()
+    # ─────────────────────────────────────────────────────────────
+
+    # ── 📡 Socket.io Broadcast ───────────────────────────────────
+    from app.core.socket_server import broadcast_group_message
+    
+    msg_dict = {
+        "id": msg.id,
+        "user_id": msg.user_id,
+        "user_name": msg.user_name,
+        "content": msg.content,
+        "is_encrypted": msg.is_encrypted,
+        "created_at": msg.created_at.isoformat(),
+    }
+    
+    await broadcast_group_message(group_id, {"type": "new_group_message", "message": msg_dict})
     # ─────────────────────────────────────────────────────────────
 
     return {

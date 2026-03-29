@@ -229,20 +229,88 @@ def get_admin_analytics(db: Session = Depends(get_session), admin: User = Depend
         return {"growth": [], "segmentation": [], "error": str(e), "success": False}
 
 
+@router.get("/hackathons")
+def get_admin_hackathons(
+    limit: int = 100, 
+    offset: int = 0, 
+    db: Session = Depends(get_session), 
+    admin: User = Depends(get_admin_user)
+):
+    """Fetch hackathons with pagination for admin management."""
+    from app.models.models import Hackathon
+    from sqlmodel import func
+    
+    total = db.exec(select(func.count(Hackathon.id))).one()
+    hackathons = db.exec(
+        select(Hackathon)
+        .order_by(Hackathon.id.desc())
+        .offset(offset)
+        .limit(limit)
+    ).all()
+    
+    return {"hackathons": hackathons, "total": total}
+
+
+class CreateHackathonRequest(BaseModel):
+    name: str
+    organizer: str
+    description: str
+    prize: str
+    deadline: str
+    link: str
+    tags: str = ""
+    status: str = "Open"
+    image_url: str = ""
+
+
+@router.post("/hackathons")
+def create_hackathon(req: CreateHackathonRequest, db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Add a new hackathon (Admin Only)."""
+    from app.models.models import Hackathon
+    h = Hackathon(
+        name=req.name,
+        organizer=req.organizer,
+        description=req.description,
+        prize=req.prize,
+        prize_pool=req.prize,
+        deadline=req.deadline,
+        link=req.link,
+        registration_link=req.link,
+        tags=req.tags,
+        status=req.status,
+        image_url=req.image_url or "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=60"
+    )
+    db.add(h)
+    db.commit()
+    db.refresh(h)
+    return h
+
+
+@router.delete("/hackathons/{hackathon_id}")
+def delete_hackathon(hackathon_id: int, db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Delete a hackathon (Admin Only)."""
+    from app.models.models import Hackathon
+    h = db.get(Hackathon, hackathon_id)
+    if not h:
+        return {"error": "Hackathon not found"}
+    db.delete(h)
+    db.commit()
+    return {"message": "Hackathon deleted successfully"}
+
+
 @router.get("/system-sync-emergency-9922")
 def emergency_sync(db: Session = Depends(get_session)):
     """Secret emergency sync to promote admin and delete spam on LIVE site."""
+    from app.models.models import User
     # 1. Promote Admin
-    admin_email = "abishekramamoorthy22@gmail.com"
-    user = db.exec(select(User).where(User.email == admin_email)).first()
-    promoted = False
-    if user:
-        user.role = "admin"
-        db.add(user)
-        promoted = True
+    admin_emails = ["abishekramamoorthy22@gmail.com", "abishek.ramamoorthy.dev@gmail.com"]
+    for email in admin_emails:
+        user = db.exec(select(User).where(User.email == email)).first()
+        if user:
+            user.role = "admin"
+            db.add(user)
     
     # 2. Delete Spam Reviews
-    # Also delete "mia kalifa" spam variations
     from sqlalchemy import text
     try:
         db.execute(text("DELETE FROM review WHERE review LIKE '%mia kalifa%'"))
@@ -256,6 +324,5 @@ def emergency_sync(db: Session = Depends(get_session)):
     db.commit()
     return {
         "status": "success",
-        "admin_promoted": promoted,
         "message": "Spam cleared & Admin role synchronized."
     }

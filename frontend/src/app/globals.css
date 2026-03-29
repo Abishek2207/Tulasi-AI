@@ -58,9 +58,9 @@
   --bg-glass-hover: rgba(255, 255, 255, 1);
 
   /* Text — Ultra Crisp Light Mode */
-  --text-primary:   #09090B;
-  --text-secondary: #3F3F46;
-  --text-muted:     #71717A;
+  --text-primary:   #111827; /* Tailwind gray-900 */
+  --text-secondary: #374151; /* Tailwind gray-700 */
+  --text-muted:     #6B7280; /* Tailwind gray-500 */
 
   /* Borders / Glass */
   --border:       rgba(0, 0, 0, 0.08);
