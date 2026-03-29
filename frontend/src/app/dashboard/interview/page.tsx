@@ -9,7 +9,8 @@ import { trackEvent } from "@/lib/analytics";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { 
   Mic, MicOff, Volume2, VolumeX, ArrowRight, CheckCircle2, 
-  TrendingUp, BrainCircuit, Terminal, Briefcase, Users, Layout, Timer 
+  TrendingUp, BrainCircuit, Terminal, Briefcase, Users, Layout, Timer,
+  Video, VideoOff, Camera
 } from "lucide-react";
 
 const ROLES = [
@@ -75,6 +76,27 @@ export default function InterviewPage() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (cameraEnabled && phase !== "feedback") {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(s => setStream(s))
+        .catch(err => {
+          console.error("Camera error:", err);
+          setCameraEnabled(false);
+        });
+    } else {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        setStream(null);
+      }
+    }
+    return () => {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+    };
+  }, [cameraEnabled, phase]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -254,8 +276,8 @@ export default function InterviewPage() {
                   </select>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 32 }}>
-                <div className="glass-card" style={{ padding: 24, textAlign: "left", flex: 1 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 32 }}>
+                <div className="glass-card" style={{ padding: 24, textAlign: "left" }}>
                   <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", display: "block", marginBottom: 12 }}>TOTAL QUESTIONS</label>
                   <div style={{ display: "flex", gap: 10 }}>
                     {[3, 5, 8, 10].map(n => (
@@ -263,7 +285,7 @@ export default function InterviewPage() {
                     ))}
                   </div>
                 </div>
-                <div className="glass-card" style={{ padding: 24, textAlign: "left", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div className="glass-card" style={{ padding: 24, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div>
                         <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", display: "block" }}>VOICE MODE 🎙️</label>
@@ -280,7 +302,35 @@ export default function InterviewPage() {
                       </button>
                    </div>
                 </div>
+                <div className="glass-card" style={{ padding: 24, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", display: "block" }}>VIDEO MODE 🎥</label>
+                        <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Show your professional posture</p>
+                      </div>
+                      <button 
+                        onClick={() => setCameraEnabled(!cameraEnabled)}
+                        style={{ 
+                          width: 50, height: 26, borderRadius: 20, padding: 4, cursor: "pointer", transition: "all 0.3s",
+                          background: cameraEnabled ? "#06B6D4" : "rgba(255,255,255,0.1)", border: "none"
+                        }}
+                      >
+                        <motion.div animate={{ x: cameraEnabled ? 24 : 0 }} style={{ width: 18, height: 18, background: "white", borderRadius: "50%" }} />
+                      </button>
+                   </div>
+                </div>
               </div>
+
+              {cameraEnabled && stream && (
+                <div style={{ marginBottom: 32, borderRadius: 16, overflow: "hidden", border: "1px solid var(--border)", position: "relative", height: 240, background: "#000" }}>
+                   <video 
+                     autoPlay muted playsInline 
+                     ref={v => { if (v) v.srcObject = stream; }}
+                     style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
+                   />
+                   <div style={{ position: "absolute", bottom: 12, left: 12, background: "rgba(0,0,0,0.5)", padding: "4px 8px", borderRadius: 4, fontSize: 10, color: "white", fontWeight: 700 }}>PREVIEW</div>
+                </div>
+              )}
 
               <motion.button 
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -302,6 +352,17 @@ export default function InterviewPage() {
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "rgba(139,92,246,0.1)" }}>
                    <motion.div animate={{ width: `${(timeLeft / 120) * 100}%` }} style={{ height: "100%", background: "#8B5CF6" }} />
                 </div>
+
+                {cameraEnabled && stream && (
+                  <div style={{ position: "absolute", top: 20, right: 20, width: 160, height: 100, borderRadius: 12, overflow: "hidden", border: "2px solid var(--brand-secondary)", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", zIndex: 10 }}>
+                     <video 
+                       autoPlay muted playsInline 
+                       ref={v => { if (v) v.srcObject = stream; }}
+                       style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
+                     />
+                     <div style={{ position: "absolute", bottom: 4, left: 4, background: "rgba(0,0,0,0.5)", padding: "2px 4px", borderRadius: 2, fontSize: 8, color: "white", fontWeight: 700 }}>YOU</div>
+                  </div>
+                )}
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
                   <span style={{ fontSize: 12, fontWeight: 900, color: "#8B5CF6", letterSpacing: 2 }}>QUESTION {questionNum} / {numQuestions}</span>

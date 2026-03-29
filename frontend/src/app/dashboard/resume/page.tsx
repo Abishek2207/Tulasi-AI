@@ -89,6 +89,24 @@ export default function ResumeBuilderPage() {
     }
   };
 
+  const exportPDF = () => {
+    const element = document.getElementById("pdf-preview-container");
+    if (!element) return;
+
+    const opt = {
+      margin: 0.5,
+      filename: `Resume_${session?.user?.name || "TulasiAI"}.pdf`,
+      image: { type: "jpeg" as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: "in", format: "letter", orientation: "portrait" as const }
+    };
+
+    // Dynamic import for client-side only library
+    import("html2pdf.js").then((html2pdf) => {
+      html2pdf.default().from(element).set(opt).save();
+    });
+  };
+
   const parseSections = (text: string) => {
     const sectionHeaders = ["SUMMARY", "EXPERIENCE", "SKILLS", "PROJECTS", "EDUCATION"];
     const lines = text.split("\n");
@@ -158,9 +176,9 @@ export default function ResumeBuilderPage() {
         }
       `}} />
       
-      {/* Hidden Pristine PDF Document */}
+      {/* Hidden Pristine PDF Document (Off-screen for capture) */}
       {result && (
-        <div id="pdf-preview-container" style={{ display: "none", color: "black", background: "white", width: "100%", maxWidth: "21cm" }}>
+        <div id="pdf-preview-container" style={{ position: "absolute", left: "-9999px", top: "-9999px", color: "black", background: "white", width: "800px", padding: "40px" }}>
           {renderResumeMarkdown(result.improved_resume)}
         </div>
       )}
@@ -327,7 +345,7 @@ export default function ResumeBuilderPage() {
                   <h3 style={{ fontSize: 18, fontWeight: 900, display: "flex", alignItems: "center", gap: 10 }}><CheckCircle2 size={18} className="text-brand" /> Re-Architected Narrative</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={handleCopy} className="btn-ghost" style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><Copy size={14} /> Copy</button>
-                    <button onClick={() => window.print()} className="btn-primary" style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><Printer size={14} /> PDF</button>
+                    <button onClick={exportPDF} className="btn-primary" style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><Printer size={14} /> PDF</button>
                   </div>
                 </div>
                 <textarea 
