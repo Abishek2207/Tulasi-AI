@@ -56,14 +56,25 @@ class Hackathon(SQLModel, table=True):
     description: str
     prize: str = ""
     prize_pool: str = ""
-    deadline: str
+    deadline: str  # Kept for backward compatibility but ISO format preferred
     link: str
     registration_link: str = ""
     tags: str = ""
     image_url: str = ""
     participants_count: int = 0
-    status: str = "Open"
+    status: str = "Open"  # Open, Upcoming, Ongoing, Closed
     is_active: bool = True
+    
+    # [NEW] Discovery Metadata
+    mode: str = "Online"  # Online, Offline, Hybrid
+    difficulty: str = "Beginner"  # Beginner, Intermediate, Advanced
+    team_size: str = "1-4 builders"
+    start_date: Optional[str] = None  # ISO Date
+    end_date: Optional[str] = None    # ISO Date
+    registration_deadline: Optional[str] = None # ISO Date
+    domains: str = "" # Comma-separated domains
+    currency: str = "USD"
+    location: Optional[str] = None
 
 
 # IMPORTANT FIX
@@ -233,6 +244,14 @@ class HackathonBookmark(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", index=True)
     hackathon_id: int = Field(foreign_key="hackathon.id", index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class HackathonApplication(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    hackathon_id: int = Field(foreign_key="hackathon.id", index=True)
+    status: str = "Applied"  # Applied, Ongoing, Completed
+    applied_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class SavedResume(SQLModel, table=True):

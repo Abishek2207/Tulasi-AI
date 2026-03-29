@@ -234,15 +234,21 @@ export const interviewApi = {
 // ─── Hackathons ──────────────────────────────────────────────────────────────
 
 export const hackathonApi = {
-  list: (tag?: string, status?: string, token?: string, limit: number = 12, offset: number = 0) => {
+  list: (tag?: string, status?: string, q?: string, difficulty?: string, mode?: string, token?: string, limit: number = 12, offset: number = 0) => {
     const params = new URLSearchParams();
-    if (tag) params.append("tag", tag);
-    if (status) params.append("status", status);
+    if (tag && tag !== "All") params.append("tag", tag);
+    if (status && status !== "All") params.append("status", status);
+    if (q) params.append("q", q);
+    if (difficulty && difficulty !== "All") params.append("difficulty", difficulty);
+    if (mode && mode !== "All") params.append("mode", mode);
     params.append("limit", limit.toString());
     params.append("offset", offset.toString());
     return request<{ hackathons: Hackathon[]; total: number; limit: number; offset: number }>(`/api/hackathons?${params.toString()}`, {}, token);
   },
   get: (id: number, token?: string) => request<Hackathon>(`/api/hackathons/${id}`, {}, token),
+  recommend: (token: string) => request<{ recommendations: Hackathon[] }>("/api/hackathons/recommend", {}, token),
+  apply: (id: number, token: string) =>
+    request<{ message: string; status: string }>(`/api/hackathons/${id}/apply`, { method: "POST" }, token),
   create: (data: Partial<Hackathon>, token: string) =>
     request<Hackathon>("/api/hackathons", {
       method: "POST",
@@ -482,9 +488,25 @@ export interface ChatSession {
 export interface Hackathon {
   id: number;
   title: string;
-  date: string;
+  organizer: string;
+  description: string;
+  prize_pool: string;
+  deadline: string;
+  registration_deadline?: string;
+  registration_link: string;
+  tags: string;
+  image_url: string;
+  participants_count: number;
+  status: string;
+  bookmarked: boolean;
+  applied: boolean;
+  application_status: string;
+  mode: string;
+  difficulty: string;
+  team_size: string;
+  domains: string;
+  currency: string;
   location?: string;
-  tags?: string[];
   [key: string]: string | number | boolean | string[] | undefined | null;
 }
 

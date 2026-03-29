@@ -1,253 +1,241 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { hackathonApi } from "@/lib/api";
+import { hackathonApi, Hackathon } from "@/lib/api";
+import toast from "react-hot-toast";
 
-interface LocalHackathon {
-  id: number;
-  title: string;
-  organizer?: string;
-  deadline?: string;
-  prize_pool?: string;
-  participants_count?: number;
-  tags?: string;
-  status?: string;
-  bookmarked?: boolean;
-  image_url?: string;
-  registration_link?: string;
-}
+// New Components
+import HackathonCard from "@/components/dashboard/hackathons/HackathonCard";
+import FilterSidebar from "@/components/dashboard/hackathons/FilterSidebar";
+import AIRecommender from "@/components/dashboard/hackathons/AIRecommender";
 
-const FALLBACK_HACKATHONS: LocalHackathon[] = [
-  {
-    id: 1, title: "Global AI Hackathon 2026", organizer: "Anthropic & OpenAI",
-    deadline: "April 15-17, 2026", prize_pool: "$250,000", participants_count: 4500,
-    tags: "LLMs,RAG,Agents", status: "Upcoming", bookmarked: false,
-    image_url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=60",
-    registration_link: "https://devpost.com",
-  },
-  {
-    id: 2, title: "ETH Global Spring", organizer: "Ethereum Foundation",
-    deadline: "May 1-3, 2026", prize_pool: "$100,000", participants_count: 2100,
-    tags: "Web3,Smart Contracts,DeFi", status: "Open", bookmarked: false,
-    image_url: "https://images.unsplash.com/photo-1622737133809-d95047b9e673?w=800&auto=format&fit=crop&q=60",
-    registration_link: "https://ethglobal.com",
-  },
-  {
-    id: 3, title: "FinTech Appathon", organizer: "Stripe",
-    deadline: "May 20-22, 2026", prize_pool: "$50,000", participants_count: 1200,
-    tags: "Payments,SaaS,Mobile", status: "Upcoming", bookmarked: false,
-    image_url: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60",
-    registration_link: "https://stripe.com",
-  },
-  {
-    id: 4, title: "Tulasi Internal Buildathon", organizer: "Tulasi AI",
-    deadline: "June 5-7, 2026", prize_pool: "Summer Internships", participants_count: 500,
-    tags: "Education,React,FastAPI", status: "Open", bookmarked: false,
-    image_url: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=60",
-    registration_link: "https://tulasiai.vercel.app",
-  },
-];
-
-function HackathonSkeleton() {
+function SkeletonGrid() {
   return (
-    <div style={{ borderRadius: 24, overflow: "hidden", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", height: 420 }}>
-      <div style={{ height: 180, background: "rgba(255,255,255,0.04)" }} />
-      <div style={{ padding: 24 }}>
-        <div style={{ height: 24, width: "70%", borderRadius: 8, background: "rgba(255,255,255,0.06)", marginBottom: 12 }} />
-        <div style={{ height: 16, width: "40%", borderRadius: 8, background: "rgba(255,255,255,0.04)", marginBottom: 24 }} />
-        <div style={{ height: 44, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
-      </div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 24 }}>
+      {[1, 2, 3, 4, 5, 6].map(i => (
+        <div key={i} className="glass-card" style={{ height: 440, opacity: 0.1, background: "rgba(255,255,255,0.05)" }} />
+      ))}
     </div>
   );
 }
 
-export default function HackathonsPage() {
+export default function HackathonsDiscoveryPage() {
   const { data: session } = useSession();
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
-  const [filter, setFilter] = useState("All");
-  const [hackathons, setHackathons] = useState<LocalHackathon[]>([]);
+  // Filter State
+  const [q, setQ] = useState("");
+  const [domain, setDomain] = useState("All");
+  const [difficulty, setDifficulty] = useState("All");
+  const [mode, setMode] = useState("All");
+  const [sort, setSort] = useState("Newest");
+  const [activeTab, setActiveTab] = useState("Discovery");
+
+  // Data State
+  const [hackathons, setHackathons] = useState<Hackathon[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [bookmarking, setBookmarking] = useState<Set<number>>(new Set());
   const LIMIT = 12;
 
-  useEffect(() => {
-    const fetchHackathons = async () => {
+  // Actions State
+  const [bookmarking, setBookmarking] = useState<Set<number>>(new Set());
+  const [applying, setApplying] = useState<Set<number>>(new Set());
+
+  const fetchHackathons = useCallback(async (isLoadMore = false) => {
+    if (!token) return;
+    if (isLoadMore) setLoadingMore(true);
+    else {
       setLoading(true);
       setOffset(0);
-      try {
-        const data = await hackathonApi.list(undefined, filter !== "All" ? filter : undefined, token, LIMIT, 0);
-        const list = data.hackathons ?? [];
-        setTotal(data.total || 0);
-        setHackathons(list.length > 0 ? (list as unknown as LocalHackathon[]) : FALLBACK_HACKATHONS);
-      } catch (e) {
-        setHackathons(FALLBACK_HACKATHONS);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHackathons();
-  }, [filter, token]);
+    }
 
-  const loadMore = async () => {
-    if (loadingMore || hackathons.length >= total) return;
-    setLoadingMore(true);
-    const nextOffset = offset + LIMIT;
     try {
-      const data = await hackathonApi.list(undefined, filter !== "All" ? filter : undefined, token, LIMIT, nextOffset);
-      const list = data.hackathons ?? [];
-      setHackathons(prev => [...prev, ...(list as unknown as LocalHackathon[])]);
-      setOffset(nextOffset);
-    } catch (e) {}
-    setLoadingMore(false);
+      let data;
+      if (activeTab === "Saved") {
+        data = await hackathonApi.bookmarked(token);
+        setHackathons(data.hackathons || []);
+        setTotal(data.hackathons?.length || 0);
+      } else if (activeTab === "Applied") {
+        // We'll repurpose the list filter for Applied later, for now Discovery handles it
+        // but just to show the UI difference:
+        data = await hackathonApi.list(undefined, undefined, q, difficulty, mode, token, 100, 0);
+        const filtered = (data.hackathons || []).filter(h => h.applied);
+        setHackathons(filtered);
+        setTotal(filtered.length);
+      } else {
+        // Discovery
+        const currentOffset = isLoadMore ? offset + LIMIT : 0;
+        data = await hackathonApi.list(domain, undefined, q, difficulty, mode, token, LIMIT, currentOffset);
+        
+        if (isLoadMore) {
+          setHackathons(prev => [...prev, ...(data.hackathons || [])]);
+          setOffset(currentOffset);
+        } else {
+          setHackathons(data.hackathons || []);
+        }
+        setTotal(data.total || 0);
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to fetch events");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [token, activeTab, domain, difficulty, mode, q, offset]);
+
+  // Initial Fetch & Filter Response
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchHackathons(false);
+    }, 300); // Debounce search/filters
+    return () => clearTimeout(timer);
+  }, [fetchHackathons, q, domain, difficulty, mode, activeTab]);
+
+  const toggleBookmark = async (id: number) => {
+    setBookmarking(prev => new Set(prev).add(id));
+    try {
+      const h = hackathons.find(x => x.id === id);
+      if (h?.bookmarked) {
+        await hackathonApi.unbookmark(id, token);
+        toast.success("Removed from bookmarks");
+      } else {
+        await hackathonApi.bookmark(id, token);
+        toast.success("Added to bookmarks!");
+      }
+      setHackathons(prev => prev.map(h => h.id === id ? { ...h, bookmarked: !h.bookmarked } : h));
+    } catch (e) {
+      toast.error("Action failed");
+    } finally {
+      setBookmarking(prev => { const s = new Set(prev); s.delete(id); return s; });
+    }
   };
 
-  const toggleBookmark = async (hack: LocalHackathon) => {
-        setBookmarking(prev => new Set(prev).add(hack.id));
+  const applyHackathon = async (id: number) => {
+    setApplying(prev => new Set(prev).add(id));
     try {
-      if (hack.bookmarked) {
-        await hackathonApi.unbookmark(hack.id, token);
-      } else {
-        await hackathonApi.bookmark(hack.id, token);
-      }
-      setHackathons(prev => prev.map(h => h.id === hack.id ? { ...h, bookmarked: !h.bookmarked } : h));
-    } catch (e) {}
-    setBookmarking(prev => { const s = new Set(prev); s.delete(hack.id); return s; });
+      await hackathonApi.apply(id, token);
+      setHackathons(prev => prev.map(h => h.id === id ? { ...h, applied: true, application_status: "Applied" } : h));
+      toast.success("Application tracked!");
+    } catch (e) {
+      toast.error("Application tracking failed");
+    } finally {
+      setApplying(prev => { const s = new Set(prev); s.delete(id); return s; });
+    }
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 60 }}>
+    <div style={{ maxWidth: 1600, margin: "0 auto", display: "flex", gap: 32, padding: "20px 0 60px 0" }}>
+      
+      {/* 1. Sidebar (Filters) */}
+      <aside style={{ width: 320, flexShrink: 0, position: "sticky", top: 20, height: "fit-content" }}>
+        <FilterSidebar 
+          q={q} setQ={setQ}
+          domain={domain} setDomain={setDomain}
+          difficulty={difficulty} setDifficulty={setDifficulty}
+          mode={mode} setMode={setMode}
+          sort={sort} setSort={setSort}
+          activeTab={activeTab} setActiveTab={setActiveTab}
+        />
+      </aside>
 
-      <div style={{ textAlign: "center", marginBottom: 40 }}>
-        <h1 style={{ fontSize: 36, fontWeight: 800, fontFamily: "var(--font-outfit)", marginBottom: 12 }}>
-          Global <span className="gradient-text">Hackathons</span>
-        </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 16, maxWidth: 600, margin: "0 auto" }}>
-          Build projects, win prizes, and get hired. Browse top vetted hackathons happening globally this season.
-        </p>
-      </div>
+      {/* 2. Main Content */}
+      <main style={{ flex: 1, minWidth: 0 }}>
+        
+        <header style={{ marginBottom: 32 }}>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: "white", marginBottom: 8 }}>
+            Hackathon <span className="gradient-text">Discovery</span>
+          </h1>
+          <p style={{ color: "var(--text-muted)", fontSize: 16 }}>
+            {activeTab === "Discovery" 
+              ? "Browse, filter, and apply to world-class developer events." 
+              : activeTab === "Saved" 
+                ? "Your bookmarked events for quick access."
+                : "Tracking your active participations and applications."
+            }
+          </p>
+        </header>
 
-      {/* Filters */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 40, flexWrap: "wrap" }}>
-        {["All", "Open", "Upcoming", "Past"].map(status => (
-          <button key={status} onClick={() => setFilter(status)}
-            style={{
-              background: filter === status ? "var(--brand-primary)" : "rgba(108,99,255,0.05)",
-              color: filter === status ? "var(--bg-primary)" : "var(--text-muted)",
-              border: filter === status ? "1px solid var(--brand-primary)" : "1px solid var(--border)",
-              padding: "8px 24px", borderRadius: 24, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s"
-            }}>
-            {status}
-          </button>
-        ))}
-      </div>
+        {/* AI Recommendations Bar */}
+        <AnimatePresence>
+          {activeTab === "Discovery" && <AIRecommender />}
+        </AnimatePresence>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 28 }}>
-        {loading ? (
-          [1, 2, 3, 4].map(i => <HackathonSkeleton key={i} />)
-        ) : (
-          <AnimatePresence>
-            {hackathons.length > 0 ? hackathons.map((hack) => (
-              <motion.div
-                key={hack.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                whileHover={{ y: -6, scale: 1.01 }}
-                transition={{ duration: 0.25 }}
-                className="glass-card"
-                style={{ padding: 0, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)" }}>
-                
-                {/* Banner */}
-                <div style={{ position: "relative", height: 180, overflow: "hidden", background: "#0f0f1a" }}>
-                  <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${hack.image_url})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.6)" }} />
-                  <div style={{ position: "absolute", top: 14, left: 14, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(10px)", padding: "5px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, color: "white", border: "1px solid rgba(255,255,255,0.2)" }}>
-                    {hack.deadline || "Date TBD"}
-                  </div>
-                  <div style={{ position: "absolute", top: 14, right: 14, background: hack.status === "Open" ? "#22c55e" : "var(--brand-primary)", padding: "4px 12px", borderRadius: 8, fontSize: 11, fontWeight: 800, color: "white" }}>
-                    {hack.status || "Open"}
-                  </div>
-                  <div style={{ position: "absolute", bottom: 12, left: 14, display: "flex", gap: 6, flexWrap: "wrap", right: 14 }}>
-                    {(hack.tags || "").split(",").slice(0, 3).map((tag: string) => (
-                      <span key={tag} style={{ background: "rgba(124,58,237,0.85)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 10, fontSize: 11, fontWeight: 700, color: "white" }}>
-                        {tag.trim()}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div style={{ padding: 22, flex: 1, display: "flex", flexDirection: "column", background: "var(--bg-card)" }}>
-                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4, lineHeight: 1.3 }}>{hack.title}</h2>
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginBottom: 18 }}>By {hack.organizer || "Organizer"}</p>
-
-                  <div style={{ display: "flex", gap: 24, marginBottom: 22 }}>
-                    <div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, marginBottom: 3 }}>Prize Pool</div>
-                      <div style={{ fontSize: 17, fontWeight: 800, color: "var(--brand-primary)" }}>{hack.prize_pool || "–"}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, marginBottom: 3 }}>Builders</div>
-                      <div style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)" }}>{(hack.participants_count ?? 0).toLocaleString()}</div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: "auto", display: "flex", gap: 10 }}>
-                    <button
-                      onClick={() => hack.registration_link && window.open(hack.registration_link, "_blank")}
-                      className="btn-primary" style={{ flex: 1, padding: 13, borderRadius: 12, fontWeight: 700, fontSize: 14 }}>
-                      Apply Now →
-                    </button>
-                    <button
-                      onClick={() => toggleBookmark(hack)}
-                      disabled={bookmarking.has(hack.id)}
-                      title={hack.bookmarked ? "Remove bookmark" : "Bookmark this hackathon"}
-                      style={{
-                        padding: "0 16px", borderRadius: 12, fontSize: 18,
-                        background: hack.bookmarked ? "rgba(251,191,36,0.15)" : "var(--background)",
-                        border: hack.bookmarked ? "1px solid rgba(251,191,36,0.4)" : "1px solid var(--border)",
-                        cursor: "pointer", transition: "all 0.2s",
-                        opacity: bookmarking.has(hack.id) ? 0.6 : 1,
-                      }}>
-                      {hack.bookmarked ? "🔖" : "🏷️"}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )) : (
-              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 80, color: "var(--text-muted)", fontSize: 16 }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>🏆</div>
-                <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8, color: "var(--text-secondary)" }}>No Hackathons Found</div>
-                Stay tuned — new events are added regularly!
-              </div>
-            )}
-          </AnimatePresence>
-        )}
-      </div>
-
-      {!loading && hackathons.length < total && (
-        <div style={{ marginTop: 60, textAlign: "center" }}>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={loadMore}
-            disabled={loadingMore}
-            style={{
-              padding: "16px 40px", borderRadius: 24, fontSize: 16, fontWeight: 800,
-              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-              color: "white", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, margin: "0 auto"
-            }}
-          >
-            {loadingMore ? "Synthesizing Node..." : "Load More Hackathons"}
-            {!loadingMore && <span>↓</span>}
-          </motion.button>
+        {/* Results Info */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-muted)" }}>
+            Showing {hackathons.length} of {total} {activeTab.toLowerCase()} items
+          </div>
+          <div style={{ fontSize: 12, color: "var(--brand-primary)", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
+            {loading ? "Syncing..." : "Updated Just Now"}
+          </div>
         </div>
-      )}
+
+        {/* Grid */}
+        {loading && offset === 0 ? (
+          <SkeletonGrid />
+        ) : (
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", 
+            gap: 28 
+          }}>
+            <AnimatePresence mode="popLayout">
+              {hackathons.map((h) => (
+                <HackathonCard
+                  key={h.id}
+                  hackathon={h}
+                  onBookmark={toggleBookmark}
+                  onApply={applyHackathon}
+                  isBookmarking={bookmarking.has(h.id)}
+                  isApplying={applying.has(h.id)}
+                />
+              ))}
+            </AnimatePresence>
+
+            {hackathons.length === 0 && !loading && (
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                style={{ gridColumn: "1 / -1", textAlign: "center", padding: "100px 0", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px dashed rgba(255,255,255,0.1)" }}
+              >
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+                <h3 style={{ fontSize: 20, fontWeight: 900, color: "white", marginBottom: 8 }}>No results matched your criteria</h3>
+                <p style={{ color: "var(--text-muted)" }}>Try adjusting your filters or search query.</p>
+                <button 
+                  onClick={() => { setQ(""); setDomain("All"); setDifficulty("All"); setMode("All"); }}
+                  style={{ marginTop: 24, padding: "10px 24px", borderRadius: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", cursor: "pointer", fontWeight: 700 }}
+                >
+                  Reset all filters
+                </button>
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        {/* Load More */}
+        {hackathons.length < total && !loading && (
+          <div style={{ marginTop: 60, textAlign: "center" }}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => fetchHackathons(true)}
+              disabled={loadingMore}
+              style={{
+                padding: "16px 48px", borderRadius: 30, fontSize: 16, fontWeight: 900,
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)",
+                color: "white", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, margin: "0 auto",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.2)"
+              }}
+            >
+              {loadingMore ? "Loading..." : "View More Opportunities"}
+              {!loadingMore && <span>↓</span>}
+            </motion.button>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
