@@ -504,6 +504,8 @@ export interface Hackathon {
   mode: string;
   difficulty: string;
   team_size: string;
+  start_date: string;
+  end_date: string;
   domains: string;
   currency: string;
   location?: string;

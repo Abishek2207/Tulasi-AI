@@ -54,16 +54,14 @@ export default function HackathonsDiscoveryPage() {
     }
 
     try {
-      let data;
+      let data: any;
       if (activeTab === "Saved") {
         data = await hackathonApi.bookmarked(token);
         setHackathons(data.hackathons || []);
         setTotal(data.hackathons?.length || 0);
       } else if (activeTab === "Applied") {
-        // We'll repurpose the list filter for Applied later, for now Discovery handles it
-        // but just to show the UI difference:
         data = await hackathonApi.list(undefined, undefined, q, difficulty, mode, token, 100, 0);
-        const filtered = (data.hackathons || []).filter(h => h.applied);
+        const filtered = (data.hackathons || []).filter((h: Hackathon) => h.applied);
         setHackathons(filtered);
         setTotal(filtered.length);
       } else {
