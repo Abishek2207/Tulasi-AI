@@ -45,63 +45,8 @@ class ReviewOut(BaseModel):
 
 @router.get("", response_model=List[ReviewOut])
 def get_reviews(session: Session = Depends(get_session)):
-    """Fetch all reviews — bypasses ORM schema issues. PUBLIC endpoint for landing page testimonials."""
-    from sqlalchemy import text
-    from datetime import datetime as dt
-    try:
-        result = session.execute(text(
-            "SELECT id, name, email, role, review, rating, created_at FROM review ORDER BY created_at DESC"
-        ))
-        rows = result.mappings().all()
-        out = []
-        for row in rows:
-            try:
-                ca = row["created_at"]
-                if ca is None:
-                    ca = dt.utcnow()
-                elif isinstance(ca, str):
-                    ca = dt.fromisoformat(ca)
-                out.append(ReviewOut(
-                    id=row["id"],
-                    name=row["name"] or "Anonymous",
-                    email=row.get("email"),
-                    role=row.get("role"),
-                    review=row["review"],
-                    rating=row["rating"],
-                    created_at=ca,
-                ))
-            except Exception:
-                continue
-        return out
-    except Exception as e:
-        # Fallback without email column (old schema)
-        try:
-            result = session.execute(text(
-                "SELECT id, name, role, review, rating, created_at FROM review ORDER BY created_at DESC"
-            ))
-            rows = result.mappings().all()
-            out = []
-            for row in rows:
-                try:
-                    ca = row["created_at"]
-                    if ca is None:
-                        ca = dt.utcnow()
-                    elif isinstance(ca, str):
-                        ca = dt.fromisoformat(ca)
-                    out.append(ReviewOut(
-                        id=row["id"],
-                        name=row["name"] or "Anonymous",
-                        email=None,
-                        role=row.get("role"),
-                        review=row["review"],
-                        rating=row["rating"],
-                        created_at=ca,
-                    ))
-                except Exception:
-                    continue
-            return out
-        except Exception as e2:
-            raise HTTPException(status_code=500, detail=f"DB error: {str(e2)}")
+    """Public reviews are no longer visible via this endpoint as per security requirements."""
+    return []
 
 
 @router.post("", response_model=ReviewOut, status_code=201)

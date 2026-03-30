@@ -111,20 +111,41 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
             components={{
               code({ node, inline, className, children, ...props }: any) {
                 const match = /language-(\w+)/.exec(className || "");
+                const codeContent = String(children).replace(/\n$/, "");
+                const [codeCopied, setCodeCopied] = useState(false);
+
+                const copyCode = () => {
+                  navigator.clipboard.writeText(codeContent);
+                  setCodeCopied(true);
+                  setTimeout(() => setCodeCopied(false), 2000);
+                };
+
                 return !inline && match ? (
-                  <div style={{ borderRadius: 12, overflow: "hidden", margin: "12px 0", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", margin: "14px 0", border: "1px solid rgba(255,255,255,0.08)", background: "#0D1117" }}>
+                    <div style={{ padding: "8px 16px", background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>{match[1]}</span>
+                      <button 
+                        onClick={copyCode}
+                        style={{ background: "none", border: "none", color: codeCopied ? "#10B981" : "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, padding: "4px 8px", borderRadius: 6, transition: "all 0.2s" }}
+                        onMouseEnter={e => e.currentTarget.style.color = "white"}
+                        onMouseLeave={e => e.currentTarget.style.color = codeCopied ? "#10B981" : "var(--text-muted)"}
+                      >
+                        {codeCopied ? <Check size={12} /> : <Copy size={12} />}
+                        {codeCopied ? "COPIED" : "COPY"}
+                      </button>
+                    </div>
                     <SyntaxHighlighter
                       {...props}
                       style={vscDarkPlus as any}
                       language={match[1]}
                       PreTag="div"
-                      customStyle={{ margin: 0, padding: "16px", background: "#0D1117", fontSize: "13.5px" }}
+                      customStyle={{ margin: 0, padding: "16px", background: "transparent", fontSize: "14px", lineHeight: 1.6 }}
                     >
-                      {String(children).replace(/\n$/, "")}
+                      {codeContent}
                     </SyntaxHighlighter>
                   </div>
                 ) : (
-                  <code {...props} className={className} style={{ background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: 6, fontSize: "0.9em", color: "#A78BFA" }}>
+                  <code {...props} className={className} style={{ background: "rgba(255,255,255,0.08)", padding: "2px 6px", borderRadius: 6, fontSize: "0.9em", color: "#A78BFA", fontWeight: 600 }}>
                     {children}
                   </code>
                 );

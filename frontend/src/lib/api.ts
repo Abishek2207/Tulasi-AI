@@ -446,6 +446,7 @@ export const paymentApi = {
 export interface ReviewItem {
   id: number;
   name: string;
+  email?: string;
   role?: string;
   review: string;
   rating: number;
@@ -454,7 +455,7 @@ export interface ReviewItem {
 
 export const reviewsApi = {
   getReviews: () => request<ReviewItem[]>("/api/reviews"),
-  submitReview: (data: { name: string; role?: string; review: string; rating: number }) =>
+  submitReview: (data: { name: string; email?: string; role?: string; review: string; rating: number }) =>
     request<ReviewItem>("/api/reviews", {
       method: "POST",
       body: JSON.stringify(data),

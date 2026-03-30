@@ -4,11 +4,9 @@ from sqlmodel import Session, select
 from app.models.models import Hackathon
 
 def seed(session: Session):
-    # Clear existing
-    existing = session.exec(select(Hackathon)).all()
-    for e in existing:
-        session.delete(e)
-    session.commit()
+    # Idempotent seeding — don't duplicate names
+    existing_names = set(session.exec(select(Hackathon.name)).all())
+    count = 0
 
     hackathons_data = [
         # GLOBAL / ELITE
@@ -211,6 +209,9 @@ def seed(session: Session):
 
     added_count = 0
     for h_data in hackathons_data:
+        if h_data["name"] in existing_names:
+            continue
+            
         h = Hackathon(
             name=h_data["name"],
             organizer=h_data["organizer"],
@@ -231,7 +232,7 @@ def seed(session: Session):
             end_date=h_data.get("end_date"),
             registration_deadline=h_data.get("registration_deadline"),
             domains=h_data.get("domains", ""),
-            currency="INR" if "₹" in h_data["prize_pool"] else "USD",
+            currency="INR" if "₹" in h_data.get("prize_pool", "") else "USD",
             location=h_data.get("location")
         )
         session.add(h)
