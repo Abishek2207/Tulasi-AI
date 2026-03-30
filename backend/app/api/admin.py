@@ -73,31 +73,28 @@ def toggle_user(req: ToggleUserRequest, db: Session = Depends(get_session), admi
 
 @router.get("/reviews")
 def get_admin_reviews(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
-    """Fetch all reviews with user details for admin moderation. Fault-tolerant for live schema."""
+    """Fetch all reviews with user details for admin moderation."""
     from sqlalchemy import text
     try:
-        # Try the ORM approach first for when schema is correct
-        results = db.exec(
-            select(Review, User.email)
-            .join(User, Review.user_id == User.id, isouter=True)
-            .order_by(Review.created_at.desc())
-        ).all()
+        # Try with email column (new schema)
+        res = db.execute(text("SELECT id, name, email, role, review, rating, created_at FROM review ORDER BY created_at DESC"))
+        rows = res.mappings().all()
         return {
             "reviews": [
                 {
-                    "id": r[0].id,
-                    "name": r[0].name,
-                    "role": r[0].role,
-                    "review": r[0].review,
-                    "rating": r[0].rating,
-                    "created_at": r[0].created_at.isoformat(),
-                    "user_email": r[1] or "Anonymous"
+                    "id": row["id"],
+                    "name": row["name"] or "Anonymous",
+                    "role": row.get("role"),
+                    "review": row["review"],
+                    "rating": row["rating"],
+                    "created_at": str(row["created_at"]),
+                    "user_email": row.get("email") or "Anonymous"
                 }
-                for r in results
+                for row in rows
             ]
         }
     except Exception:
-        # Fallback raw SQL if user_id column doesn't exist yet
+        # Fallback: old schema without email
         try:
             res = db.execute(text("SELECT id, name, role, review, rating, created_at FROM review ORDER BY created_at DESC"))
             rows = res.mappings().all()
@@ -110,7 +107,7 @@ def get_admin_reviews(db: Session = Depends(get_session), admin: User = Depends(
                         "review": row["review"],
                         "rating": row["rating"],
                         "created_at": str(row["created_at"]),
-                        "user_email": "Anonymous (Old Schema)"
+                        "user_email": "Anonymous"
                     }
                     for row in rows
                 ]
