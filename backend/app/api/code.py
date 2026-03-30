@@ -221,12 +221,11 @@ def mark_problem_solved(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    """Mark a coding problem as solved. Logs activity and updates coding progress."""
+    """Mark a coding problem as solved (internal — called after submit validation)."""
     problem = PROBLEMS_BY_ID.get(problem_id)
     if not problem:
         raise HTTPException(404, "Problem not found")
 
-    # Check if already solved
     existing = db.exec(
         select(SolvedProblem).where(
             SolvedProblem.user_id == current_user.id,
@@ -238,8 +237,6 @@ def mark_problem_solved(
     if not existing:
         db.add(SolvedProblem(user_id=current_user.id, problem_id=problem_id))
         newly_solved = True
-
-        # Use centralized activity logging (this handles XP, Level, Streak, and Progress)
         log_activity_internal(
             current_user, db, "code_solved", f"Solved: {problem['title']}", problem_id
         )
@@ -260,6 +257,157 @@ def mark_problem_solved(
         "progress_pct": pct,
         "xp_earned": 50 if newly_solved else 0,
     }
+
+
+class SubmitRequest(BaseModel):
+    code: str
+    language: str = "python"
+    problem_id: str
+
+
+def _normalize(text: str) -> str:
+    """Normalize output for comparison: strip, lowercase, collapse whitespace."""
+    return " ".join(text.strip().lower().split())
+
+
+@router.post("/submit")
+def submit_code(
+    req: SubmitRequest,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    LeetCode-style Submit:
+    1. Runs user code with problem's sample_input as stdin.
+    2. Compares stdout (normalized) against sample_output.
+    3. Returns: Accepted | Wrong Answer | Runtime Error | Compile Error | Time Limit Exceeded.
+    4. Only marks problem as solved on Accepted.
+    """
+    problem = PROBLEMS_BY_ID.get(req.problem_id)
+    if not problem:
+        raise HTTPException(404, "Problem not found")
+
+    sample_input  = problem.get("sample_input", "") or ""
+    sample_output = problem.get("sample_output", "") or ""
+
+    # Run the code using the same execution engine
+    code_req = CodeRequest(code=req.code, language=req.language, stdin=sample_input)
+    run_result = run_code(code_req, current_user)
+
+    stdout        = run_result.get("stdout", "") or ""
+    stderr        = run_result.get("stderr", "") or ""
+    exec_status   = run_result.get("status", "error")
+    exec_time_ms  = run_result.get("execution_time_ms", 0)
+
+    # ── Determine verdict ───────────────────────────────────────────
+    if exec_status in ("compile_error",):
+        return {
+            "verdict": "Compile Error",
+            "status": "compile_error",
+            "message": "❌ Compilation Failed",
+            "stdout": stdout,
+            "stderr": stderr,
+            "expected": sample_output,
+            "execution_time_ms": exec_time_ms,
+            "newly_solved": False,
+            "xp_earned": 0,
+        }
+
+    if exec_status in ("timeout",):
+        return {
+            "verdict": "Time Limit Exceeded",
+            "status": "timeout",
+            "message": "⏱️ Time Limit Exceeded",
+            "stdout": stdout,
+            "stderr": stderr,
+            "expected": sample_output,
+            "execution_time_ms": exec_time_ms,
+            "newly_solved": False,
+            "xp_earned": 0,
+        }
+
+    if exec_status in ("runtime_error", "error") and stderr:
+        return {
+            "verdict": "Runtime Error",
+            "status": "runtime_error",
+            "message": "⚠️ Runtime Error",
+            "stdout": stdout,
+            "stderr": stderr,
+            "expected": sample_output,
+            "execution_time_ms": exec_time_ms,
+            "newly_solved": False,
+            "xp_earned": 0,
+        }
+
+    # If there's no expected output defined (conceptual/design problems), treat as Accepted if ran OK
+    if not sample_output.strip():
+        newly_solved_info = mark_problem_solved.__wrapped__(req.problem_id, db, current_user) if hasattr(mark_problem_solved, '__wrapped__') else None
+        # Fallback: run the solve logic directly
+        existing = db.exec(
+            select(SolvedProblem).where(
+                SolvedProblem.user_id == current_user.id,
+                SolvedProblem.problem_id == req.problem_id
+            )
+        ).first()
+        newly = False
+        if not existing:
+            db.add(SolvedProblem(user_id=current_user.id, problem_id=req.problem_id))
+            newly = True
+            log_activity_internal(current_user, db, "code_solved", f"Solved: {problem['title']}", req.problem_id)
+            db.commit()
+        return {
+            "verdict": "Accepted",
+            "status": "accepted",
+            "message": "✅ Accepted",
+            "stdout": stdout,
+            "stderr": "",
+            "expected": "(No output validation for this problem type)",
+            "execution_time_ms": exec_time_ms,
+            "newly_solved": newly,
+            "xp_earned": 50 if newly else 0,
+        }
+
+    # Compare output
+    actual_norm   = _normalize(stdout)
+    expected_norm = _normalize(sample_output)
+
+    if actual_norm == expected_norm:
+        # Accepted — mark as solved
+        existing = db.exec(
+            select(SolvedProblem).where(
+                SolvedProblem.user_id == current_user.id,
+                SolvedProblem.problem_id == req.problem_id
+            )
+        ).first()
+        newly = False
+        if not existing:
+            db.add(SolvedProblem(user_id=current_user.id, problem_id=req.problem_id))
+            newly = True
+            log_activity_internal(current_user, db, "code_solved", f"Solved: {problem['title']}", req.problem_id)
+            db.commit()
+        return {
+            "verdict": "Accepted",
+            "status": "accepted",
+            "message": "✅ Accepted",
+            "stdout": stdout,
+            "stderr": "",
+            "expected": sample_output,
+            "execution_time_ms": exec_time_ms,
+            "newly_solved": newly,
+            "xp_earned": 50 if newly else 0,
+        }
+    else:
+        return {
+            "verdict": "Wrong Answer",
+            "status": "wrong_answer",
+            "message": "❌ Wrong Answer",
+            "stdout": stdout,
+            "stderr": stderr,
+            "expected": sample_output,
+            "execution_time_ms": exec_time_ms,
+            "newly_solved": False,
+            "xp_earned": 0,
+        }
 
 
 @router.get("/resources")

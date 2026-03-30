@@ -178,67 +178,58 @@ export default function CertificatesPage() {
                   {earned && (
                     <button
                       onClick={() => {
-                        const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
-    body { margin: 0; font-family: 'Outfit', sans-serif; background: #050505; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .canvas { 
-      width: 900px; height: 600px; padding: 4px; background: linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%); 
-      border-radius: 8px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); position: relative;
-    }
-    .inner { 
-      background: #0A0A0B; width: 100%; height: 100%; border-radius: 6px; box-sizing: border-box;
-      padding: 60px; text-align: center; position: relative; overflow: hidden;
-      border: 1px solid rgba(255,215,0,0.2);
-    }
-    .logo-img { width: 90px; height: 90px; margin-bottom: 24px; filter: drop-shadow(0 0 15px rgba(255,215,0,0.4)); }
-    .issuer { font-size: 16px; letter-spacing: 6px; color: #DAA520; text-transform: uppercase; margin-bottom: 40px; font-weight: 700; }
-    .label { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px; }
-    .name { font-size: 42px; font-weight: 900; color: white; margin: 10px 0 20px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    .line { width: 400px; height: 1px; background: linear-gradient(90deg, transparent, #FFD700, transparent); margin: 0 auto 30px; }
-    .title { font-size: 32px; font-weight: 800; color: #FFD700; margin-bottom: 12px; }
-    .desc { font-size: 15px; color: #aaa; line-height: 1.6; max-width: 600px; margin: 0 auto 50px; }
-    .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; }
-    .sign-box { text-align: center; width: 200px; }
-    .sign-line { border-top: 1px solid #444; padding-top: 8px; font-size: 12px; color: #666; font-weight: 700; text-transform: uppercase; }
-    .date { font-size: 12px; color: #DAA520; font-weight: 700; }
-    .stamp { width: 80px; height: 80px; border: 2px solid #DAA520; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #DAA520; font-weight: 900; transform: rotate(-15deg); background: rgba(218,165,32,0.05); }
-  </style>
-</head>
-<body>
-  <div class="canvas">
-    <div class="inner">
-      <img src="/images/logo.png" class="logo-img" />
-      <div class="issuer">Tulasi AI Platform</div>
-      <div class="label">Certificate of Achievement</div>
-      <div class="name">${session?.user?.name || session?.user?.email || "Tulasi AI Student"}</div>
-      <div class="line"></div>
-      <div class="label">has successfully mastered</div>
-      <div class="title">${m.title}</div>
-      <div class="desc">${m.desc}</div>
-      <div class="footer">
-        <div class="sign-box">
-          <div style="font-family: cursive; font-size: 24px; color: #ccc; margin-bottom: 5px;">Tulasi Admin</div>
-          <div class="sign-line">Authorized Signatory</div>
-        </div>
-        <div class="stamp">OFFICIAL<br/>VERIFIED</div>
-        <div class="sign-box">
-          <div class="date">${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
-          <div class="sign-line">Date of Issuance</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
-                        const blob = new Blob([html], { type: "text/html" });
-                        const a = document.createElement("a");
-                        a.href = URL.createObjectURL(blob);
-                        a.download = `${m.title.replace(/\s+/g, "_")}_Certificate.html`;
-                        a.click();
+                        const handleDownload = async () => {
+                          try {
+                            // Dynamically import to prevent SSR errors
+                            const html2pdf = (await import('html2pdf.js')).default;
+                            
+                            const container = document.createElement("div");
+                            container.innerHTML = `
+                              <div style="width: 900px; height: 600px; padding: 4px; background: linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%); border-radius: 8px; font-family: 'Outfit', sans-serif;">
+                                <div style="background: #0A0A0B; width: 100%; height: 100%; border-radius: 6px; box-sizing: border-box; padding: 60px; text-align: center; position: relative; border: 1px solid rgba(255,215,0,0.2);">
+                                  <div style="font-size: 16px; letter-spacing: 6px; color: #DAA520; text-transform: uppercase; margin-bottom: 40px; font-weight: 700;">Tulasi AI Platform</div>
+                                  <div style="font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px;">Certificate of Achievement</div>
+                                  <div style="font-size: 42px; font-weight: 900; color: white; margin: 10px 0 20px; font-family: 'Outfit', sans-serif;">${session?.user?.name || session?.user?.email || "Tulasi AI Student"}</div>
+                                  <div style="width: 400px; height: 1px; background: linear-gradient(90deg, transparent, #FFD700, transparent); margin: 0 auto 30px;"></div>
+                                  <div style="font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px;">has successfully mastered</div>
+                                  <div style="font-size: 32px; font-weight: 800; color: #FFD700; margin-bottom: 12px;">${m.title}</div>
+                                  <div style="font-size: 15px; color: #aaa; line-height: 1.6; max-width: 600px; margin: 0 auto 50px;">${m.desc}</div>
+                                  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+                                    <div style="text-align: center; width: 200px;">
+                                      <div style="font-family: cursive; font-size: 24px; color: #ccc; margin-bottom: 5px;">Tulasi Admin</div>
+                                      <div style="border-top: 1px solid #444; padding-top: 8px; font-size: 12px; color: #666; font-weight: 700; text-transform: uppercase;">Authorized Signatory</div>
+                                    </div>
+                                    <div style="width: 80px; height: 80px; border: 2px solid #DAA520; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #DAA520; font-weight: 900; transform: rotate(-15deg); background: rgba(218,165,32,0.05);">OFFICIAL<br/>VERIFIED</div>
+                                    <div style="text-align: center; width: 200px;">
+                                      <div style="font-size: 12px; color: #DAA520; font-weight: 700; margin-bottom: 10px;">${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
+                                      <div style="border-top: 1px solid #444; padding-top: 8px; font-size: 12px; color: #666; font-weight: 700; text-transform: uppercase;">Date of Issuance</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            `;
+                            
+                            // Temporarily append to body to render fonts correctly
+                            container.style.position = 'absolute';
+                            container.style.left = '-9999px';
+                            document.body.appendChild(container);
+                            
+                            const opt: any = {
+                              margin: 0,
+                              filename: `${m.title.replace(/\s+/g, "_")}_Certificate.pdf`,
+                              image: { type: 'jpeg', quality: 0.98 },
+                              html2canvas: { scale: 2, useCORS: true, backgroundColor: '#050505' },
+                              jsPDF: { unit: 'px', format: [900, 600], orientation: 'landscape' }
+                            };
+                            
+                            await html2pdf().set(opt).from(container).save();
+                            document.body.removeChild(container);
+                          } catch (err) {
+                            console.error("PDF Generation failed:", err);
+                            alert("Failed to generate PDF. Check console.");
+                          }
+                        };
+                        handleDownload();
                       }}
                       style={{ width: "100%", padding: "10px", borderRadius: 10, background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.3)", color: "#FFD700", fontWeight: 700, cursor: "pointer" }}
                     >

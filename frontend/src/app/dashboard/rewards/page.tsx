@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { activityApi } from "@/lib/api";
+import { activityApi, rewardApi } from "@/lib/api";
 
 const REWARD_ITEMS = [
   { id: 1, name: "Premium Resume Review", description: "Get your resume heavily reviewed by a FAANG engineer.", cost: 5000, icon: "📄", color: "#6C63FF", bg: "rgba(108,99,255,0.1)" },
@@ -22,27 +22,46 @@ export default function RewardsPage() {
   const [redeeming, setRedeeming] = useState<number | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
 
+  const [rewards, setRewards] = useState<any[]>([]);
+
   useEffect(() => {
     if (token) {
-      activityApi.getStats(token).then(data => {
-        const stats = data as any;
+      Promise.all([
+        activityApi.getStats(token),
+        rewardApi.getRewards(token)
+      ]).then(([statsRes, rewardsRes]) => {
+        const stats = statsRes as any;
         setXp(Number(stats?.xp) || 0);
+        
+        // Map backend rewards to UI color/icon structure
+        const backendRewards = rewardsRes.rewards.map((r, i) => {
+          const defaults = REWARD_ITEMS[i % REWARD_ITEMS.length];
+          return {
+            id: r.id, name: r.name, description: r.description, 
+            cost: r.cost_xp || r.cost, 
+            icon: defaults.icon, color: defaults.color, bg: defaults.bg
+          };
+        });
+        setRewards(backendRewards.length > 0 ? backendRewards : REWARD_ITEMS);
         setLoading(false);
       }).catch(() => setLoading(false));
     }
   }, [token]);
 
-  const handleRedeem = (item: any) => {
+  const handleRedeem = async (item: any) => {
     if (xp < item.cost) return;
     setRedeeming(item.id);
     
-    // Simulate API call for redemption
-    setTimeout(() => {
-      setXp(prev => prev - item.cost);
-      setSuccessMsg(`Successfully redeemed: ${item.name}! Check your email for details.`);
-      setRedeeming(null);
+    try {
+      const res = await rewardApi.redeem(item.id, token);
+      setXp(res.remaining_xp);
+      setSuccessMsg(res.message || `Successfully redeemed: ${item.name}! Check your email for details.`);
       setTimeout(() => setSuccessMsg(""), 4000);
-    }, 1500);
+    } catch (err: any) {
+      alert(err.message || "Failed to redeem reward.");
+    } finally {
+      setRedeeming(null);
+    }
   };
 
   return (
@@ -83,7 +102,7 @@ export default function RewardsPage() {
 
       {/* Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-        {REWARD_ITEMS.map((item, i) => {
+        {rewards.map((item, i) => {
           const canAfford = xp >= item.cost;
           const isRedeeming = redeeming === item.id;
 

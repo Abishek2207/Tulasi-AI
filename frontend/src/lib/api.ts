@@ -291,6 +291,8 @@ export const codeApi = {
     request<{ success: boolean; newly_solved: boolean; problem_id: string; solved_count: number; progress_pct: number; xp_earned: number }>(`/api/code/problems/${id}/solve`, { method: "POST" }, token),
   run: (code: string, language: string, token: string, stdin?: string) =>
     request<{ stdout: string; stderr: string; output: string; status: string; execution_time_ms?: number }>("/api/code/run", { method: "POST", body: JSON.stringify({ code, language, stdin }) }, token),
+  submit: (code: string, language: string, problem_id: string, token: string) =>
+    request<{ verdict: string; status: string; message: string; stdout: string; stderr: string; expected: string; execution_time_ms: number; newly_solved: boolean; xp_earned: number }>("/api/code/submit", { method: "POST", body: JSON.stringify({ code, language, problem_id }) }, token),
   explain: (code: string, language: string, token: string) =>
     request<{ explanation: string; status: string }>("/api/code/explain", { method: "POST", body: JSON.stringify({ code, language }) }, token),
 };

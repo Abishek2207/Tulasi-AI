@@ -417,9 +417,9 @@ def get_leaderboard(
             data["user_context"] = _get_user_leaderboard_context(current_user, db)
         return data
 
-    # Get top 50
+    # Get top 10
     top_users = db.exec(
-        select(User).order_by(User.xp.desc()).limit(50)
+        select(User).order_by(User.xp.desc()).limit(10)
     ).all()
     
     leaderboard_data = []

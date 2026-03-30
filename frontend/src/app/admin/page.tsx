@@ -220,7 +220,7 @@ export default function AdminPage() {
         {stats && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20, marginBottom: 40 }}>
             {[
-              { label: "Total Students", value: stats.students, icon: "👥", color: "#6C63FF" },
+              { label: "Total Users", value: stats.total_users, icon: "👥", color: "#6C63FF" },
               { label: "Active Today", value: stats.active_today, icon: "⚡", color: "#43E97B" },
               { label: "Pro Upgrades", value: stats.pro_users || 0, icon: "💎", color: "#A78BFA" },
               { label: "Est. MRR (₹)", value: `₹${(stats.pro_users || 0) * 100}`, icon: "💰", color: "#10B981", highlight: true },
@@ -297,7 +297,7 @@ export default function AdminPage() {
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    {["Reviewer", "Gmail", "Rating", "Feedback", "Date", "Action"].map(h => (
+                    {["Reviewer", "Email", "Rating", "Feedback", "Date", "Action"].map(h => (
                       <th key={h} style={{ padding: "16px 20px", textAlign: "left", fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>{h}</th>
                     ))}
                   </tr>
@@ -309,7 +309,7 @@ export default function AdminPage() {
                         <div style={{ fontWeight: 700, fontSize: 14 }}>{r.name}</div>
                         <div style={{ color: "var(--text-muted)", fontSize: 12 }}>{r.role || "Community"}</div>
                       </td>
-                      <td style={{ padding: "16px 20px", fontSize: 13, color: "var(--brand-secondary)", fontWeight: 600 }}>{r.user_email}</td>
+                      <td style={{ padding: "16px 20px", fontSize: 13, color: "var(--brand-secondary)", fontWeight: 600 }}>{r.user_email || "—"}</td>
                       <td style={{ padding: "16px 20px" }}>
                         <div style={{ display: "flex", gap: 2 }}>
                           {Array.from({ length: 5 }).map((_, i) => (

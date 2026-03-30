@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatApi, ChatMsg, ChatSession } from "@/lib/api";
-import { Bot, Send, Trash2, Plus, MessageSquare, Menu, X, Clock, History, BrainCircuit } from "lucide-react";
+import { Bot, Send, Trash2, Plus, MessageSquare, Menu, X, Clock, History, BrainCircuit, Copy, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -38,11 +38,22 @@ function TypingDots() {
 
 function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
   const isUser = msg.role === "user";
+  const [copied, setCopied] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(msg.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         display: "flex",
         gap: 12,
@@ -71,7 +82,27 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
         lineHeight: 1.7,
         boxShadow: isUser ? "0 4px 18px rgba(0,122,255,0.25)" : "none",
         wordBreak: "break-word",
+        position: "relative",
       }}>
+        {!isUser && (
+          <button
+            onClick={handleCopy}
+            style={{
+              position: "absolute", top: -10, right: -10,
+              background: copied ? "#10B981" : "rgba(124,58,237,0.9)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              color: "white", padding: 6, borderRadius: "50%", cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+              opacity: hovered || copied ? 1 : 0,
+              transform: hovered || copied ? "scale(1)" : "scale(0.8)",
+              transition: "all 0.2s",
+              zIndex: 10
+            }}
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+          </button>
+        )}
+        
         {isUser ? (
           <span style={{ whiteSpace: "pre-wrap" }}>{msg.content}</span>
         ) : (

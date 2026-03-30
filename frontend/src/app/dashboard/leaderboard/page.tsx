@@ -162,7 +162,7 @@ export default function LeaderboardPage() {
       {/* Full List */}
       <div className="glass-card" style={{ padding: 0, overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)" }}>
         <div style={{ padding: "24px 32px", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.01)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>All Active Rankings</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Top 10 Global Rankings</h2>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Total Players: {leaderboard.length}</div>
         </div>
 
