@@ -1,7 +1,8 @@
 import socketio
 import os
 from app.api.deps import get_user_from_token
-from app.core.database import SessionLocal
+from app.core.database import engine
+from sqlmodel import Session
 
 sio = socketio.AsyncServer(
     async_mode='asgi',
@@ -32,7 +33,7 @@ async def connect(sid, environ, auth=None):
         print(f"Connection rejected: No token provided for sid {sid}")
         return False # Disconnect
     
-    db = SessionLocal()
+    db = Session(engine)
     try:
         user = await get_user_from_token(token, db)
         if not user:
