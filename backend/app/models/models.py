@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, String
 from typing import Optional
 from datetime import datetime
 
@@ -66,7 +67,7 @@ class Hackathon(SQLModel, table=True):
     is_active: bool = True
     
     # [NEW] Discovery Metadata
-    mode: str = "Online"  # Online, Offline, Hybrid
+    mode: str = Field(default="Online", sa_column=Column("mode", String, quote=True))
     difficulty: str = "Beginner"  # Beginner, Intermediate, Advanced
     team_size: str = "1-4 builders"
     start_date: Optional[str] = None  # ISO Date
@@ -258,7 +259,7 @@ class SavedResume(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
     document_type: str = "Resume"  # Resume or Cover Letter
-    mode: str = "ATS-Optimized"
+    mode: str = Field(default="ATS-Optimized", sa_column=Column("mode", String, quote=True))
     original_resume: str
     job_description: str
     improved_resume: str
