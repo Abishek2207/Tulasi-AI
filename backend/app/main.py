@@ -262,23 +262,15 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
+    from fastapi.responses import PlainTextResponse
     import traceback
     tb = traceback.format_exc()
     print(f"\u274c CRITICAL ERROR on {request.method} {request.url}:\n{tb}")
-    origin = request.headers.get("origin", "*")
-    cors_headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
     
-    # Returning full traceback for remote debugging regardless of ENV
-    return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "error": "Internal Server Error",
-            "message": str(exc),
-            "type": exc.__class__.__name__,
-            "traceback": tb
-        },
-        headers=cors_headers
+    # Returning plain text traceback to avoid JSON serialization failures
+    return PlainTextResponse(
+        content=f"--- CRITICAL BACKEND ERROR ---\n\n{tb}",
+        status_code=500
     )
 
 
