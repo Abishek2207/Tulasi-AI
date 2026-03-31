@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { authApi } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import toast from "react-hot-toast";
 
@@ -71,6 +72,25 @@ export default function AuthPage() {
   const [error, setError] = useState("");
   const [oAuthLoading, setOAuthLoading] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleGoogleLogin = async () => {
+    try {
+      console.log("[Auth] Triggering Supabase Google OAuth...");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: process.env.NEXT_PUBLIC_APP_URL || "https://tulasiai.vercel.app/dashboard",
+        }
+      });
+      if (error) {
+        console.error("Login error:", error.message);
+        toast.error("Google Auth failed: " + error.message);
+      }
+    } catch (err: any) {
+      console.error("[Auth Error] Unexpected Google OAuth failure:", err);
+      toast.error("Unexpected authentication error.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,7 +194,7 @@ export default function AuthPage() {
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* OAuth Buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
-              <button type="button" 
+              <button type="button" onClick={handleGoogleLogin}
                 style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
                 onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
                 onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
