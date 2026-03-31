@@ -293,7 +293,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     print(f"\u274c CRITICAL ERROR on {request.method} {request.url}:\n{tb}")
     origin = request.headers.get("origin", "*")
     cors_headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
-    debug_mode = os.environ.get("DEBUG", "").lower() in ("true", "1")
+    debug_mode = True # FORCE ENABLED for remote debugging
     return JSONResponse(
         status_code=500,
         content={
