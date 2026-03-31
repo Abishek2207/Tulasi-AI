@@ -339,11 +339,11 @@ app.mount("/socket.io", socket_app)
 
 
 # ── Root Endpoint ──────────────────────────────────────────────────
-@app.get("/")
-def root():
+@app.get("/api")
+def api_root():
     return {
         "name": "Tulasi AI API",
-        "version": "3.0.0",
+        "version": "3.0.0-0dcc484",
         "status": "running",
         "docs": "/api/docs",
     }
