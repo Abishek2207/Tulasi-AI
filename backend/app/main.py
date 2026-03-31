@@ -104,7 +104,7 @@ async def lifespan(app: FastAPI):
                     for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
                         if col not in existing_cols:
                             try:
-                                conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN {col} VARCHAR;'))
+                                conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN "{col}" VARCHAR;'))
                             except Exception as e:
                                 print(f"[Migration Warning] Add {col}: {e}")
 
@@ -144,6 +144,17 @@ async def lifespan(app: FastAPI):
                     print("[Migration] Ensuring 'hackathonapplication' table exists.")
                 except Exception as e:
                     print(f"[Migration Error] HackathonApplication: {e}")
+
+                # Step 7.5: Handle SavedResume schema expansion
+                try:
+                    inspector = inspect(engine)
+                    existing_sr_cols = [c["name"] for c in inspector.get_columns("savedresume")]
+                    if "savedresume" in inspector.get_table_names():
+                        if "mode" not in existing_sr_cols:
+                            conn.execute(text('ALTER TABLE savedresume ADD COLUMN "mode" VARCHAR DEFAULT \'ATS-Optimized\';'))
+                            print("[Migration] Added 'mode' to savedresume.")
+                except Exception as e:
+                    print(f"[Migration Warning] SavedResume schema check: {e}")
 
                 # Step 8: Ensure seed data (Fallback for empty databases)
                 try:
@@ -194,7 +205,7 @@ async def lifespan(app: FastAPI):
                             ]
                             for h in hacks:
                                 conn.execute(text("""
-                                    INSERT INTO hackathon (title, organizer, description, prize_pool, deadline, registration_link, tags, image_url, mode, difficulty, team_size, start_date, end_date, domains, currency, participants_count, status) 
+                                    INSERT INTO hackathon (title, organizer, description, prize_pool, deadline, registration_link, tags, image_url, "mode", difficulty, team_size, start_date, end_date, domains, currency, participants_count, status) 
                                     VALUES (:t, :o, :d, :p, :dl, :rl, :tg, :iu, :m, :diff, :ts, :sd, :ed, :dom, :cur, 0, 'Active')
                                 """), h)
                             print("[Migration] 🌱 Seeded initial high-tech hackathons.")
