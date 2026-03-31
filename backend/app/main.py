@@ -46,22 +46,8 @@ async def lifespan(app: FastAPI):
             from app.core.database import engine
             from sqlalchemy import text
             with engine.begin() as conn:
-                # Step 1: Force create Review table if SQLModel failed it
-                try:
-                    conn.execute(text("""
-                        CREATE TABLE IF NOT EXISTS review (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            user_id INTEGER,
-                            name VARCHAR NOT NULL,
-                            role VARCHAR,
-                            review TEXT NOT NULL,
-                            rating INTEGER NOT NULL,
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        );
-                    """))
-                    print("[Migration] Ensuring 'review' table exists.")
-                except Exception as e:
-                    print(f"[Migration Error] Table creation: {e}")
+                # Step 1: Handling Review table migration natively handles via create_all
+                # Additional columns patched below if migrating from very old SQLite baseline
 
                 # Step 2: Add missing columns if table already existed but was old
                 try:
@@ -131,19 +117,7 @@ async def lifespan(app: FastAPI):
                     print(f"[Migration Warning] Global Unlock: {e}")
 
                 # Step 7: Create HackathonApplication table if not exists
-                try:
-                    conn.execute(text("""
-                        CREATE TABLE IF NOT EXISTS hackathonapplication (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            user_id INTEGER NOT NULL,
-                            hackathon_id INTEGER NOT NULL,
-                            status VARCHAR DEFAULT "Applied",
-                            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        );
-                    """))
-                    print("[Migration] Ensuring 'hackathonapplication' table exists.")
-                except Exception as e:
-                    print(f"[Migration Error] HackathonApplication: {e}")
+                # (Removed manual SQLite creation, create_all in init_db handles this safely for Postgres)
 
                 # Step 7.5: Handle SavedResume schema expansion
                 try:
