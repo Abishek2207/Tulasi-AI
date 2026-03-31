@@ -3,8 +3,8 @@
 import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { activityApi, profileApi } from "@/lib/api";
-import { Zap, Flame, Code, Target, Trophy, Award, Edit3, Check, X } from "lucide-react";
+import { activityApi, profileApi, usersApi } from "@/lib/api";
+import { Zap, Flame, Code, Target, Trophy, Award, Edit3, Check, X, Camera, Image as ImageIcon, Sparkles, Loader2 } from "lucide-react";
 
 interface UserStats {
   xp?: number; level?: number; problems_solved?: number;
@@ -36,16 +36,41 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [formData, setFormData] = useState({ name: "", bio: "", skills: "" });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [removingBg, setRemovingBg] = useState(false);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
   useEffect(() => {
     if (session) activityApi.getStats(token).then(setStats).catch(() => {});
     if (session?.user) {
-      const u = session.user as { name?: string; bio?: string; skills?: string };
+      const u = session.user as { name?: string; bio?: string; skills?: string; avatar?: string };
       setFormData({ name: u.name || "", bio: u.bio || "", skills: u.skills || "" });
+      if (u.avatar) setAvatarUrl(u.avatar);
     }
   }, [session]);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Preview immediately
+    const reader = new FileReader();
+    reader.onload = (ev) => setAvatarUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
+
+    // Auto-remove BG if it's a new upload
+    try {
+      setRemovingBg(true);
+      const blob = await usersApi.removeBg(file, token);
+      const url = URL.createObjectURL(blob);
+      setAvatarUrl(url);
+    } catch (err) {
+      console.error("BG Removal failed:", err);
+    } finally {
+      setRemovingBg(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -112,14 +137,25 @@ export default function ProfilePage() {
             />
             <div style={{
               width: 110, height: 110, borderRadius: "50%",
-              background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
+              background: avatarUrl ? `url(${avatarUrl}) center/cover` : "linear-gradient(135deg, #8B5CF6, #06B6D4)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 44, fontWeight: 900, color: "white",
               position: "relative", zIndex: 1,
               border: "3px solid #05070D",
+              overflow: "hidden"
             }}>
-              {initials}
+              {!avatarUrl && initials}
+              {removingBg && (
+                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                   <Loader2 size={24} className="animate-spin" />
+                </div>
+              )}
             </div>
+
+            <label htmlFor="avatar-upload" style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", width: 32, height: 32, borderRadius: "50%", background: "#1E293B", border: "2px solid #05070D", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
+              <Camera size={14} color="#A78BFA" />
+            </label>
+            <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
             {/* Online indicator */}
             <div style={{
               position: "absolute", bottom: 4, right: 4, width: 18, height: 18,
