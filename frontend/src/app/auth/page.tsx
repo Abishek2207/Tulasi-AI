@@ -163,7 +163,7 @@ export default function AuthPage() {
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* OAuth Buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
-              <button type="button" onClick={() => alert("OAuth is temporarily disabled while we upgrade our security systems.")}
+              <button type="button" 
                 style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
                 onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
                 onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
@@ -171,7 +171,7 @@ export default function AuthPage() {
                 <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
                 Google
               </button>
-              <button type="button" onClick={() => alert("OAuth is temporarily disabled while we upgrade our security systems.")}
+              <button type="button" 
                 style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
                 onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
                 onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
