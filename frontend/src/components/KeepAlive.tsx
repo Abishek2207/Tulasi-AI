@@ -11,23 +11,43 @@ import { healthCheck } from "@/lib/api";
  */
 export function KeepAlive() {
   useEffect(() => {
-    // Ping every 10 minutes (Render sleep starts at 15 mins)
-    const INTERVAL = 10 * 60 * 1000; 
+    // Ping every 8 minutes (Render sleep starts at 15 mins)
+    // 8 mins is safer to account for network jitter.
+    const INTERVAL = 8 * 60 * 1000; 
+    let lastPing = 0;
 
     const ping = async () => {
+      const now = Date.now();
+      // Throttle pings to at most once every 3 minutes to avoid flooding
+      if (now - lastPing < 3 * 60 * 1000) return;
+      
       try {
-        console.log("[KeepAlive] 🛰️ Pinging backend to prevent sleep...");
+        console.log("[KeepAlive] 🛰️ Heartbeat: Ensuring Tulasi AI stays optimized...");
         await healthCheck();
+        lastPing = Date.now();
       } catch (e) {
-        // Silent failure is okay for keep-alive
+        // Silent failure
       }
     };
 
     // Initial ping
     ping();
 
+    // Event-based pings (Proactive wakeup when user returns)
+    const handleActivity = () => {
+      if (document.visibilityState === "visible") ping();
+    };
+
+    window.addEventListener("visibilitychange", handleActivity);
+    window.addEventListener("focus", handleActivity);
+
     const timer = setInterval(ping, INTERVAL);
-    return () => clearInterval(timer);
+    
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("visibilitychange", handleActivity);
+      window.removeEventListener("focus", handleActivity);
+    };
   }, []);
 
   return null; // Invisible component
