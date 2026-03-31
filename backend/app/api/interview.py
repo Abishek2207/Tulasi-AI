@@ -129,12 +129,12 @@ def answer_interview(
     current_user: User = Depends(get_current_user)
 ):
     # ── 🔍 PERSISTENCE: Retrieve session from DB ──
-    interview_session = db.exec(
-        select(PersistentInterviewSession).where(
-            PersistentInterviewSession.session_id == req.session_id,
-            PersistentInterviewSession.user_id == current_user.id
-        )
-    ).first()
+    query = select(PersistentInterviewSession).where(
+        PersistentInterviewSession.session_id == req.session_id,
+        PersistentInterviewSession.user_id == current_user.id
+    )
+    result = db.exec(query)
+    interview_session = result.first()
     
     if not interview_session:
         raise HTTPException(404, "Interview session not found or expired.")

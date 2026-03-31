@@ -27,7 +27,9 @@ def generate_join_code(length: int = 6) -> str:
 def _ensure_unique_code(db: Session) -> str:
     for _ in range(10):
         code = generate_join_code()
-        existing = db.exec(select(Group).where(Group.join_code == code)).first()
+        query = select(Group).where(Group.join_code == code)
+        result = db.exec(query)
+        existing = result.first()
         if not existing:
             return code
     raise HTTPException(500, "Could not generate unique join code. Try again.")
@@ -100,17 +102,19 @@ def join_group(
     current_user: User = Depends(get_current_user),
 ):
     code = req.join_code.strip().upper()
-    group = db.exec(select(Group).where(Group.join_code == code)).first()
+    query = select(Group).where(Group.join_code == code)
+    result = db.exec(query)
+    group = result.first()
     if not group:
         raise HTTPException(404, f"No group found with code '{code}'")
 
     # Check if already a member
-    already = db.exec(
-        select(GroupMember).where(
-            GroupMember.group_id == group.id,
-            GroupMember.user_id == current_user.id,
-        )
-    ).first()
+    query = select(GroupMember).where(
+        GroupMember.group_id == group.id,
+        GroupMember.user_id == current_user.id,
+    )
+    result = db.exec(query)
+    already = result.first()
     if already:
         return {"message": "You are already a member of this group", "group": {
             "id": group.id, "name": group.name, "join_code": group.join_code
@@ -173,12 +177,12 @@ def get_messages(
     current_user: User = Depends(get_current_user),
 ):
     # Verify membership
-    member = db.exec(
-        select(GroupMember).where(
-            GroupMember.group_id == group_id,
-            GroupMember.user_id == current_user.id,
-        )
-    ).first()
+    query = select(GroupMember).where(
+        GroupMember.group_id == group_id,
+        GroupMember.user_id == current_user.id,
+    )
+    result = db.exec(query)
+    member = result.first()
     if not member:
         raise HTTPException(403, "You are not a member of this group")
 
@@ -213,12 +217,12 @@ async def send_message(
     current_user: User = Depends(get_current_user),
 ):
     # Verify membership
-    member = db.exec(
-        select(GroupMember).where(
-            GroupMember.group_id == group_id,
-            GroupMember.user_id == current_user.id,
-        )
-    ).first()
+    query = select(GroupMember).where(
+        GroupMember.group_id == group_id,
+        GroupMember.user_id == current_user.id,
+    )
+    result = db.exec(query)
+    member = result.first()
     if not member:
         raise HTTPException(403, "You are not a member of this group")
 
@@ -276,12 +280,12 @@ def get_group(
     if not group:
         raise HTTPException(404, "Group not found")
 
-    member = db.exec(
-        select(GroupMember).where(
-            GroupMember.group_id == group_id,
-            GroupMember.user_id == current_user.id,
-        )
-    ).first()
+    query = select(GroupMember).where(
+        GroupMember.group_id == group_id,
+        GroupMember.user_id == current_user.id,
+    )
+    result = db.exec(query)
+    member = result.first()
     if not member:
         raise HTTPException(403, "You are not a member of this group")
 

@@ -71,24 +71,32 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [oAuthLoading, setOAuthLoading] = useState<string | null>(null);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tulasiai.vercel.app";
   const router = useRouter();
 
   const handleGoogleLogin = async () => {
+    if (oAuthLoading) return;
+    setOAuthLoading("google");
     try {
       console.log("[Auth] Triggering Supabase Google OAuth...");
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
-          redirectTo: process.env.NEXT_PUBLIC_APP_URL || "https://tulasiai.vercel.app/dashboard",
-        }
+          // Must match the Authorized Redirect URI set in Google Cloud Console
+          // and the Supabase Auth → Providers → Google → Redirect URL
+          redirectTo: `${appUrl}/auth/callback`,
+        },
       });
       if (error) {
-        console.error("Login error:", error.message);
-        toast.error("Google Auth failed: " + error.message);
+        console.error("[Auth] Google OAuth error:", error.message);
+        toast.error("Google sign-in failed: " + error.message);
+        setOAuthLoading(null);
       }
+      // On success Supabase redirects the browser — no further code runs here
     } catch (err: any) {
       console.error("[Auth Error] Unexpected Google OAuth failure:", err);
-      toast.error("Unexpected authentication error.");
+      toast.error("Unexpected authentication error. Please try again.");
+      setOAuthLoading(null);
     }
   };
 
@@ -194,13 +202,17 @@ export default function AuthPage() {
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* OAuth Buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
-              <button type="button" onClick={handleGoogleLogin}
-                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
-                onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
+              <button type="button" onClick={handleGoogleLogin} disabled={!!oAuthLoading}
+                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading ? "not-allowed" : "pointer", transition: "all 0.2s", opacity: oAuthLoading ? 0.6 : 1 }}
+                onMouseEnter={e => { if (!oAuthLoading) e.currentTarget.style.background = "#23252E"; }}
+                onMouseLeave={e => { if (!oAuthLoading) e.currentTarget.style.background = "#1A1C23"; }}
               >
-                <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
-                Google
+                {oAuthLoading === "google" ? (
+                  <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
+                ) : (
+                  <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
+                )}
+                {oAuthLoading === "google" ? "Redirecting…" : "Google"}
               </button>
               <button type="button" 
                 style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}

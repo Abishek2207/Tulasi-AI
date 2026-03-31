@@ -82,12 +82,12 @@ def _update_progress(user_id: int, category: str, db: Session):
     }
     total = TOTALS.get(category, 20)
 
-    prog = db.exec(
-        select(UserProgress).where(
-            UserProgress.user_id == user_id,
-            UserProgress.category == category
-        )
-    ).first()
+    query = select(UserProgress).where(
+        UserProgress.user_id == user_id,
+        UserProgress.category == category
+    )
+    result = db.exec(query)
+    prog = result.first()
 
     # Count completed items for this category
     if category == "coding":
@@ -268,7 +268,9 @@ def redeem_reward(
     current_user: User = Depends(get_current_user)
 ):
     from app.models.models import Reward, UserBadge
-    reward = db.exec(select(Reward).where(Reward.id == req.reward_id)).first()
+    query = select(Reward).where(Reward.id == req.reward_id)
+    result = db.exec(query)
+    reward = result.first()
     if not reward:
         raise HTTPException(404, "Reward not found")
         
@@ -276,7 +278,9 @@ def redeem_reward(
         raise HTTPException(400, "Not enough XP to redeem this reward")
         
     # Check if already owned
-    existing = db.exec(select(UserBadge).where(UserBadge.user_id == current_user.id, UserBadge.name == reward.name)).first()
+    query = select(UserBadge).where(UserBadge.user_id == current_user.id, UserBadge.name == reward.name)
+    result = db.exec(query)
+    existing = result.first()
     if existing:
         raise HTTPException(400, "You already own this reward")
         
@@ -425,9 +429,9 @@ def get_leaderboard(
     leaderboard_data = []
     for idx, u in enumerate(top_users):
         # Count solved problems efficiently
-        solved_count = db.exec(
-            select(func.count(SolvedProblem.id)).where(SolvedProblem.user_id == u.id)
-        ).first() or 0
+        query = select(func.count(SolvedProblem.id)).where(SolvedProblem.user_id == u.id)
+        result = db.exec(query)
+        solved_count = result.first() or 0
         
         leaderboard_data.append({
             "id": u.id,
@@ -454,13 +458,13 @@ def _get_user_leaderboard_context(user: User, db: Session):
     """Helper to find a specific user's rank/stats in the global leaderboard."""
     from app.models.models import SolvedProblem
     # Count how many users have MORE XP than THIS user
-    higher_xp_count = db.exec(
-        select(func.count(User.id)).where(User.xp > (user.xp or 0))
-    ).first() or 0
+    query = select(func.count(User.id)).where(User.xp > (user.xp or 0))
+    result = db.exec(query)
+    higher_xp_count = result.first() or 0
     
-    solved_count = db.exec(
-        select(func.count(SolvedProblem.id)).where(SolvedProblem.user_id == user.id)
-    ).first() or 0
+    query = select(func.count(SolvedProblem.id)).where(SolvedProblem.user_id == user.id)
+    result = db.exec(query)
+    solved_count = result.first() or 0
     
     return {
         "rank": int(higher_xp_count) + 1,

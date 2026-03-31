@@ -214,6 +214,9 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
             action = "roadmap_generated" if tool != "chat" else "message_sent"
             title = f"{tool.capitalize()} interaction"
             log_activity_internal(user, db, action, title, json.dumps({"session_id": session_id}))
+            query = select(User).where(User.id == current_user.id)
+            result = db.exec(query)
+            user = result.first()
             db.commit()
             print(f"✅ XP Awarded to user {user.id}")
         except Exception as e:

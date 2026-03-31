@@ -10,7 +10,8 @@ def check_tables():
     
     for table_name in [t[0] for t in tables]:
         print(f"\n--- {table_name} ---")
-        cursor.execute(f"PRAGMA table_info({table_name});")
+        # Use double quotes for table names to handle reserved keywords like 'group'
+        cursor.execute(f'PRAGMA table_info("{table_name}");')
         cols = cursor.fetchall()
         for col in cols:
             print(col)

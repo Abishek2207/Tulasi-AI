@@ -218,15 +218,15 @@ def apply_hackathon(
     current_user: User = Depends(get_current_user),
 ):
     from app.models.models import HackathonApplication
-    hackathon = session.get(Hackathon, hackathon_id)
-    if not hackathon:
+    query = select(Hackathon).where(Hackathon.id == hackathon_id)
+    result = session.exec(query)
+    h = result.first()
+    if not h:
         raise HTTPException(status_code=404, detail="Hackathon not found")
 
-    existing = session.exec(
-        select(HackathonApplication)
-        .where(HackathonApplication.user_id == current_user.id)
-        .where(HackathonApplication.hackathon_id == hackathon_id)
-    ).first()
+    query = select(HackathonApplication).where(HackathonApplication.user_id == current_user.id, HackathonApplication.hackathon_id == hackathon_id)
+    result = session.exec(query)
+    existing = result.first()
 
     if existing:
         return {"message": "Already applied", "status": existing.status}
