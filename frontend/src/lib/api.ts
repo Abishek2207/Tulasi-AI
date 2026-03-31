@@ -103,30 +103,17 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 5, ba
     // If we get a 500, 502, 503, or 504, the backend might be starting or crashing.
     if (res.status >= 500 && retries > 0) {
       console.warn(`[TulasiAPI] Server error ${res.status}. Retrying in ${backoff}ms... (${retries} retries left)`);
-      // Only show toast after 3 failures (retries=2) — genuine cold start, not a transient blip
-      if (isBrowser && retries === 2) {
-          toast.loading("Backend warming up — hang tight...", { 
-              id: "retry-toast",
-              duration: Infinity,
-              style: { backgroundColor: "#0F172A", color: "#94A3B8", border: "1px solid #1E293B", borderRadius: "12px", fontSize: "13px", fontWeight: "500" }
-          });
-      }
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
 
-    // Silently dismiss the loading toast on recovery
+    // Silently dismiss any stale loading toast on recovery
     if (isBrowser) toast.dismiss("retry-toast");
     return res;
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (retries > 0 && err.name !== "AbortError") {
       console.warn(`[TulasiAPI] Network error. Retrying in ${backoff}ms... (${retries} retries left)`, err);
-      if (isBrowser && retries === 2) {
-          toast.loading("Connecting to backend...", { id: "retry-toast",
-            style: { backgroundColor: "#0F172A", color: "#94A3B8", border: "1px solid #1E293B", borderRadius: "12px", fontSize: "13px" }
-          });
-      }
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
