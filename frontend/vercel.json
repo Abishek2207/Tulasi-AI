@@ -7,6 +7,12 @@
     "NEXT_PUBLIC_API_URL": "https://tulasi-ai-wgwl.onrender.com",
     "NEXTAUTH_URL": "https://tulasiai.vercel.app"
   },
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
