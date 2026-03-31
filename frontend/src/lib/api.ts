@@ -552,6 +552,20 @@ export const reviewsApi = {
     }),
 };
 
+export const usersApi = {
+  removeBg: async (file: File, token: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_URL}/api/users/avatar/remove-bg`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) throw new Error("Background removal failed");
+    return res.blob();
+  }
+};
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface User {

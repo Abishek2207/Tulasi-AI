@@ -165,11 +165,30 @@ async def lifespan(app: FastAPI):
 
                     # ── 🤝 COMMUNITY SYNC ───────────────────────────
                     try:
-                        group_count = conn.execute(text("SELECT count(*) as c FROM group")).mappings().first()["c"]
+                        group_count = conn.execute(text("SELECT count(*) as c FROM \"group\"")).mappings().first()["c"]
                         if group_count == 0:
-                            conn.execute(text("INSERT INTO group (name, description, join_code, created_by) VALUES ('Global Community', 'The official hub for all Tulasi AI orbits.', 'ORBIT1', 1)"))
+                            conn.execute(text("INSERT INTO \"group\" (name, description, join_code, created_by) VALUES ('Global Community', 'The official hub for all Tulasi AI orbits.', 'ORBIT1', 1)"))
                             print("[Migration] 🌍 Initialized Global Community orbital.")
-                    except: pass
+                    except Exception as e: 
+                        print(f"[Migration Warning] Community Sync: {e}")
+
+                    # ── 🚀 HACKATHON DISCOVERY SEED ──────────────────
+                    try:
+                        hack_count = conn.execute(text("SELECT count(*) as c FROM hackathon")).mappings().first()["c"]
+                        if hack_count == 0:
+                            hacks = [
+                                {"t": "AI for India 2026", "o": "Tulasi AI", "d": "Build the next generation of social AI tools focused on regional accessibility.", "p": "₹5,00,000", "dl": "2026-05-15", "rl": "https://tulasiai.vercel.app/hackathons/1", "tg": "AI, ML, Social Impact", "iu": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e", "m": "Hybrid", "diff": "Medium", "ts": "1-4", "sd": "2026-05-20", "ed": "2026-05-22", "dom": "Engineering", "cur": "INR"},
+                                {"t": "Zero-Key AI Hack", "o": "Meta-Labs", "d": "Design AI engines that require zero API keys using edge-compute-only models.", "p": "$10,000", "dl": "2026-04-10", "rl": "https://example.com/zero-key", "tg": "Edge, Security", "iu": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b", "m": "Remote", "diff": "Hard", "ts": "1-2", "sd": "2026-04-15", "ed": "2026-04-16", "dom": "Security", "cur": "USD"},
+                                {"t": "Web3 Orbit 24H", "o": "Polygon", "d": "Rapid prototyping of decentralized learning platforms on Polygon zKEVM.", "p": "5,000 MATIC", "dl": "2026-06-01", "rl": "https://example.com/web3", "tg": "Web3, Blockchain", "iu": "https://images.unsplash.com/photo-1639762681057-408a5197bb40", "m": "In-Person (Bangalore)", "diff": "Easy", "ts": "1-3", "sd": "2026-06-05", "ed": "2026-06-06", "dom": "Web3", "cur": "MATIC"}
+                            ]
+                            for h in hacks:
+                                conn.execute(text("""
+                                    INSERT INTO hackathon (title, organizer, description, prize_pool, deadline, registration_link, tags, image_url, mode, difficulty, team_size, start_date, end_date, domains, currency, participants_count, status) 
+                                    VALUES (:t, :o, :d, :p, :dl, :rl, :tg, :iu, :m, :diff, :ts, :sd, :ed, :dom, :cur, 0, 'Active')
+                                """), h)
+                            print("[Migration] 🌱 Seeded initial high-tech hackathons.")
+                    except Exception as e:
+                        print(f"[Migration Warning] Hackathon Seed: {e}")
                     # ────────────────────────────────────────────────
                 except Exception as e:
                     print(f"[Migration Error] Seeding: {e}")
