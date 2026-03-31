@@ -1,87 +1,89 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
-interface Session {
-  user: User & { accessToken?: string; name?: string; email?: string; image?: string };
+interface SessionData {
+  user: any;
 }
 
 export function useSession() {
-  const [data, setData] = useState<Session | null>(null);
+  const [data, setData] = useState<SessionData | null>(null);
   const [status, setStatus] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
 
   useEffect(() => {
-    const checkSession = () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setStatus("unauthenticated");
-        setData(null);
-        return;
-      }
+    let mounted = true;
+
+    async function checkSession() {
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const isExp = payload.exp * 1000 < Date.now();
-        if (isExp) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          setStatus("unauthenticated");
-          setData(null);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error || !session) {
+          if (mounted) {
+            setStatus("unauthenticated");
+            setData(null);
+          }
           return;
         }
 
-        const userStr = localStorage.getItem("user");
-        let userProfile = { id: 0, role: "student", ...payload };
-        if (userStr) {
-          try { userProfile = { ...userProfile, ...JSON.parse(userStr) }; } catch (e) {}
-        }
+        console.log("[Supabase Auth] Session recovered:", session.user.email);
         
-        setData({
-          user: {
-            ...userProfile,
-            name: userProfile.name || payload.sub,
-            email: userProfile.email || payload.sub,
-            accessToken: token
-          } as any
-        });
-        setStatus("authenticated");
+        if (mounted) {
+          setData({ user: session.user });
+          setStatus("authenticated");
+        }
       } catch (err) {
-        setStatus("unauthenticated");
-        setData(null);
+        if (mounted) setStatus("unauthenticated");
       }
-    };
+    }
 
     checkSession();
-    
-    // Custom event to trigger re-renders on login/logout from within the same window
-    const handleAuthChange = () => checkSession();
-    window.addEventListener("tulasi-auth-change", handleAuthChange);
-    window.addEventListener("storage", checkSession); // for cross-tab
+
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Supabase Auth] State changed:", event);
+      if (session) {
+        if (mounted) {
+          setData({ user: session.user });
+          setStatus("authenticated");
+        }
+
+        // ────────────────────────────────────────────────────────
+        // STEP 7 AUTOMATIC FIX: Insert user into Supabase DB if not exists
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          const { error: upsertErr } = await supabase.from('users').upsert({
+            id: session.user.id,
+            email: session.user.email,
+            created_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+          if (upsertErr) console.error("⚠️ Failed to sync users table:", upsertErr);
+        }
+        // ────────────────────────────────────────────────────────
+
+      } else {
+        if (mounted) {
+          setStatus("unauthenticated");
+          setData(null);
+        }
+      }
+    });
 
     return () => {
-      window.removeEventListener("tulasi-auth-change", handleAuthChange);
-      window.removeEventListener("storage", checkSession);
+      mounted = false;
+      listener.subscription.unsubscribe();
     };
   }, []);
 
-  // Expose an update function if needed to artificially trigger rechecking
-  const update = async () => {
-    window.dispatchEvent(new Event("tulasi-auth-change"));
-  };
+  const update = async () => {}; // Stub for backward compatibility
 
   return { data, status, update };
 }
 
-export function signOut({ callbackUrl }: { callbackUrl?: string } = {}) {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  window.dispatchEvent(new Event("tulasi-auth-change"));
+export async function signOut({ callbackUrl }: { callbackUrl?: string } = {}) {
+  await supabase.auth.signOut();
   window.location.href = callbackUrl || "/auth";
 }
 
 export function signIn(provider: string, options?: any) {
-  // In our custom implementation, we just route to `/auth` because
-  // the unified JWT login is handled there.
   window.location.href = "/auth";
 }
 
