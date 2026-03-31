@@ -134,6 +134,35 @@ async def lifespan(app: FastAPI):
                 except Exception as e:
                     print(f"[Migration Error] HackathonApplication: {e}")
 
+                # Step 8: Ensure seed data (Fallback for empty databases)
+                try:
+                    user_count_res = conn.execute(text('SELECT count(*) as c FROM "user"'))
+                    if user_count_res.mappings().first()["c"] == 0:
+                        from app.core.security import get_password_hash
+                        from app.core.config import settings
+                        import uuid
+                        admin_mail = settings.ADMIN_EMAIL
+                        admin_pass = get_password_hash("password")
+                        code = uuid.uuid4().hex[:8].upper()
+                        conn.execute(text('INSERT INTO "user" (email, name, hashed_password, role, invite_code, is_pro) VALUES (:e, :n, :p, :r, :c, 1)'),
+                        {"e": admin_mail, "n": "Super Admin", "p": admin_pass, "r": "admin", "c": code})
+                        print("[Migration] 🌱 Seeded initial admin account.")
+
+                    rev_count_res = conn.execute(text('SELECT count(*) as c FROM review'))
+                    if rev_count_res.mappings().first()["c"] == 0:
+                        reviews = [
+                            {"n": "Alex Chen", "e": "alex@example.com", "rol": "Software Engineer", "rev": "Tulasi AI completely overhauled my interview prep. The AI mock interviews are incredibly realistic.", "rat": 5},
+                            {"n": "Sarah Jenkins", "e": "sarah@example.com", "rol": "CS Student", "rev": "The personalized roadmaps saved me months of wandering. I landed my first internship because of the curated content.", "rat": 5},
+                            {"n": "Mike Donovan", "e": "mike@example.com", "rol": "Frontend Dev", "rev": "Having an AI instantly explain why my code failed is a game changer. The UI is also visually stunning.", "rat": 5},
+                            {"n": "Elena Rodriguez", "e": "elena@example.com", "rol": "Data Scientist", "rev": "The community hackathons are fantastic! The platform seamlessly integrates coding, learning, and competing.", "rat": 4},
+                            {"n": "James Wu", "e": "james@example.com", "rol": "Backend Engineer", "rev": "Honestly the best gamified learning platform I've used. I actually look forward to logging in every day.", "rat": 5}
+                        ]
+                        for r in reviews:
+                            conn.execute(text("INSERT INTO review (name, email, role, review, rating) VALUES (:n, :e, :rol, :rev, :rat)"), r)
+                        print("[Migration] 🌱 Seeded initial realistic reviews.")
+                except Exception as e:
+                    print(f"[Migration Error] Seeding: {e}")
+
             # ───────────────────────────────────────────────────
             
         except Exception as e:
@@ -251,8 +280,11 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     duration = round((time.time() - start) * 1000, 2)
 
+    if duration > 500:
+        print(f"⚠️ [SLOW DB/API Action] {request.method} {request.url.path} took {duration}ms")
+
     print(
-        f"📡 {request.method} {request.url.path} "
+        f"[Backend Request] 📡 {request.method} {request.url.path} "
         f"→ {response.status_code} ({duration} ms)"
     )
 

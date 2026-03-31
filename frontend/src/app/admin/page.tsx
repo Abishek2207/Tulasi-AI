@@ -313,7 +313,9 @@ export default function AdminPage() {
 
               <div className="glass-card" style={{ padding: 24 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: "var(--text-secondary)" }}>🏆 Top 5 Users</h3>
-                {leaderboard.slice(0, 5).map(u => (
+                {leaderboard.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>No data available</div>
+                ) : leaderboard.slice(0, 5).map(u => (
                   <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontSize: 16, fontWeight: 800, color: rankColor(u.rank), minWidth: 24 }}>#{u.rank}</span>
                     {avatar(u.name, u.is_pro)}
@@ -359,7 +361,9 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map((u, idx) => (
+                    {filteredUsers.length === 0 ? (
+                      <tr><td colSpan={7} style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>No users available</td></tr>
+                    ) : filteredUsers.map((u, idx) => (
                       <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)", transition: "background 0.15s" }}
                         onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "rgba(255,255,255,0.025)"}
                         onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}>
@@ -421,7 +425,9 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {reviews.map(r => (
+                    {reviews.length === 0 ? (
+                      <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>No reviews available</td></tr>
+                    ) : reviews.map(r => (
                       <tr key={r.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)", background: r.is_featured ? "rgba(255,215,0,0.03)" : "transparent" }}
                         onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = r.is_featured ? "rgba(255,215,0,0.05)" : "rgba(255,255,255,0.025)"}
                         onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = r.is_featured ? "rgba(255,215,0,0.03)" : "transparent"}>

@@ -8,6 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { authApi } from "@/lib/api";
 import { TulasiLogo } from "@/components/TulasiLogo";
+import toast from "react-hot-toast";
 
 // TulasILogo Pro - with the leaf/circuit design and Pro badge
 function TulasiLogoPro() {
@@ -78,8 +79,10 @@ export default function AuthPage() {
 
     if (isLogin) {
       try {
+        console.log("[Auth] Attempting login for:", email);
         // Call backend directly first to get token, then sync to NextAuth session
         const data = await authApi.login(email, password);
+        console.log("[Auth] Login successful. Saving token.");
         if (data.access_token) {
           localStorage.setItem("token", data.access_token);
         }
@@ -91,11 +94,16 @@ export default function AuthPage() {
         router.push("/dashboard");
       } catch (err: unknown) {
         const error = err as Error;
-        setError(error.message || "Invalid email or password.");
+        const msg = error.message || "Invalid email or password.";
+        console.error("[Auth Error] Login completely failed:", error);
+        setError(msg);
+        toast.error(msg);
       }
     } else {
       try {
+        console.log("[Auth] Attempting registration for:", email);
         const data = await authApi.register(email, password, name, inviteCode);
+        console.log("[Auth] Registration successful. Saving token.");
         if (data.access_token) {
           localStorage.setItem("token", data.access_token);
         }
@@ -107,7 +115,10 @@ export default function AuthPage() {
         router.push("/dashboard");
       } catch (err: unknown) {
         const error = err as Error;
-        setError(error.message || "Registration failed");
+        const msg = error.message || "Registration failed.";
+        console.error("[Auth Error] Registration completely failed:", error);
+        setError(msg);
+        toast.error(msg);
       }
     }
     setLoading(false);
