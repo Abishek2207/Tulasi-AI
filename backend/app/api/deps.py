@@ -21,13 +21,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = result.first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
-    
-    # Update last_seen for activity tracking
-    user.last_seen = datetime.utcnow()
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    
+
+    # Best-effort last_seen update — do NOT commit here (causes SQLite write-lock under load)
+    try:
+        user.last_seen = datetime.utcnow()
+        db.add(user)
+        # Commit happens at end of request lifecycle, not here
+    except Exception:
+        pass  # Never fail auth because of a cosmetic last_seen update
+
     return user
 
 async def get_user_from_token(token: str, db: Session) -> Optional[User]:

@@ -18,6 +18,15 @@ from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
 from fastapi.responses import RedirectResponse
 
+# ── CORS origins — defined at module level so exception handlers can reference it ──
+ALLOW_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://tulasiai.vercel.app",
+    "https://tulasi-ai.vercel.app",
+    "https://tulasi-ai-wgwl.onrender.com",
+]
+
 # ── Track startup time ─────────────────────────────────────────────
 _START_TIME = time.time()
 
@@ -268,33 +277,27 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    # Log the full traceback or error for internal debugging
-    print(f"❌ CRITICAL ERROR on {request.method} {request.url}: {exc}")
-    # Return a clean JSON only response as requested
+    import traceback
+    tb = traceback.format_exc()
+    print(f"\u274c CRITICAL ERROR on {request.method} {request.url}:\n{tb}")
     origin = request.headers.get("origin", "*")
-    headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
+    cors_headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
+    debug_mode = os.environ.get("DEBUG", "").lower() in ("true", "1")
     return JSONResponse(
         status_code=500,
         content={
-            "success": False, 
+            "success": False,
             "error": "Internal Server Error",
-            "message": str(exc) if os.environ.get("DEBUG") == "true" else "An unexpected error occurred. Please try again later.",
-            "type": exc.__class__.__name__
+            "message": str(exc) if debug_mode else "An unexpected error occurred. Please try again later.",
+            "type": exc.__class__.__name__,
+            **(  {"traceback": tb} if debug_mode else {}  )
         },
-        headers=headers
+        headers=cors_headers
     )
 
 
-ALLOW_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://tulasiai.vercel.app",
-    "https://tulasi-ai.vercel.app",
-    "https://tulasi-ai-wgwl.onrender.com",
-]
-
+# ── CORS Middleware (origins already defined above) ────────────────────────────────
 # Allow all origins in production so Render backend works with any frontend
-# (Vercel, custom domains, etc.)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOW_ORIGINS,
