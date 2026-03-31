@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
 
 export default function BillingPage() {

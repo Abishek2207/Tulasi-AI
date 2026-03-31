@@ -453,9 +453,9 @@ def get_leaderboard(
 def _get_user_leaderboard_context(user: User, db: Session):
     """Helper to find a specific user's rank/stats in the global leaderboard."""
     from app.models.models import SolvedProblem
-    # Count how many users have more XP than this user
-    rank = db.exec(
-        select(func.count(User.id)).where(User.xp > user.xp)
+    # Count how many users have MORE XP than THIS user
+    higher_xp_count = db.exec(
+        select(func.count(User.id)).where(User.xp > (user.xp or 0))
     ).first() or 0
     
     solved_count = db.exec(
@@ -463,11 +463,11 @@ def _get_user_leaderboard_context(user: User, db: Session):
     ).first() or 0
     
     return {
-        "rank": rank + 1,
+        "rank": int(higher_xp_count) + 1,
         "xp": user.xp or 0,
         "streak": user.streak or 0,
         "problems_solved": solved_count,
-        "is_pro": getattr(user, 'is_pro', False)
+        "is_pro": getattr(user, 'is_pro', True)
     }
 
 @router.get("/public-feed")

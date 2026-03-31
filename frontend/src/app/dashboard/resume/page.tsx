@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { motion, AnimatePresence } from "framer-motion";
 import { resumeApi } from "@/lib/api";
 import Link from "next/link";

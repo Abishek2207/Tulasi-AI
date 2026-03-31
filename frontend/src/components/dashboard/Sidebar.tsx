@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
 import { Logo as TulasiLogo } from "@/components/Logo";
 import { useState, useEffect } from "react";
@@ -101,6 +101,8 @@ export default function Sidebar() {
   };
 
 
+  const { sidebarOpen } = useSelector((s: RootState) => s.ui);
+
   return (
     <div style={{
       width: 280, height: "100vh",
@@ -109,7 +111,14 @@ export default function Sidebar() {
       display: "flex", flexDirection: "column",
       overflow: "hidden",
       boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
-    }}>
+    }} className="sidebar-container">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => dispatch(toggleSidebar())}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: -1 }} 
+        />
+      )}
       {/* Logo */}
       <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <motion.div whileHover={{ scale: 1.02 }} style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -217,44 +226,8 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* Usage Limit Tracker (Free Users Only) */}
-      {!isPro && currentUser && currentUser.role !== "admin" && (
-        <div style={{ padding: "0 16px 16px" }}>
-          <div style={{
-            background: "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
-            border: "1px solid rgba(255,255,255,0.05)",
-            borderRadius: 14, padding: "14px",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 4 }}>
-                <Zap size={10} color="#06B6D4" /> Daily AI Usage
-              </span>
-              <span style={{ fontSize: 11, fontWeight: 800, color: usagePercent > 90 ? "#F43F5E" : "white" }}>
-                {chatsUsed} / {chatLimit}
-              </span>
-            </div>
-            
-            <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${usagePercent}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                style={{ 
-                  height: "100%", 
-                  background: usagePercent > 90 ? "#F43F5E" : usagePercent > 75 ? "#F59E0B" : "linear-gradient(90deg, #8B5CF6, #06B6D4)",
-                  borderRadius: 3
-                }} 
-              />
-            </div>
-            
-            {usagePercent > 80 && (
-              <p style={{ fontSize: 10, color: "#F59E0B", marginTop: 8, lineHeight: 1.4, fontWeight: 500 }}>
-                You're running low on free chats today.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Usage Limit Tracker — REMOVED FOR PLATINUM PRO UNLIMITED */}
+      {/* { !isPro && ... } */}
 
       {/* User footer */}
       {currentUser && (
@@ -298,6 +271,14 @@ export default function Sidebar() {
           )}
         </div>
       )}
+      <style>{`
+        @media (min-width: 1024px) {
+          .sidebar-container {
+            position: relative !important;
+            transform: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

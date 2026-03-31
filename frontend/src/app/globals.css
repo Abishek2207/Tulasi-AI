@@ -303,6 +303,60 @@ select option {
 }
 
 /* ============================
+   LIGHT MODE: HARDCODED DARK OVERRIDES
+   ============================ */
+
+/* TopBar — was hardcoded rgba(9,9,15,0.85) */
+[data-theme="light"] .topbar-bg {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* AI chat bubble — was rgba(255,255,255,0.03)/invisible */
+[data-theme="light"] .chat-bubble-ai {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Code editor dark panels — force light bg in light mode */
+[data-theme="light"] .code-panel-dark {
+  background: #f8f9fa !important;
+  border-color: rgba(0,0,0,0.08) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Verdict panels in code page */
+[data-theme="light"] .verdict-panel {
+  color: var(--text-primary) !important;
+}
+
+/* Glass cards in light mode — ensure visible text */
+[data-theme="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Dropdowns/popups that hardcode dark bg */
+[data-theme="light"] .dropdown-dark {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="light"] .dropdown-dark button {
+  color: var(--text-primary) !important;
+}
+
+/* Scrollbar in light mode */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.25);
+}
+
+/* ============================
    RESPONSIVE LAYOUT UTILITIES
    ============================ */
 

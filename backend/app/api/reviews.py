@@ -43,10 +43,34 @@ class ReviewOut(BaseModel):
         orm_mode = True
 
 
+from app.api.deps import get_admin_user
+from app.models.models import User
+
 @router.get("", response_model=List[ReviewOut])
-def get_reviews(session: Session = Depends(get_session)):
-    """Public reviews are no longer visible via this endpoint as per security requirements."""
-    return []
+def get_reviews(session: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Fetch the latest 10 reviews for public display."""
+    from sqlalchemy import text
+    try:
+        # Try a direct query since Review model might be out of sync with raw email col
+        res = session.execute(text(
+            "SELECT id, name, email, role, review, rating, created_at FROM review ORDER BY created_at DESC LIMIT 10"
+        ))
+        rows = res.mappings().all()
+        reviews = []
+        for row in rows:
+            ca = row["created_at"]
+            if isinstance(ca, str):
+                try: ca = datetime.fromisoformat(ca.replace("Z", "+00:00"))
+                except: ca = datetime.utcnow()
+            reviews.append(ReviewOut(
+                id=row["id"], name=row["name"], email=row.get("email"),
+                role=row.get("role"), review=row["review"],
+                rating=row["rating"], created_at=ca or datetime.utcnow()
+            ))
+        return reviews
+    except Exception as e:
+        print(f"❌ Error fetching reviews: {e}")
+        return session.exec(select(Review).order_by(Review.created_at.desc()).limit(10)).all()
 
 
 @router.post("", response_model=ReviewOut, status_code=201)

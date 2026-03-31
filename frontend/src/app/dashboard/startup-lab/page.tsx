@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import ReactMarkdown from "react-markdown";
 import { startupApi, StartupIdea as ApiStartupIdea } from "@/lib/api";
 import { TiltCard } from "@/components/ui/TiltCard";

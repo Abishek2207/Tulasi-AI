@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { groupApi, Group, GroupMessage } from "@/lib/api";
 import { encryptMessage, decryptMessage } from "@/lib/crypto";
 import { socketService } from "@/lib/socket";

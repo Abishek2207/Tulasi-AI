@@ -23,7 +23,7 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_seen: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
-    is_pro: bool = False
+    is_pro: bool = True
     stripe_customer_id: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
     chats_today: int = 0
@@ -277,6 +277,7 @@ class Review(SQLModel, table=True):
     role: Optional[str] = None
     review: str
     rating: int = Field(ge=1, le=5)
+    is_featured: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

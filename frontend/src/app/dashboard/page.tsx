@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -255,10 +255,10 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* High Density Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
+      <div className="dashboard-grid">
 
         {/* Real-time Stats Loop */}
-        <motion.div variants={item} style={{ gridColumn: "span 1" }}>
+        <motion.div variants={item} className="stat-card">
           <TiltCard intensity={5} style={{ height: "100%" }}>
             <div className="glass-card" style={{ padding: 28, height: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -286,7 +286,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Global Leaderboard Snapshot */}
-        <motion.div variants={item} style={{ gridColumn: "span 1" }}>
+        <motion.div variants={item} className="stat-card">
           <TiltCard intensity={5} style={{ height: "100%" }}>
             <div className="glass-card" style={{ padding: 28, height: "100%" }}>
               <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 18, display: "flex", alignItems: "center", gap: 8 }}>
@@ -308,14 +308,14 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Global Live Feed */}
-        <motion.div variants={item} style={{ gridColumn: "span 1" }}>
+        <motion.div variants={item} className="stat-card">
           <TiltCard intensity={3} style={{ height: "100%" }}>
             <LiveActivityFeed activities={feed} />
           </TiltCard>
         </motion.div>
 
         {/* Gamified Referral Card */}
-        <motion.div variants={item} style={{ gridColumn: "span 1" }}>
+        <motion.div variants={item} className="stat-card">
           <TiltCard intensity={5} style={{ height: "100%" }}>
             <div className="glass-card" style={{
               padding: 28, height: "100%", display: "flex", flexDirection: "column",
@@ -359,7 +359,7 @@ export default function DashboardPage() {
 
         {/* Module Grid - Main */}
         {MODULES.map((mod) => (
-          <motion.div key={mod.id} variants={item} style={{ gridColumn: `span ${mod.span}` }}>
+          <motion.div key={mod.id} variants={item} className={`module-span-${mod.span}`}>
             <TiltCard intensity={5} style={{ height: "100%" }}>
               <Link href={mod.link} style={{ textDecoration: "none", display: "block", height: "100%" }}>
                 <div className="glass-card" style={{
@@ -403,7 +403,33 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
+      <style>{`
+        .dashboard-grid { 
+          display: grid; 
+          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
+          gap: 24px; 
+        }
+        .stat-card { grid-column: span 1; }
+        .module-span-2 { grid-column: span 2; }
+        .module-span-1 { grid-column: span 1; }
+
+        @media (max-width: 1100px) {
+          .dashboard-grid { 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+          }
+          .module-span-2 { grid-column: span 1; }
+        }
+
+        @media (max-width: 850px) {
+          .dashboard-grid { 
+             grid-template-columns: 1fr; 
+             gap: 16px;
+          }
+          .banner-card { padding: 40px 24px !important; }
+          .hero-buttons { flex-direction: column; gap: 12px; }
+          .module-span-2, .module-span-1 { grid-column: span 1; }
+        }
+      `}</style>
     </motion.div>
   );
 }
-

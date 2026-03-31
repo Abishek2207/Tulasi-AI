@@ -13,8 +13,6 @@ from sqlmodel import Session, select
 from app.core.ai_router import get_ai_response, GOOGLE_API_KEY, FALLBACK_MODELS
 from app.models.models import ChatMessage, User, UserFeedback
 from app.core.database import get_session
-from app.services.vector_service import vector_service
-from app.core.database import get_session
 from app.core.rate_limit import limiter
 from app.core.security import get_current_user
 from datetime import date
@@ -98,10 +96,8 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
         user.chats_today = 0
         user.last_reset_date = today
     
-    daily_limit = 100 + (user.xp // 100) if hasattr(user, "xp") else 100
-    
-    if not user.is_pro and user.chats_today >= daily_limit:
-        return ChatResponse(response=f"🚀 You have reached your daily limit of {daily_limit} free AI chats. Upgrade to Pro for unlimited access.", session_id=session_id, ai_model="tulasi-ai-limit")
+    user.chats_today += 1
+    db.add(user)
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     
@@ -130,6 +126,10 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
     
     db.commit()
 
+    from app.api.activity import log_activity_internal
+    log_activity_internal(user, db, "message_sent", f"Chatting with Tulasi AI", None)
+    db.commit()
+
     return ChatResponse(response=response_text, session_id=session_id, ai_model="tulasi-ai")
 
 
@@ -156,11 +156,9 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
         db.add(user)
         db.commit()
     
-    daily_limit = 100 + (user.xp // 100) if hasattr(user, "xp") else 100
-    
-    if not user.is_pro and user.chats_today >= daily_limit:
-        err_data = json.dumps({"token": f"🚀 You have reached your daily limit of {daily_limit} free AI chats. Upgrade to Pro for unlimited access via the Dashboard.", "session_id": session_id, "done": True, "error": True})
-        return StreamingResponse((f"data: {err_data}\n\n" for _ in range(1)), media_type="text/event-stream")
+    user.chats_today += 1
+    db.add(user)
+    db.commit()
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     
@@ -208,6 +206,18 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
             print(f"❌ [Stream] Fatal error: {e}")
             err_data = json.dumps({"token": "⏳ AI temporarily busy. Please retry.", "session_id": session_id, "done": True, "error": True})
             yield f"data: {err_data}\n\n"
+        
+        # After stream ends, award XP
+        try:
+            from app.api.activity import log_activity_internal
+            # Award 10 XP for regular chat, 50 XP for tools
+            action = "roadmap_generated" if tool != "chat" else "message_sent"
+            title = f"{tool.capitalize()} interaction"
+            log_activity_internal(user, db, action, title, json.dumps({"session_id": session_id}))
+            db.commit()
+            print(f"✅ XP Awarded to user {user.id}")
+        except Exception as e:
+            print(f"⚠️ XP award failed: {e}")
 
     return StreamingResponse(generate(), media_type="text/event-stream", headers={
         "Cache-Control": "no-cache",

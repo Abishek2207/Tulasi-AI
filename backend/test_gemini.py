@@ -1,10 +1,10 @@
 import os
 from dotenv import load_dotenv
 load_dotenv()
-from app.core.ai_router import call_gemini_with_fallback
+from app.core.ai_router import get_ai_response
 import json
 
 try:
-    print(call_gemini_with_fallback([{'role':'user', 'parts':[{'text':'hi'}]}]))
+    print(get_ai_response('hi'))
 except Exception as e:
     print("FAILED:", str(e))

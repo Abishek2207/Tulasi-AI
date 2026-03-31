@@ -124,9 +124,15 @@ export default function CodePracticePage() {
       const res = await codeApi.submit(code, language.id, (activeProblem as any).id, token);
       setVerdictData(res);
       setExecTime(res.execution_time_ms);
-      setConsoleOutput(
-        `Your Output:\n${res.stdout || "(no output)"}\n\nExpected:\n${res.expected || "(N/A)"}`
-      );
+      if (res.status === "accepted") {
+        setConsoleOutput(`🎉 All ${res.total_test_cases || ""} test cases passed!\nExecution time: ${res.execution_time_ms}ms`);
+      } else {
+        const passedInfo = res.total_test_cases ? `Passed ${res.test_cases_passed}/${res.total_test_cases} test cases.\n\n` : "";
+        const inputInfo = res.failed_input ? `--- Failed Input ---\n${res.failed_input}\n\n` : "";
+        setConsoleOutput(
+          `${passedInfo}${inputInfo}--- Expected Output ---\n${res.expected || "(N/A)"}\n\n--- Your Output ---\n${res.stdout || "(no output)"}${res.stderr ? `\n\n--- Error output ---\n${res.stderr}` : ""}`
+        );
+      }
 
       const v = res.status as Verdict;
       setVerdict(v);
@@ -138,11 +144,11 @@ export default function CodePracticePage() {
           fetchProblems();
         }
       } else if (res.status === "wrong_answer") {
-        toast.error("❌ Wrong Answer — check your output logic.");
+        toast.error(`❌ Wrong Answer (Passed ${res.test_cases_passed}/${res.total_test_cases})`);
       } else if (res.status === "compile_error") {
         toast.error("🔴 Compilation Failed — fix syntax errors.");
       } else if (res.status === "timeout") {
-        toast.error("⏱️ Time Limit Exceeded — optimize your algorithm.");
+        toast.error(`⏱️ Time Limit Exceeded (Passed ${res.test_cases_passed}/${res.total_test_cases})`);
       } else {
         toast.error(`⚠️ ${res.verdict}`);
       }
@@ -258,6 +264,11 @@ export default function CodePracticePage() {
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 16 }}>{vc.icon}</span>
                 <span style={{ fontWeight: 800, fontSize: 14, color: vc.color }}>{vc.label}</span>
+                {verdictData?.test_cases_passed !== undefined && (
+                  <span style={{ fontSize: 12, color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "2px 10px", borderRadius: 20, fontWeight: 700 }}>
+                    {verdictData.test_cases_passed}/{verdictData.total_test_cases} test cases
+                  </span>
+                )}
                 {verdictData?.newly_solved && (
                   <span style={{ fontSize: 12, color: "#F59E0B", display: "flex", alignItems: "center", gap: 4 }}>
                     <Zap size={12} /> +{verdictData.xp_earned} XP earned!
@@ -312,9 +323,39 @@ export default function CodePracticePage() {
                   <Terminal size={11} className="text-secondary" />
                   <span style={{ fontSize: 10, fontWeight: 900, color: "#555", letterSpacing: 1 }}>OUTPUT</span>
                 </div>
-                <div style={{ flex: 1, padding: "12px 16px", color: consoleOutput ? "#c8c8c8" : "#555",
-                  fontFamily: "monospace", fontSize: 12.5, overflowY: "auto", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-                  {consoleOutput || "Run your code to see output..."}
+                <div style={{ flex: 1, padding: "12px 16px", overflowY: "auto", lineHeight: 1.6 }}>
+                  {!consoleOutput && <span style={{ color: "#555", fontFamily: "monospace", fontSize: 12.5 }}>Run your code to see output...</span>}
+                  {consoleOutput && verdict === "idle" && (
+                    <pre style={{ color: "#c8c8c8", fontFamily: "monospace", fontSize: 12.5, margin: 0, whiteSpace: "pre-wrap" }}>{consoleOutput}</pre>
+                  )}
+                  {consoleOutput && verdict !== "idle" && verdict !== "running" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {verdictData?.failed_input && (
+                        <div style={{ background: "rgba(108,99,255,0.08)", border: "1px solid rgba(108,99,255,0.2)", borderRadius: 10, padding: "10px 14px" }}>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: "#8B78FA", letterSpacing: 1, marginBottom: 6 }}>FAILED INPUT</div>
+                          <pre style={{ margin: 0, fontFamily: "monospace", fontSize: 12.5, color: "#ccc", whiteSpace: "pre-wrap" }}>{verdictData.failed_input}</pre>
+                        </div>
+                      )}
+                      {verdictData?.expected && (
+                        <div style={{ background: "rgba(16,185,129,0.07)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, padding: "10px 14px" }}>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: "#10B981", letterSpacing: 1, marginBottom: 6 }}>EXPECTED OUTPUT</div>
+                          <pre style={{ margin: 0, fontFamily: "monospace", fontSize: 12.5, color: "#ccc", whiteSpace: "pre-wrap" }}>{verdictData.expected}</pre>
+                        </div>
+                      )}
+                      {verdictData?.stdout !== undefined && (
+                        <div style={{ background: verdict === "accepted" ? "rgba(16,185,129,0.07)" : "rgba(244,63,94,0.07)", border: `1px solid ${verdict === "accepted" ? "rgba(16,185,129,0.2)" : "rgba(244,63,94,0.2)"}`, borderRadius: 10, padding: "10px 14px" }}>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: verdict === "accepted" ? "#10B981" : "#F43F5E", letterSpacing: 1, marginBottom: 6 }}>YOUR OUTPUT</div>
+                          <pre style={{ margin: 0, fontFamily: "monospace", fontSize: 12.5, color: "#ccc", whiteSpace: "pre-wrap" }}>{verdictData.stdout || "(no output)"}</pre>
+                        </div>
+                      )}
+                      {verdictData?.stderr && (
+                        <div style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, padding: "10px 14px" }}>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: "#F59E0B", letterSpacing: 1, marginBottom: 6 }}>STDERR</div>
+                          <pre style={{ margin: 0, fontFamily: "monospace", fontSize: 12, color: "#aaa", whiteSpace: "pre-wrap" }}>{verdictData.stderr}</pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -344,16 +385,24 @@ export default function CodePracticePage() {
                   {(activeProblem as any).description}
                 </div>
 
-                {(activeProblem as any).sample_input && (
+                {/* Test Cases Panel */}
+                {((activeProblem as any).test_cases?.length > 0 || (activeProblem as any).sample_input) && (
                   <div style={{ marginBottom: 20 }}>
                     <h4 style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>
-                      Sample Test Case
+                      Test Cases ({(activeProblem as any).test_cases?.length || 1})
                     </h4>
-                    <div style={{ background: "rgba(0,0,0,0.25)", padding: 14, borderRadius: 12, fontFamily: "monospace", fontSize: 12.5, border: "1px solid rgba(255,255,255,0.05)" }}>
-                      <div style={{ color: "var(--brand-primary)", marginBottom: 4, fontSize: 11, fontWeight: 700 }}>Input:</div>
-                      <div style={{ color: "#ccc", marginBottom: 12 }}>{(activeProblem as any).sample_input}</div>
-                      <div style={{ color: "#43E97B", marginBottom: 4, fontSize: 11, fontWeight: 700 }}>Expected Output:</div>
-                      <div style={{ color: "#ccc" }}>{(activeProblem as any).sample_output}</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {((activeProblem as any).test_cases || [
+                        { input: (activeProblem as any).sample_input, expected: (activeProblem as any).sample_output }
+                      ]).map((tc: { input: string; expected: string }, idx: number) => (
+                        <div key={idx} style={{ background: "rgba(0,0,0,0.25)", padding: 12, borderRadius: 10, fontFamily: "monospace", fontSize: 12, border: "1px solid rgba(255,255,255,0.05)" }}>
+                          <div style={{ color: "#666", marginBottom: 4, fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>CASE {idx + 1}</div>
+                          <div style={{ color: "var(--brand-primary)", marginBottom: 2, fontSize: 10, fontWeight: 700 }}>Input:</div>
+                          <div style={{ color: "#ccc", marginBottom: 8, whiteSpace: "pre-wrap" }}>{tc.input}</div>
+                          <div style={{ color: "#43E97B", marginBottom: 2, fontSize: 10, fontWeight: 700 }}>Expected:</div>
+                          <div style={{ color: "#ccc" }}>{tc.expected}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

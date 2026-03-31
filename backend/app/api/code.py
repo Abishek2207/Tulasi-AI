@@ -16,11 +16,50 @@ router = APIRouter()
 # ============================================================
 PROBLEMS = [
     # ── ARRAYS ──────────────────────────────────────────────
-    {"id": "ARR-001", "category": "Arrays", "difficulty": "Easy", "title": "Two Sum", "description": "Given an array of integers nums and integer target, return indices of two numbers that add up to target.", "hint": "Use a hash map to store each number's index as you iterate.", "solution": "Use HashMap: store num→index as you go. For each num, check if target-num exists in map.", "companies": ["Google", "Amazon", "Microsoft"], "sample_input": "nums = [2,7,11,15], target = 9", "sample_output": "[0,1]"},
-    {"id": "ARR-002", "category": "Arrays", "difficulty": "Easy", "title": "Best Time to Buy and Sell Stock", "description": "Given array prices where prices[i] is price of stock on day i, find max profit from a single buy-sell.", "hint": "Track min price seen so far and compare profit.", "solution": "Track minPrice = Inf, maxProfit = 0. For each price: update minPrice, compute profit = price - minPrice, update maxProfit.", "companies": ["Amazon", "Facebook"], "sample_input": "prices = [7,1,5,3,6,4]", "sample_output": "5"},
-    {"id": "ARR-003", "category": "Arrays", "difficulty": "Easy", "title": "Contains Duplicate", "description": "Given integer array, return true if any value appears at least twice.", "hint": "Use a set to track seen numbers.", "solution": "Add each element to a HashSet. If size doesn't increase, it's a duplicate.", "companies": ["Amazon"], "sample_input": "nums = [1,2,3,1]", "sample_output": "true"},
+    {"id": "ARR-001", "category": "Arrays", "difficulty": "Easy", "title": "Two Sum", 
+     "description": "Given an array of integers nums and integer target, return indices of two numbers that add up to target. Read input from STDIN: 1st line is nums (space-separated), 2nd line is target. Print the two indices space-separated.", 
+     "hint": "Use a hash map to store each number's index as you iterate.", 
+     "solution": "Use HashMap: store num→index as you go. For each num, check if target-num exists in map.", 
+     "companies": ["Google", "Amazon", "Microsoft"], 
+     "sample_input": "2 7 11 15\n9", "sample_output": "0 1",
+     "test_cases": [
+         {"input": "2 7 11 15\n9", "expected": "0 1"},
+         {"input": "3 2 4\n6", "expected": "1 2"},
+         {"input": "3 3\n6", "expected": "0 1"}
+     ]},
+    {"id": "ARR-002", "category": "Arrays", "difficulty": "Easy", "title": "Best Time to Buy and Sell Stock", 
+     "description": "Given array prices where prices[i] is price of stock on day i, find max profit from a single buy-sell. Read input from STDIN: space-separated prices. Print the max profit.", 
+     "hint": "Track min price seen so far and compare profit.", 
+     "solution": "Track minPrice = Inf, maxProfit = 0. For each price: update minPrice, compute profit = price - minPrice, update maxProfit.", 
+     "companies": ["Amazon", "Facebook"], 
+     "sample_input": "7 1 5 3 6 4", "sample_output": "5",
+     "test_cases": [
+         {"input": "7 1 5 3 6 4", "expected": "5"},
+         {"input": "7 6 4 3 1", "expected": "0"},
+         {"input": "2 4 1 5 8", "expected": "7"}
+     ]},
+    {"id": "ARR-003", "category": "Arrays", "difficulty": "Easy", "title": "Contains Duplicate", 
+     "description": "Given integer array, return true if any value appears at least twice. Read from STDIN space-separated integers. Print true or false.", 
+     "hint": "Use a set to track seen numbers.", 
+     "solution": "Add each element to a HashSet. If size doesn't increase, it's a duplicate.", 
+     "companies": ["Amazon"], 
+     "sample_input": "1 2 3 1", "sample_output": "true",
+     "test_cases": [
+         {"input": "1 2 3 1", "expected": "true"},
+         {"input": "1 2 3 4", "expected": "false"},
+         {"input": "1 1 1 3 3 4 3 2 4 2", "expected": "true"}
+     ]},
     {"id": "ARR-004", "category": "Arrays", "difficulty": "Easy", "title": "Product of Array Except Self", "description": "Return array output such that output[i] is equal to product of all elements except nums[i]. No division allowed.", "hint": "Use prefix and suffix product arrays.", "solution": "Two-pass approach: compute prefix products left→right, then suffix products right→left. Multiply prefix[i] * suffix[i].", "companies": ["Amazon", "Microsoft", "Apple"], "sample_input": "nums = [1,2,3,4]", "sample_output": "[24,12,8,6]"},
-    {"id": "ARR-005", "category": "Arrays", "difficulty": "Medium", "title": "Maximum Subarray (Kadane's)", "description": "Find the contiguous subarray with the largest sum.", "hint": "Kadane's algorithm: extend or restart subarray at each step.", "solution": "maxCurrent = maxGlobal = nums[0]. For each num: maxCurrent = max(num, maxCurrent+num). Update maxGlobal.", "companies": ["Amazon", "Google", "Microsoft"], "sample_input": "nums = [-2,1,-3,4,-1,2,1,-5,4]", "sample_output": "6"},
+    {"id": "ARR-005", "category": "Arrays", "difficulty": "Medium", "title": "Maximum Subarray (Kadane's)",
+     "description": "Find the contiguous subarray with the largest sum. Read from STDIN: space-separated integers. Print the maximum subarray sum.",
+     "hint": "Kadane's algorithm: extend or restart subarray at each step.",
+     "solution": "maxCurrent = maxGlobal = nums[0]. For each num: maxCurrent = max(num, maxCurrent+num). Update maxGlobal.",
+     "companies": ["Amazon", "Google", "Microsoft"], "sample_input": "-2 1 -3 4 -1 2 1 -5 4", "sample_output": "6",
+     "test_cases": [
+         {"input": "-2 1 -3 4 -1 2 1 -5 4", "expected": "6"},
+         {"input": "1", "expected": "1"},
+         {"input": "5 4 -1 7 8", "expected": "23"}
+     ]},
     {"id": "ARR-006", "category": "Arrays", "difficulty": "Medium", "title": "3Sum", "description": "Find all unique triplets in array that give sum zero.", "hint": "Sort first, then use two pointers.", "solution": "Sort array. For each i, use lo/hi pointers. Adjust based on sum. Skip duplicates.", "companies": ["Facebook", "Google"], "sample_input": "nums = [-1,0,1,2,-1,-4]", "sample_output": "[[-1,-1,2],[-1,0,1]]"},
     {"id": "ARR-007", "category": "Arrays", "difficulty": "Medium", "title": "Container With Most Water", "description": "Given heights array, find two lines that form container with most water.", "hint": "Two pointers from both ends, always move shorter side.", "solution": "Start lo=0, hi=n-1. area = min(h[lo],h[hi]) * (hi-lo). Move smaller pointer inward.", "companies": ["Amazon", "Google"], "sample_input": "height = [1,8,6,2,5,4,8,3,7]", "sample_output": "49"},
     {"id": "ARR-008", "category": "Arrays", "difficulty": "Medium", "title": "Merge Intervals", "description": "Given array of intervals, merge all overlapping intervals.", "hint": "Sort by start time, then iteratively merge.", "solution": "Sort intervals by start. Iterate: if current start <= prev end, merge. Else add new interval.", "companies": ["Google", "Facebook", "Microsoft"], "sample_input": "intervals = [[1,3],[2,6],[8,10],[15,18]]", "sample_output": "[[1,6],[8,10],[15,18]]"},
@@ -31,9 +70,37 @@ PROBLEMS = [
     {"id": "ARR-013", "category": "Arrays", "difficulty": "Easy", "title": "Move Zeroes", "description": "Move all zeros to end while maintaining order of non-zeros.", "hint": "Use two pointers — slow for next non-zero position.", "solution": "left pointer tracks next non-zero position. Swap nums[left] and nums[i] when nums[i] != 0.", "companies": ["Facebook"]},
 
     # ── STRINGS ─────────────────────────────────────────────
-    {"id": "STR-001", "category": "Strings", "difficulty": "Easy", "title": "Valid Anagram", "description": "Check if two strings are anagrams of each other.", "hint": "Count character frequencies.", "solution": "Sort both strings (O(nlogn)) or count chars with HashMap. Compare counts.", "companies": ["Amazon"]},
-    {"id": "STR-002", "category": "Strings", "difficulty": "Easy", "title": "Valid Palindrome", "description": "Given string, return true if it is palindrome considering only alphanumeric characters.", "hint": "Two pointers from both ends.", "solution": "lo=0, hi=n-1. Skip non-alphanumeric. Compare lower(s[lo]) and lower(s[hi]).", "companies": ["Facebook", "Microsoft"]},
-    {"id": "STR-003", "category": "Strings", "difficulty": "Medium", "title": "Longest Substring Without Repeating Characters", "description": "Find length of longest substring without repeating characters.", "hint": "Sliding window with a HashSet.", "solution": "Window [left..right]. Expand right, if char in set move left until it's not. Track max window.", "companies": ["Amazon", "Google", "Facebook"]},
+    {"id": "STR-001", "category": "Strings", "difficulty": "Easy", "title": "Valid Anagram",
+     "description": "Check if two strings are anagrams. Read from STDIN: two lines, each a word. Print true or false.",
+     "hint": "Count character frequencies.",
+     "solution": "Sort both strings or count chars with HashMap. Compare counts.",
+     "companies": ["Amazon"],
+     "sample_input": "anagram\nnagaram", "sample_output": "true",
+     "test_cases": [
+         {"input": "anagram\nnagaram", "expected": "true"},
+         {"input": "rat\ncar", "expected": "false"},
+         {"input": "listen\nsilent", "expected": "true"}
+     ]},
+    {"id": "STR-002", "category": "Strings", "difficulty": "Easy", "title": "Valid Palindrome",
+     "description": "Given string, return true if it is a palindrome (alphanumeric only, case-insensitive). Read from STDIN: one line. Print true or false.",
+     "hint": "Two pointers from both ends.", "solution": "lo=0, hi=n-1. Skip non-alphanumeric. Compare lower(s[lo]) and lower(s[hi]).",
+     "companies": ["Facebook", "Microsoft"],
+     "sample_input": "A man a plan a canal Panama", "sample_output": "true",
+     "test_cases": [
+         {"input": "A man a plan a canal Panama", "expected": "true"},
+         {"input": "race a car", "expected": "false"},
+         {"input": " ", "expected": "true"}
+     ]},
+    {"id": "STR-003", "category": "Strings", "difficulty": "Medium", "title": "Longest Substring Without Repeating Characters",
+     "description": "Find length of longest substring without repeating characters. Read from STDIN: one string. Print the length.",
+     "hint": "Sliding window with a HashSet.", "solution": "Window [left..right]. Expand right, if char in set move left until it's not. Track max window.",
+     "companies": ["Amazon", "Google", "Facebook"],
+     "sample_input": "abcabcbb", "sample_output": "3",
+     "test_cases": [
+         {"input": "abcabcbb", "expected": "3"},
+         {"input": "bbbbb", "expected": "1"},
+         {"input": "pwwkew", "expected": "3"}
+     ]},
     {"id": "STR-004", "category": "Strings", "difficulty": "Hard", "title": "Minimum Window Substring", "description": "Find minimum window in s which contains all characters of t.", "hint": "Sliding window with character count maps.", "solution": "Count chars in t. Expand right collecting chars; when all found, shrink left while maintaining validity.", "companies": ["Google", "Facebook"]},
     {"id": "STR-005", "category": "Strings", "difficulty": "Medium", "title": "Group Anagrams", "description": "Group anagrams together from a list of strings.", "hint": "Use sorted string as hash key.", "solution": "HashMap: key = sorted(word), value = [words]. Group all words sharing same sorted key.", "companies": ["Amazon", "Facebook"]},
     {"id": "STR-006", "category": "Strings", "difficulty": "Medium", "title": "Encode and Decode Strings", "description": "Design encode/decode for list of strings transmitted over network.", "hint": "Length-prefix encoding: '5#hello'", "solution": "Encode: prefix each string with 'len#'. Decode: read until '#', take next len chars.", "companies": ["Google"]},
@@ -73,8 +140,24 @@ PROBLEMS = [
     {"id": "GR-009", "category": "Graph", "difficulty": "Hard", "title": "Alien Dictionary", "description": "Determine character ordering in alien language from sorted word list.", "hint": "Build graph from adjacent word pairs, topological sort.", "solution": "Compare adjacent words to find char ordering edges. Topological sort to find order.", "companies": ["Facebook", "Google"]},
 
     # ── DYNAMIC PROGRAMMING ──────────────────────────────────
-    {"id": "DP-001", "category": "Dynamic Programming", "difficulty": "Easy", "title": "Climbing Stairs", "description": "You can climb 1 or 2 stairs at a time. How many ways to reach step n?", "hint": "Like Fibonacci. dp[n] = dp[n-1] + dp[n-2].", "solution": "dp[1]=1, dp[2]=2. For i>2: dp[i] = dp[i-1] + dp[i-2]. Return dp[n].", "companies": ["Amazon", "Google"]},
-    {"id": "DP-002", "category": "Dynamic Programming", "difficulty": "Medium", "title": "Coin Change", "description": "Find minimum number of coins that make amount. Infinite supply of each coin.", "hint": "Bottom-up DP: dp[i] = min coins to make amount i.", "solution": "dp[0]=0, dp[i]=INF. For each amt 1..amount: try each coin, dp[i] = min(dp[i], dp[i-coin]+1).", "companies": ["Amazon", "Google", "Facebook"]},
+    {"id": "DP-001", "category": "Dynamic Programming", "difficulty": "Easy", "title": "Climbing Stairs",
+     "description": "You can climb 1 or 2 stairs at a time. How many ways to reach step n? Read from STDIN: one integer n. Print the number of ways.",
+     "hint": "Like Fibonacci. dp[n] = dp[n-1] + dp[n-2].", "solution": "dp[1]=1, dp[2]=2. For i>2: dp[i] = dp[i-1] + dp[i-2]. Return dp[n].",
+     "companies": ["Amazon", "Google"], "sample_input": "3", "sample_output": "3",
+     "test_cases": [
+         {"input": "2", "expected": "2"},
+         {"input": "3", "expected": "3"},
+         {"input": "5", "expected": "8"}
+     ]},
+    {"id": "DP-002", "category": "Dynamic Programming", "difficulty": "Medium", "title": "Coin Change",
+     "description": "Find minimum number of coins that make amount. Infinite supply of each coin. Read from STDIN: 1st line space-separated coin denominations, 2nd line is target amount. Print minimum coins or -1 if impossible.",
+     "hint": "Bottom-up DP: dp[i] = min coins to make amount i.", "solution": "dp[0]=0, dp[i]=INF. For each amt 1..amount: try each coin, dp[i] = min(dp[i], dp[i-coin]+1).",
+     "companies": ["Amazon", "Google", "Facebook"], "sample_input": "1 5 6 9\n11", "sample_output": "2",
+     "test_cases": [
+         {"input": "1 5 6 9\n11", "expected": "2"},
+         {"input": "2\n3", "expected": "-1"},
+         {"input": "1 2 5\n11", "expected": "3"}
+     ]},
     {"id": "DP-003", "category": "Dynamic Programming", "difficulty": "Medium", "title": "Longest Common Subsequence", "description": "Find length of LCS of two strings.", "hint": "2D DP table. dp[i][j] = LCS of s1[0..i] and s2[0..j].", "solution": "If s1[i]==s2[j]: dp[i][j] = dp[i-1][j-1]+1. Else: max(dp[i-1][j], dp[i][j-1]).", "companies": ["Google", "Amazon"]},
     {"id": "DP-004", "category": "Dynamic Programming", "difficulty": "Medium", "title": "Word Break", "description": "Determine if string can be segmented into dictionary words.", "hint": "DP: dp[i] = can substring [0..i] be segmented.", "solution": "dp[0]=True. For each i, check all j<i: if dp[j] and s[j..i] in dict, dp[i]=True.", "companies": ["Amazon", "Google", "Facebook"]},
     {"id": "DP-005", "category": "Dynamic Programming", "difficulty": "Medium", "title": "Unique Paths", "description": "Count unique paths from top-left to bottom-right of m×n grid (only right/down moves).", "hint": "dp[i][j] = dp[i-1][j] + dp[i][j-1].", "solution": "Initialize all row 0 and col 0 as 1. Fill dp[i][j] = dp[i-1][j] + dp[i][j-1].", "companies": ["Google", "Amazon", "Microsoft"]},
@@ -278,136 +361,104 @@ def submit_code(
 ):
     """
     LeetCode-style Submit:
-    1. Runs user code with problem's sample_input as stdin.
-    2. Compares stdout (normalized) against sample_output.
-    3. Returns: Accepted | Wrong Answer | Runtime Error | Compile Error | Time Limit Exceeded.
-    4. Only marks problem as solved on Accepted.
+    1. Iterate over test cases.
+    2. Runs user code with each test case's input as stdin.
+    3. Compares stdout (normalized) against expected output.
+    4. Returns: Accepted | Wrong Answer | Runtime Error | Compile Error | Time Limit Exceeded.
     """
     problem = PROBLEMS_BY_ID.get(req.problem_id)
     if not problem:
         raise HTTPException(404, "Problem not found")
 
-    sample_input  = problem.get("sample_input", "") or ""
-    sample_output = problem.get("sample_output", "") or ""
+    test_cases = problem.get("test_cases")
+    if not test_cases:
+        sample_input  = problem.get("sample_input", "") or ""
+        sample_output = problem.get("sample_output", "") or ""
+        test_cases = [{"input": sample_input, "expected": sample_output}]
 
-    # Run the code using the same execution engine
-    code_req = CodeRequest(code=req.code, language=req.language, stdin=sample_input)
-    run_result = run_code(code_req, current_user)
+    total_tests = len(test_cases)
+    passed_tests = 0
+    total_exec_time = 0
 
-    stdout        = run_result.get("stdout", "") or ""
-    stderr        = run_result.get("stderr", "") or ""
-    exec_status   = run_result.get("status", "error")
-    exec_time_ms  = run_result.get("execution_time_ms", 0)
+    for i, tc in enumerate(test_cases):
+        code_req = CodeRequest(code=req.code, language=req.language, stdin=tc["input"])
+        run_result = run_code(code_req, current_user)
 
-    # ── Determine verdict ───────────────────────────────────────────
-    if exec_status in ("compile_error",):
-        return {
-            "verdict": "Compile Error",
-            "status": "compile_error",
-            "message": "❌ Compilation Failed",
-            "stdout": stdout,
-            "stderr": stderr,
-            "expected": sample_output,
-            "execution_time_ms": exec_time_ms,
-            "newly_solved": False,
-            "xp_earned": 0,
-        }
+        stdout        = run_result.get("stdout", "") or ""
+        stderr        = run_result.get("stderr", "") or ""
+        exec_status   = run_result.get("status", "error")
+        exec_time_ms  = run_result.get("execution_time_ms", 0)
+        
+        total_exec_time += exec_time_ms
 
-    if exec_status in ("timeout",):
-        return {
-            "verdict": "Time Limit Exceeded",
-            "status": "timeout",
-            "message": "⏱️ Time Limit Exceeded",
-            "stdout": stdout,
-            "stderr": stderr,
-            "expected": sample_output,
-            "execution_time_ms": exec_time_ms,
-            "newly_solved": False,
-            "xp_earned": 0,
-        }
+        if exec_status == "compile_error":
+            return {
+                "verdict": "Compile Error", "status": "compile_error",
+                "message": "🔴 Compilation Failed", "stdout": stdout, "stderr": stderr,
+                "expected": tc["expected"], "failed_input": tc["input"],
+                "execution_time_ms": total_exec_time,
+                "test_cases_passed": passed_tests, "total_test_cases": total_tests,
+                "newly_solved": False, "xp_earned": 0
+            }
 
-    if exec_status in ("runtime_error", "error") and stderr:
-        return {
-            "verdict": "Runtime Error",
-            "status": "runtime_error",
-            "message": "⚠️ Runtime Error",
-            "stdout": stdout,
-            "stderr": stderr,
-            "expected": sample_output,
-            "execution_time_ms": exec_time_ms,
-            "newly_solved": False,
-            "xp_earned": 0,
-        }
+        if exec_status == "timeout":
+            return {
+                "verdict": "Time Limit Exceeded", "status": "timeout",
+                "message": "⏱️ Time Limit Exceeded", "stdout": stdout, "stderr": stderr,
+                "expected": tc["expected"], "failed_input": tc["input"],
+                "execution_time_ms": total_exec_time,
+                "test_cases_passed": passed_tests, "total_test_cases": total_tests,
+                "newly_solved": False, "xp_earned": 0
+            }
 
-    # If there's no expected output defined (conceptual/design problems), treat as Accepted if ran OK
-    if not sample_output.strip():
-        newly_solved_info = mark_problem_solved.__wrapped__(req.problem_id, db, current_user) if hasattr(mark_problem_solved, '__wrapped__') else None
-        # Fallback: run the solve logic directly
-        existing = db.exec(
-            select(SolvedProblem).where(
-                SolvedProblem.user_id == current_user.id,
-                SolvedProblem.problem_id == req.problem_id
-            )
-        ).first()
-        newly = False
-        if not existing:
-            db.add(SolvedProblem(user_id=current_user.id, problem_id=req.problem_id))
-            newly = True
-            log_activity_internal(current_user, db, "code_solved", f"Solved: {problem['title']}", req.problem_id)
-            db.commit()
-        return {
-            "verdict": "Accepted",
-            "status": "accepted",
-            "message": "✅ Accepted",
-            "stdout": stdout,
-            "stderr": "",
-            "expected": "(No output validation for this problem type)",
-            "execution_time_ms": exec_time_ms,
-            "newly_solved": newly,
-            "xp_earned": 50 if newly else 0,
-        }
+        if exec_status in ("runtime_error", "error") and stderr:
+            return {
+                "verdict": "Runtime Error", "status": "runtime_error",
+                "message": "⚠️ Runtime Error", "stdout": stdout, "stderr": stderr,
+                "expected": tc["expected"], "failed_input": tc["input"],
+                "execution_time_ms": total_exec_time,
+                "test_cases_passed": passed_tests, "total_test_cases": total_tests,
+                "newly_solved": False, "xp_earned": 0
+            }
 
-    # Compare output
-    actual_norm   = _normalize(stdout)
-    expected_norm = _normalize(sample_output)
+        actual_norm   = _normalize(stdout)
+        expected_norm = _normalize(tc["expected"])
 
-    if actual_norm == expected_norm:
-        # Accepted — mark as solved
-        existing = db.exec(
-            select(SolvedProblem).where(
-                SolvedProblem.user_id == current_user.id,
-                SolvedProblem.problem_id == req.problem_id
-            )
-        ).first()
-        newly = False
-        if not existing:
-            db.add(SolvedProblem(user_id=current_user.id, problem_id=req.problem_id))
-            newly = True
-            log_activity_internal(current_user, db, "code_solved", f"Solved: {problem['title']}", req.problem_id)
-            db.commit()
-        return {
-            "verdict": "Accepted",
-            "status": "accepted",
-            "message": "✅ Accepted",
-            "stdout": stdout,
-            "stderr": "",
-            "expected": sample_output,
-            "execution_time_ms": exec_time_ms,
-            "newly_solved": newly,
-            "xp_earned": 50 if newly else 0,
-        }
-    else:
-        return {
-            "verdict": "Wrong Answer",
-            "status": "wrong_answer",
-            "message": "❌ Wrong Answer",
-            "stdout": stdout,
-            "stderr": stderr,
-            "expected": sample_output,
-            "execution_time_ms": exec_time_ms,
-            "newly_solved": False,
-            "xp_earned": 0,
-        }
+        if not tc["expected"].strip() or actual_norm == expected_norm:
+            passed_tests += 1
+        else:
+            return {
+                "verdict": "Wrong Answer", "status": "wrong_answer",
+                "message": f"❌ Wrong Answer on Test Case {i+1}",
+                "stdout": stdout, "stderr": stderr,
+                "expected": tc["expected"], "failed_input": tc["input"],
+                "execution_time_ms": total_exec_time,
+                "test_cases_passed": passed_tests, "total_test_cases": total_tests,
+                "newly_solved": False, "xp_earned": 0
+            }
+
+    # If all test cases pass:
+    existing = db.exec(
+        select(SolvedProblem).where(
+            SolvedProblem.user_id == current_user.id,
+            SolvedProblem.problem_id == req.problem_id
+        )
+    ).first()
+    newly = False
+    if not existing:
+        db.add(SolvedProblem(user_id=current_user.id, problem_id=req.problem_id))
+        newly = True
+        log_activity_internal(current_user, db, "code_solved", f"Solved: {problem['title']}", req.problem_id)
+        db.commit()
+
+    return {
+        "verdict": "Accepted", "status": "accepted",
+        "message": "✅ Accepted", "stdout": "All test cases passed!", "stderr": "",
+        "expected": "", "failed_input": "",
+        "execution_time_ms": total_exec_time,
+        "test_cases_passed": passed_tests, "total_test_cases": total_tests,
+        "newly_solved": newly, "xp_earned": 50 if newly else 0
+    }
 
 
 @router.get("/resources")

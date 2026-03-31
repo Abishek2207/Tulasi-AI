@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { roadmapApi } from "@/lib/api";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import Link from "next/link";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { 

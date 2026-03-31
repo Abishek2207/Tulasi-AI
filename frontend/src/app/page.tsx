@@ -315,39 +315,31 @@ function StarRating({ rating, interactive = false, onSet }: { rating: number; in
   );
 }
 
-import { useSession } from "next-auth/react";
-
 // ── Reviews Section ──────────────────────────────────────────────
 function ReviewsSection() {
-  const { data: session } = useSession();
-  const [reviews, setReviews] = useState<ReviewItem[]>([
-    { id: -1, name: "Arjun Mehta", role: "Cloud Architect @ Google", review: "Tulasi AI changed the way I think about scalability. The roadmaps are a masterclass in engineering design.", rating: 5, created_at: "" },
-    { id: -2, name: "Sarah Chen", role: "Frontend Lead @ Meta", review: "The mock interview AI is incredibly realistic. It caught nuances in my behavioral answers that even human mocks missed.", rating: 5, created_at: "" },
-    { id: -3, name: "Vikram Singh", role: "Senior Dev @ Microsoft", review: "Finally a platform that treats engineering as a craft. The focus on deep understanding over rote memorization is refreshing.", rating: 5, created_at: "" }
-  ]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", role: "", review: "", rating: 0 });
   const [formError, setFormError] = useState("");
+  const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
-    reviewsApi.getReviews()
-      .then(data => {
-        // If we have dynamic reviews, they come after our static ones
-        if (data && data.length > 0) {
-          setReviews(prev => [...prev, ...data]);
-        }
-      })
-      .catch(() => setReviews([]))
-      .finally(() => setLoading(false));
+    // Optionally fetch logged in user from localStorage if needed
+    const stored = localStorage.getItem("token");
+    if (stored) {
+      try {
+        const payload = JSON.parse(atob(stored.split(".")[1]));
+        if (payload.sub) setUserName(payload.sub);
+      } catch(e) {}
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
     
-    const finalName = session?.user?.name || form.name.trim();
+    const finalName = userName || form.name.trim();
     if (!finalName) return setFormError("Name is required.");
     if (!form.review.trim()) return setFormError("Review is required.");
     if (form.rating === 0) return setFormError("Please select a star rating.");
@@ -387,39 +379,9 @@ function ReviewsSection() {
           </p>
         </motion.div>
 
-        {loading && (
-          <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "48px 0", fontSize: 16 }}>Loading reviews...</div>
-        )}
-
-        {!loading && reviews.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: "center", padding: "64px 24px", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 24, color: "var(--text-muted)", fontSize: 17, marginBottom: 64 }}>
-            No reviews yet. Be the first to share your experience.
-          </motion.div>
-        )}
-
-        {!loading && reviews.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: 24, marginBottom: 64 }}>
-            {reviews.map((r, i) => (
-              <motion.div key={r.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
-                <TiltCard intensity={4}>
-                  <div className="glass-card" style={{ padding: "clamp(24px, 4vw, 40px)", background: "rgba(255,255,255,0.02)", height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
-                    <StarRating rating={r.rating} />
-                    <p style={{ fontSize: "clamp(14px, 1.8vw, 17px)", color: "var(--text-primary)", lineHeight: 1.7, margin: "20px 0 28px", fontWeight: 500, flex: 1 }}>"{r.review}"</p>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #06B6D4, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white", fontSize: 16, flexShrink: 0 }}>
-                        {r.name[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ color: "white", fontWeight: 800, fontSize: 15 }}>{r.name}</div>
-                        {r.role && <div style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{r.role}</div>}
-                      </div>
-                    </div>
-                  </div>
-                </TiltCard>
-              </motion.div>
-            ))}
-          </div>
-        )}
+        <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "16px 0", fontSize: 16 }}>
+          Reviews are actively moderated and reviewed by the administrative team.
+        </div>
 
         {/* Write a Review Form */}
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -439,13 +401,13 @@ function ReviewsSection() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Display Name *</label>
                   <input 
-                    value={session?.user?.name || form.name} 
-                    onChange={e => !session && setForm(f => ({ ...f, name: e.target.value }))}
-                    readOnly={!!session} 
+                    value={userName || form.name} 
+                    onChange={e => !userName && setForm(f => ({ ...f, name: e.target.value }))}
+                    readOnly={!!userName} 
                     placeholder="Your Name"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px 16px", color: session ? "var(--text-muted)" : "white", fontSize: 15, outline: "none", width: "100%", boxSizing: "border-box" }} 
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px 16px", color: userName ? "var(--text-muted)" : "white", fontSize: 15, outline: "none", width: "100%", boxSizing: "border-box" }} 
                   />
-                  {session && <span style={{ fontSize: 10, color: "var(--brand-primary)", fontWeight: 700 }}>Logged in as {session.user.name}</span>}
+                  {userName && <span style={{ fontSize: 10, color: "var(--brand-primary)", fontWeight: 700 }}>Logged in</span>}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Email Address (optional)</label>

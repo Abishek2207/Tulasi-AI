@@ -14,7 +14,7 @@ def get_my_profile(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "name": current_user.name,
         "role": current_user.role,
-        "is_pro": current_user.is_pro,
+        "is_pro": True,
         "xp": current_user.xp,
         "level": current_user.level,
     }
@@ -51,8 +51,8 @@ def get_referral_stats(
     return {
         "invite_code": current_user.invite_code,
         "total_referrals": len(referred_users),
-        "is_pro": current_user.is_pro,
+        "is_pro": True,
         "pro_expiry_date": current_user.pro_expiry_date,
-        "referrals_needed_for_pro": max(0, 10 - len(referred_users))
+        "referrals_needed_for_pro": 0
     }
 
