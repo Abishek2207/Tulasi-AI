@@ -267,15 +267,16 @@ async def general_exception_handler(request: Request, exc: Exception):
     print(f"\u274c CRITICAL ERROR on {request.method} {request.url}:\n{tb}")
     origin = request.headers.get("origin", "*")
     cors_headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
-    debug_mode = True # FORCE ENABLED for remote debugging
+    
+    # Returning full traceback for remote debugging regardless of ENV
     return JSONResponse(
         status_code=500,
         content={
             "success": False,
             "error": "Internal Server Error",
-            "message": str(exc) if debug_mode else "An unexpected error occurred. Please try again later.",
+            "message": str(exc),
             "type": exc.__class__.__name__,
-            **(  {"traceback": tb} if debug_mode else {}  )
+            "traceback": tb
         },
         headers=cors_headers
     )
