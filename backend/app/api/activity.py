@@ -51,23 +51,37 @@ class LogActivityRequest(BaseModel):
 
 def _update_streak(user: User, db: Session):
     """Increment streak if first activity of today; reset if gap > 1 day."""
-    today = date.today().isoformat()
+    from datetime import date, timedelta
+    today_dt = date.today()
+    today_str = today_dt.isoformat()
     last = user.last_activity_date
 
-    if last == today:
-        return  # already active today
+    # Early exit if already active today
+    if last == today_str:
+        return
 
-    yesterday = (date.fromisoformat(last) if last else None)
-    from datetime import timedelta
-    try:
-        if last and (date.today() - date.fromisoformat(last)).days == 1:
+    # Normalize last activity to a date object
+    last_date = None
+    if last:
+        if hasattr(last, "isoformat"): # It's a date or datetime object
+            last_date = last if isinstance(last, date) else last.date()
+        else: # Likely a string
+            try:
+                last_date = date.fromisoformat(str(last))
+            except (ValueError, TypeError):
+                last_date = None
+
+    if not last_date:
+        user.streak = 1
+    else:
+        diff = (today_dt - last_date).days
+        if diff == 1:
             user.streak = (user.streak or 0) + 1
-        elif not last or (date.today() - date.fromisoformat(last)).days > 1:
-            user.streak = 1  # reset or start
-    except ValueError:
-        user.streak = 1 # reset streak if date parsing fails
+        elif diff > 1:
+            user.streak = 1
+        # if diff == 0, we already returned above
 
-    user.last_activity_date = today
+    user.last_activity_date = today_str
     db.add(user)
 
 

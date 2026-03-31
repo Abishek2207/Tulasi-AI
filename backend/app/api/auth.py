@@ -112,24 +112,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_session
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # ── Update streak on login ────────────────────────────────────────
-    today = date.today().isoformat()
-    last = user.last_activity_date
-    if last != today:
-        try:
-            from datetime import date as _date
-            if last and (_date.today() - _date.fromisoformat(last)).days == 1:
-                user.streak = (user.streak or 0) + 1
-            elif not last or (_date.today() - _date.fromisoformat(last)).days > 1:
-                user.streak = 1
-        except ValueError:
-            user.streak = 1  # Reset if date format invalid
-        # Update longest streak
-        user.longest_streak = max(user.longest_streak or 0, user.streak)
-        user.last_activity_date = today
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+    # Streak and last activity are now handled centrally by log_activity_internal below.
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
     if user.email == settings.ADMIN_EMAIL and user.role != "admin":
@@ -262,24 +245,7 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
         db.commit()
         db.refresh(user)
 
-    # ── Update streak on oauth login ──────────────────────────────────
-    today = date.today().isoformat()
-    last = user.last_activity_date
-    if last != today:
-        try:
-            from datetime import date as _date
-            if last and (_date.today() - _date.fromisoformat(last)).days == 1:
-                user.streak = (user.streak or 0) + 1
-            elif not last or (_date.today() - _date.fromisoformat(last)).days > 1:
-                user.streak = 1
-        except ValueError:
-            user.streak = 1  # Reset streak if invalid
-            
-        user.longest_streak = max(user.longest_streak or 0, user.streak)
-        user.last_activity_date = today
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+    # Streak and last activity are now handled centrally by log_activity_internal below.
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
     if user.email == settings.ADMIN_EMAIL and user.role != "admin":
