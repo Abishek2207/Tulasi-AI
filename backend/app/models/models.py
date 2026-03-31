@@ -63,11 +63,11 @@ class Hackathon(SQLModel, table=True):
     tags: str = ""
     image_url: str = ""
     participants_count: int = 0
-    status: str = "Open"  # Open, Upcoming, Ongoing, Closed
+    status: str = "Active"
     is_active: bool = True
     
     # [NEW] Discovery Metadata
-    mode: str = Field(default="Online", sa_column=Column("mode", String, quote=True))
+    event_mode: str = Field(default="Online", sa_column=Column("event_mode", String), alias="mode")
     difficulty: str = "Beginner"  # Beginner, Intermediate, Advanced
     team_size: str = "1-4 builders"
     start_date: Optional[str] = None  # ISO Date
@@ -258,8 +258,12 @@ class HackathonApplication(SQLModel, table=True):
 class SavedResume(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    is_deleted: bool = False
+    resume_mode: str = Field(default="ATS-Optimized", sa_column=Column("resume_mode", String), alias="mode")
+    
+    user: Optional["User"] = Relationship(back_populates="resumes")
     document_type: str = "Resume"  # Resume or Cover Letter
-    mode: str = Field(default="ATS-Optimized", sa_column=Column("mode", String, quote=True))
     original_resume: str
     job_description: str
     improved_resume: str
