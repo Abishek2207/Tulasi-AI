@@ -82,12 +82,29 @@ async def lifespan(app: FastAPI):
                     conn.execute(text('ALTER TABLE groupmessage ADD COLUMN is_encrypted BOOLEAN DEFAULT 0;'))
                 except: pass
 
-                # Step 5: Hackathon Schema Expansion (Discovery Platform) — NON-BLOCKING CHECK
+                # Step 4: Handle reserved keywords rename ('mode')
+                try:
+                    # Rename existing 'mode' column to 'event_mode' in hackathon
+                    inspector = inspect(engine)
+                    hackathon_cols = [c["name"] for c in inspector.get_columns("hackathon")]
+                    if "mode" in hackathon_cols and "event_mode" not in hackathon_cols:
+                        conn.execute(text('ALTER TABLE hackathon RENAME COLUMN "mode" TO event_mode;'))
+                        print("[Migration] Renamed 'mode' to 'event_mode' in hackathon.")
+                    
+                    # Also handle SavedResume if it exists
+                    if "savedresume" in inspector.get_table_names():
+                        sr_cols = [c["name"] for c in inspector.get_columns("savedresume")]
+                        if "mode" in sr_cols and "resume_mode" not in sr_cols:
+                            conn.execute(text('ALTER TABLE savedresume RENAME COLUMN "mode" TO resume_mode;'))
+                            print("[Migration] Renamed 'mode' to 'resume_mode' in savedresume.")
+                except Exception as e:
+                    print(f"[Migration Warning] Rename 'mode': {e}")
+
+                # Step 5: Ensure new columns exist (Quoted for safety)
                 try:
                     inspector = inspect(engine)
                     existing_cols = [c["name"] for c in inspector.get_columns("hackathon")]
-
-                    for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
+                    for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "event_mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
                         if col not in existing_cols:
                             try:
                                 conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN "{col}" VARCHAR;'))
@@ -179,7 +196,7 @@ async def lifespan(app: FastAPI):
                             ]
                             for h in hacks:
                                 conn.execute(text("""
-                                    INSERT INTO hackathon (title, organizer, description, prize_pool, deadline, registration_link, tags, image_url, "mode", difficulty, team_size, start_date, end_date, domains, currency, participants_count, status) 
+                                    INSERT INTO hackathon (title, organizer, description, prize_pool, deadline, registration_link, tags, image_url, event_mode, difficulty, team_size, start_date, end_date, domains, currency, participants_count, status) 
                                     VALUES (:t, :o, :d, :p, :dl, :rl, :tg, :iu, :m, :diff, :ts, :sd, :ed, :dom, :cur, 0, 'Active')
                                 """), h)
                             print("[Migration] 🌱 Seeded initial high-tech hackathons.")
