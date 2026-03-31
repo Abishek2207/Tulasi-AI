@@ -12,7 +12,8 @@ import uvicorn
 import time
 
 from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf
-from app.core.database import init_db
+from app.core.database import init_db, engine
+from sqlalchemy import inspect
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
 from fastapi.responses import RedirectResponse
@@ -87,29 +88,30 @@ async def lifespan(app: FastAPI):
                 except: pass
 
                 # Step 5: Hackathon Schema Expansion (Discovery Platform) — NON-BLOCKING CHECK
-                cursor = conn.connection.cursor()
-                cursor.execute("PRAGMA table_info(hackathon);")
-                existing_cols = [c[1] for c in cursor.fetchall()]
+                try:
+                    inspector = inspect(engine)
+                    existing_cols = [c["name"] for c in inspector.get_columns("hackathon")]
 
-                for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
-                    if col not in existing_cols:
-                        try:
-                            conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN {col} VARCHAR;'))
-                        except Exception as e:
-                            print(f"[Migration Warning] Add {col}: {e}")
+                    for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
+                        if col not in existing_cols:
+                            try:
+                                conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN {col} VARCHAR;'))
+                            except Exception as e:
+                                print(f"[Migration Warning] Add {col}: {e}")
 
-                # Step 6: User Table — UNLOCK PLATINUM PRO & SYNC CHATS
-                cursor.execute("PRAGMA table_info(\"user\");")
-                existing_user_cols = [c[1] for c in cursor.fetchall()]
+                    # Step 6: User Table — UNLOCK PLATINUM PRO & SYNC CHATS
+                    existing_user_cols = [c["name"] for c in inspector.get_columns("user")]
 
-                for col in ["is_pro", "chats_today", "last_reset_date", "pro_expiry_date"]:
-                    if col not in existing_user_cols:
-                        try:
-                            default = "1" if col == "is_pro" else "0" if col == "chats_today" else "NULL"
-                            col_type = "BOOLEAN" if col=="is_pro" else "INTEGER" if col=="chats_today" else "VARCHAR"
-                            conn.execute(text(f'ALTER TABLE "user" ADD COLUMN {col} {col_type} DEFAULT {default};'))
-                        except Exception as e:
-                            print(f"[Migration Warning] Add {col}: {e}")
+                    for col in ["is_pro", "chats_today", "last_reset_date", "pro_expiry_date"]:
+                        if col not in existing_user_cols:
+                            try:
+                                default = "1" if col == "is_pro" else "0" if col == "chats_today" else "NULL"
+                                col_types = "BOOLEAN" if col=="is_pro" else "INTEGER" if col=="chats_today" else "VARCHAR"
+                                conn.execute(text(f'ALTER TABLE "user" ADD COLUMN {col} {col_types} DEFAULT {default};'))
+                            except Exception as e:
+                                print(f"[Migration Warning] Add user col {col}: {e}")
+                except Exception as e:
+                    print(f"[Migration Warning] Schema inspection failed: {e}")
                 
                 # GLOBAL UNLOCK: Force all existing users to PRO (Targeted and Safe)
                 try:
