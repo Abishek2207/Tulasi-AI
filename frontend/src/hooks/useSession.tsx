@@ -75,13 +75,17 @@ export function useSession() {
       }
     }
 
-    async function exchangeSupabaseForJWT(supabaseToken: string, email: string) {
+    async function exchangeSupabaseForJWT(supabaseToken: string, email: string, fullName?: string) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10_000); // 10s max
       try {
         const res = await fetch(`${API_URL}/api/auth/google-oauth`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, name: email.split("@")[0], provider: "google" }),
+          body: JSON.stringify({ email, name: fullName || email.split("@")[0], provider: "google" }),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (res.ok) {
           const result = await res.json();
           if (result.access_token) {
@@ -90,11 +94,19 @@ export function useSession() {
             console.log("[Auth] FastAPI JWT obtained for:", email, "role:", result.user?.role);
             return { ...result.user, accessToken: result.access_token };
           }
+        } else {
+          console.warn("[Auth] Backend returned", res.status, "for google-oauth \u2014 using Supabase fallback.");
         }
-      } catch (err) {
-        console.error("[Auth] Failed to exchange Supabase token for FastAPI JWT:", err);
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        if (err.name === "AbortError") {
+          console.warn("[Auth] Backend took >10s to respond, using Supabase session fallback.");
+        } else {
+          console.error("[Auth] Failed to exchange Supabase token for FastAPI JWT:", err);
+        }
       }
-      return { id: email, email, name: email.split("@")[0], role: "student", is_pro: false, xp: 0, level: 1, streak: 0, accessToken: supabaseToken };
+      // Graceful fallback: user is valid via Supabase, just no FastAPI JWT yet
+      return { id: email, email, name: fullName || email.split("@")[0], role: "student", is_pro: true, xp: 0, level: 1, streak: 0, accessToken: supabaseToken };
     }
 
     async function init() {

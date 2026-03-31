@@ -74,11 +74,8 @@ function resolveToken(): string | undefined {
   if (isBrowser) {
     const stored = localStorage.getItem("token");
     if (stored) return stored;
-    
-    const path = window.location.pathname;
-    if (!path.startsWith("/auth") && path !== "/") {
-      window.location.href = "/auth";
-    }
+    // Don't redirect here — the dashboard layout handles auth guards.
+    // Redirecting from API helper causes loops during the session loading phase.
   }
   return undefined;
 }
@@ -106,29 +103,29 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 5, ba
     // If we get a 500, 502, 503, or 504, the backend might be starting or crashing.
     if (res.status >= 500 && retries > 0) {
       console.warn(`[TulasiAPI] Server error ${res.status}. Retrying in ${backoff}ms... (${retries} retries left)`);
-      if (isBrowser && retries === 4) { // Delay toast slightly to see if it's transient
-          toast.loading("Tulasi AI is optimizing its engines (Cloud cold start)...", { 
+      // Only show toast after 3 failures (retries=2) — genuine cold start, not a transient blip
+      if (isBrowser && retries === 2) {
+          toast.loading("Backend warming up — hang tight...", { 
               id: "retry-toast",
               duration: Infinity,
-              style: { backgroundColor: "#0F172A", color: "#A78BFA", border: "1px solid #1E293B", borderRadius: "12px", fontSize: "14px", fontWeight: "600" }
+              style: { backgroundColor: "#0F172A", color: "#94A3B8", border: "1px solid #1E293B", borderRadius: "12px", fontSize: "13px", fontWeight: "500" }
           });
       }
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
 
-    if (isBrowser && retries < 5) {
-        toast.success("Neural Circuits Optimized", { id: "retry-toast", duration: 2000 });
-    } else if (isBrowser) {
-        toast.dismiss("retry-toast");
-    }
+    // Silently dismiss the loading toast on recovery
+    if (isBrowser) toast.dismiss("retry-toast");
     return res;
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (retries > 0 && err.name !== "AbortError") {
       console.warn(`[TulasiAPI] Network error. Retrying in ${backoff}ms... (${retries} retries left)`, err);
-      if (isBrowser && retries === 4) {
-          toast.loading("Tulasi AI is waking up...", { id: "retry-toast" });
+      if (isBrowser && retries === 2) {
+          toast.loading("Connecting to backend...", { id: "retry-toast",
+            style: { backgroundColor: "#0F172A", color: "#94A3B8", border: "1px solid #1E293B", borderRadius: "12px", fontSize: "13px" }
+          });
       }
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
