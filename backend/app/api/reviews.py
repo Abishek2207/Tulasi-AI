@@ -47,13 +47,13 @@ from app.api.deps import get_admin_user
 from app.models.models import User
 
 @router.get("", response_model=List[ReviewOut])
-def get_reviews(session: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
-    """Fetch the latest 10 reviews for public display."""
+def get_reviews(session: Session = Depends(get_session)):
+    """Fetch the latest 10 reviews for public display (Email intentionally hidden)."""
     from sqlalchemy import text
     try:
         # Try a direct query since Review model might be out of sync with raw email col
         res = session.execute(text(
-            "SELECT id, name, email, role, review, rating, created_at FROM review ORDER BY created_at DESC LIMIT 10"
+            "SELECT id, name, role, review, rating, created_at FROM review ORDER BY created_at DESC LIMIT 10"
         ))
         rows = res.mappings().all()
         reviews = []
@@ -63,7 +63,7 @@ def get_reviews(session: Session = Depends(get_session), admin: User = Depends(g
                 try: ca = datetime.fromisoformat(ca.replace("Z", "+00:00"))
                 except: ca = datetime.utcnow()
             reviews.append(ReviewOut(
-                id=row["id"], name=row["name"], email=row.get("email"),
+                id=row["id"], name=row["name"], email=None,
                 role=row.get("role"), review=row["review"],
                 rating=row["rating"], created_at=ca or datetime.utcnow()
             ))

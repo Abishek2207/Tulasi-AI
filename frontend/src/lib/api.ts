@@ -98,7 +98,11 @@ async function request<T>(
     try {
       // We use Bearer token headers for auth — cookies are not needed.
       // Using 'omit' removes the CORS preflight restriction entirely.
+      console.log(`[API Request] → ${options.method || "GET"} ${fullUrl}`);
+      const t0 = performance.now();
       const res = await fetchWithRetry(fullUrl, { credentials: "omit", ...options, headers, mode: "cors" });
+      const t1 = performance.now();
+      console.log(`[API Response] ← ${res.status} ${fullUrl} (${Math.round(t1 - t0)}ms)`);
       log(`← ${res.status} ${fullUrl}`);
 
     if (!res.ok) {
