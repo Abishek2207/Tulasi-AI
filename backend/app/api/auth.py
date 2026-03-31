@@ -33,7 +33,9 @@ class LoginRequest(BaseModel):
 @limiter.limit("5/minute")
 def register(request: Request, req: RegisterRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
     print("Incoming password length:", len(req.password))
-    existing = db.exec(select(User).where(User.email == req.email)).first()
+    query = select(User).where(User.email == req.email)
+    result = db.exec(query)
+    existing = result.first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -48,7 +50,9 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
     
     # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
     if req.invite_code:
-        referer = db.exec(select(User).where(User.invite_code == req.invite_code)).first()
+        query = select(User).where(User.invite_code == req.invite_code)
+        result = db.exec(query)
+        referer = result.first()
         if referer:
             referer.xp = (referer.xp or 0) + 500
             user.xp = 500
@@ -102,7 +106,9 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
 @router.post("/login")
 @limiter.limit("10/minute")
 def login(request: Request, req: LoginRequest, db: Session = Depends(get_session)):
-    user = db.exec(select(User).where(User.email == req.email)).first()
+    query = select(User).where(User.email == req.email)
+    result = db.exec(query)
+    user = result.first()
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
@@ -216,7 +222,9 @@ class OAuthLoginRequest(BaseModel):
 @router.post("/google-oauth")
 def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
     """Auto-register or login OAuth users (Google/GitHub) and return a JWT token."""
-    user = db.exec(select(User).where(User.email == req.email)).first()
+    query = select(User).where(User.email == req.email)
+    result = db.exec(query)
+    user = result.first()
 
     if not user:
         # Auto-register the oauth user
@@ -232,7 +240,9 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
 
         # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
         if req.invite_code:
-            referer = db.exec(select(User).where(User.invite_code == req.invite_code)).first()
+            query = select(User).where(User.invite_code == req.invite_code)
+            result = db.exec(query)
+            referer = result.first()
             if referer:
                 referer.xp = (referer.xp or 0) + 500
                 user.xp = 500

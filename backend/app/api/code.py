@@ -288,12 +288,12 @@ def get_problem(
     if not problem:
         raise HTTPException(404, "Problem not found")
 
-    solved = db.exec(
-        select(SolvedProblem).where(
-            SolvedProblem.user_id == current_user.id,
-            SolvedProblem.problem_id == problem_id
-        )
-    ).first()
+    query = select(SolvedProblem).where(
+        SolvedProblem.user_id == current_user.id,
+        SolvedProblem.problem_id == problem_id
+    )
+    result = db.exec(query)
+    solved = result.first()
 
     return {**problem, "solved": solved is not None}
 
@@ -309,12 +309,12 @@ def mark_problem_solved(
     if not problem:
         raise HTTPException(404, "Problem not found")
 
-    existing = db.exec(
-        select(SolvedProblem).where(
-            SolvedProblem.user_id == current_user.id,
-            SolvedProblem.problem_id == problem_id
-        )
-    ).first()
+    query = select(SolvedProblem).where(
+        SolvedProblem.user_id == current_user.id,
+        SolvedProblem.problem_id == problem_id
+    )
+    result = db.exec(query)
+    existing = result.first()
 
     newly_solved = False
     if not existing:
@@ -438,12 +438,12 @@ def submit_code(
             }
 
     # If all test cases pass:
-    existing = db.exec(
-        select(SolvedProblem).where(
-            SolvedProblem.user_id == current_user.id,
-            SolvedProblem.problem_id == req.problem_id
-        )
-    ).first()
+    query = select(SolvedProblem).where(
+        SolvedProblem.user_id == current_user.id,
+        SolvedProblem.problem_id == req.problem_id
+    )
+    result = db.exec(query)
+    existing = result.first()
     newly = False
     if not existing:
         db.add(SolvedProblem(user_id=current_user.id, problem_id=req.problem_id))

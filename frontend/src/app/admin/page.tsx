@@ -5,56 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { TulasiLogo } from "@/components/TulasiLogo";
-import { supabase } from "@/lib/supabase";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
+import toast from "react-hot-toast";
+import { 
+  adminApi, Stats, AdminUser, Review, Activity, LeaderboardEntry, 
+  CodeAnalytics, ChatAnalytics, Analytics, Hackathon
+} from "@/lib/api";
 
-// ─── Types ─────────────────────────────────────────────────────────
-interface Stats {
-  total_users: number; active_24h: number; active_today: number;
-  total_reviews: number; total_submissions: number;
-  total_hackathon_participants: number; total_chat_messages: number;
-  pro_users: number;
-}
-interface AdminUser {
-  id: number; name: string; email: string; role: string; xp: number;
-  level: number; streak: number; is_pro: boolean; created_at: string;
-  last_seen: string; last_activity_date: string; is_active: boolean;
-}
-interface Review {
-  id: number; name: string; role: string; review: string; rating: number;
-  created_at: string; user_email: string; is_featured: boolean;
-}
-interface Activity {
-  id: number; user_name: string; user_email: string; action_type: string;
-  title: string; metadata: string; xp: number; created_at: string;
-}
-interface LeaderboardEntry {
-  rank: number; id: number; name: string; email: string; xp: number;
-  level: number; streak: number; is_pro: boolean; is_top10: boolean;
-}
-interface CodeAnalytics {
-  total_submissions: number; accepted_count: number; wrong_answer_count: number;
-  acceptance_rate: number; top_solvers: { name: string; email: string; solved_count: number; xp: number }[];
-  unique_solvers: number; total_problems_available: number;
-}
-interface ChatAnalytics {
-  total_messages: number; user_messages: number; ai_messages: number;
-  active_users_7d: number; active_users_24h: number;
-  last_conversations: { title: string; user_name: string; user_email: string; last_message: string; created_at: string }[];
-}
-interface Hackathon {
-  id: number; name: string; organizer: string; status: string;
-  deadline: string; prize: string; link: string; participants_count: number;
-}
-interface Analytics {
-  growth: { date: string; signups: number; actions: number }[];
-  segmentation: { name: string; value: number; color: string }[];
-}
 
 type Tab = "overview" | "users" | "reviews" | "activity" | "leaderboard" | "code" | "chat" | "hackathons";
+
+
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
 const fmt = (d?: string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
@@ -109,82 +73,71 @@ export default function AdminPage() {
     [token]);
 
   const load = useCallback(async () => {
-    // Note: We bypass token checks for admin pages now that Supabase is truth source.
     try {
-      // 1. Fetch raw data from Supabase directly per STEP 8
-      const [{ data: sbUsers }, { data: sbReviews }] = await Promise.all([
-        supabase.from('users').select('*'),
-        supabase.from('reviews').select('*')
+      // 1. Load data using the unified adminApi
+      const [u, r, s, a, lb, ca, cha, hk, an] = await Promise.allSettled([
+        adminApi.users(),
+        adminApi.reviews(),
+        adminApi.stats(),
+        adminApi.activity(),
+        adminApi.leaderboard(),
+        adminApi.code(),
+        adminApi.chat(),
+        adminApi.hackathons(),
+        adminApi.analytics(),
       ]);
 
-      if (sbUsers) {
-        console.log("[Supabase] Fetched robust users:", sbUsers.length);
-        // Map Supabase schema back to frontend expected structure
-        setUsers(sbUsers.map((u: any) => ({
-          ...u,
-          id: u.id || Math.random(),
-          xp: u.xp || 0,
-          level: u.level || 1,
-          is_pro: u.is_pro || false,
-          is_active: true,
-          streak: u.streak || 0,
-        })));
-      }
-
-      if (sbReviews) {
-        console.log("[Supabase] Fetched real reviews:", sbReviews.length);
-        setReviews(sbReviews.map((r: any) => ({
-          ...r,
-          id: r.id || Math.random(),
-          user_email: r.email,
-        })));
-      }
-
-      // 2. Safely load complex telemetry stats from the Python backend
-      if (token) {
-        const [s, a, lb, ca, cha, hk, an] = await Promise.allSettled([
-          h(`${API}/api/admin/stats`),
-          h(`${API}/api/admin/activity`),
-          h(`${API}/api/admin/leaderboard`),
-          h(`${API}/api/admin/code-analytics`),
-          h(`${API}/api/admin/chat-analytics`),
-          h(`${API}/api/admin/hackathons`),
-          h(`${API}/api/admin/analytics`),
-        ]);
-        if (s.status === "fulfilled" && !s.value.error) setStats(s.value);
-        if (a.status === "fulfilled" && a.value.activity) setActivity(a.value.activity);
-        if (lb.status === "fulfilled" && lb.value.leaderboard) setLeaderboard(lb.value.leaderboard);
-        if (ca.status === "fulfilled") setCodeAnalytics(ca.value);
-        if (cha.status === "fulfilled") setChatAnalytics(cha.value);
-        if (hk.status === "fulfilled" && hk.value.hackathons) setHackathons(hk.value.hackathons);
-        if (an.status === "fulfilled" && !an.value.error) setAnalytics(an.value);
-      }
-    } catch (e) { console.error("Admin Load Error", e); }
-    finally { setLoading(false); }
-  }, [token, h]);
+      if (u.status === "fulfilled") setUsers(u.value.users);
+      if (r.status === "fulfilled") setReviews(r.value.reviews);
+      if (s.status === "fulfilled") setStats(s.value);
+      if (a.status === "fulfilled") setActivity(a.value.activity);
+      if (lb.status === "fulfilled") setLeaderboard(lb.value.leaderboard);
+      if (ca.status === "fulfilled") setCodeAnalytics(ca.value);
+      if (cha.status === "fulfilled") setChatAnalytics(cha.value);
+      if (hk.status === "fulfilled") setHackathons(hk.value.hackathons);
+      if (an.status === "fulfilled") setAnalytics(an.value);
+    } catch (e) {
+      console.error("[Admin] Data load failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { const t = setInterval(load, 30000); return () => clearInterval(t); }, [load]);
 
   const toggleUser = async (id: number, active: boolean) => {
-    await fetch(`${API}/api/admin/toggle-user`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials: "include", mode: "cors", body: JSON.stringify({ user_id: id, is_active: !active }) });
-    setUsers(u => u.map(x => x.id === id ? { ...x, is_active: !active } : x));
+    try {
+      await adminApi.toggleUser(id, !active);
+      setUsers(u => u.map(x => x.id === id ? { ...x, is_active: !active } : x));
+    } catch (err) { toast.error("Failed to toggle user status."); }
   };
   const deleteReview = async (id: number) => {
     if (!confirm("Delete this review?")) return;
-    await fetch(`${API}/api/admin/reviews/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` }, credentials: "include", mode: "cors" });
-    setReviews(r => r.filter(x => x.id !== id));
+    try {
+      await adminApi.deleteReview(id);
+      setReviews(r => r.filter(x => x.id !== id));
+    } catch (err) { toast.error("Failed to delete review."); }
   };
   const featureReview = async (id: number) => {
-    const res = await fetch(`${API}/api/admin/reviews/${id}/feature`, { method: "PATCH", headers: { Authorization: `Bearer ${token}` }, credentials: "include", mode: "cors" });
-    const data = await res.json();
-    setReviews(r => r.map(x => x.id === id ? { ...x, is_featured: data.is_featured } : x));
+    try {
+      const data = await adminApi.featureReview(id);
+      setReviews(r => r.map(x => x.id === id ? { ...x, is_featured: data.is_featured } : x));
+    } catch (err) { toast.error("Failed to update review."); }
   };
   const seedHackathons = async () => {
     setSeeding(true); setSeedMsg("");
     try {
-      const res = await fetch(`${API}/api/admin/seed-hackathons`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, credentials: "include", mode: "cors" });
-      const data = await res.json();
+      const data = await adminApi.seedHackathons();
+      setSeedMsg(data.message || "Done!");
+      await load();
+    } catch { setSeedMsg("Seed failed."); }
+    finally { setSeeding(false); }
+  };
+  const seedReviews = async () => {
+    setSeeding(true); setSeedMsg("");
+    try {
+      const data = await adminApi.seedReviews();
       setSeedMsg(data.message || "Done!");
       await load();
     } catch { setSeedMsg("Seed failed."); }
@@ -192,15 +145,35 @@ export default function AdminPage() {
   };
   const deleteHackathon = async (id: number) => {
     if (!confirm("Delete hackathon?")) return;
-    await fetch(`${API}/api/admin/hackathons/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` }, credentials: "include", mode: "cors" });
-    setHackathons(h => h.filter(x => x.id !== id));
+    try {
+      await adminApi.deleteHackathon(id);
+      setHackathons(h => h.filter(x => x.id !== id));
+    } catch { toast.error("Failed to delete hackathon."); }
   };
 
   if (status === "loading" || loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "var(--bg-primary)", gap: 16 }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-        style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid rgba(124,58,237,0.2)", borderTopColor: "#7C3AED" }} />
-      <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-outfit)", fontSize: 16 }}>Loading dashboard…</span>
+    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-primary)" }}>
+      {/* Sidebar Skeleton */}
+      <div style={{ width: 220, background: "rgba(0,0,0,0.3)", borderRight: "1px solid var(--border)", padding: "28px 0" }}>
+        <div style={{ padding: "0 20px 28px", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
+          <div className="skeleton" style={{ width: 100, height: 30, borderRadius: 8 }} />
+        </div>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} style={{ padding: "12px 20px" }}>
+            <div className="skeleton" style={{ width: "80%", height: 16, borderRadius: 4 }} />
+          </div>
+        ))}
+      </div>
+      {/* Main Content Skeleton */}
+      <div style={{ flex: 1, padding: 40 }}>
+        <div className="skeleton" style={{ width: 200, height: 32, borderRadius: 8, marginBottom: 40 }} />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24, marginBottom: 40 }}>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="glass-card skeleton" style={{ height: 120, borderRadius: 16 }} />
+          ))}
+        </div>
+        <div className="glass-card skeleton" style={{ height: 400, borderRadius: 16 }} />
+      </div>
     </div>
   );
 
@@ -685,6 +658,10 @@ export default function AdminPage() {
               </div>
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 {seedMsg && <span style={{ fontSize: 12, color: "#10B981", fontWeight: 600 }}>{seedMsg}</span>}
+                <button onClick={seedReviews} disabled={seeding}
+                  style={{ padding: "9px 18px", borderRadius: 10, border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.08)", color: "#A78BFA", fontSize: 12, cursor: seeding ? "not-allowed" : "pointer", fontWeight: 700 }}>
+                  {seeding ? "⏳ Seeding…" : "⭐ Seed 7 Reviews"}
+                </button>
                 <button onClick={seedHackathons} disabled={seeding}
                   style={{ padding: "9px 18px", borderRadius: 10, border: "1px solid rgba(16,185,129,0.3)", background: "rgba(16,185,129,0.08)", color: "#10B981", fontSize: 12, cursor: seeding ? "not-allowed" : "pointer", fontWeight: 700 }}>
                   {seeding ? "⏳ Seeding…" : "🌱 Seed 20 Hackathons"}

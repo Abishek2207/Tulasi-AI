@@ -7,9 +7,60 @@ const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV === "development";
 import toast from "react-hot-toast";
 
+// ─── Types ─────────────────────────────────────────────────────────
+export interface Stats {
+  total_users: number; active_24h: number; active_today: number;
+  total_reviews: number; total_submissions: number;
+  total_hackathon_participants: number; total_chat_messages: number;
+  pro_users: number;
+}
+export interface AdminUser {
+  id: number; name: string; email: string; role: string; xp: number;
+  level: number; streak: number; is_pro: boolean; created_at: string;
+  last_seen: string; last_activity_date: string; is_active: boolean;
+}
+export interface Review {
+  id: number; name: string; role: string; review: string; rating: number;
+  created_at: string; user_email: string; is_featured: boolean;
+}
+export interface Activity {
+  id: number; user_name: string; user_email: string; action_type: string;
+  title: string; metadata: string; xp: number; created_at: string;
+}
+export interface LeaderboardEntry {
+  rank: number; id: number; name: string; email: string; xp: number;
+  level: number; streak: number; is_pro: boolean; is_top10: boolean;
+}
+export interface CodeAnalytics {
+  total_submissions: number; accepted_count: number; wrong_answer_count: number;
+  acceptance_rate: number; top_solvers: { name: string; email: string; solved_count: number; xp: number }[];
+  unique_solvers: number; total_problems_available: number;
+}
+export interface ChatAnalytics {
+  total_messages: number; user_messages: number; ai_messages: number;
+  active_users_7d: number; active_users_24h: number;
+  last_conversations: { title: string; user_name: string; user_email: string; last_message: string; created_at: string }[];
+}
+export interface Analytics {
+  growth: { date: string; signups: number; actions: number }[];
+  segmentation: { name: string; value: number; color: string }[];
+}
+export interface Hackathon {
+  id: number; name: string; organizer: string; status: string;
+  deadline: string; prize: string; link: string; participants_count: number;
+}
+
+
+
 // ─── API Base URL ─────────────────────────────────────────────────────────────
-// Env var is baked in at Vercel build time; fallback ensures local dev always works.
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+// Priority: 1. ENV VAR (from .env.local or Vercel)
+//           2. Localhost:10000 (if in development)
+//           3. Production Render URL (Final Fallback)
+const DEFAULT_PROD_URL = "https://tulasi-ai-wgwl.onrender.com";
+const LOCAL_DEV_URL = "http://localhost:10000";
+
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (isDev ? LOCAL_DEV_URL : DEFAULT_PROD_URL);
 
 /** Centralised debug logger — always prints in dev; silent in prod unless token missing */
 function log(label: string, data?: unknown) {
@@ -44,38 +95,34 @@ export function websocketUrl(path: string): string {
 
 const FETCH_TIMEOUT_MS = 60_000; // 60s timeout for AI endpoints
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<Response> {
-  try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(id);
+async function fetchWithRetry(url: string, options: RequestInit, retries = 5, backoff = 1000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-    if (!res.ok) {
-      if (res.status === 502 || res.status === 503 || res.status === 504) {
-         if (retries === 2) toast.loading("Server waking up. Retrying...", { id: "retry-toast" }); 
-         throw new Error("API error / Server waking up");
-      }
-      if (res.status >= 500) {
-         throw new Error(`API error: ${res.status}`);
-      }
-      return res; // return early for 4xx errors
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    // If we get a 500, 502, 503, or 504, the backend might be starting or crashing.
+    if (res.status >= 500 && retries > 0) {
+      console.warn(`[TulasiAPI] Server error ${res.status}. Retrying in ${backoff}ms... (${retries} retries left)`);
+      if (isBrowser && retries === 5) toast.loading("Tulasi AI is waking up...", { id: "retry-toast" });
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
-    toast.dismiss("retry-toast");
+
+    if (isBrowser) toast.dismiss("retry-toast");
     return res;
-  } catch (err: unknown) {
-    const error = err as Error;
-    if (retries === 0 || error.name === 'AbortError') {
-      toast.dismiss("retry-toast");
-      if (error.name === 'AbortError') {
-        throw new Error("Request timed out.");
-      }
-      throw error;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (retries > 0 && err.name !== "AbortError") {
+      console.warn(`[TulasiAPI] Network error. Retrying in ${backoff}ms... (${retries} retries left)`, err);
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
-    // Exponential backoff for the 2 retries
-    await new Promise(r => setTimeout(r, 1000 * (3 - retries)));
-    return fetchWithRetry(url, options, retries - 1);
+    if (isBrowser) toast.dismiss("retry-toast");
+    if (err.name === "AbortError") throw new Error("Request timed out (60s). Please try again.");
+    throw err;
   }
 }
 
@@ -100,7 +147,13 @@ async function request<T>(
       // Using 'omit' removes the CORS preflight restriction entirely.
       console.log(`[API Request] → ${options.method || "GET"} ${fullUrl}`);
       const t0 = performance.now();
-      const res = await fetchWithRetry(fullUrl, { credentials: "omit", ...options, headers, mode: "cors" });
+      const res = await fetchWithRetry(fullUrl, { 
+        credentials: "omit", 
+        ...options, 
+        headers, 
+        mode: "cors",
+        cache: "no-store", // Prevent stale health/session data
+      });
       const t1 = performance.now();
       console.log(`[API Response] ← ${res.status} ${fullUrl} (${Math.round(t1 - t0)}ms)`);
       log(`← ${res.status} ${fullUrl}`);
@@ -141,6 +194,34 @@ async function request<T>(
     throw new Error(msg);
   }
 }
+
+// ─── Admin ───────────────────────────────────────────────────────────────────
+export const adminApi = {
+  stats: () => request<Stats>("/api/admin/stats"),
+  users: () => request<{ users: AdminUser[] }>("/api/admin/users"),
+  reviews: () => request<{ reviews: Review[] }>("/api/admin/reviews"),
+  activity: () => request<{ activity: Activity[] }>("/api/admin/activity"),
+  leaderboard: () => request<{ leaderboard: LeaderboardEntry[] }>("/api/admin/leaderboard"),
+  code: () => request<CodeAnalytics>("/api/admin/code-analytics"),
+  chat: () => request<ChatAnalytics>("/api/admin/chat-analytics"),
+  hackathons: () => request<{ hackathons: Hackathon[] }>("/api/admin/hackathons"),
+  analytics: () => request<Analytics>("/api/admin/analytics"),
+  toggleUser: (user_id: number, is_active: boolean) =>
+    request<{ message: string }>("/api/admin/toggle-user", {
+      method: "POST",
+      body: JSON.stringify({ user_id, is_active }),
+    }),
+  deleteReview: (id: number) =>
+    request<{ message: string }>(`/api/admin/reviews/${id}`, { method: "DELETE" }),
+  featureReview: (id: number) =>
+    request<{ message: string; is_featured: boolean }>(`/api/admin/reviews/${id}/feature`, { method: "PATCH" }),
+  seedHackathons: () =>
+    request<{ message: string }>("/api/admin/seed-hackathons", { method: "POST" }),
+  seedReviews: () =>
+    request<{ message: string }>("/api/admin/seed-reviews", { method: "POST" }),
+  deleteHackathon: (id: number) =>
+    request<{ message: string }>(`/api/admin/hackathons/${id}`, { method: "DELETE" }),
+};
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -598,6 +679,21 @@ export interface Reward {
   cost: number;
   [key: string]: string | number | boolean | undefined | null;
 }
+
+// ─── PDF / Document Q&A ──────────────────────────────────────────────
+
+export const pdfApi = {
+  upload: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<{ filename: string; chunks_indexed: number; message: string }>("/api/pdf/upload", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  status: () => request<{ indexed_chunks: number }>("/api/pdf/status"),
+  clear: () => request<{ message: string }>("/api/pdf/clear", { method: "DELETE" }),
+};
 
 export interface StartupIdea {
   id: number;

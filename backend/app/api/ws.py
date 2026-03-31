@@ -174,10 +174,12 @@ async def websocket_group_chat(
     from sqlmodel import Session
 
     with Session(engine) as db:
-        member = db.query(GroupMember).filter(
+        query = select(GroupMember).where(
             GroupMember.group_id == group_id, 
             GroupMember.user_id == user_id
-        ).first()
+        )
+        result = db.exec(query)
+        member = result.first()
         
         if not member:
             await websocket.accept()
@@ -185,7 +187,9 @@ async def websocket_group_chat(
             await websocket.close(code=4003)
             return
         
-        user = db.query(User).filter(User.id == user_id).first()
+        query = select(User).where(User.id == user_id)
+        result = db.exec(query)
+        user = result.first()
         user_name = user.name if user else "Member"
 
     # 3. Connect to Manager

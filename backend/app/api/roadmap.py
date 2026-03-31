@@ -146,13 +146,13 @@ def log_progress(
         raise HTTPException(404, "Milestone not found")
 
     # Check if already logged
-    existing_log = db.exec(
-        select(ActivityLog).where(
-            ActivityLog.user_id == current_user.id,
-            ActivityLog.action_type == "roadmap_step",
-            ActivityLog.metadata_json == req.milestone_id
-        )
-    ).first()
+    query = select(ActivityLog).where(
+        ActivityLog.user_id == current_user.id,
+        ActivityLog.action_type == "roadmap_step",
+        ActivityLog.metadata_json == req.milestone_id
+    )
+    result = db.exec(query)
+    existing_log = result.first()
 
     if existing_log:
         return {"message": "Milestone already completed"}

@@ -169,12 +169,12 @@ def generate_certificate(
         raise HTTPException(404, "Milestone not found")
 
     # === STRICT PROGRESS CHECK ===
-    prog = db.exec(
-        select(UserProgress).where(
-            UserProgress.user_id == current_user.id,
-            UserProgress.category == milestone["category"]
-        )
-    ).first()
+    query = select(UserProgress).where(
+        UserProgress.user_id == current_user.id,
+        UserProgress.category == milestone["category"]
+    )
+    result = db.exec(query)
+    prog = result.first()
 
     current_pct = prog.progress_pct if prog else 0
 
@@ -186,12 +186,12 @@ def generate_certificate(
         )
 
     # Check if already earned
-    existing = db.exec(
-        select(Certificate).where(
-            Certificate.user_id == current_user.id,
-            Certificate.title == milestone["title"]
-        )
-    ).first()
+    query = select(Certificate).where(
+        Certificate.user_id == current_user.id,
+        Certificate.title == milestone["title"]
+    )
+    result = db.exec(query)
+    existing = result.first()
     if existing:
         return {"message": "Certificate already earned!", "id": existing.id}
 

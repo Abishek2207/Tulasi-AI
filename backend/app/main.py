@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 import time
 
-from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf
 from app.core.database import init_db
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
@@ -136,7 +136,8 @@ async def lifespan(app: FastAPI):
 
                 # Step 8: Ensure seed data (Fallback for empty databases)
                 try:
-                    user_count_res = conn.execute(text('SELECT count(*) as c FROM "user"'))
+                    user_count_stmt = text('SELECT count(*) as c FROM "user"')
+                    user_count_res = conn.execute(user_count_stmt)
                     if user_count_res.mappings().first()["c"] == 0:
                         from app.core.security import get_password_hash
                         from app.core.config import settings
@@ -148,7 +149,8 @@ async def lifespan(app: FastAPI):
                         {"e": admin_mail, "n": "Super Admin", "p": admin_pass, "r": "admin", "c": code})
                         print("[Migration] 🌱 Seeded initial admin account.")
 
-                    rev_count_res = conn.execute(text('SELECT count(*) as c FROM review'))
+                    rev_count_stmt = text('SELECT count(*) as c FROM review')
+                    rev_count_res = conn.execute(rev_count_stmt)
                     if rev_count_res.mappings().first()["c"] == 0:
                         reviews = [
                             {"n": "Alex Chen", "e": "alex@example.com", "rol": "Software Engineer", "rev": "Tulasi AI completely overhauled my interview prep. The AI mock interviews are incredibly realistic.", "rat": 5},
@@ -160,6 +162,15 @@ async def lifespan(app: FastAPI):
                         for r in reviews:
                             conn.execute(text("INSERT INTO review (name, email, role, review, rating) VALUES (:n, :e, :rol, :rev, :rat)"), r)
                         print("[Migration] 🌱 Seeded initial realistic reviews.")
+
+                    # ── 🤝 COMMUNITY SYNC ───────────────────────────
+                    try:
+                        group_count = conn.execute(text("SELECT count(*) as c FROM group")).mappings().first()["c"]
+                        if group_count == 0:
+                            conn.execute(text("INSERT INTO group (name, description, join_code, created_by) VALUES ('Global Community', 'The official hub for all Tulasi AI orbits.', 'ORBIT1', 1)"))
+                            print("[Migration] 🌍 Initialized Global Community orbital.")
+                    except: pass
+                    # ────────────────────────────────────────────────
                 except Exception as e:
                     print(f"[Migration Error] Seeding: {e}")
 
@@ -310,6 +321,7 @@ app.include_router(stripe.router,       prefix="/api/stripe",       tags=["Monet
 app.include_router(payment.router,      prefix="/api/payment",      tags=["Payment"])
 app.include_router(reviews.router,      prefix="/api/reviews",      tags=["Reviews"])
 app.include_router(users.router,        prefix="/api/users",        tags=["Users"])
+app.include_router(pdf.router,          prefix="/api/pdf",          tags=["Document Q&A"])
 
 
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────
@@ -356,23 +368,22 @@ def api_root():
 @app.get("/api/status")
 def health():
     uptime = int(time.time() - _START_TIME)
+    from app.core.database import engine
+    from sqlalchemy import text
+    db_status = "connected"
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("SELECT 1"))
+    except Exception as e:
+        db_status = f"unreachable: {str(e)}"
+        print(f"❌ Database Health Check Failed: {e}")
 
     return {
-        "success": True,
-        "status": "alive",
-        "server": "Tulasi AI backend",
-        "version": "3.0.0",
+        "status": "ok" if db_status == "connected" else "error",
+        "db": db_status,
         "uptime_seconds": uptime,
-        "services": [
-            "chat",
-            "code",
-            "roadmaps",
-            "rewards",
-            "analytics",
-            "interview",
-            "hackathons",
-            "websocket",
-        ],
+        "version": "3.0.0",
+        "server": "Tulasi AI Backend"
     }
 
 
