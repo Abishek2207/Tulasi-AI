@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Upload, Send, Trash2, Brain, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import { Brain, FileText, Loader2, Send, Sparkles, Trash2, Upload, MessageSquare, ShieldCheck, Zap } from "lucide-react";
 import { pdfApi, chatApi } from "@/lib/api";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
@@ -95,23 +95,38 @@ export default function PDFQAPage() {
       
       {/* Left Sidebar: Document Management */}
       <div className="dash-card" style={{ width: 340, display: "flex", flexDirection: "column", gap: 24, padding: 24 }}>
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
-            <FileText size={20} className="text-brand" /> AI PDF Analyst
+        <div style={{ padding: "0 4px" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 8, display: "flex", alignItems: "center", gap: 12, letterSpacing: "-0.02em" }}>
+            <div style={{ background: "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))", width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 16px rgba(108,99,255,0.3)" }}>
+              <Zap size={20} color="white" />
+            </div>
+            <span>Document Lab</span>
           </h2>
-          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Upload documents and talk to Tulasi AI about them.</p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 500 }}>Upload & analyze technical documents with RAG.</p>
         </div>
 
-        <div style={{ border: "2px dashed var(--border)", borderRadius: 16, padding: 24, textAlign: "center", background: "rgba(255,255,255,0.02)", transition: "all 0.2s" }}
+        <div 
+          style={{ 
+            border: "2px dashed rgba(255,255,255,0.1)", 
+            borderRadius: 20, 
+            padding: "32px 24px", 
+            textAlign: "center", 
+            background: "rgba(255,255,255,0.01)", 
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            cursor: "pointer",
+            position: "relative",
+            overflow: "hidden"
+          }}
           onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.[0]) setFile(e.dataTransfer.files[0]); }}
         >
-          <Upload size={32} style={{ margin: "0 auto 16px", opacity: 0.5 }} />
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, var(--brand-primary), transparent)", opacity: uploading ? 1 : 0 }} />
+          <Upload size={40} style={{ margin: "0 auto 16px", opacity: 0.3, color: "var(--brand-primary)" }} />
           <input type="file" accept=".pdf" onChange={onFileChange} style={{ display: "none" }} id="pdf-upload" />
-          <label htmlFor="pdf-upload" style={{ cursor: "pointer", fontSize: 14, fontWeight: 700, color: "var(--brand-primary)" }}>
-            {file ? file.name : "Choose a PDF File"}
+          <label htmlFor="pdf-upload" style={{ cursor: "pointer", fontSize: 15, fontWeight: 800, color: "white", display: "block" }}>
+            {file ? file.name : "Select technical PDF"}
           </label>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>or drag & drop here</p>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10, fontWeight: 500 }}>Max size 10MB • .pdf only</p>
         </div>
 
         {file && (
@@ -159,15 +174,15 @@ export default function PDFQAPage() {
       <div className="dash-card" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden" }}>
         
         {/* Chat Header */}
-        <div style={{ padding: 24, borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.01)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--brand-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Brain size={24} color="white" />
+        <div style={{ padding: "20px 28px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.02)", backdropFilter: "blur(10px)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(108,99,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(108,99,255,0.2)" }}>
+              <Brain size={26} style={{ color: "var(--brand-primary)" }} />
             </div>
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 800 }}>Document Intelligence</h3>
-              <div style={{ fontSize: 12, color: "#10B981", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
-                <CheckCircle2 size={12} /> Active & Context-Aware
+              <h3 style={{ fontSize: 17, fontWeight: 900, letterSpacing: "-0.01em" }}>Neural Document Engine</h3>
+              <div style={{ fontSize: 11, color: "#10B981", fontWeight: 800, display: "flex", alignItems: "center", gap: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                <ShieldCheck size={13} /> Context Authenticated
               </div>
             </div>
           </div>

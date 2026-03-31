@@ -53,7 +53,7 @@ export default function AuthCallbackPage() {
                 avatar_url: session.user.user_metadata?.avatar_url || null,
                 created_at: new Date().toISOString(),
               },
-              { onConflict: "id" }
+              { onConflict: "email" }
             );
             if (upsertErr) {
               console.warn("[OAuth Callback] users upsert warning:", upsertErr.message);

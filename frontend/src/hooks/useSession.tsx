@@ -68,7 +68,7 @@ export function useSession() {
           name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
           avatar_url: session.user.user_metadata?.avatar_url || null,
           created_at: new Date().toISOString()
-        }, { onConflict: 'id' });
+        }, { onConflict: 'email' });
         if (upsertErr) console.error("⚠️ Failed to sync users table:", upsertErr.message);
       } catch (err) {
         console.error("⚠️ Failed to sync users table:", err);
