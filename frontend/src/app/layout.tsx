@@ -12,6 +12,7 @@ import { DebugPanel } from "@/components/DebugPanel";
 import { XPNotificationSystem } from "@/components/XPNotification";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
+import { KeepAlive } from "@/components/KeepAlive";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
           {children}
+          <KeepAlive />
           <DebugPanel />
           <XPNotificationSystem />
           <OnboardingTour />

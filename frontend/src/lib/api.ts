@@ -106,7 +106,12 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 5, ba
     // If we get a 500, 502, 503, or 504, the backend might be starting or crashing.
     if (res.status >= 500 && retries > 0) {
       console.warn(`[TulasiAPI] Server error ${res.status}. Retrying in ${backoff}ms... (${retries} retries left)`);
-      if (isBrowser && retries === 5) toast.loading("Tulasi AI is waking up...", { id: "retry-toast" });
+      if (isBrowser && retries === 5) {
+          toast.loading("Tulasi AI is optimizing its neural circuits (Cloud cold start)...", { 
+              id: "retry-toast",
+              style: { backgroundColor: "#1E1B4B", color: "#A78BFA", border: "1px solid #4C1D95" }
+          });
+      }
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }

@@ -193,16 +193,16 @@ export default function MessagesPage() {
   return (
     <div className="messages-container" style={{ maxWidth: 1200, margin: "0 auto", height: "calc(100vh - 120px)", display: "flex", gap: 24 }}>
       
-      {/* Sidebar */}
-      <div className="dash-card messages-sidebar" style={{ width: 320, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden" }}>
-        <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
+      {/* Sidebar - User/Group List */}
+      <div className="dash-card messages-sidebar" style={{ width: 320, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden", borderRight: "1px solid var(--border)", background: "rgba(255,255,255,0.01)" }}>
+        <div style={{ display: "flex", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
           <button onClick={() => { setActiveTab("dm"); setMessages([]); setActiveGroup(null); if (users.length) setActiveUser(users[0]); }} 
-            style={{ flex: 1, padding: "16px", fontSize: 13, fontWeight: 700, transition: "0.2s", background: activeTab === "dm" ? "rgba(255,255,255,0.05)" : "transparent", borderBottom: activeTab === "dm" ? "2px solid var(--brand-primary)" : "none", color: activeTab === "dm" ? "white" : "var(--text-muted)", cursor: "pointer", border: "none" }}>
-            DIRECTS
+            style={{ flex: 1, padding: "18px 16px", fontSize: 12, fontWeight: 900, transition: "0.3s", background: activeTab === "dm" ? "rgba(108,99,255,0.05)" : "transparent", borderBottom: activeTab === "dm" ? "3px solid var(--brand-primary)" : "3px solid transparent", color: activeTab === "dm" ? "white" : "var(--text-muted)", cursor: "pointer", border: "none", textTransform: "uppercase", letterSpacing: 1.5 }}>
+            Direct ID
           </button>
           <button onClick={() => { setActiveTab("community"); setMessages([]); setActiveUser(null); fetchGroups(); }} 
-            style={{ flex: 1, padding: "16px", fontSize: 13, fontWeight: 700, transition: "0.2s", background: activeTab === "community" ? "rgba(255,255,255,0.05)" : "transparent", borderBottom: activeTab === "community" ? "2px solid var(--brand-primary)" : "none", color: activeTab === "community" ? "white" : "var(--text-muted)", cursor: "pointer", border: "none" }}>
-            COMMUNITY
+            style={{ flex: 1, padding: "18px 16px", fontSize: 12, fontWeight: 900, transition: "0.3s", background: activeTab === "community" ? "rgba(16,185,129,0.05)" : "transparent", borderBottom: activeTab === "community" ? "3px solid #10B981" : "3px solid transparent", color: activeTab === "community" ? "white" : "var(--text-muted)", cursor: "pointer", border: "none", textTransform: "uppercase", letterSpacing: 1.5 }}>
+            Orbit HUB
           </button>
         </div>
         
@@ -238,21 +238,26 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      {/* Main Chat */}
-      <div className="dash-card messages-chat" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden" }}>
+      {/* Main Chat Area */}
+      <div className="dash-card messages-chat" style={{ flex: 1, display: "flex", flexDirection: "column", padding: 0, overflow: "hidden", background: "rgba(255,255,255,0.005)" }}>
         {activeUser || activeGroup ? (
           <>
-            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12 }}>
-               <div style={{ width: 44, height: 44, borderRadius: activeUser ? 22 : 12, background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700, border: "1px solid var(--border)" }}>
+            <div style={{ padding: "20px 28px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 16, background: "rgba(255,255,255,0.02)", backdropFilter: "blur(12px)" }}>
+               <div style={{ width: 48, height: 48, borderRadius: activeUser ? 24 : 14, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 900, border: "1px solid rgba(255,255,255,0.1)", color: activeUser ? "var(--brand-primary)" : "#10B981", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
                  {activeUser ? activeUser.name.charAt(0).toUpperCase() : "#"}
                </div>
-               <div>
-                  <h3 style={{ fontSize: 16, fontWeight: 700 }}>{activeUser?.name || activeGroup?.name}</h3>
-                  <span style={{ fontSize: 11, color: "#10B981" }}>{activeUser ? "🔐 Private Orbit" : "🌍 Global Orbital"}</span>
+               <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.01em" }}>{activeUser?.name || activeGroup?.name}</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: 3, background: "#10B981", boxShadow: "0 0 8px #10B981" }} />
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                      {activeUser ? "Private Encryption Active" : "Public Global Channel"}
+                    </span>
+                  </div>
                </div>
                {activeUser && (
-                 <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
-                   <button onClick={() => setShowVoice(true)} className="btn btn-secondary">📞</button>
+                 <div style={{ display: "flex", gap: 12 }}>
+                   <button onClick={() => setShowVoice(true)} className="btn btn-secondary" style={{ width: 40, height: 40, padding: 0, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.03)" }}>📞</button>
                  </div>
                )}
             </div>
