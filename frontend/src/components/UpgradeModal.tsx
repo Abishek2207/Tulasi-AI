@@ -6,7 +6,7 @@ import { X, CheckCircle, Zap, Shield, Clock, Award, PartyPopper } from "lucide-r
 import { paymentApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import confetti from "canvas-confetti";
 
 interface UpgradeModalProps {

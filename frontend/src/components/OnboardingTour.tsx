@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { X, Sparkles, ArrowRight, BrainCircuit, Target, FileText } from "lucide-react";
 
 const STEPS = [

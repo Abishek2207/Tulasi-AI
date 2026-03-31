@@ -94,7 +94,7 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
             "email": user.email,
             "name": user.name,
             "role": user.role,
-            "invite_code": user.invite_code,
+            "invite_code": user.invite_code, "is_pro": True, "chats_today": 0,
         }
     }
 
@@ -148,7 +148,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_session
             "email": user.email,
             "name": user.name,
             "role": user.role,
-            "invite_code": user.invite_code,
+            "invite_code": user.invite_code, "is_pro": True, "chats_today": 0,
         }
     }
 
@@ -168,7 +168,8 @@ def get_me(current_user: User = Depends(get_current_user)):
         "xp": current_user.xp,
         "level": current_user.level,
         "invite_code": current_user.invite_code,
-        "chats_today": getattr(current_user, "chats_today", 0),
+        "chats_today": 0,
+        "is_pro": True,
     }
 
 

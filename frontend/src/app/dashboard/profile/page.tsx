@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { activityApi, profileApi } from "@/lib/api";

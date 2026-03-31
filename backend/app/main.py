@@ -69,6 +69,9 @@ async def lifespan(app: FastAPI):
                 try:
                     conn.execute(text('ALTER TABLE review ADD COLUMN created_at TIMESTAMP;'))
                 except: pass
+                try:
+                    conn.execute(text('ALTER TABLE review ADD COLUMN is_featured BOOLEAN DEFAULT 0;'))
+                except: pass
                 
                 # Step 3: Handle User table migrations
                 try:
@@ -83,63 +86,40 @@ async def lifespan(app: FastAPI):
                     conn.execute(text('ALTER TABLE groupmessage ADD COLUMN is_encrypted BOOLEAN DEFAULT 0;'))
                 except: pass
 
-                # Step 5: Hackathon Schema Expansion (Discovery Platform)
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN organizer VARCHAR DEFAULT "Unknown";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN description TEXT DEFAULT "";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN prize_pool VARCHAR DEFAULT "INR 0";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN deadline VARCHAR DEFAULT "";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN registration_deadline VARCHAR;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN registration_link VARCHAR DEFAULT "#";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN tags VARCHAR DEFAULT "";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN image_url VARCHAR DEFAULT "https://via.placeholder.com/600x400";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN participants_count INTEGER DEFAULT 0;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN status VARCHAR DEFAULT "Open";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN mode VARCHAR DEFAULT "Online";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN difficulty VARCHAR DEFAULT "Intermediate";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN team_size VARCHAR DEFAULT "1-4 Members";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN start_date VARCHAR;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN end_date VARCHAR;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN domains VARCHAR DEFAULT "General";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN currency VARCHAR DEFAULT "INR";'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE hackathon ADD COLUMN location VARCHAR;'))
-                except: pass
+                # Step 5: Hackathon Schema Expansion (Discovery Platform) — NON-BLOCKING CHECK
+                cursor = conn.connection.cursor()
+                cursor.execute("PRAGMA table_info(hackathon);")
+                existing_cols = [c[1] for c in cursor.fetchall()]
 
-                # Step 6: Create HackathonApplication table if not exists
+                for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
+                    if col not in existing_cols:
+                        try:
+                            conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN {col} VARCHAR;'))
+                        except Exception as e:
+                            print(f"[Migration Warning] Add {col}: {e}")
+
+                # Step 6: User Table — UNLOCK PLATINUM PRO & SYNC CHATS
+                cursor.execute("PRAGMA table_info(\"user\");")
+                existing_user_cols = [c[1] for c in cursor.fetchall()]
+
+                for col in ["is_pro", "chats_today", "last_reset_date", "pro_expiry_date"]:
+                    if col not in existing_user_cols:
+                        try:
+                            default = "1" if col == "is_pro" else "0" if col == "chats_today" else "NULL"
+                            col_type = "BOOLEAN" if col=="is_pro" else "INTEGER" if col=="chats_today" else "VARCHAR"
+                            conn.execute(text(f'ALTER TABLE "user" ADD COLUMN {col} {col_type} DEFAULT {default};'))
+                        except Exception as e:
+                            print(f"[Migration Warning] Add {col}: {e}")
+                
+                # GLOBAL UNLOCK: Force all existing users to PRO (Targeted and Safe)
+                try:
+                    conn.execute(text('UPDATE "user" SET is_pro = 1 WHERE is_pro = 0 OR is_pro IS NULL;'))
+                    conn.execute(text('UPDATE "user" SET chats_today = 0;'))
+                    print("[Migration] PLATINUM PRO status verified for all users.")
+                except Exception as e:
+                    print(f"[Migration Warning] Global Unlock: {e}")
+
+                # Step 7: Create HackathonApplication table if not exists
                 try:
                     conn.execute(text("""
                         CREATE TABLE IF NOT EXISTS hackathonapplication (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { studyApi, StudyRoom, StudyMessage } from "@/lib/api";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Users, Timer, MessageSquare, Plus, ArrowRight, DoorOpen } from "lucide-react";

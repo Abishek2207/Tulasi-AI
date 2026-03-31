@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { chatApi, ChatMsg } from "@/lib/api";
 import { X, Send, Bot, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";

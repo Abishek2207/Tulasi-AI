@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { activityApi, rewardApi } from "@/lib/api";
 
 const REWARD_ITEMS = [
@@ -23,6 +23,7 @@ export default function RewardsPage() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [rewards, setRewards] = useState<any[]>([]);
+  const [confirmItem, setConfirmItem] = useState<any>(null);
 
   useEffect(() => {
     if (token) {
@@ -50,8 +51,14 @@ export default function RewardsPage() {
 
   const handleRedeem = async (item: any) => {
     if (xp < item.cost) return;
+    setConfirmItem(item); // show confirmation first
+  };
+
+  const confirmRedeem = async () => {
+    const item = confirmItem;
+    if (!item) return;
+    setConfirmItem(null);
     setRedeeming(item.id);
-    
     try {
       const res = await rewardApi.redeem(item.id, token);
       setXp(res.remaining_xp);
@@ -147,6 +154,41 @@ export default function RewardsPage() {
           );
         })}
       </div>
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {confirmItem && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setConfirmItem(null)}
+            style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.92 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 20, padding: "36px 32px", minWidth: 340, maxWidth: 400, textAlign: "center", boxShadow: "0 40px 80px rgba(0,0,0,0.8)" }}
+            >
+              <div style={{ fontSize: 44, marginBottom: 16 }}>{confirmItem.icon}</div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Confirm Redemption</h2>
+              <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 8, lineHeight: 1.5 }}>
+                You are about to redeem <strong style={{ color: "var(--text-primary)" }}>{confirmItem.name}</strong>.
+              </p>
+              <p style={{ color: "var(--brand-primary)", fontSize: 16, fontWeight: 800, marginBottom: 24 }}>
+                ⚡ {confirmItem.cost.toLocaleString()} XP will be deducted.
+              </p>
+              <div style={{ display: "flex", gap: 12 }}>
+                <button
+                  onClick={() => setConfirmItem(null)}
+                  style={{ flex: 1, padding: "12px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+                >Cancel</button>
+                <button
+                  onClick={confirmRedeem}
+                  style={{ flex: 1, padding: "12px", borderRadius: 12, background: confirmItem.color, border: "none", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 16px ${confirmItem.color}40` }}
+                >Confirm Redeem</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

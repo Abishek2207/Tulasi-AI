@@ -3,7 +3,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { toggleSidebar } from "@/store/slices/uiSlice";
 import { RootState } from "@/store";
-import { signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "@/hooks/useSession";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
@@ -54,7 +54,7 @@ export default function TopBar() {
 
   return (
     <>
-      <div style={{
+      <div className="topbar-bg" style={{
         height: 64,
         borderBottom: "1px solid rgba(255,255,255,0.04)",
         background: "rgba(9,9,15,0.85)",
@@ -75,7 +75,7 @@ export default function TopBar() {
           onClick={() => dispatch(toggleSidebar())}
           style={{
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-            color: "rgba(255,255,255,0.6)", cursor: "pointer", padding: "7px 10px",
+            color: "var(--text-secondary)", cursor: "pointer", padding: "7px 10px",
             borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
             transition: "all 0.15s ease",
           }}
@@ -95,7 +95,7 @@ export default function TopBar() {
               background: "rgba(255,255,255,0.03)",
               border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 12, padding: "8px 12px",
-              color: "rgba(255,255,255,0.4)", fontSize: 13, outline: "none",
+              color: "var(--text-muted)", fontSize: 13, outline: "none",
               fontFamily: "var(--font-inter)",
               cursor: "pointer", textAlign: "left",
               display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -204,8 +204,8 @@ export default function TopBar() {
                 >
                   {/* User info header */}
                   <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{user?.name || "User"}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{user?.email}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{user?.name || "User"}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{user?.email}</div>
                   </div>
 
                   {/* Menu items */}
@@ -216,7 +216,7 @@ export default function TopBar() {
                         width: "100%", display: "flex", alignItems: "center", gap: 10,
                         padding: "10px 12px", borderRadius: 9,
                         background: "transparent", border: "none",
-                        color: "rgba(255,255,255,0.75)", fontSize: 13, fontWeight: 500,
+                        color: "var(--text-secondary)", fontSize: 13, fontWeight: 500,
                         cursor: "pointer", textAlign: "left",
                         transition: "background 0.15s",
                       }}

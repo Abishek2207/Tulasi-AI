@@ -1,6 +1,6 @@
 "use client";
 
-import { SessionProvider, useSession } from "next-auth/react";
+import { SessionProvider, useSession } from "@/hooks/useSession";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "@/store";
 import { useEffect } from "react";

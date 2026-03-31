@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { rewardApi, activityApi } from "@/lib/api";
 
 const streakData = Array.from({ length: 52 }, (_, week) =>

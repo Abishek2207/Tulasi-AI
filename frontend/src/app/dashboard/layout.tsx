@@ -1,8 +1,8 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store";
 import { toggleSidebar, updateStats } from "@/store/slices/uiSlice";
@@ -14,12 +14,25 @@ import { BackgroundBeams } from "@/components/ui/BackgroundBeams";
 import { DebugPanel } from "@/components/DebugPanel";
 import { XPNotificationSystem } from "@/components/XPNotification";
 
+/** Safe hook — avoids SSR crash and only fires on real resize events. */
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return isDesktop;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
   const sidebarOpen = useSelector((s: RootState) => s.ui.sidebarOpen);
+  const isDesktop = useIsDesktop();
   const user = session?.user;
 
   const hasLocalToken = typeof window !== "undefined" && !!localStorage.getItem("token");
@@ -68,7 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ── Sidebar ── */}
       <AnimatePresence mode="wait">
         {/* Mobile Sidebar Overlay */}
-        {sidebarOpen && typeof window !== "undefined" && window.innerWidth < 1024 && (
+        {sidebarOpen && !isDesktop && (
           <>
             <motion.div
               key="backdrop"
@@ -98,7 +111,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </AnimatePresence>
 
       {/* Desktop Persistent Sidebar */}
-      {typeof window !== "undefined" && window.innerWidth >= 1024 && (
+      {isDesktop && (
         <motion.div
           animate={{ 
             width: sidebarOpen ? 280 : 0,

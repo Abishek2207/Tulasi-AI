@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatApi, ChatMsg, ChatSession } from "@/lib/api";
 import { Bot, Send, Trash2, Plus, MessageSquare, Menu, X, Clock, History, BrainCircuit, Copy, Check } from "lucide-react";
@@ -51,7 +51,7 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.35, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{

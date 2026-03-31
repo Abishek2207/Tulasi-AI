@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -86,12 +86,8 @@ export default function AuthPage() {
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user));
         }
-        // Also create a NextAuth session so useSession() works in components
-        const result = await signIn("credentials", { email, password, redirect: false });
-        if (result?.error) {
-          // NextAuth failed but we have backend token — still allow login
-          console.warn("NextAuth session creation warning:", result.error);
-        }
+        // Token saved. UseSession will read it.
+        window.dispatchEvent(new Event("tulasi-auth-change"));
         router.push("/dashboard");
       } catch (err: unknown) {
         const error = err as Error;
@@ -106,11 +102,8 @@ export default function AuthPage() {
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user));
         }
-        // Also create a NextAuth session
-        const result = await signIn("credentials", { email, password, redirect: false });
-        if (result?.error) {
-          console.warn("NextAuth session creation warning:", result.error);
-        }
+        // Token saved. UseSession will read it.
+        window.dispatchEvent(new Event("tulasi-auth-change"));
         router.push("/dashboard");
       } catch (err: unknown) {
         const error = err as Error;
@@ -153,7 +146,7 @@ export default function AuthPage() {
 
       {/* Right side - Login Form */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#111218", position: "relative", zIndex: 1, boxShadow: "-20px 0 60px rgba(0,0,0,0.5)" }}>
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: [0.16,1,0.3,1] }}
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           style={{ width: "100%", maxWidth: 420, padding: "0 32px" }}
         >
           <TulasiLogoPro />
@@ -170,30 +163,20 @@ export default function AuthPage() {
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* OAuth Buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
-              <button type="button" onClick={() => { setOAuthLoading("google"); signIn("google", { callbackUrl: "/dashboard" }); }}
-                disabled={oAuthLoading !== null}
-                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading !== null ? "not-allowed" : "pointer", transition: "all 0.2s" }}
-                onMouseEnter={e => { if(oAuthLoading === null) e.currentTarget.style.background = "#23252E"}}
-                onMouseLeave={e => { if(oAuthLoading === null) e.currentTarget.style.background = "#1A1C23"}}
+              <button type="button" onClick={() => alert("OAuth is temporarily disabled while we upgrade our security systems.")}
+                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
+                onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
               >
-                {oAuthLoading === "google" ? (
-                  <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                ) : (
-                  <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
-                )}
+                <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
                 Google
               </button>
-              <button type="button" onClick={() => { setOAuthLoading("github"); signIn("github", { callbackUrl: "/dashboard" }); }}
-                disabled={oAuthLoading !== null}
-                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading !== null ? "not-allowed" : "pointer", transition: "all 0.2s" }}
-                onMouseEnter={e => { if(oAuthLoading === null) e.currentTarget.style.background = "#23252E"}}
-                onMouseLeave={e => { if(oAuthLoading === null) e.currentTarget.style.background = "#1A1C23"}}
+              <button type="button" onClick={() => alert("OAuth is temporarily disabled while we upgrade our security systems.")}
+                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
+                onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
               >
-                {oAuthLoading === "github" ? (
-                  <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                ) : (
-                  <img src="https://authjs.dev/img/providers/github.svg" width={18} height={18} alt="GitHub" style={{ filter: "invert(1)" }} />
-                )}
+                <img src="https://authjs.dev/img/providers/github.svg" width={18} height={18} alt="GitHub" style={{ filter: "invert(1)" }} />
                 GitHub
               </button>
             </div>

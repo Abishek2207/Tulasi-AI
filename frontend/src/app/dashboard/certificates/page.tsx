@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { certificateApi, Certificate, Milestone } from "@/lib/api";
 
 // Local UI-specific extensions if needed, otherwise use the API types.

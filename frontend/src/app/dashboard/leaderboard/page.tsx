@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { activityApi } from "@/lib/api";
 import { TiltCard } from "@/components/ui/TiltCard";
 import confetti from "canvas-confetti";
@@ -102,55 +102,47 @@ export default function LeaderboardPage() {
         </p>
       </div>
 
-      {/* Podium for Top 3 */}
+      {/* Podium for Top 3 — Hidden on small mobile, simplified on tablets */}
       {!loading && leaderboard.length >= 3 && (
-        <div className="podium-container" style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 24, marginBottom: 80, perspective: 1000 }}>
+        <div className="podium-container">
           {[leaderboard[1], leaderboard[0], leaderboard[2]].map((user, i) => {
-            if (!user) return <div key={i} style={{ width: 180 }} />;
-            // Logic to map podium position (0,1,2) back to actual rank (2,1,3)
+            if (!user) return <div key={i} className="podium-placeholder" />;
             const rank = i === 1 ? 1 : i === 0 ? 2 : 3;
-            const heights = [180, 240, 160];
             const colors = RANK_COLORS[rank - 1];
             const glows = RANK_GLOWS[rank - 1];
 
             return (
               <motion.div
                 key={user.id as string}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: rank * 0.1 }}
+                className={`podium-item item-rank-${rank}`}
               >
                 <TiltCard
                   intensity={10}
+                  className="podium-card"
                   style={{ 
-                    display: "flex", flexDirection: "column", alignItems: "center", width: 190,
-                    background: `rgba(255,255,255,0.02)`, border: rank === 1 ? `2px solid ${colors}` : `1px solid ${colors}40`, 
-                    padding: "24px 0 0", borderRadius: 24, boxShadow: rank === 1 ? `0 0 40px ${glows}` : "none"
+                    border: rank === 1 ? `2px solid ${colors}` : `1px solid ${colors}40`, 
+                    boxShadow: rank === 1 ? `0 0 40px ${glows}` : "none"
                   }}>
-                  <div style={{ position: "relative", marginBottom: 12 }}>
-                    <div style={{ 
-                      width: rank === 1 ? 80 : 64, height: rank === 1 ? 80 : 64, borderRadius: "50%", 
+                  <div className="podium-avatar-wrapper">
+                    <div className="podium-avatar" style={{ 
                       background: `linear-gradient(135deg, ${colors}40, ${colors}80)`, 
-                      border: `2px solid ${colors}`, display: "flex", alignItems: "center", justifyContent: "center", 
-                      fontWeight: 900, fontSize: rank === 1 ? 32 : 24, color: "white", 
-                      boxShadow: `0 0 20px ${glows}` 
+                      border: `2px solid ${colors}`, boxShadow: `0 0 20px ${glows}` 
                     }}>
-                      {user.avatar ? <img src={user.avatar} style={{ width: "100%", height: "100%", borderRadius: "50%" }} /> : user.name.charAt(0).toUpperCase()}
+                      {user.avatar ? <img src={user.avatar} className="avatar-img" /> : user.name.charAt(0).toUpperCase()}
                     </div>
-                    <div style={{ position: "absolute", bottom: -5, right: -5, width: 28, height: 28, background: colors, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, color: "#000", border: "3px solid #05070D" }}>
-                      {rank}
-                    </div>
+                    <div className="podium-rank-badge" style={{ background: colors }}>{rank}</div>
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: "white", marginBottom: 4 }}>{user.name}</div>
-                  <div style={{ fontSize: 14, color: colors, fontWeight: 800, marginBottom: 20 }}>{user.xp.toLocaleString()} XP</div>
+                  <div className="podium-name">{user.name}</div>
+                  <div className="podium-xp" style={{ color: colors }}>{user.xp.toLocaleString()} XP</div>
                   
-                  <div style={{ 
-                    width: "100%", height: heights[i], 
+                  <div className="podium-base" style={{ 
                     background: `linear-gradient(180deg, ${colors}15 0%, transparent 100%)`, 
-                    borderTop: `1px solid ${colors}30`, borderRadius: "12px 12px 24px 24px", 
-                    display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 16 
+                    borderTop: `1px solid ${colors}30`
                   }}>
-                    <span style={{ fontSize: 44, fontWeight: 950, color: colors, opacity: 0.5 }}>#{rank}</span>
+                    <span className="base-rank-text" style={{ color: colors }}>#{rank}</span>
                   </div>
                 </TiltCard>
               </motion.div>
@@ -178,7 +170,7 @@ export default function LeaderboardPage() {
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🏃‍♂️</div>
                 <div style={{ fontWeight: 600 }}>The race hasn't started yet. Be the first to earn XP!</div>
               </motion.div>
-            ) : leaderboard.map((user, idx) => {
+            ) : leaderboard.slice(0, 10).map((user, idx) => {
               const isCurrentUser = user.id === currentUserId;
               const isTop3 = idx < 3;
               return (
@@ -237,13 +229,41 @@ export default function LeaderboardPage() {
 
                   {/* XP */}
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontWeight: 900, fontSize: 18, color: isTop3 ? RANK_COLORS[idx] : "white" }}>
+                    <div style={{ fontWeight: 900, fontSize: 18, color: isTop3 ? RANK_COLORS[idx] : "var(--text-primary)" }}>
                       {(user.xp || 0).toLocaleString()} <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)" }}>XP</span>
                     </div>
                   </div>
                 </motion.div>
               );
             })}
+            {/* Your Rank — shown when current user is outside top 10 */}
+            {!loading && userContext && userContext.rank > 10 && (() => {
+              const meInList = leaderboard.find((u: any) => u.id === currentUserId);
+              if (!meInList) return null;
+              return (
+                <>
+                  <div style={{ padding: "10px 32px", borderTop: "1px dashed rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+                    <span>···</span><span>Your Rank</span><span>···</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", padding: "18px 32px", gap: 20, background: "rgba(124, 58, 237, 0.08)", borderLeft: "4px solid var(--brand-primary)" }}>
+                    <div style={{ width: 40, textAlign: "center", fontWeight: 900, fontSize: 18, color: "var(--brand-primary)", flexShrink: 0 }}>#{userContext.rank}</div>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg, #7C3AED, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 18, color: "white", flexShrink: 0 }}>
+                      {meInList.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
+                        {meInList.name}
+                        <span style={{ fontSize: 10, background: "var(--brand-primary)", color: "white", padding: "2px 10px", borderRadius: 20, fontWeight: 700 }}>YOU</span>
+                      </div>
+                      <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>Level {meInList.level} · 🔥 {meInList.streak}d · 💻 {meInList.problems_solved} solved</div>
+                    </div>
+                    <div style={{ fontWeight: 900, fontSize: 18, color: "var(--text-primary)" }}>
+                      {(meInList.xp || 0).toLocaleString()} <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)" }}>XP</span>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </AnimatePresence>
         </div>
       </div>
@@ -289,12 +309,44 @@ export default function LeaderboardPage() {
         .spinner { border-top-color: var(--brand-primary); }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         
+        .podium-container { display: flex; align-items: flex-end; justify-content: center; gap: 24px; margin-bottom: 80px; perspective: 1000px; }
+        .podium-placeholder { width: 180px; }
+        .podium-item { display: flex; flex-direction: column; align-items: center; }
+        .podium-card { display: flex; flex-direction: column; align-items: center; width: 190px; background: rgba(255,255,255,0.02); padding: 24px 0 0; border-radius: 24px; }
+        .podium-avatar-wrapper { position: relative; margin-bottom: 12px; }
+        .podium-avatar { border-radius: 50%; display: flex; alignItems: center; justify-content: center; font-weight: 900; color: white; }
+        .item-rank-1 .podium-avatar { width: 80px; height: 80px; font-size: 32px; }
+        .item-rank-2 .podium-avatar, .item-rank-3 .podium-avatar { width: 64px; height: 64px; font-size: 24px; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; }
+        .podium-rank-badge { position: absolute; bottom: -5px; right: -5px; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: #000; border: 3px solid #05070D; }
+        .podium-name { font-size: 18px; font-weight: 900; color: white; margin-bottom: 4px; }
+        .podium-xp { font-size: 14px; font-weight: 800; margin-bottom: 20px; }
+        .podium-base { width: 100%; border-radius: 12px 12px 24px 24px; display: flex; align-items: flex-start; justify-content: center; padding-top: 16px; min-height: 100px; }
+        .item-rank-1 .podium-base { min-height: 180px; }
+        .item-rank-2 .podium-base { min-height: 140px; }
+        .item-rank-3 .podium-base { min-height: 120px; }
+        .base-rank-text { font-size: 44px; font-weight: 950; opacity: 0.5; }
+
         @media (max-width: 850px) {
           .podium-container {
             flex-direction: column !important;
-            align-items: center !important;
-            gap: 40px !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+            padding: 0 20px;
           }
+          .podium-card {
+            width: 100% !important;
+            flex-direction: row !important;
+            padding: 16px 24px !important;
+            border-radius: 16px !important;
+            align-items: center !important;
+          }
+          .podium-base { display: none !important; }
+          .podium-avatar-wrapper { margin-bottom: 0 !important; margin-right: 16px; }
+          .podium-avatar { width: 50px !important; height: 50px !important; font-size: 18px !important; }
+          .podium-name { margin-bottom: 0 !important; flex: 1; }
+          .podium-xp { margin-bottom: 0 !important; font-size: 16px !important; }
+          
           .spotlight-container {
             flex-direction: column !important;
             gap: 16px !important;
