@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
+
+// Global tracker to ensure one sync per session per user across all instances of the hook
+const syncTracker = new Set<string>();
 
 export interface SessionUser {
   id: string | number;
@@ -60,7 +63,9 @@ export function useSession() {
     }
 
     async function syncUserToSupabase(session: any) {
-      // STEP 5 REFINED: Insert/Update user in Supabase DB with metadata
+      if (!session?.user?.id || syncTracker.has(session.user.id)) return;
+      syncTracker.add(session.user.id);
+      
       try {
         const { error: upsertErr } = await supabase.from('users').upsert({
           id: session.user.id,
@@ -69,9 +74,23 @@ export function useSession() {
           avatar_url: session.user.user_metadata?.avatar_url || null,
           created_at: new Date().toISOString()
         }, { onConflict: 'email' });
-        if (upsertErr) console.error("⚠️ Failed to sync users table:", upsertErr.message);
-      } catch (err) {
-        console.error("⚠️ Failed to sync users table:", err);
+        
+        if (upsertErr) {
+          if (upsertErr.message?.includes("Lock broken") || upsertErr.message?.includes("AbortError")) {
+            console.warn("[Auth Sync] Lock handled by another tab/request. Skipping.");
+          } else {
+            console.error("⚠️ Failed to sync users table:", upsertErr.message);
+          }
+        }
+      } catch (err: any) {
+        if (err.name === "AbortError" || err.message?.includes("Lock broken")) {
+          console.warn("[Auth Sync] AbortError detected. Concurrent sync handled.");
+        } else {
+          console.error("⚠️ Failed to sync users table:", err);
+        }
+      } finally {
+        // Clear from tracker after a delay to allow re-syncing if needed after a long time
+        setTimeout(() => syncTracker.delete(session.user.id), 60_000);
       }
     }
 

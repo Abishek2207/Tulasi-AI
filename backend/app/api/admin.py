@@ -736,3 +736,36 @@ def emergency_sync(db: Session = Depends(get_session)):
 
     db.commit()
     return {"status": "success", "message": "Spam cleared & Admin role synchronized."}
+
+
+# ─────────────────────────────────────────────────────────────────────
+# PURGE FAKE / DUMMY REVIEWS
+# ─────────────────────────────────────────────────────────────────────
+
+@router.delete("/purge-fake-reviews")
+def purge_fake_reviews(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Delete all seeded/dummy placeholder reviews from the production database.
+    Only keeps reviews submitted by real users through the form."""
+    from sqlalchemy import text
+
+    FAKE_EMAILS = [
+        "alex@example.com", "sarah@example.com", "mike@example.com",
+        "elena@example.com", "james@example.com",
+    ]
+    FAKE_NAMES = ["Alex Chen", "Sarah Jenkins", "Mike Donovan", "Elena Rodriguez", "James Wu"]
+
+    deleted = 0
+    try:
+        for email in FAKE_EMAILS:
+            res = db.execute(text("DELETE FROM review WHERE email = :e"), {"e": email})
+            deleted += res.rowcount
+        for name in FAKE_NAMES:
+            res = db.execute(text("DELETE FROM review WHERE name = :n AND (email IS NULL OR email = '')"), {"n": name})
+            deleted += res.rowcount
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Purge failed: {str(e)}")
+
+    return {"status": "success", "deleted": deleted, "message": f"Purged {deleted} fake/dummy reviews. Only real reviews remain."}
+

@@ -219,6 +219,8 @@ export const adminApi = {
     request<{ message: string }>("/api/admin/seed-reviews", { method: "POST" }),
   deleteHackathon: (id: number) =>
     request<{ message: string }>(`/api/admin/hackathons/${id}`, { method: "DELETE" }),
+  purgeFakeReviews: () =>
+    request<{ status: string; deleted: number; message: string }>("/api/admin/purge-fake-reviews", { method: "DELETE" }),
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────

@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BackgroundBeams } from "@/components/ui/BackgroundBeams";
 import { DebugPanel } from "@/components/DebugPanel";
 import { XPNotificationSystem } from "@/components/XPNotification";
+import { TulasiLogo } from "@/components/TulasiLogo";
 
 /** Safe hook — avoids SSR crash and only fires on real resize events. */
 function useIsDesktop() {
@@ -62,13 +63,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [status, dispatch]);
 
   if (status === "loading") return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
+      <TulasiLogo size={72} glow showText={false} />
       <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-        style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid rgba(124,58,237,0.2)", borderTopColor: "#7C3AED" }}
-      />
-      <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Loading your workspace...</p>
+        animate={{ opacity: [0.4, 1, 0.4] }}
+        transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+        style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}
+      >
+        Loading your workspace…
+      </motion.div>
     </div>
   );
 

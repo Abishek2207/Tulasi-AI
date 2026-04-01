@@ -11,41 +11,6 @@ import { supabase } from "@/lib/supabase";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import toast from "react-hot-toast";
 
-// TulasILogo Pro - with the leaf/circuit design and Pro badge
-function TulasiLogoPro() {
-  return (
-    <motion.div 
-      initial={{ scale: 0.9, opacity: 0 }} 
-      animate={{ scale: 1, opacity: 1 }} 
-      transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
-      style={{ display: "flex", alignItems: "center", gap: 16, justifyContent: "center", marginBottom: 40 }}
-    >
-      <div style={{ position: "relative" }}>
-        <TulasiLogo size={72} style={{ filter: "drop-shadow(0 0 25px rgba(168, 85, 247, 0.4))" }} />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        <span style={{ fontFamily: "var(--font-outfit)", fontWeight: 900, fontSize: 32, color: "white", letterSpacing: "-1px", lineHeight: 1 }}>
-          Tulasi<span className="gradient-text">AI</span>
-        </span>
-        <div style={{ 
-          background: "linear-gradient(135deg, #A855F7, #22D3EE)", 
-          padding: "2px 10px", 
-          borderRadius: 6, 
-          fontSize: 11, 
-          fontWeight: 900, 
-          color: "white", 
-          marginTop: 6,
-          letterSpacing: "1.5px",
-          textTransform: "uppercase",
-          boxShadow: "0 0 20px rgba(168, 85, 247, 0.6)",
-          display: "inline-block"
-        }}>
-          Platinum
-        </div>
-      </div>
-    </motion.div>
-  );
-}
 
 // Password Strength Utility
 function getPasswordStrength(pwd: string) {
@@ -188,7 +153,14 @@ export default function AuthPage() {
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           style={{ width: "100%", maxWidth: 420, padding: "0 32px" }}
         >
-          <TulasiLogoPro />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
+            style={{ display: "flex", justifyContent: "center", marginBottom: 40 }}
+          >
+            <TulasiLogo size={64} showText badge="Platinum" glow />
+          </motion.div>
 
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <h2 style={{ fontSize: 24, fontWeight: 700, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>

@@ -3,47 +3,127 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 
-export function TulasiLogo({ className = "", size = 40, style }: { className?: string; size?: number; style?: React.CSSProperties }) {
+/**
+ * TulasiLogo — single source of truth for the Tulasi AI logo.
+ * Used everywhere: TopBar, Sidebar, Auth, Loading, Landing page.
+ *
+ * Props:
+ *  size       — px size of the logo image (default 40)
+ *  glow       — show animated glow ring (default true)
+ *  showText   — show "TulasiAI" wordmark next to logo (default false)
+ *  badge      — optional badge text below wordmark e.g. "Platinum"
+ *  className  — extra CSS class on wrapper
+ *  style      — extra inline styles on wrapper
+ */
+export function TulasiLogo({
+  className = "",
+  size = 40,
+  glow = true,
+  showText = false,
+  badge,
+  style,
+}: {
+  className?: string;
+  size?: number;
+  glow?: boolean;
+  showText?: boolean;
+  badge?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
-      className={`relative flex items-center justify-center ${className}`}
-      style={{ width: size, height: size, ...style }}
+      className={`tulasi-logo-root ${className}`}
+      style={{ display: "flex", alignItems: "center", gap: size * 0.35, ...style }}
     >
-      {/* Dynamic Lotus Glow (Vibrant multi-color pulse) */}
-      <motion.div
-        className="absolute inset-0 rounded-full blur-2xl"
-        style={{
-          background: "radial-gradient(circle at center, #22D3EE 0%, #A855F7 30%, #EC4899 60%, #10B981 90%, transparent 100%)",
-          opacity: 0.15
-        }}
-        animate={{
-          scale: [1, 1.4, 1.1, 1.6, 1],
-          opacity: [0.12, 0.25, 0.15, 0.2, 0.12],
-          rotate: [0, 45, -45, 90, 0],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
+      {/* ── Image + glow wrapper ── */}
+      <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+        {/* Animated glow ring */}
+        {glow && (
+          <motion.div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: -size * 0.2,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle at center, rgba(34,211,238,0.35) 0%, rgba(168,85,247,0.25) 35%, rgba(236,72,153,0.15) 65%, transparent 100%)",
+              filter: `blur(${size * 0.25}px)`,
+              pointerEvents: "none",
+            }}
+            animate={{
+              scale: [1, 1.3, 1.1, 1.4, 1],
+              opacity: [0.4, 0.7, 0.5, 0.65, 0.4],
+            }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          />
+        )}
 
-      <motion.div
-        whileHover={{ scale: 1.1, filter: "brightness(1.2) drop-shadow(0 0 15px rgba(168, 85, 247, 0.4))" }}
-        transition={{ type: "spring", stiffness: 400, damping: 15 }}
-        className="relative z-10 flex items-center justify-center"
-        style={{ width: size, height: size }}
-      >
-        <Image
-          src="/images/logo.png"
-          alt="Tulasi AI Lotus Logo"
-          width={size}
-          height={size}
-          className="object-contain"
-          style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.5))" }}
-          priority
-        />
-      </motion.div>
+        {/* Logo image with hover spring */}
+        <motion.div
+          whileHover={{
+            scale: 1.08,
+            filter: "brightness(1.15) drop-shadow(0 0 18px rgba(168,85,247,0.55))",
+          }}
+          transition={{ type: "spring", stiffness: 380, damping: 16 }}
+          style={{ position: "relative", zIndex: 1, width: size, height: size }}
+        >
+          <Image
+            src="/images/logo.png"
+            alt="Tulasi AI Lotus Logo"
+            width={size}
+            height={size}
+            className="object-contain"
+            style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.55))" }}
+            priority
+          />
+        </motion.div>
+      </div>
+
+      {/* ── Optional wordmark ── */}
+      {showText && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
+              fontWeight: 900,
+              fontSize: size * 0.55,
+              color: "white",
+              letterSpacing: "-0.03em",
+              lineHeight: 1,
+            }}
+          >
+            Tulasi<span style={{ color: "#22D3EE" }}>AI</span>
+          </span>
+
+          {badge && (
+            <span
+              style={{
+                marginTop: size * 0.1,
+                background: "linear-gradient(135deg, #A855F7, #22D3EE)",
+                padding: `${size * 0.04}px ${size * 0.14}px`,
+                borderRadius: size * 0.12,
+                fontSize: size * 0.2,
+                fontWeight: 900,
+                color: "white",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                boxShadow: "0 0 18px rgba(168,85,247,0.5)",
+                display: "inline-block",
+              }}
+            >
+              {badge}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
+}
+
+/**
+ * @deprecated Use TulasiLogo with showText prop instead.
+ * Kept for backward compat with components that import { Logo }.
+ */
+export function Logo({ size = 48, showText = true }: { size?: number; showText?: boolean }) {
+  return <TulasiLogo size={size} showText={showText} glow />;
 }
