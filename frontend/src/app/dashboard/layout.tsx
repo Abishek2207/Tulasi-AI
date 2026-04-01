@@ -62,7 +62,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (status === "authenticated") fetchGlobalStats();
   }, [status, dispatch]);
 
-  if (status === "loading") return (
+  // Optimistic rendering: If we have a local token, don't show the full-screen sync message
+  // to avoid artificial delays. The hooks/components will handle their own loading states.
+  if (status === "loading" && !hasLocalToken) return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
       <TulasiLogo size={72} glow showText={false} />
       <motion.div
@@ -70,7 +72,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
         style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}
       >
-        Loading your workspace…
+        Neural Link Establishing…
       </motion.div>
     </div>
   );

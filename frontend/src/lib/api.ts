@@ -98,24 +98,21 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 1, ba
     const res = await fetch(url, { ...options, signal: controller.signal });
     clearTimeout(timeoutId);
 
-    // If we get a 500, 502, 503, or 504, the backend might be starting or crashing.
+    // If we get a 500, 502, 503, or 504, the backend might be starting (cold start).
     if (res.status >= 500 && retries > 0) {
-      console.warn(`[TulasiAPI] Server error ${res.status}. Retrying in ${backoff}ms... (${retries} retries left)`);
+      console.warn(`[Sync] Backend status ${res.status}. Synchronizing in ${backoff}ms... (${retries} retries left)`);
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
 
-    // Silently dismiss any stale loading toast on recovery
-    if (isBrowser) toast.dismiss("retry-toast");
     return res;
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (retries > 0 && err.name !== "AbortError") {
-      console.warn(`[TulasiAPI] Network error. Retrying in ${backoff}ms... (${retries} retries left)`, err);
+      console.warn(`[Sync] Network handshake delayed. Retrying in ${backoff}ms... (${retries} retries left)`);
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
-    if (isBrowser) toast.dismiss("retry-toast");
     if (err.name === "AbortError") throw new Error("Request timed out (60s). Please try again.");
     throw err;
   }
