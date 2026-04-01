@@ -541,28 +541,27 @@ function Footer() {
           </div>
 
           {/* RIGHT: Contact & Links */}
-          <div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right" }}>
             <h4 style={{ color: "white", fontWeight: 900, marginBottom: 20, fontSize: 11, textTransform: "uppercase", letterSpacing: 2.5 }}>Connect With Us</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-end" }}>
               <a href="mailto:abishekramamoorthy22@gmail.com" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
-                <Mail size={16} /> abishekramamoorthy22@gmail.com
+                abishekramamoorthy22@gmail.com <Mail size={16} />
               </a>
               <a href="tel:6369538345" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
-                <Phone size={16} /> +91 63695 38345
+                +91 63695 38345 <Phone size={16} />
               </a>
               <a href="https://www.instagram.com/_.abi22._/" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
-                <Instagram size={16} /> @_.abi22._
+                @_.abi22._ <Instagram size={16} />
               </a>
             </div>
           </div>
         </div>
 
-        <div style={{ paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 20, width: "100%" }}>
-          <div />
+        <div style={{ paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
           <span style={{ color: "var(--text-muted)", fontSize: 13, fontWeight: 600, textAlign: "center" }}>
             Founded &amp; Built by Abishek R • © 2026 Tulasi AI Labs
           </span>
-          <div style={{ display: "flex", gap: 24, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 24 }}>
              <Link href="/contact" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Contact Us</Link>
              <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Privacy</Link>
              <Link href="/terms" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Terms</Link>
