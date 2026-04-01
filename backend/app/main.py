@@ -44,151 +44,137 @@ async def lifespan(app: FastAPI):
             
             # ── 🚨 DATABASE AUTO-MIGRATION 🚨 ────────────────────
             from app.core.database import engine
-            from sqlalchemy import text
+            from sqlalchemy import text, inspect
             
-            with engine.connect() as conn:
-                # Step 1 & 2: Review table patches
-                try:
-                    with conn.begin():
-                        for sql in [
-                            'ALTER TABLE review ADD COLUMN user_id INTEGER;',
-                            'ALTER TABLE review ADD COLUMN email VARCHAR;',
-                            'ALTER TABLE review ADD COLUMN role VARCHAR;',
-                            'ALTER TABLE review ADD COLUMN rating INTEGER;',
-                            'ALTER TABLE review ADD COLUMN created_at TIMESTAMP;',
-                            'ALTER TABLE review ADD COLUMN is_featured BOOLEAN DEFAULT 0;'
-                        ]:
-                            try:
-                                conn.execute(text(sql))
-                            except: pass
-                except Exception as e:
-                    print(f"[Migration Warning] Review table patches: {e}")
+            inspector = inspect(engine)
+            tables = inspector.get_table_names()
 
-                # Step 3: Handle User table migrations
-                try:
-                    with conn.begin():
-                        try:
-                            conn.execute(text('ALTER TABLE "user" ADD COLUMN pro_expiry_date VARCHAR;'))
-                        except: pass
-                        try:
-                            conn.execute(text('ALTER TABLE "user" ADD COLUMN is_pro BOOLEAN DEFAULT 0;'))
-                        except: pass
-                except Exception as e:
-                    print(f"[Migration Warning] User table migrations: {e}")
+            def add_column_if_missing(table_name, column_name, column_type, default=None):
+                """Helper to add a column only if it doesn't already exist."""
+                existing_cols = [c["name"] for c in inspector.get_columns(table_name)]
+                if column_name not in existing_cols:
+                    try:
+                        # We use a fresh connection for each ALTER to prevent transaction poisoning
+                        with engine.begin() as conn:
+                            default_clause = f" DEFAULT {default}" if default is not None else ""
+                            conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN "{column_name}" {column_type}{default_clause};'))
+                        print(f"[Migration] Added column '{column_name}' to '{table_name}'.")
+                    except Exception as e:
+                        print(f"[Migration Warning] Failed to add column '{column_name}' to '{table_name}': {e}")
+                return column_name in existing_cols or column_name in [c["name"] for c in inspector.get_columns(table_name)]
 
-                # Step 4: Handle GroupMessage migrations
-                try:
-                    with conn.begin():
-                        try:
-                            conn.execute(text('ALTER TABLE groupmessage ADD COLUMN is_encrypted BOOLEAN DEFAULT 0;'))
-                        except: pass
-                except Exception as e:
-                    print(f"[Migration Warning] GroupMessage migrations: {e}")
+            # Step 1: Review Table
+            if "review" in tables:
+                add_column_if_missing("review", "user_id", "INTEGER")
+                add_column_if_missing("review", "email", "VARCHAR")
+                add_column_if_missing("review", "role", "VARCHAR")
+                add_column_if_missing("review", "rating", "INTEGER")
+                add_column_if_missing("review", "created_at", "TIMESTAMP")
+                add_column_if_missing("review", "is_featured", "BOOLEAN", default="FALSE")
 
-                # Step 5: Handle reserved keywords rename ('mode')
-                try:
-                    with conn.begin():
-                        inspector = inspect(engine)
-                        # Hackathon rename
-                        hackathon_cols = [c["name"] for c in inspector.get_columns("hackathon")]
-                        if "mode" in hackathon_cols and "event_mode" not in hackathon_cols:
-                            conn.execute(text('ALTER TABLE hackathon RENAME COLUMN "mode" TO event_mode;'))
-                            print("[Migration] Renamed 'mode' to 'event_mode' in hackathon.")
-                        
-                        # SavedResume rename
-                        if "savedresume" in inspector.get_table_names():
-                            sr_cols = [c["name"] for c in inspector.get_columns("savedresume")]
-                            if "mode" in sr_cols and "resume_mode" not in sr_cols:
-                                conn.execute(text('ALTER TABLE savedresume RENAME COLUMN "mode" TO resume_mode;'))
-                                print("[Migration] Renamed 'mode' to 'resume_mode' in savedresume.")
-                except Exception as e:
-                    print(f"[Migration Warning] Column renames: {e}")
+            # Step 2: User Table
+            if "user" in tables:
+                add_column_if_missing("user", "pro_expiry_date", "VARCHAR")
+                add_column_if_missing("user", "is_pro", "BOOLEAN", default="FALSE")
+                add_column_if_missing("user", "chats_today", "INTEGER", default="0")
+                add_column_if_missing("user", "last_reset_date", "VARCHAR")
 
-                # Step 6: Ensure new columns exist
+                # Global Unlock Action (PRO status sync)
                 try:
-                    with conn.begin():
-                        inspector = inspect(engine)
-                        existing_cols = [c["name"] for c in inspector.get_columns("hackathon")]
-                        for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "event_mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
-                            if col not in existing_cols:
-                                try:
-                                    conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN "{col}" VARCHAR;'))
-                                except Exception as e:
-                                    print(f"[Migration Warning] Add {col}: {e}")
-
-                        # User Table — Global Pro Sync
-                        existing_user_cols = [c["name"] for c in inspector.get_columns("user")]
-                        for col in ["is_pro", "chats_today", "last_reset_date", "pro_expiry_date"]:
-                            if col not in existing_user_cols:
-                                try:
-                                    default = "1" if col == "is_pro" else "0" if col == "chats_today" else "NULL"
-                                    col_types = "BOOLEAN" if col=="is_pro" else "INTEGER" if col=="chats_today" else "VARCHAR"
-                                    conn.execute(text(f'ALTER TABLE "user" ADD COLUMN {col} {col_types} DEFAULT {default};'))
-                                except Exception as e:
-                                    print(f"[Migration Warning] Add user col {col}: {e}")
-                except Exception as e:
-                    print(f"[Migration Warning] Schema expansion failed: {e}")
-                
-                # Step 7: Global Unlock
-                try:
-                    with conn.begin():
-                        conn.execute(text('UPDATE "user" SET is_pro = 1 WHERE is_pro = 0 OR is_pro IS NULL;'))
+                    with engine.begin() as conn:
+                        conn.execute(text('UPDATE "user" SET is_pro = TRUE WHERE is_pro IS FALSE OR is_pro IS NULL;'))
                         conn.execute(text('UPDATE "user" SET chats_today = 0;'))
-                        print("[Migration] PLATINUM PRO status verified for all users.")
+                    print("[Migration] PLATINUM PRO status verified for all users.")
                 except Exception as e:
-                    print(f"[Migration Warning] Global Unlock: {e}")
+                    print(f"[Migration Warning] Global Unlock failed: {e}")
 
-                # Step 8: Handle SavedResume schema expansion
-                try:
-                    with conn.begin():
-                        inspector = inspect(engine)
-                        if "savedresume" in inspector.get_table_names():
-                            existing_sr_cols = [c["name"] for c in inspector.get_columns("savedresume")]
-                            if "mode" not in existing_sr_cols:
-                                conn.execute(text('ALTER TABLE savedresume ADD COLUMN "mode" VARCHAR DEFAULT \'ATS-Optimized\';'))
-                                print("[Migration] Added 'mode' to savedresume.")
-                except Exception as e:
-                    print(f"[Migration Warning] SavedResume schema check: {e}")
+            # Step 3: GroupMessage Table
+            if "groupmessage" in tables:
+                add_column_if_missing("groupmessage", "is_encrypted", "BOOLEAN", default="FALSE")
 
-                # Step 9: Seeding
-                try:
-                    with conn.begin():
-                        # Seed Admin
-                        user_count_stmt = text('SELECT count(*) as c FROM "user"')
-                        user_count_res = conn.execute(user_count_stmt)
-                        if user_count_res.mappings().first()["c"] == 0:
-                            from app.core.security import get_password_hash
-                            from app.core.config import settings
-                            import uuid
-                            admin_mail = settings.ADMIN_EMAIL
-                            admin_pass = get_password_hash("password")
-                            code = uuid.uuid4().hex[:8].upper()
-                            conn.execute(text('INSERT INTO "user" (email, name, hashed_password, role, invite_code, is_pro, provider, streak, longest_streak, xp, level, chats_today, created_at, last_seen, is_active) VALUES (:e, :n, :p, :r, :c, 1, :pr, 0, 0, 0, 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)'),
-                            {"e": admin_mail, "n": "Super Admin", "p": admin_pass, "r": "admin", "c": code, "pr": "email"})
-                            print("[Migration] 🌱 Seeded initial admin account.")
+            # Step 4: Hackathon Table (Handling mode -> event_mode rename)
+            if "hackathon" in tables:
+                cols = [c["name"] for c in inspector.get_columns("hackathon")]
+                if "mode" in cols and "event_mode" not in cols:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(text('ALTER TABLE hackathon RENAME COLUMN "mode" TO event_mode;'))
+                        print("[Migration] Renamed 'mode' to 'event_mode' in hackathon.")
+                    except Exception as e:
+                        print(f"[Migration Warning] Failed to rename 'mode' in hackathon: {e}")
 
-                        # Community Sync
-                        group_count = conn.execute(text("SELECT count(*) as c FROM \"group\"")).mappings().first()["c"]
-                        if group_count == 0:
-                            conn.execute(text("INSERT INTO \"group\" (name, description, join_code, created_by, created_at) VALUES ('Global Community', 'The official hub for all Tulasi AI orbits.', 'ORBIT1', 1, CURRENT_TIMESTAMP)"))
-                            print("[Migration] 🌍 Initialized Global Community orbital.")
+                # Ensure all other hackathon columns exist
+                hackathon_fields = [
+                    ("organizer", "VARCHAR"), ("description", "VARCHAR"), ("prize_pool", "VARCHAR"),
+                    ("deadline", "VARCHAR"), ("registration_deadline", "VARCHAR"), ("registration_link", "VARCHAR"),
+                    ("tags", "VARCHAR"), ("image_url", "VARCHAR"), ("participants_count", "INTEGER"),
+                    ("status", "VARCHAR"), ("event_mode", "VARCHAR"), ("difficulty", "VARCHAR"),
+                    ("team_size", "VARCHAR"), ("start_date", "VARCHAR"), ("end_date", "VARCHAR"),
+                    ("domains", "VARCHAR"), ("currency", "VARCHAR"), ("location", "VARCHAR")
+                ]
+                for col_name, col_type in hackathon_fields:
+                    add_column_if_missing("hackathon", col_name, col_type)
 
-                        # Hackathon Seed
-                        hack_count = conn.execute(text("SELECT count(*) as c FROM hackathon")).mappings().first()["c"]
-                        if hack_count == 0:
-                            hacks = [
-                                {"t": "AI for India 2026", "o": "Tulasi AI", "d": "Build the next generation of social AI tools focused on regional accessibility.", "p": "₹5,00,000", "dl": "2026-05-15", "rl": "https://tulasiai.vercel.app/hackathons/1", "tg": "AI, ML, Social Impact", "iu": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e", "m": "Hybrid", "diff": "Medium", "ts": "1-4", "sd": "2026-05-20", "ed": "2026-05-22", "dom": "Engineering", "cur": "INR"},
-                                {"t": "Zero-Key AI Hack", "o": "Meta-Labs", "d": "Design AI engines that require zero API keys using edge-compute-only models.", "p": "$10,000", "dl": "2026-04-10", "rl": "https://example.com/zero-key", "tg": "Edge, Security", "iu": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b", "m": "Remote", "diff": "Hard", "ts": "1-2", "sd": "2026-04-15", "ed": "2026-04-16", "dom": "Security", "cur": "USD"},
-                                {"t": "Web3 Orbit 24H", "o": "Polygon", "d": "Rapid prototyping of decentralized learning platforms on Polygon zKEVM.", "p": "5,000 MATIC", "dl": "2026-06-01", "rl": "https://example.com/web3", "tg": "Web3, Blockchain", "iu": "https://images.unsplash.com/photo-1639762681057-408a5197bb40", "m": "In-Person (Bangalore)", "diff": "Easy", "ts": "1-3", "sd": "2026-06-05", "ed": "2026-06-06", "dom": "Web3", "cur": "MATIC"}
-                            ]
-                            for h in hacks:
-                                conn.execute(text("""
-                                    INSERT INTO hackathon (name, organizer, description, prize, prize_pool, deadline, link, registration_link, tags, image_url, event_mode, difficulty, team_size, start_date, end_date, domains, currency, participants_count, status, is_active) 
-                                    VALUES (:t, :o, :d, :p, :p, :dl, :rl, :rl, :tg, :iu, :m, :diff, :ts, :sd, :ed, :dom, :cur, 0, 'Active', 1)
-                                """), h)
-                            print("[Migration] 🌱 Seeded initial high-tech hackathons.")
-                except Exception as e:
-                    print(f"[Migration Error] Seeding: {e}")
+            # Step 5: SavedResume Table
+            if "savedresume" in tables:
+                cols = [c["name"] for c in inspector.get_columns("savedresume")]
+                if "mode" in cols and "resume_mode" not in cols:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(text('ALTER TABLE savedresume RENAME COLUMN "mode" TO resume_mode;'))
+                        print("[Migration] Renamed 'mode' to 'resume_mode' in savedresume.")
+                    except Exception as e:
+                        print(f"[Migration Warning] Failed to rename 'mode' in savedresume: {e}")
+                
+                # Ensure resume_mode exists if neither 'mode' nor 'resume_mode' were found (edge case)
+                add_column_if_missing("savedresume", "resume_mode", "VARCHAR", default="'ATS-Optimized'")
+
+            # Step 6: Seeding
+            # Seed Admin User
+            try:
+                with engine.begin() as conn:
+                    user_count = conn.execute(text('SELECT count(*) as c FROM "user"')).mappings().first()["c"]
+                    if user_count == 0:
+                        from app.core.security import get_password_hash
+                        from app.core.config import settings
+                        import uuid
+                        admin_mail = settings.ADMIN_EMAIL
+                        admin_pass = get_password_hash("password")
+                        code = uuid.uuid4().hex[:8].upper()
+                        conn.execute(text('INSERT INTO "user" (email, name, hashed_password, role, invite_code, is_pro, provider, streak, longest_streak, xp, level, chats_today, created_at, last_seen, is_active) VALUES (:e, :n, :p, :r, :c, TRUE, :pr, 0, 0, 0, 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, TRUE)'),
+                        {"e": admin_mail, "n": "Super Admin", "p": admin_pass, "r": "admin", "c": code, "pr": "email"})
+                        print("[Migration] 🌱 Seeded initial admin account.")
+            except Exception as e:
+                print(f"[Migration Warning] Failed to seed Admin User: {e}")
+
+            # Seed Global Community
+            try:
+                with engine.begin() as conn:
+                    group_count = conn.execute(text('SELECT count(*) as c FROM "group"')).mappings().first()["c"]
+                    if group_count == 0:
+                        conn.execute(text("INSERT INTO \"group\" (name, description, join_code, created_by, created_at) VALUES ('Global Community', 'The official hub for all Tulasi AI orbits.', 'ORBIT1', 1, CURRENT_TIMESTAMP)"))
+                        print("[Migration] 🌍 Initialized Global Community orbit.")
+            except Exception as e:
+                print(f"[Migration Warning] Failed to seed Global Community: {e}")
+
+            # Seed Hackathons
+            try:
+                with engine.begin() as conn:
+                    hack_count = conn.execute(text("SELECT count(*) as c FROM hackathon")).mappings().first()["c"]
+                    if hack_count == 0:
+                        hacks = [
+                            {"t": "AI for India 2026", "o": "Tulasi AI", "d": "Build the next generation of social AI tools focused on regional accessibility.", "p": "₹5,00,000", "dl": "2026-05-15", "rl": "https://tulasiai.vercel.app/hackathons/1", "tg": "AI, ML, Social Impact", "iu": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e", "m": "Hybrid", "diff": "Medium", "ts": "1-4", "sd": "2026-05-20", "ed": "2026-05-22", "dom": "Engineering", "cur": "INR"},
+                            {"t": "Zero-Key AI Hack", "o": "Meta-Labs", "d": "Design AI engines that require zero API keys using edge-compute-only models.", "p": "$10,000", "dl": "2026-04-10", "rl": "https://example.com/zero-key", "tg": "Edge, Security", "iu": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b", "m": "Remote", "diff": "Hard", "ts": "1-2", "sd": "2026-04-15", "ed": "2026-04-16", "dom": "Security", "cur": "USD"},
+                            {"t": "Web3 Orbit 24H", "o": "Polygon", "d": "Rapid prototyping of decentralized learning platforms on Polygon zKEVM.", "p": "5,000 MATIC", "dl": "2026-06-01", "rl": "https://example.com/web3", "tg": "Web3, Blockchain", "iu": "https://images.unsplash.com/photo-1639762681057-408a5197bb40", "m": "In-Person (Bangalore)", "diff": "Easy", "ts": "1-3", "sd": "2026-06-05", "ed": "2026-06-06", "dom": "Web3", "cur": "MATIC"}
+                        ]
+                        for h in hacks:
+                            conn.execute(text("""
+                                INSERT INTO hackathon (name, organizer, description, prize, prize_pool, deadline, link, registration_link, tags, image_url, event_mode, difficulty, team_size, start_date, end_date, domains, currency, participants_count, status, is_active) 
+                                VALUES (:t, :o, :d, :p, :p, :dl, :rl, :rl, :tg, :iu, :m, :diff, :ts, :sd, :ed, :dom, :cur, 0, 'Active', TRUE)
+                            """), h)
+                        print("[Migration] 🌱 Seeded initial high-tech hackathons.")
+            except Exception as e:
+                print(f"[Migration Warning] Failed to seed Hackathons: {e}")
 
             # ───────────────────────────────────────────────────
             
