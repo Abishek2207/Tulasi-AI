@@ -30,5 +30,11 @@ def get_ai_response(
     Generate an AI response with full resilience via HybridAIClient.
     """
     # HybridAIClient now handles text and image-based recovery paths
-    response = ai_client.get_response(message, history=history, image_data=image_data, system_instruction=system_instruction)
+    response = ai_client.get_response(
+        message, 
+        history=history, 
+        image_data=image_data, 
+        system_instruction=system_instruction,
+        force_model=force_model
+    )
     return str(response)

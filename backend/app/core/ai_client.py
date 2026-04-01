@@ -301,15 +301,41 @@ class HybridAIClient:
         image_data: Optional[bytes] = None,
         stream: bool = False,
         system_instruction: Optional[str] = None,
+        force_model: Optional[str] = None,
     ) -> Union[str, Generator]:
         """
         Main entry point. Tries providers in order:
           Gemini (all models) → OpenRouter (all free models) → Groq → Mock
+        If force_model is provided, it tries that model FIRST if it matches a provider.
         """
         history = history or []
         gemini_contents = self._format_for_gemini(message, history, image_data=image_data)
         compat_messages = self._format_for_openai_compat(message, history, system_instruction=system_instruction)
         errors: List[str] = []
+
+        # ── 0. Handle force_model override ──
+        if force_model:
+            # Special case for 'complex_reasoning' -> try the best Gemini model available
+            if force_model == "complex_reasoning":
+                force_model = self.GEMINI_MODELS[0]
+
+            # Try to determine provider based on model name
+            try:
+                if any(m in force_model for m in ["gemini", "gemma"]) or force_model.startswith("models/"):
+                    print(f"🎯 [AI] Forcing model: {force_model} (Gemini/Google path)")
+                    res = self._call_gemini(gemini_contents, force_model, stream=stream, system_instruction=system_instruction)
+                    if res: return res
+                elif "/" in force_model: # Likely OpenRouter format provider/model
+                    print(f"🎯 [AI] Forcing model: {force_model} (OpenRouter path)")
+                    res = self._call_openrouter(compat_messages, model=force_model, stream=stream)
+                    if res: return res
+                elif "llama" in force_model.lower():
+                    print(f"🎯 [AI] Forcing model: {force_model} (Groq path)")
+                    res = self._call_groq(compat_messages, stream=stream)
+                    if res: return res
+            except Exception as fe:
+                print(f"⚠️ [AI] Force model '{force_model}' failed, falling back to chain: {fe}")
+                errors.append(f"ForceModel/{force_model}: {fe}")
 
         if stream:
             def master_gen():
