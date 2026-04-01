@@ -56,11 +56,9 @@ export interface Hackathon {
 // Priority: 1. ENV VAR (from .env.local or Vercel)
 //           2. Localhost:10000 (if in development)
 //           3. Production Render URL (Final Fallback)
-const DEFAULT_PROD_URL = "https://tulasi-ai-wgwl.onrender.com";
-const LOCAL_DEV_URL = "http://localhost:10000";
+const LOCAL_DEV_URL = "http://127.0.0.1:10000";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 
-  (isDev ? LOCAL_DEV_URL : DEFAULT_PROD_URL);
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || LOCAL_DEV_URL;
 
 /** Centralised debug logger — always prints in dev; silent in prod unless token missing */
 function log(label: string, data?: unknown) {
@@ -92,7 +90,7 @@ export function websocketUrl(path: string): string {
 
 const FETCH_TIMEOUT_MS = 60_000; // 60s timeout for AI endpoints
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 5, backoff = 1000): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, retries = 1, backoff = 500): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -185,8 +183,11 @@ async function request<T>(
   } catch (err: unknown) {
     const error = err as Error;
     const msg = error.message || "Network Error";
-    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED")) {
-      throw new Error("Backend unreachable. Check your connection.");
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED") || msg.includes("ECONNREFUSED")) {
+      const isLocal = API_URL.includes("localhost") || API_URL.includes("127.0.0.1");
+      throw new Error(isLocal 
+        ? `Backend unreachable at ${API_URL}. Ensure your FastAPI server is running (npm run backend).`
+        : "Backend unreachable. Check your internet connection or Render status.");
     }
     throw new Error(msg);
   }
