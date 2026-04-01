@@ -326,6 +326,13 @@ app.mount("/socket.io", socket_app)
 
 
 # ── Root Endpoint ──────────────────────────────────────────────────
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "message": "TulasiAI Backend Running 🚀"
+    }
+
 @app.get("/api")
 def api_root():
     return {
