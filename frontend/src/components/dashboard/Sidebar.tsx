@@ -83,7 +83,7 @@ export default function Sidebar() {
 
   const stats = useSelector((s: RootState) => s.ui.stats);
   const currentUser = sessionUser;
-  const currentXp = stats.xp;
+  const currentXp = stats?.xp ?? 0;
   const chatsUsedCurrent = chatsUsed;
   const chatLimit = 100 + Math.floor(currentXp / 100);
   const usagePercent = Math.min((chatsUsedCurrent / chatLimit) * 100, 100);

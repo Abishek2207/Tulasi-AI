@@ -79,7 +79,7 @@ export default function ResumeBuilderPage() {
       cacheRef.current.set(cacheKey, data);
       setResult(data);
     } catch (err: any) {
-      setError(err.message || "Analysis failed. Connecting to AI...");
+      setError(err.message || "Analysis failed. Initializing analysis...");
     } finally { setLoading(false); }
   };
 

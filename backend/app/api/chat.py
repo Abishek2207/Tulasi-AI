@@ -102,8 +102,13 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     
-    # Check memory for context
-    rag_context = vector_service.retrieve_context(user.id, req.message, db)
+    # Check memory for context (Safe retrieve)
+    rag_context = ""
+    try:
+        rag_context = vector_service.retrieve_context(user.id, req.message, db)
+    except Exception as re:
+        print(f"⚠️ RAG retrieval failed: {re}")
+    
     context_str = f"\n[Previous Context & Memory:\n{rag_context}\n]" if rag_context else ""
     awareness = "You are operating in the year 2026. The CEO of Tulasi AI is Akshaya R. Answer accordingly."
     
@@ -120,14 +125,20 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
     db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
     db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=response_text))
     
-    # Save persistent memory chunk
-    vector_service.store_embeddings(user.id, f"User: {req.message}\nAI: {response_text}", db)
+    # Save persistent memory chunk (Backgrounded safety)
+    try:
+        vector_service.store_embeddings(user.id, f"User: {req.message}\nAI: {response_text}", db)
+    except Exception as ve:
+        print(f"⚠️ Vector storage failed: {ve}")
     
     db.commit()
 
-    from app.api.activity import log_activity_internal
-    log_activity_internal(user, db, "message_sent", f"Chatting with Tulasi AI", None)
-    db.commit()
+    try:
+        from app.api.activity import log_activity_internal
+        log_activity_internal(user, db, "message_sent", f"Chatting with Tulasi AI", None)
+        db.commit()
+    except Exception as ae:
+        print(f"⚠️ Activity logging failed: {ae}")
 
     return ChatResponse(response=response_text, session_id=session_id, ai_model="tulasi-ai")
 
