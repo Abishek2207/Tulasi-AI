@@ -46,7 +46,7 @@ class ReviewOut(BaseModel):
         return v
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Pydantic v2 (replaces orm_mode)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
