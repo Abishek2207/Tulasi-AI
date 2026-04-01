@@ -11,6 +11,8 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { VoiceButton } from "@/components/VoiceButton";
+import { ReviewForm } from "@/components/ReviewForm";
+import { Star } from "lucide-react";
 
 const GREETING = "Hello! I'm Tulasi AI, your personal learning companion. Ask me anything — coding concepts, career advice, interview prep, or system design.";
 
@@ -177,6 +179,9 @@ export default function ChatPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [msgCount, setMsgCount] = useState(0);
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -254,6 +259,13 @@ export default function ChatPage() {
         fetchSessions();
       }
       setMessages(prev => [...prev, { role: "assistant", content: res.response || "..." }]);
+      
+      // Prompt for review after 5 user messages
+      const nextCount = msgCount + 1;
+      setMsgCount(nextCount);
+      if (nextCount === 5) {
+        setShowReviewPrompt(true);
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to send message");
     } finally {
@@ -310,6 +322,76 @@ export default function ChatPage() {
           )}
           <div ref={endRef} />
         </div>
+
+        {/* Review Prompt */}
+        <AnimatePresence>
+          {showReviewPrompt && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              style={{ 
+                margin: "0 20px 16px", padding: "12px 20px", 
+                background: "linear-gradient(90deg, rgba(139,92,246,0.15) 0%, rgba(6,182,212,0.15) 100%)",
+                borderRadius: 16, border: "1px solid rgba(139,92,246,0.25)",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 16, boxShadow: "0 0 20px rgba(0,0,0,0.2)"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFD93D" }}>
+                   <Star size={18} fill="#FFD93D" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "white" }}>Help us improve?</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Share your experience and get 100 XP instantly.</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button 
+                  onClick={() => setShowReviewPrompt(false)}
+                  style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                >
+                  NOT NOW
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsReviewModalOpen(true);
+                    setShowReviewPrompt(false);
+                  }}
+                  style={{ background: "var(--brand-primary)", color: "white", border: "none", padding: "6px 14px", borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+                >
+                  REVIEW NOW
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Review Modal Integration */}
+        <AnimatePresence>
+          {isReviewModalOpen && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+             <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setIsReviewModalOpen(false)}
+               style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", zIndex: 1000 }}
+             />
+             <motion.div 
+               initial={{ opacity: 0, scale: 0.95, y: 20 }}
+               animate={{ opacity: 1, scale: 1, y: 0 }}
+               exit={{ opacity: 0, scale: 0.95, y: 20 }}
+               style={{ 
+                 position: "relative", zIndex: 1001, width: "100%", maxWidth: 600,
+                 background: "#0B0E14", border: "1px solid rgba(255,255,255,0.08)",
+                 borderRadius: 32, padding: "40px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+               }}
+             >
+               <ReviewForm onClose={() => setIsReviewModalOpen(false)} />
+             </motion.div>
+           </div>
+          )}
+        </AnimatePresence>
 
         {/* Input */}
         <div style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "10px 16px", display: "flex", gap: 12, alignItems: "flex-end", backdropFilter: "blur(12px)" }}>

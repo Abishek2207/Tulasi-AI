@@ -45,138 +45,135 @@ async def lifespan(app: FastAPI):
             # ── 🚨 DATABASE AUTO-MIGRATION 🚨 ────────────────────
             from app.core.database import engine
             from sqlalchemy import text
-            with engine.begin() as conn:
-                # Step 1: Handling Review table migration natively handles via create_all
-                # Additional columns patched below if migrating from very old SQLite baseline
+            
+            with engine.connect() as conn:
+                # Step 1 & 2: Review table patches
+                try:
+                    with conn.begin():
+                        for sql in [
+                            'ALTER TABLE review ADD COLUMN user_id INTEGER;',
+                            'ALTER TABLE review ADD COLUMN email VARCHAR;',
+                            'ALTER TABLE review ADD COLUMN role VARCHAR;',
+                            'ALTER TABLE review ADD COLUMN rating INTEGER;',
+                            'ALTER TABLE review ADD COLUMN created_at TIMESTAMP;',
+                            'ALTER TABLE review ADD COLUMN is_featured BOOLEAN DEFAULT 0;'
+                        ]:
+                            try:
+                                conn.execute(text(sql))
+                            except: pass
+                except Exception as e:
+                    print(f"[Migration Warning] Review table patches: {e}")
 
-                # Step 2: Add missing columns if table already existed but was old
-                try:
-                    conn.execute(text('ALTER TABLE review ADD COLUMN user_id INTEGER;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE review ADD COLUMN email VARCHAR;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE review ADD COLUMN role VARCHAR;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE review ADD COLUMN rating INTEGER;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE review ADD COLUMN created_at TIMESTAMP;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE review ADD COLUMN is_featured BOOLEAN DEFAULT 0;'))
-                except: pass
-                
                 # Step 3: Handle User table migrations
                 try:
-                    conn.execute(text('ALTER TABLE "user" ADD COLUMN pro_expiry_date VARCHAR;'))
-                except: pass
-                try:
-                    conn.execute(text('ALTER TABLE "user" ADD COLUMN is_pro BOOLEAN DEFAULT 0;'))
-                except: pass
+                    with conn.begin():
+                        try:
+                            conn.execute(text('ALTER TABLE "user" ADD COLUMN pro_expiry_date VARCHAR;'))
+                        except: pass
+                        try:
+                            conn.execute(text('ALTER TABLE "user" ADD COLUMN is_pro BOOLEAN DEFAULT 0;'))
+                        except: pass
+                except Exception as e:
+                    print(f"[Migration Warning] User table migrations: {e}")
 
                 # Step 4: Handle GroupMessage migrations
                 try:
-                    conn.execute(text('ALTER TABLE groupmessage ADD COLUMN is_encrypted BOOLEAN DEFAULT 0;'))
-                except: pass
-
-                # Step 4: Handle reserved keywords rename ('mode')
-                try:
-                    # Rename existing 'mode' column to 'event_mode' in hackathon
-                    inspector = inspect(engine)
-                    hackathon_cols = [c["name"] for c in inspector.get_columns("hackathon")]
-                    if "mode" in hackathon_cols and "event_mode" not in hackathon_cols:
-                        conn.execute(text('ALTER TABLE hackathon RENAME COLUMN "mode" TO event_mode;'))
-                        print("[Migration] Renamed 'mode' to 'event_mode' in hackathon.")
-                    
-                    # Also handle SavedResume if it exists
-                    if "savedresume" in inspector.get_table_names():
-                        sr_cols = [c["name"] for c in inspector.get_columns("savedresume")]
-                        if "mode" in sr_cols and "resume_mode" not in sr_cols:
-                            conn.execute(text('ALTER TABLE savedresume RENAME COLUMN "mode" TO resume_mode;'))
-                            print("[Migration] Renamed 'mode' to 'resume_mode' in savedresume.")
+                    with conn.begin():
+                        try:
+                            conn.execute(text('ALTER TABLE groupmessage ADD COLUMN is_encrypted BOOLEAN DEFAULT 0;'))
+                        except: pass
                 except Exception as e:
-                    print(f"[Migration Warning] Rename 'mode': {e}")
+                    print(f"[Migration Warning] GroupMessage migrations: {e}")
 
-                # Step 5: Ensure new columns exist (Quoted for safety)
+                # Step 5: Handle reserved keywords rename ('mode')
                 try:
-                    inspector = inspect(engine)
-                    existing_cols = [c["name"] for c in inspector.get_columns("hackathon")]
-                    for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "event_mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
-                        if col not in existing_cols:
-                            try:
-                                conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN "{col}" VARCHAR;'))
-                            except Exception as e:
-                                print(f"[Migration Warning] Add {col}: {e}")
-
-                    # Step 6: User Table — UNLOCK PLATINUM PRO & SYNC CHATS
-                    existing_user_cols = [c["name"] for c in inspector.get_columns("user")]
-
-                    for col in ["is_pro", "chats_today", "last_reset_date", "pro_expiry_date"]:
-                        if col not in existing_user_cols:
-                            try:
-                                default = "1" if col == "is_pro" else "0" if col == "chats_today" else "NULL"
-                                col_types = "BOOLEAN" if col=="is_pro" else "INTEGER" if col=="chats_today" else "VARCHAR"
-                                conn.execute(text(f'ALTER TABLE "user" ADD COLUMN {col} {col_types} DEFAULT {default};'))
-                            except Exception as e:
-                                print(f"[Migration Warning] Add user col {col}: {e}")
+                    with conn.begin():
+                        inspector = inspect(engine)
+                        # Hackathon rename
+                        hackathon_cols = [c["name"] for c in inspector.get_columns("hackathon")]
+                        if "mode" in hackathon_cols and "event_mode" not in hackathon_cols:
+                            conn.execute(text('ALTER TABLE hackathon RENAME COLUMN "mode" TO event_mode;'))
+                            print("[Migration] Renamed 'mode' to 'event_mode' in hackathon.")
+                        
+                        # SavedResume rename
+                        if "savedresume" in inspector.get_table_names():
+                            sr_cols = [c["name"] for c in inspector.get_columns("savedresume")]
+                            if "mode" in sr_cols and "resume_mode" not in sr_cols:
+                                conn.execute(text('ALTER TABLE savedresume RENAME COLUMN "mode" TO resume_mode;'))
+                                print("[Migration] Renamed 'mode' to 'resume_mode' in savedresume.")
                 except Exception as e:
-                    print(f"[Migration Warning] Schema inspection failed: {e}")
+                    print(f"[Migration Warning] Column renames: {e}")
+
+                # Step 6: Ensure new columns exist
+                try:
+                    with conn.begin():
+                        inspector = inspect(engine)
+                        existing_cols = [c["name"] for c in inspector.get_columns("hackathon")]
+                        for col in ["organizer", "description", "prize_pool", "deadline", "registration_deadline", "registration_link", "tags", "image_url", "participants_count", "status", "event_mode", "difficulty", "team_size", "start_date", "end_date", "domains", "currency", "location"]:
+                            if col not in existing_cols:
+                                try:
+                                    conn.execute(text(f'ALTER TABLE hackathon ADD COLUMN "{col}" VARCHAR;'))
+                                except Exception as e:
+                                    print(f"[Migration Warning] Add {col}: {e}")
+
+                        # User Table — Global Pro Sync
+                        existing_user_cols = [c["name"] for c in inspector.get_columns("user")]
+                        for col in ["is_pro", "chats_today", "last_reset_date", "pro_expiry_date"]:
+                            if col not in existing_user_cols:
+                                try:
+                                    default = "1" if col == "is_pro" else "0" if col == "chats_today" else "NULL"
+                                    col_types = "BOOLEAN" if col=="is_pro" else "INTEGER" if col=="chats_today" else "VARCHAR"
+                                    conn.execute(text(f'ALTER TABLE "user" ADD COLUMN {col} {col_types} DEFAULT {default};'))
+                                except Exception as e:
+                                    print(f"[Migration Warning] Add user col {col}: {e}")
+                except Exception as e:
+                    print(f"[Migration Warning] Schema expansion failed: {e}")
                 
-                # GLOBAL UNLOCK: Force all existing users to PRO (Targeted and Safe)
+                # Step 7: Global Unlock
                 try:
-                    conn.execute(text('UPDATE "user" SET is_pro = 1 WHERE is_pro = 0 OR is_pro IS NULL;'))
-                    conn.execute(text('UPDATE "user" SET chats_today = 0;'))
-                    print("[Migration] PLATINUM PRO status verified for all users.")
+                    with conn.begin():
+                        conn.execute(text('UPDATE "user" SET is_pro = 1 WHERE is_pro = 0 OR is_pro IS NULL;'))
+                        conn.execute(text('UPDATE "user" SET chats_today = 0;'))
+                        print("[Migration] PLATINUM PRO status verified for all users.")
                 except Exception as e:
                     print(f"[Migration Warning] Global Unlock: {e}")
 
-                # Step 7: Create HackathonApplication table if not exists
-                # (Removed manual SQLite creation, create_all in init_db handles this safely for Postgres)
-
-                # Step 7.5: Handle SavedResume schema expansion
+                # Step 8: Handle SavedResume schema expansion
                 try:
-                    inspector = inspect(engine)
-                    existing_sr_cols = [c["name"] for c in inspector.get_columns("savedresume")]
-                    if "savedresume" in inspector.get_table_names():
-                        if "mode" not in existing_sr_cols:
-                            conn.execute(text('ALTER TABLE savedresume ADD COLUMN "mode" VARCHAR DEFAULT \'ATS-Optimized\';'))
-                            print("[Migration] Added 'mode' to savedresume.")
+                    with conn.begin():
+                        inspector = inspect(engine)
+                        if "savedresume" in inspector.get_table_names():
+                            existing_sr_cols = [c["name"] for c in inspector.get_columns("savedresume")]
+                            if "mode" not in existing_sr_cols:
+                                conn.execute(text('ALTER TABLE savedresume ADD COLUMN "mode" VARCHAR DEFAULT \'ATS-Optimized\';'))
+                                print("[Migration] Added 'mode' to savedresume.")
                 except Exception as e:
                     print(f"[Migration Warning] SavedResume schema check: {e}")
 
-                # Step 8: Ensure seed data (Fallback for empty databases)
+                # Step 9: Seeding
                 try:
-                    user_count_stmt = text('SELECT count(*) as c FROM "user"')
-                    user_count_res = conn.execute(user_count_stmt)
-                    if user_count_res.mappings().first()["c"] == 0:
-                        from app.core.security import get_password_hash
-                        from app.core.config import settings
-                        import uuid
-                        admin_mail = settings.ADMIN_EMAIL
-                        admin_pass = get_password_hash("password")
-                        code = uuid.uuid4().hex[:8].upper()
-                        conn.execute(text('INSERT INTO "user" (email, name, hashed_password, role, invite_code, is_pro, provider, streak, longest_streak, xp, level, chats_today, created_at, last_seen, is_active) VALUES (:e, :n, :p, :r, :c, 1, :pr, 0, 0, 0, 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)'),
-                        {"e": admin_mail, "n": "Super Admin", "p": admin_pass, "r": "admin", "c": code, "pr": "email"})
-                        print("[Migration] 🌱 Seeded initial admin account.")
+                    with conn.begin():
+                        # Seed Admin
+                        user_count_stmt = text('SELECT count(*) as c FROM "user"')
+                        user_count_res = conn.execute(user_count_stmt)
+                        if user_count_res.mappings().first()["c"] == 0:
+                            from app.core.security import get_password_hash
+                            from app.core.config import settings
+                            import uuid
+                            admin_mail = settings.ADMIN_EMAIL
+                            admin_pass = get_password_hash("password")
+                            code = uuid.uuid4().hex[:8].upper()
+                            conn.execute(text('INSERT INTO "user" (email, name, hashed_password, role, invite_code, is_pro, provider, streak, longest_streak, xp, level, chats_today, created_at, last_seen, is_active) VALUES (:e, :n, :p, :r, :c, 1, :pr, 0, 0, 0, 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)'),
+                            {"e": admin_mail, "n": "Super Admin", "p": admin_pass, "r": "admin", "c": code, "pr": "email"})
+                            print("[Migration] 🌱 Seeded initial admin account.")
 
-                    # Note: Reviews are NOT seeded on startup.
-                    # Only real user-submitted reviews appear on the platform.
-
-
-                    # ── 🤝 COMMUNITY SYNC ───────────────────────────
-                    try:
+                        # Community Sync
                         group_count = conn.execute(text("SELECT count(*) as c FROM \"group\"")).mappings().first()["c"]
                         if group_count == 0:
                             conn.execute(text("INSERT INTO \"group\" (name, description, join_code, created_by, created_at) VALUES ('Global Community', 'The official hub for all Tulasi AI orbits.', 'ORBIT1', 1, CURRENT_TIMESTAMP)"))
                             print("[Migration] 🌍 Initialized Global Community orbital.")
-                    except Exception as e: 
-                        print(f"[Migration Warning] Community Sync: {e}")
 
-                    # ── 🚀 HACKATHON DISCOVERY SEED ──────────────────
-                    try:
+                        # Hackathon Seed
                         hack_count = conn.execute(text("SELECT count(*) as c FROM hackathon")).mappings().first()["c"]
                         if hack_count == 0:
                             hacks = [
@@ -190,9 +187,6 @@ async def lifespan(app: FastAPI):
                                     VALUES (:t, :o, :d, :p, :p, :dl, :rl, :rl, :tg, :iu, :m, :diff, :ts, :sd, :ed, :dom, :cur, 0, 'Active', 1)
                                 """), h)
                             print("[Migration] 🌱 Seeded initial high-tech hackathons.")
-                    except Exception as e:
-                        print(f"[Migration Warning] Hackathon Seed: {e}")
-                    # ────────────────────────────────────────────────
                 except Exception as e:
                     print(f"[Migration Error] Seeding: {e}")
 
