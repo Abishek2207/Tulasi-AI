@@ -44,9 +44,11 @@ export default function ProfilePage() {
   useEffect(() => {
     if (session) activityApi.getStats(token).then(setStats).catch(() => {});
     if (session?.user) {
-      const u = session.user as { name?: string; bio?: string; skills?: string; avatar?: string };
+      const u = session.user as { name?: string; bio?: string; skills?: string; avatar?: string; image?: string };
       setFormData({ name: u.name || "", bio: u.bio || "", skills: u.skills || "" });
+      // Google OAuth photo or custom uploaded avatar
       if (u.avatar) setAvatarUrl(u.avatar);
+      else if (u.image) setAvatarUrl(u.image);
     }
   }, [session]);
 
@@ -137,14 +139,23 @@ export default function ProfilePage() {
             />
             <div style={{
               width: 110, height: 110, borderRadius: "50%",
-              background: avatarUrl ? `url(${avatarUrl}) center/cover` : "linear-gradient(135deg, #8B5CF6, #06B6D4)",
+              background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 44, fontWeight: 900, color: "white",
               position: "relative", zIndex: 1,
               border: "3px solid #05070D",
               overflow: "hidden"
             }}>
-              {!avatarUrl && initials}
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Profile"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                  onError={() => setAvatarUrl(null)}
+                />
+              ) : (
+                <span style={{ fontSize: 44, fontWeight: 900 }}>{initials}</span>
+              )}
               {removingBg && (
                 <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                    <Loader2 size={24} className="animate-spin" />

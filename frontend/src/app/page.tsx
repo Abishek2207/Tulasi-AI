@@ -355,7 +355,7 @@ function ReviewsSection() {
     
     const finalName = userName || form.name.trim();
     if (!finalName) return setFormError("Name is required.");
-    if (!form.review.trim()) return setFormError("Review is required.");
+    if (!form.review.trim() || form.review.trim().length < 10) return setFormError("Review must be at least 10 characters long.");
     if (form.rating === 0) return setFormError("Please select a star rating.");
     
     setSubmitting(true);

@@ -161,7 +161,13 @@ async function request<T>(
       let backendMsg = res.statusText;
       try {
         const errJson = await res.json();
-        backendMsg = errJson.detail || errJson.message || errJson.error || backendMsg;
+        if (errJson.detail && Array.isArray(errJson.detail)) {
+          backendMsg = errJson.detail.map((e: any) => e.msg || JSON.stringify(e)).join(". ");
+        } else if (typeof errJson.detail === "string") {
+          backendMsg = errJson.detail;
+        } else {
+          backendMsg = errJson.message || errJson.error || backendMsg;
+        }
       } catch (e) {}
       
       if (res.status >= 500) throw new Error(`500 Server Error: ${backendMsg}`);
