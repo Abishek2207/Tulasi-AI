@@ -104,40 +104,41 @@ def submit_review(
     reviewer_email = (data.email or "").strip() or None
 
     try:
-        # Try ORM insert first
+        # Save review with ORM
         new_review = Review(
             user_id=None,
             name=reviewer_name,
+            email=reviewer_email,
             role=data.role,
             review=data.review,
             rating=data.rating,
             created_at=now,
         )
-        session.add(new_review)
-        session.commit()
-        session.refresh(new_review)
-
-        # Try to update email if column exists
-        try:
-            session.execute(text(
-                "UPDATE review SET email = :email WHERE id = :id"
-            ), {"email": reviewer_email, "id": new_review.id})
-            session.commit()
-        except Exception:
-            pass
-
-        # [NEW] Award XP if email matches an existing user
+        
+        # Link user_id if email matches
         if reviewer_email:
-            user_statement = select(User).where(User.email == reviewer_email)
-            user = session.exec(user_statement).first()
+            user = session.exec(select(User).where(User.email == reviewer_email)).first()
             if user:
+                new_review.user_id = user.id
                 user.xp += 100
                 session.add(user)
                 try:
                     log_activity_internal(user, session, "review_submitted", "Awarded 100 XP for platform review", None)
                 except: pass
-                session.commit()
-                print(f"⭐ 100 XP awarded to {user.email} for review!")
+        
+        session.add(new_review)
+        session.commit()
+        session.refresh(new_review)
+
+        return ReviewOut(
+            id=new_review.id,
+            name=new_review.name,
+            email=new_review.email,
+            role=new_review.role,
+            review=new_review.review,
+            rating=new_review.rating,
+            created_at=new_review.created_at,
+        )
 
         return ReviewOut(
             id=new_review.id,
