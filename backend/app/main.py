@@ -330,25 +330,16 @@ app.mount("/socket.io", socket_app)
 def api_root():
     return {
         "name": "Tulasi AI API",
-        "version": "3.0.0-0dcc484",
+        "version": "3.0.0",
         "status": "running",
         "docs": "/api/docs",
+        "health": "/api/health"
     }
 
 @app.get("/docs", include_in_schema=False)
 def docs_redirect():
     """Redirects /docs to the actual docs URL /api/docs"""
     return RedirectResponse(url="/api/docs")
-
-
-# ── API Root ───────────────────────────────────────────────────────
-@app.get("/api")
-def api_root():
-    return {
-        "message": "Tulasi AI API running",
-        "docs": "/api/docs",
-        "health": "/api/health"
-    }
 
 
 # ── Health Check ───────────────────────────────────────────────────

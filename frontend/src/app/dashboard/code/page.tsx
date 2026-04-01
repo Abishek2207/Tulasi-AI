@@ -43,6 +43,7 @@ export default function CodePracticePage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [execTime, setExecTime] = useState<number | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
@@ -81,11 +82,33 @@ export default function CodePracticePage() {
     setConsoleOutput(null);
     setCode(language.starter);
     setCustomInput((p as any).sample_input || "");
+    setCodeError(null);
+  };
+
+  // Helper: check if code is empty or only starter template
+  const isCodeEmpty = () => {
+    const trimmed = code.trim();
+    if (!trimmed) return true;
+    // Check if user hasn't changed the starter code at all
+    if (trimmed === language.starter.trim()) return false; // starter is fine to run
+    return false;
+  };
+
+  const isCodeBlank = () => {
+    return !code.trim();
   };
 
   // RUN — uses custom stdin, shows raw output
   const runCode = async () => {
     if (!token) { toast.error("Login required"); return; }
+    
+    // Validate: code blank check
+    if (isCodeBlank()) {
+      setCodeError("⚠️ Code editorla code ezhuthamal run panna mudiyathu!");
+      toast.error("Code illama run panna mudiyathu da!");
+      return;
+    }
+    setCodeError(null);
     setRunning(true);
     setVerdict("running");
     setConsoleOutput(null);
@@ -99,6 +122,7 @@ export default function CodePracticePage() {
         toast.success(`Ran in ${resp.execution_time_ms ?? "?"}ms`);
       } else if (resp.status === "compile_error") {
         setVerdict("compile_error");
+        toast.error("🔴 Syntax Error — code seri paar!");
       } else if (resp.status === "timeout") {
         setVerdict("timeout");
       } else {
@@ -116,6 +140,16 @@ export default function CodePracticePage() {
   // SUBMIT — validates against predefined expected output
   const submitCode = async () => {
     if (!activeProblem || !token) { toast.error("Login required"); return; }
+    
+    // Validate: code blank check
+    if (isCodeBlank()) {
+      setCodeError("⚠️ Solution ezhuthamal submit panna mudiyathu!");
+      toast.error("Code illama submit panna mudiyathu da! Munadi code ezhuthu.");
+      setConsoleOutput("❌ Error: Code editor blank-a irukku!\n\nUnoda solution code ezhuthi aprom submit panum.");
+      setVerdict("compile_error");
+      return;
+    }
+    setCodeError(null);
     setSubmitting(true);
     setVerdict("running");
     setVerdictData(null);
@@ -289,18 +323,24 @@ export default function CodePracticePage() {
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
             
             {/* Code Editor */}
-            <div className="glass-card" style={{ flex: 1, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", background: "#0c0c0d" }}>
+            <div className="glass-card" style={{ flex: 1, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", background: "#0c0c0d", border: codeError ? "1px solid rgba(244,63,94,0.5)" : "" }}>
               <div style={{ padding: "7px 14px", background: "#161618", borderBottom: "1px solid #222", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 10, fontWeight: 900, color: "#555", letterSpacing: 1 }}>EDITOR</span>
                 <span style={{ fontSize: 10, color: "#444" }}>
                   main.{language.id === "python" ? "py" : language.id === "javascript" ? "js" : language.id === "cpp" ? "cpp" : language.id === "c" ? "c" : "java"}
                 </span>
               </div>
-              <textarea value={code} onChange={e => setCode(e.target.value)} spellCheck={false}
+              <textarea value={code} onChange={e => { setCode(e.target.value); if (e.target.value.trim()) setCodeError(null); }} spellCheck={false}
                 placeholder="Write your solution here..."
                 style={{ flex: 1, background: "transparent", border: "none", color: "#d4d4d4",
                   fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: 13.5, padding: "20px",
                   outline: "none", resize: "none", lineHeight: 1.65, tabSize: 2 }} />
+              {codeError && (
+                <div style={{ padding: "8px 20px", background: "rgba(244,63,94,0.12)", borderTop: "1px solid rgba(244,63,94,0.3)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>🚫</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#F43F5E" }}>{codeError}</span>
+                </div>
+              )}
             </div>
 
             {/* Custom Input + Console */}
