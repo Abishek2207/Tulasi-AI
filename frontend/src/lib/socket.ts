@@ -8,7 +8,7 @@ class SocketService {
     if (this.socket?.connected && this.token === token) return;
     
     this.token = token;
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
     
     this.socket = io(baseUrl, {
       auth: { token },

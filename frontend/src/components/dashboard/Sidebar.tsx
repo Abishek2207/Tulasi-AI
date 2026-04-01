@@ -63,7 +63,7 @@ const NAV_SECTIONS = [
       { icon: User,            name: "Profile",         href: "/dashboard/profile" },
       { icon: Gift,            name: "Rewards Store",   href: "/dashboard/rewards" },
       { icon: CreditCard,      name: "Billing & Pro",   href: "/dashboard/billing" },
-      { icon: Activity,        name: "API Status",      href: "https://tulasi-ai-wgwl.onrender.com/api/health" },
+      { icon: Activity,        name: "API Status",      href: `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/health` },
     ]
   }
 ];

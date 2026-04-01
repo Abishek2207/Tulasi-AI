@@ -158,29 +158,19 @@ async def lifespan(app: FastAPI):
                         admin_mail = settings.ADMIN_EMAIL
                         admin_pass = get_password_hash("password")
                         code = uuid.uuid4().hex[:8].upper()
-                        conn.execute(text('INSERT INTO "user" (email, name, hashed_password, role, invite_code, is_pro) VALUES (:e, :n, :p, :r, :c, 1)'),
-                        {"e": admin_mail, "n": "Super Admin", "p": admin_pass, "r": "admin", "c": code})
+                        conn.execute(text('INSERT INTO "user" (email, name, hashed_password, role, invite_code, is_pro, provider, streak, longest_streak, xp, level, chats_today, created_at, last_seen, is_active) VALUES (:e, :n, :p, :r, :c, 1, :pr, 0, 0, 0, 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)'),
+                        {"e": admin_mail, "n": "Super Admin", "p": admin_pass, "r": "admin", "c": code, "pr": "email"})
                         print("[Migration] 🌱 Seeded initial admin account.")
 
-                    rev_count_stmt = text('SELECT count(*) as c FROM review')
-                    rev_count_res = conn.execute(rev_count_stmt)
-                    if rev_count_res.mappings().first()["c"] == 0:
-                        reviews = [
-                            {"n": "Alex Chen", "e": "alex@example.com", "rol": "Software Engineer", "rev": "Tulasi AI completely overhauled my interview prep. The AI mock interviews are incredibly realistic.", "rat": 5},
-                            {"n": "Sarah Jenkins", "e": "sarah@example.com", "rol": "CS Student", "rev": "The personalized roadmaps saved me months of wandering. I landed my first internship because of the curated content.", "rat": 5},
-                            {"n": "Mike Donovan", "e": "mike@example.com", "rol": "Frontend Dev", "rev": "Having an AI instantly explain why my code failed is a game changer. The UI is also visually stunning.", "rat": 5},
-                            {"n": "Elena Rodriguez", "e": "elena@example.com", "rol": "Data Scientist", "rev": "The community hackathons are fantastic! The platform seamlessly integrates coding, learning, and competing.", "rat": 4},
-                            {"n": "James Wu", "e": "james@example.com", "rol": "Backend Engineer", "rev": "Honestly the best gamified learning platform I've used. I actually look forward to logging in every day.", "rat": 5}
-                        ]
-                        for r in reviews:
-                            conn.execute(text("INSERT INTO review (name, email, role, review, rating) VALUES (:n, :e, :rol, :rev, :rat)"), r)
-                        print("[Migration] 🌱 Seeded initial realistic reviews.")
+                    # Note: Reviews are NOT seeded on startup.
+                    # Only real user-submitted reviews appear on the platform.
+
 
                     # ── 🤝 COMMUNITY SYNC ───────────────────────────
                     try:
                         group_count = conn.execute(text("SELECT count(*) as c FROM \"group\"")).mappings().first()["c"]
                         if group_count == 0:
-                            conn.execute(text("INSERT INTO \"group\" (name, description, join_code, created_by) VALUES ('Global Community', 'The official hub for all Tulasi AI orbits.', 'ORBIT1', 1)"))
+                            conn.execute(text("INSERT INTO \"group\" (name, description, join_code, created_by, created_at) VALUES ('Global Community', 'The official hub for all Tulasi AI orbits.', 'ORBIT1', 1, CURRENT_TIMESTAMP)"))
                             print("[Migration] 🌍 Initialized Global Community orbital.")
                     except Exception as e: 
                         print(f"[Migration Warning] Community Sync: {e}")

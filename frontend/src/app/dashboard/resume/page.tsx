@@ -135,7 +135,7 @@ export default function ResumeBuilderPage() {
       const isHeader3 = line.startsWith("### ");
       const isBullet = line.startsWith("- ") || line.startsWith("* ");
       
-      let cleanLine = line.replace(/#/g, "").replace(/^- /g, "").replace(/^\* /g, "").trim();
+      const cleanLine = line.replace(/#/g, "").replace(/^- /g, "").replace(/^\* /g, "").trim();
       
       // Basic inline bold parsing **text**
       const boldParsed = cleanLine.split(/(\*\*.*?\*\*)/g).map((part, idx) => {

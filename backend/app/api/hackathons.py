@@ -30,7 +30,7 @@ def hackathon_to_dict(h: Hackathon, bookmarked: bool = False, applied: bool = Fa
         "applied": applied,
         "application_status": application_status,
         # New Metadata
-        "mode": h.mode,
+        "mode": h.event_mode,
         "difficulty": h.difficulty,
         "team_size": h.team_size,
         "start_date": h.start_date,
@@ -64,7 +64,7 @@ def get_hackathons(
     if difficulty and difficulty.lower() not in ("all", ""):
         statement = statement.where(Hackathon.difficulty == difficulty)
     if mode and mode.lower() not in ("all", ""):
-        statement = statement.where(Hackathon.mode == mode)
+        statement = statement.where(Hackathon.event_mode == mode)
     if q:
         statement = statement.where(
             (Hackathon.name.contains(q)) | (Hackathon.organizer.contains(q)) | (Hackathon.description.contains(q))

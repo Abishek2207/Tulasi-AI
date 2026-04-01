@@ -11,6 +11,7 @@ import { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, Command, Zap, LogOut, User, ChevronDown } from "lucide-react";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { useRouter } from "next/navigation";
+import { TulasiLogo } from "@/components/TulasiLogo";
 
 export default function TopBar() {
   const dispatch = useDispatch();
@@ -82,6 +83,17 @@ export default function TopBar() {
         >
           {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
         </motion.button>
+
+        {/* Logo — always visible; acts as home link on mobile */}
+        <a
+          href="/dashboard"
+          style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}
+          aria-label="Tulasi AI Home"
+        >
+          <TulasiLogo size={32} showText glow={false}
+            style={{ gap: 8 }}
+          />
+        </a>
 
         {/* Search opens Command Palette */}
         <div style={{ flex: 1, maxWidth: 420, position: "relative" }}>
