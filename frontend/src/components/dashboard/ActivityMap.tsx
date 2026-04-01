@@ -17,9 +17,10 @@ export function ActivityMap() {
         if (res?.time_series) {
           // Map XP to 0-3 levels
           const mapped = res.time_series.map(d => {
-            if (d.xp > 500) return 3;
-            if (d.xp > 200) return 2;
-            if (d.xp > 0) return 1;
+            const val = d?.xp ?? 0;
+            if (val > 500) return 3;
+            if (val > 200) return 2;
+            if (val > 0) return 1;
             return 0;
           });
           // Pad or slice to 147 (21x7)

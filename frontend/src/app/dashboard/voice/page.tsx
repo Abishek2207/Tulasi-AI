@@ -19,7 +19,7 @@ export default function VoiceRoomPage() {
     e.preventDefault();
     if (!roomId.trim()) return;
     
-    setStatus("Connecting to signaling server...");
+    setStatus("Establishing connection...");
     ws.current = new WebSocket(websocketUrl(`/api/voice/signal/ws/${roomId}`));
     
     ws.current.onopen = async () => {

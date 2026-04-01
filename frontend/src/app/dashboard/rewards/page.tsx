@@ -39,7 +39,7 @@ export default function RewardsPage() {
           const defaults = REWARD_ITEMS[i % REWARD_ITEMS.length];
           return {
             id: r.id, name: r.name, description: r.description, 
-            cost: r.cost_xp || r.cost, 
+            cost: r.cost_xp ?? r.cost ?? 0, 
             icon: defaults.icon, color: defaults.color, bg: defaults.bg
           };
         });

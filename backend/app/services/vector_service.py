@@ -94,35 +94,52 @@ class VectorService:
         valid_chunks = []
         for c in chunks:
             try:
-                vectors.append(json.loads(c.embedding_json))
-                valid_chunks.append(c)
+                v = json.loads(c.embedding_json)
+                if isinstance(v, list) and len(v) > 0:
+                    vectors.append(v)
+                    valid_chunks.append(c)
             except Exception:
                 pass
         
         if not vectors:
             return ""
 
-        vectors_np = np.array(vectors).astype('float32')
-        index = faiss.IndexFlatL2(vectors_np.shape[1])
+        # Ensure all vectors have the same dimension before creating the array
+        dim = len(vectors[0])
+        consistent_vectors = []
+        consistent_chunks = []
+        for i, v in enumerate(vectors):
+            if len(v) == dim:
+                consistent_vectors.append(v)
+                consistent_chunks.append(valid_chunks[i])
+        
+        if not consistent_vectors:
+            return ""
+
+        vectors_np = np.array(consistent_vectors).astype('float32')
+        index = faiss.IndexFlatL2(dim)
         index.add(vectors_np)
         
-        query_vec = self.embed_documents(query)
-        query_np = np.array([query_vec]).astype('float32')
-        
-        # Prevent FAISS crash if old chunks used 384d (MiniLM) and new use 768d (Gemini)
-        if vectors_np.shape[1] != query_np.shape[1]:
-            print("Vector dimension mismatch! Wiping old context to prevent FAISS crash.")
+        try:
+            query_vec = self.embed_documents(query)
+            if not query_vec or len(query_vec) != dim:
+                print(f"Query vector dimension mismatch ({len(query_vec) if query_vec else 0} vs {dim}). Skipping context.")
+                return ""
+            
+            query_np = np.array([query_vec]).astype('float32')
+            
+            # Prevent out-of-bounds error if less chunks than top_k
+            k = min(top_k, len(consistent_chunks))
+            distances, indices = index.search(query_np, k)
+            
+            context_parts = []
+            for idx in indices[0]:
+                if 0 <= idx < len(consistent_chunks):
+                    context_parts.append(consistent_chunks[idx].content)
+            
+            return "\n---\n".join(context_parts)
+        except Exception as e:
+            print(f"FAISS search failed: {e}")
             return ""
-        
-        # Prevent out-of-bounds error if less chunks than top_k
-        k = min(top_k, len(valid_chunks))
-        distances, indices = index.search(query_np, k)
-        
-        context_parts = []
-        for idx in indices[0]:
-            if idx < len(valid_chunks):
-                context_parts.append(valid_chunks[idx].content)
-        
-        return "\n---\n".join(context_parts)
 
 vector_service = VectorService()

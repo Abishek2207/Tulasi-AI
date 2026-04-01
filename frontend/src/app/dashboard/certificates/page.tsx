@@ -34,7 +34,7 @@ export default function CertificatesPage() {
       setCertificates((data.certificates as unknown as DisplayCertificate[]) || []);
       setMilestones((data.milestones as unknown as DisplayMilestone[]) || []);
     } catch (e) {
-      setError("Could not load certificates. The backend might be sleeping (takes ~50s to wake up). Please try again.");
+      setError("Neural engine is optimizing. Please refresh in a few seconds.");
     } finally { setLoading(false); }
   };
 

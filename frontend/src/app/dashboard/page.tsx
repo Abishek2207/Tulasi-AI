@@ -18,6 +18,7 @@ import {
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
 import dynamic from "next/dynamic";
+import { ReviewForm } from "@/components/ReviewForm";
 
 const ActivityMap = dynamic(() => import("@/components/dashboard/ActivityMap").then(mod => mod.ActivityMap), {
   ssr: false,
@@ -141,6 +142,7 @@ export default function DashboardPage() {
   const [localStats, setLocalStats] = useState<Partial<DashboardStats>>({
     problems_solved: 0, videos_watched: 0, hackathons_joined: 0, invite_code: ""
   });
+  const [showReviewModal, setShowReviewModal] = useState(false);
   
   // Merge Redux stats with local dashboard-specific stats
   const stats: DashboardStats = {
@@ -384,6 +386,31 @@ export default function DashboardPage() {
           </motion.div>
         ))}
 
+        {/* FEEDBACK MODULE */}
+        <motion.div variants={item} className="module-span-2">
+          <TiltCard intensity={5} style={{ height: "100%" }}>
+            <div className="glass-card" style={{
+              padding: 32, height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+              background: "linear-gradient(135deg, rgba(168,85,247,0.05) 0%, rgba(6,182,212,0.05) 100%)",
+              border: "1px solid rgba(168,85,247,0.2)"
+            }}>
+              <div>
+                <h3 style={{ fontSize: 24, fontWeight: 900, marginBottom: 8 }}>Share Your Feedback</h3>
+                <p style={{ color: "var(--text-secondary)", fontSize: 15, maxWidth: 500 }}>
+                  Help us refine the Neural Engine. Submit a review and earn <span style={{ color: "var(--brand-primary)", fontWeight: 800 }}>+100 XP</span> for your contribution.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowReviewModal(true)}
+                className="btn-primary" 
+                style={{ padding: "14px 28px", borderRadius: 14, fontWeight: 800 }}
+              >
+                Submit Review
+              </button>
+            </div>
+          </TiltCard>
+        </motion.div>
+
       </div>
 
       {/* Activity Graph */}
@@ -402,6 +429,33 @@ export default function DashboardPage() {
           <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Maintain consistency to unlock high-order AI models.</div>
         </div>
       </motion.div>
+
+      {/* Review Modal */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              onClick={() => setShowReviewModal(false)}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)" }}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              style={{ 
+                position: "relative", zIndex: 101, width: "100%", maxWidth: 600,
+                background: "#0B0E14", border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 32, padding: "40px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+              }}
+            >
+              <ReviewForm onClose={() => setShowReviewModal(false)} />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         .dashboard-grid { 

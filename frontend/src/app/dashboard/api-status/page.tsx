@@ -189,7 +189,7 @@ export default function ApiStatusPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ width: 8, height: 8, borderRadius: 4, background: backendPing === "alive" ? "#43E97B" : backendPing === "waking" ? "#FFD93D" : "#FF6B6B", boxShadow: `0 0 6px ${backendPing === "alive" ? "#43E97B" : "#FFD93D"}` }} />
               <span style={{ fontSize: 12, fontWeight: 700 }}>
-                {backendPing === "alive" ? `Online · ${pingMs}ms` : backendPing === "waking" ? "Waking up..." : "Down"}
+                {backendPing === "alive" ? `Online · ${pingMs}ms` : backendPing === "waking" ? "Optimizing..." : "Down"}
               </span>
             </div>
           </div>
