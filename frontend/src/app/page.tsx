@@ -557,11 +557,13 @@ function Footer() {
           </div>
         </div>
 
-        <div style={{ paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
-          <span style={{ color: "var(--text-muted)", fontSize: 13, fontWeight: 600 }}>
+        <div style={{ paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 20, width: "100%" }}>
+          <div />
+          <span style={{ color: "var(--text-muted)", fontSize: 13, fontWeight: 600, textAlign: "center" }}>
             Founded &amp; Built by Abishek R • © 2026 Tulasi AI Labs
           </span>
-          <div style={{ display: "flex", gap: 24 }}>
+          <div style={{ display: "flex", gap: 24, justifyContent: "flex-end" }}>
+             <Link href="/contact" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Contact Us</Link>
              <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Privacy</Link>
              <Link href="/terms" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Terms</Link>
           </div>
