@@ -53,8 +53,8 @@ export function ConnectionStatus() {
 
       <div className="flex items-center justify-between">
         <span className="text-white/60">API:</span>
-        <span className={apiOnline ? "text-emerald-400 font-bold" : "text-rose-400 font-bold animate-pulse"}>
-          {apiOnline === null ? "CHECKING..." : apiOnline ? "ONLINE" : "OFFLINE"}
+        <span className={apiOnline ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+          {apiOnline === null ? "..." : apiOnline ? "ONLINE" : "OFFLINE"}
         </span>
       </div>
 

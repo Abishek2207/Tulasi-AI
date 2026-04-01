@@ -5,33 +5,17 @@ import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 
 const PRICING_PLANS = [
   {
-    name: "Free",
+    name: "Platinum Pro",
     price: "$0",
-    desc: "Perfect for students starting their tech journey.",
+    desc: "Community Edition — Unlimited access for everyone.",
     features: [
-      "10 AI Chats per day",
-      "Basic Resume Tips",
-      "1 Mock Interview per week",
-      "Community Study Rooms access"
-    ],
-    buttonText: "Current Plan",
-    popular: false,
-    gradient: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))",
-    border: "1px solid rgba(255,255,255,0.1)"
-  },
-  {
-    name: "Pro",
-    price: "$9",
-    period: "/month",
-    desc: "For serious job seekers needing advanced tools.",
-    features: [
-      "Unlimited AI Chats (Gemini 2.5 Flash)",
+      "Unlimited AI Chats (Gemini 1.5 Flash)",
       "Advanced ATS Resume Scanning",
       "Unlimited Mock Interviews",
       "Priority Startup Lab access",
-      "Zero Ads & Priority Support"
+      "Complete Learning Modules"
     ],
-    buttonText: "Upgrade to Pro",
+    buttonText: "Account Active",
     popular: true,
     gradient: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(56,189,248,0.05))",
     border: "1px solid rgba(139, 92, 246, 0.5)"
@@ -81,7 +65,6 @@ export default function PricingPage() {
             
             <div style={{ marginBottom: 32, display: "flex", alignItems: "baseline", gap: 4 }}>
               <span style={{ fontSize: 48, fontWeight: 800, fontFamily: "var(--font-display)", letterSpacing: "-2px" }}>{plan.price}</span>
-              {plan.period && <span style={{ color: "var(--text-secondary)" }}>{plan.period}</span>}
             </div>
 
             <motion.button

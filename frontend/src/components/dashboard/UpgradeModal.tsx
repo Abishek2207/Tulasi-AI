@@ -73,84 +73,9 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
 
   if (!isOpen) return null;
 
-  const handleUpgrade = async () => {
-    setLoading(true);
-    const toastId = toast.loading("Preparing checkout...");
-
-    try {
-      // 1️⃣ Load Razorpay checkout.js script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded || !window.Razorpay) {
-        throw new Error("Failed to load Razorpay checkout. Check your internet connection.");
-      }
-
-      // 2️⃣ Create order on backend
-      const order = await paymentApi.createOrder();
-      toast.dismiss(toastId);
-
-      // 3️⃣ Get user info from localStorage for prefill
-      const storedUser = (() => {
-        try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; }
-      })();
-
-      // 4️⃣ Open Razorpay checkout popup
-      const rzp = new window.Razorpay({
-        key:         order.key_id,
-        amount:      order.amount,
-        currency:    order.currency,
-        name:        "Tulasi AI",
-        description: "Pro Plan — Unlimited AI, Interviews & Resume",
-        order_id:    order.order_id,
-        prefill: {
-          email: storedUser.email || "",
-          name:  storedUser.name  || "",
-        },
-        theme: { color: "#8B5CF6" },
-
-        handler: async (response: RazorpayPaymentResponse) => {
-          // 5️⃣ Verify payment signature on backend (HMAC-SHA256)
-          const verifyToastId = toast.loading("Verifying payment...");
-          try {
-            const result = await paymentApi.verifyPayment({
-              razorpay_order_id:   response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature:  response.razorpay_signature,
-            });
-
-            if (result.success && result.is_pro) {
-              // 6️⃣ Update user in localStorage so Pro badge shows immediately
-              const updatedUser = { ...storedUser, is_pro: true };
-              localStorage.setItem("user", JSON.stringify(updatedUser));
-
-              toast.dismiss(verifyToastId);
-              toast.success("🎉 You are now a Pro member!", { duration: 5000 });
-              onUpgradeSuccess?.();
-              onClose();
-            } else {
-              throw new Error("Verification failed. Contact support.");
-            }
-          } catch (err: unknown) {
-      const error = err as Error;
-            toast.dismiss(verifyToastId);
-            toast.error(error.message || "Payment verification failed.");
-          }
-        },
-
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-            toast.dismiss();
-          },
-        },
-      });
-
-      rzp.open();
-    } catch (err: unknown) {
-      const error = err as Error;
-      toast.dismiss(toastId);
-      toast.error(error.message || "Payment failed. Try again.");
-      setLoading(false);
-    }
+  const handleUpgrade = () => {
+    toast.success("All features are already unlocked for you!");
+    onClose();
   };
 
   return (
@@ -218,18 +143,15 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
         <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
           <motion.button
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-            onClick={handleUpgrade} disabled={loading}
+            onClick={handleUpgrade}
             style={{
-              width: "100%", maxWidth: 320, padding: "16px", borderRadius: 14, border: "none", cursor: loading ? "not-allowed" : "pointer",
+              width: "100%", maxWidth: 320, padding: "16px", borderRadius: 14, border: "none", cursor: "pointer",
               background: "linear-gradient(135deg, #8B5CF6, #38BDF8)", color: "#fff", fontSize: 16, fontWeight: 600,
               boxShadow: "0 8px 20px rgba(139, 92, 246, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              opacity: loading ? 0.7 : 1, margin: "0 auto"
+              margin: "0 auto"
             }}
           >
-            {loading
-              ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} />
-              : "⚡ Upgrade to Pro — ₹100/mo"
-            }
+            "Getting Started"
           </motion.button>
         </div>
 

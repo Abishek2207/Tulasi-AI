@@ -19,9 +19,19 @@ venv/
 env/
 instance/
 
-# Databases
+# Project Specific
+tmp/
+backend/tmp/
+*.txt
+*.json
 *.db
 *.sqlite3
+!package.json
+!plugin.json
+!tsconfig.json
+!next-env.d.ts
+!backend/requirements.txt
+!backend/alembic.ini
 
 # OS
 .DS_Store

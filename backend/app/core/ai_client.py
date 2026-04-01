@@ -20,7 +20,7 @@ class HybridAIClient:
         if self.gemini_key:
             genai.configure(api_key=self.gemini_key)
         
-        self.gemini_models = ["models/gemini-1.5-flash", "models/gemini-1.5-pro", "models/gemini-1.0-pro"]
+        self.gemini_models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]
 
     def _format_for_gemini(self, message: str, history: List[Dict], image_data: Optional[bytes] = None) -> List[Dict]:
         contents = []

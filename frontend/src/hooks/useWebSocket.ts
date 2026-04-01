@@ -52,6 +52,8 @@ export function useWebSocket({
     return `${websocketUrl("/ws/chat")}?token=${encodeURIComponent(token)}&room_id=${encodeURIComponent(roomId)}`;
   }, [token, roomId]);
 
+  const connectRef = useRef<() => void>(undefined);
+
   const connect = useCallback(() => {
     shouldClose.current = false;
     setStatus("connecting");
@@ -98,13 +100,17 @@ export function useWebSocket({
         // Exponential backoff: min 3s, max 30s
         const delay = Math.min(reconnectDelay * 2 ** (retryCount.current - 1), 30_000);
         console.warn(`WebSocket closed. Reconnecting in ${Math.round(delay / 1000)}s... (attempt ${retryCount.current}/${maxRetries})`);
-        reconnectTimeout.current = setTimeout(connect, delay);
+        reconnectTimeout.current = setTimeout(() => connectRef.current?.(), delay);
       } else {
         console.error("WebSocket max reconnect attempts reached.");
         setStatus("error");
       }
     };
   }, [token, roomId, buildUrl, reconnectDelay, maxRetries, onMessage]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     connect();
