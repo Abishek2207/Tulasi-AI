@@ -8,14 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from sqlmodel import Session, select, text
 from app.core.database import engine
 from app.models.models import Hackathon, Review, User
-from app.api.admin import REAL_HACKATHONS
-
-REAL_REVIEWS = [
-    {"name": "Abishek R", "role": "Full Stack Dev", "review": "Tulasi AI helped me crack my senior engineering role! The mock interviews are lifesavers.", "rating": 5},
-    {"name": "Sneha Kapoor", "role": "SDE-2 at Amazon", "review": "The coding community here is amazing. Highly recommend the elite hackathons.", "rating": 5},
-    {"name": "Rahul Verma", "role": "Student at IIT", "review": "Best platform for system design prep. The visual roadmaps are super clear.", "rating": 4},
-]
-
+from app.api.admin import REAL_HACKATHONS, REAL_REVIEWS
 
 def seed():
     with Session(engine) as db:
@@ -30,24 +23,28 @@ def seed():
                 print(f"✅ Promoted {email} to admin.")
         db.commit()
 
-    
-    # ⭐ Seeding professional reviews...
-    # (Skip seeding fake reviews as per user request. Only real user-submitted reviews will be kept.)
-    # print("\n⭐ Seeding professional reviews...")
-    # for r in REAL_REVIEWS:
-    #     existing = db.execute(text("SELECT id FROM review WHERE review = :rev"), {"rev": r["review"]}).first()
-    #     if existing:
-    #         continue
-    #     new_review = Review(
-    #         name=r["name"],
-    #         role=r["role"],
-    #         review=r["review"],
-    #         rating=r["rating"],
-    #         created_at=datetime.utcnow(),
-    #     )
-    #     db.add(new_review)
-    # db.commit()
-    # print(f"✅ Seeded {len(REAL_REVIEWS)} reviews.")
+        # ⭐ Seeding professional reviews...
+        print("\n⭐ Seeding professional reviews...")
+        added_r = 0
+        skipped_r = 0
+        for r in REAL_REVIEWS:
+            # Check if this review text already exists
+            existing = db.execute(text("SELECT id FROM review WHERE review = :rev"), {"rev": r["review"]}).first()
+            if existing:
+                skipped_r += 1
+                continue
+            
+            new_review = Review(
+                name=r["name"],
+                role=r["role"],
+                review=r["review"],
+                rating=r["rating"],
+                created_at=datetime.utcnow(),
+            )
+            db.add(new_review)
+            added_r += 1
+        db.commit()
+        print(f"✅ Seeded {added_r} reviews ({skipped_r} skipped).")
 
         # 3. Seed Hackathons
         print("\n🚀 Seeding global hackathons...")
