@@ -27,7 +27,7 @@ class ModelRouter:
                 gemini_key = settings.effective_gemini_key
                 if gemini_key:
                     self._gemini_model = ChatGoogleGenerativeAI(
-                        model="gemini-2.0-flash",
+                        model="gemini-2.0-flash-lite",  # cheapest free-tier model
                         google_api_key=gemini_key,
                         temperature=0.7,
                     )
