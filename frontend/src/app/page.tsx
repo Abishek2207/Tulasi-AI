@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Logo as TulasiLogo } from "@/components/Logo";
+import { TulasiLogo } from "@/components/TulasiLogo";
 import {
   FileText, Target, Map, Code, Award, Trophy, Users,
   Sparkles, ArrowRight, Layout, BrainCircuit, HardDrive, Cpu, Menu, X,
@@ -317,6 +317,8 @@ function StarRating({ rating, interactive = false, onSet }: { rating: number; in
 
 // ── Reviews Section ──────────────────────────────────────────────
 function ReviewsSection() {
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [fetchingReviews, setFetchingReviews] = useState(true);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -333,6 +335,18 @@ function ReviewsSection() {
         if (payload.sub) setUserName(payload.sub);
       } catch(e) {}
     }
+
+    const loadReviews = async () => {
+      try {
+        const data = await reviewsApi.getReviews();
+        setReviews(data || []);
+      } catch (err) {
+        console.error("Failed to fetch reviews:", err);
+      } finally {
+        setFetchingReviews(false);
+      }
+    };
+    loadReviews();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -357,6 +371,8 @@ function ReviewsSection() {
       // but showing locally for feedback is okay.
       setForm({ name: "", email: "", role: "", review: "", rating: 0 });
       setSubmitted(true);
+      // Optimistically add the new review to the UI
+      setReviews(prev => [newReview, ...prev].slice(0, 10));
       setTimeout(() => setSubmitted(false), 4000);
     } catch (err: any) {
       const msg = err.message || "Failed to submit. Please try again.";
@@ -381,6 +397,49 @@ function ReviewsSection() {
 
         <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "16px 0", fontSize: 16 }}>
           Reviews are actively moderated and reviewed by the administrative team.
+        </div>
+
+        {/* Dynamic Reviews Display */}
+        <div style={{ marginBottom: 64 }}>
+          {fetchingReviews ? (
+            <div style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 20 }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="glass-card" style={{ minWidth: 320, height: 200, padding: 24, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ width: "40%", height: 20, background: "rgba(255,255,255,0.05)", borderRadius: 4, marginBottom: 16 }} />
+                  <div style={{ width: "80%", height: 16, background: "rgba(255,255,255,0.03)", borderRadius: 4, marginBottom: 8 }} />
+                  <div style={{ width: "95%", height: 16, background: "rgba(255,255,255,0.03)", borderRadius: 4, marginBottom: 8 }} />
+                  <div style={{ width: "60%", height: 16, background: "rgba(255,255,255,0.03)", borderRadius: 4 }} />
+                </div>
+              ))}
+            </div>
+          ) : reviews.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
+              {reviews.map((r, i) => (
+                <motion.div key={r.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+                  <TiltCard intensity={3} style={{ height: "100%" }}>
+                    <div className="glass-card" style={{ padding: 24, background: "rgba(255,255,255,0.02)", height: "100%", display: "flex", flexDirection: "column" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                        <div>
+                          <h4 style={{ fontWeight: 800, fontSize: 16, color: "white" }}>{r.name}</h4>
+                          {r.role && <span style={{ fontSize: 12, color: "var(--brand-primary)" }}>{r.role}</span>}
+                        </div>
+                        <StarRating rating={r.rating} />
+                      </div>
+                      <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6, flex: 1 }}>"{r.review}"</p>
+                      <div style={{ marginTop: 16, fontSize: 11, color: "var(--text-muted)" }}>
+                        {new Date(r.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                  </TiltCard>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+             <div style={{ textAlign: "center", padding: "64px 20px", background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px dashed rgba(255,255,255,0.1)" }}>
+               <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>No reviews yet</h3>
+               <p style={{ color: "var(--text-muted)", fontSize: 15 }}>Be the first to share your experience with Tulasi AI!</p>
+             </div>
+          )}
         </div>
 
         {/* Write a Review Form */}
