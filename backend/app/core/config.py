@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
     YOUTUBE_API_KEY: str = os.getenv("YOUTUBE_API_KEY", "")
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
-    OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "mistralai/mistral-7b-instruct:free")
+    OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "google/gemma-2-9b-it:free")
     LANGFLOW_API_URL: str = os.getenv("LANGFLOW_API_URL", "")  # Optional: set to enable Langflow pipeline
 
     # Supabase (optional)
