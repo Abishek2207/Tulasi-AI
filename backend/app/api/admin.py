@@ -528,40 +528,6 @@ def get_admin_analytics(db: Session = Depends(get_session), admin: User = Depend
 # SEED REAL DATA (Reviews & Hackathons)
 # ─────────────────────────────────────────────────────────────────────
 
-REAL_REVIEWS = [
-    {"name": "Ananya Sharma", "role": "Final Year CSE", "review": "Tulasi AI helped me crack my first technical interview! The AI feedback is incredibly precise and feels like talking to a real mentor.", "rating": 5},
-    {"name": "Rahul Verma", "role": "Software Engineer", "review": "The resume analysis tool is a game-changer. I increased my keyword match score from 40% to 85% in just a few iterations.", "rating": 5},
-    {"name": "Priyanka Nair", "role": "Pre-final IT", "review": "The hackathon discovery platform is so convenient. I no longer have to check multiple sites to find the best coding events.", "rating": 4},
-    {"name": "Aditya Singh", "role": "M.Tech Student", "review": "Building roadmaps with AI has made my learning journey so structured. I'm now learning Web3 with a clear path.", "rating": 5},
-    {"name": "Sneha Reddy", "role": "Full Stack Developer", "review": "The code sandbox is super fast and the AI explanations for complex algorithms are very helpful for my daily standups.", "rating": 4},
-    {"name": "Vikram Malhotra", "role": "Engineering Lead", "review": "As a mentor, I recommend Tulasi AI to all my juniors for interview prep. It's the most comprehensive tool I've seen.", "rating": 5},
-    {"name": "Ishaan Gupta", "role": "BCA Student", "review": "The UI is stunning and the experience is seamless. It's not just an AI tool, it's a complete career ecosystem.", "rating": 5},
-]
-
-@router.post("/seed-reviews")
-def seed_reviews(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
-    """Seed high-quality, professional reviews."""
-    from sqlalchemy import text
-    added = 0
-    skipped = 0
-    for r in REAL_REVIEWS:
-        # Check if review by same person exists
-        existing = db.execute(text("SELECT id FROM review WHERE name = :n AND review = :r"), {"n": r["name"], "r": r["review"]}).first()
-        if existing:
-            skipped += 1
-            continue
-        
-        db.execute(text(
-            "INSERT INTO review (name, role, review, rating, created_at, is_featured) "
-            "VALUES (:n, :rol, :rev, :rat, :c, 1)"
-        ), {
-            "n": r["name"], "rol": r["role"], "rev": r["review"], 
-            "rat": r["rating"], "c": datetime.utcnow(), "is_featured": 1
-        })
-        added += 1
-    db.commit()
-    return {"message": f"Seeded {added} reviews ({skipped} skipped)", "added": added}
-
 # ─────────────────────────────────────────────────────────────────────
 # HACKATHONS
 # ─────────────────────────────────────────────────────────────────────

@@ -186,8 +186,8 @@ async def lifespan(app: FastAPI):
                             ]
                             for h in hacks:
                                 conn.execute(text("""
-                                    INSERT INTO hackathon (title, organizer, description, prize_pool, deadline, registration_link, tags, image_url, event_mode, difficulty, team_size, start_date, end_date, domains, currency, participants_count, status) 
-                                    VALUES (:t, :o, :d, :p, :dl, :rl, :tg, :iu, :m, :diff, :ts, :sd, :ed, :dom, :cur, 0, 'Active')
+                                    INSERT INTO hackathon (name, organizer, description, prize, prize_pool, deadline, link, registration_link, tags, image_url, event_mode, difficulty, team_size, start_date, end_date, domains, currency, participants_count, status, is_active) 
+                                    VALUES (:t, :o, :d, :p, :p, :dl, :rl, :rl, :tg, :iu, :m, :diff, :ts, :sd, :ed, :dom, :cur, 0, 'Active', 1)
                                 """), h)
                             print("[Migration] 🌱 Seeded initial high-tech hackathons.")
                     except Exception as e:

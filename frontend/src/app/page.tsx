@@ -540,10 +540,10 @@ function Footer() {
             </div>
           </div>
 
-          {/* RIGHT: Contact & Status */}
+          {/* RIGHT: Contact & Links */}
           <div>
-            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 20, fontSize: 11, textTransform: "uppercase", letterSpacing: 2.5 }}>Contact & Status</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 20, fontSize: 11, textTransform: "uppercase", letterSpacing: 2.5 }}>Connect With Us</h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <a href="mailto:abishekramamoorthy22@gmail.com" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
                 <Mail size={16} /> abishekramamoorthy22@gmail.com
               </a>
@@ -554,30 +554,17 @@ function Footer() {
                 <Instagram size={16} /> @_.abi22._
               </a>
             </div>
-            
-            <div style={{ padding: "20px 24px", background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 18 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }}
-                  style={{ width: 10, height: 10, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981", flexShrink: 0 }}
-                />
-                <span style={{ fontSize: 11, fontWeight: 900, color: "#10B981", letterSpacing: 1, textTransform: "uppercase" }}>● ALL SYSTEMS OPERATIONAL</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {["API", "Auth", "AI Engine", "Database"].map(s => (
-                  <div key={s} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{s}</span>
-                    <span style={{ fontSize: 11, color: "#10B981", fontWeight: 700 }}>✓ Online</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
-        <div style={{ paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center" }}>
+        <div style={{ paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
           <span style={{ color: "var(--text-muted)", fontSize: 13, fontWeight: 600 }}>
             Founded &amp; Built by Abishek R • © 2026 Tulasi AI Labs
           </span>
+          <div style={{ display: "flex", gap: 24 }}>
+             <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Privacy</Link>
+             <Link href="/terms" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Terms</Link>
+          </div>
         </div>
       </div>
     </footer>

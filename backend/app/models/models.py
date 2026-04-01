@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Column, String
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -30,6 +30,10 @@ class User(SQLModel, table=True):
     chats_today: int = 0
     last_reset_date: Optional[str] = None
     pro_expiry_date: Optional[str] = None  # Tracks 2-month free pro rewards
+    
+    # Relationships
+    resumes: List["SavedResume"] = Relationship(back_populates="user")
+
 
 
 class ChatSession(SQLModel, table=True):

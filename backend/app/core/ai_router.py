@@ -17,7 +17,7 @@ from app.core.config import settings
 
 # Exported constants (used by chat.py and other modules)
 GOOGLE_API_KEY: str = settings.effective_gemini_key or ""
-FALLBACK_MODELS: List[str] = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"]
+FALLBACK_MODELS: List[str] = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
 
 def get_ai_response(
     message: str,

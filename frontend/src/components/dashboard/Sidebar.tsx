@@ -73,18 +73,12 @@ export default function Sidebar() {
   const dispatch = useDispatch();
   const { data: session } = useSession();
   const sessionUser = session?.user;
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(true);
   const [chatsUsed, setChatsUsed] = useState(0);
 
   useEffect(() => {
-    const readPro = () => {
-      try {
-        const stored = JSON.parse(localStorage.getItem("user") || "{}");
-        setIsPro(!!stored.is_pro || !!sessionUser?.is_pro);
-        setChatsUsed(stored.chats_today || 0);
-      } catch { setIsPro(false); }
-    };
-    readPro();
+    setIsPro(true);
+    setChatsUsed(0);
   }, [sessionUser]);
 
   const stats = useSelector((s: RootState) => s.ui.stats);
@@ -138,8 +132,8 @@ export default function Sidebar() {
             }}>
               Tulasi<span style={{ color: "var(--brand-primary)" }}>AI</span>
             </div>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
-              Premium
+            <div style={{ fontSize: 9, color: "var(--brand-primary)", fontWeight: 900, textTransform: "uppercase", letterSpacing: 1.5, textShadow: "0 0 10px rgba(168, 85, 247, 0.4)" }}>
+              Platinum Elite
             </div>
           </div>
         </motion.div>
@@ -251,24 +245,20 @@ export default function Sidebar() {
               </div>
             </div>
             {isPro ? (
-              <span style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, background: "linear-gradient(135deg,#8B5CF6,#D946EF)", color: "white", fontWeight: 700, whiteSpace: "nowrap" }}>PRO</span>
+              <span style={{ 
+                fontSize: 10, padding: "4px 10px", borderRadius: 8, 
+                background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(217,70,239,0.15))", 
+                border: "1px solid rgba(139,92,246,0.4)",
+                color: "#A78BFA", fontWeight: 800, whiteSpace: "nowrap",
+                boxShadow: "0 0 15px rgba(139,92,246,0.2)",
+                backdropFilter: "blur(10px)"
+              }}>PLATINUM</span>
             ) : (
               <span style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>Free</span>
             )}
           </div>
 
-          {!isPro && currentUser.role !== "admin" && (
-            <Link href="/dashboard/billing" style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              marginTop: 10, padding: "9px 12px", borderRadius: 9,
-              background: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(6,182,212,0.06))",
-              border: "1px solid rgba(139,92,246,0.2)",
-              textDecoration: "none", fontSize: 12, color: "#8B5CF6", fontWeight: 600,
-              transition: "all 0.2s ease",
-            }}>
-              Upgrade to Pro
-            </Link>
-          )}
+          {/* Upgrade button removed - Everyone is Platinum */}
         </div>
       )}
       <style>{`

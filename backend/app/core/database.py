@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, create_engine, Session, select
 from sqlalchemy.pool import QueuePool
 from app.core.config import settings
 
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+connect_args = {"check_same_thread": False, "timeout": 15} if settings.DATABASE_URL.startswith("sqlite") else {}
 
 try:
     engine = create_engine(

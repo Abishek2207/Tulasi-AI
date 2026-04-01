@@ -16,6 +16,7 @@ from app.core.database import get_session
 from app.core.rate_limit import limiter
 from app.core.security import get_current_user
 from datetime import date
+from app.services.vector_service import vector_service
 
 import google.generativeai as genai
 import time
@@ -115,9 +116,7 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
         print(f"Error generating AI response: {e}")
         response_text = "⏳ AI is temporarily busy. Please try again."
 
-    # Save messages & Iterate Limit
-    user.chats_today += 1
-    db.add(user)
+    # Save messages
     db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
     db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=response_text))
     
@@ -156,7 +155,8 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
         db.add(user)
         db.commit()
     
-    user.chats_today += 1
+    # Unlimited Streaming Access
+    user.chats_today = 0
     db.add(user)
     db.commit()
 
@@ -192,7 +192,7 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
             with SyncSession(engine) as _db:
                 db_user = _db.get(User, user.id)
                 if db_user:
-                    db_user.chats_today += 1
+                    db_user.chats_today = 0
                     _db.add(db_user)
                 _db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
                 _db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=full_response))
@@ -214,11 +214,11 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
             action = "roadmap_generated" if tool != "chat" else "message_sent"
             title = f"{tool.capitalize()} interaction"
             log_activity_internal(user, db, action, title, json.dumps({"session_id": session_id}))
-            query = select(User).where(User.id == current_user.id)
-            result = db.exec(query)
-            user = result.first()
+            # Re-fetch user to ensure fresh state for logging/XP tracking
+            user = db.get(User, user.id)
             db.commit()
-            print(f"✅ XP Awarded to user {user.id}")
+            if user:
+                print(f"✅ XP Awarded to user {user.id}")
         except Exception as e:
             print(f"⚠️ XP award failed: {e}")
 

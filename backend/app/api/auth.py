@@ -159,6 +159,7 @@ def get_me(current_user: User = Depends(get_current_user)):
         "invite_code": current_user.invite_code,
         "chats_today": 0,
         "is_pro": True,
+        "pro_expiry_date": "Unlimited Lifetime Access"
     }
 
 
@@ -271,5 +272,7 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
             "name": user.name,
             "role": user.role,
             "invite_code": user.invite_code,
+            "is_pro": True,
+            "chats_today": 0
         }
     }
