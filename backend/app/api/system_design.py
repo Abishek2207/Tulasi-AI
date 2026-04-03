@@ -1,7 +1,12 @@
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 from app.core.ai_router import get_ai_response
+from app.models.models import User
+from app.api.deps import get_current_user
 import json
+
+router = APIRouter()
 
 class SolutionRequest(BaseModel):
     problem_id: str
