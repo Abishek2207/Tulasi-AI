@@ -8,10 +8,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Search, Command, Zap, LogOut, User, ChevronDown } from "lucide-react";
+import { Menu, X, Search, Command, Zap, LogOut, User, ChevronDown, Camera } from "lucide-react";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { useRouter } from "next/navigation";
 import { TulasiLogo } from "@/components/TulasiLogo";
+import { authApi } from "@/lib/api";
+import toast from "react-hot-toast";
 
 export default function TopBar() {
   const dispatch = useDispatch();
@@ -24,7 +26,9 @@ export default function TopBar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
@@ -51,6 +55,36 @@ export default function TopBar() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     await signOut({ callbackUrl: "/" });
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) { // 1MB limit
+      toast.error("Profile photo must be less than 1MB");
+      return;
+    }
+
+    setAvatarUploading(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64Data = event.target?.result as string;
+      try {
+         await authApi.updateProfile({ avatar: base64Data });
+         toast.success("Profile photo updated!");
+         // We should update the session/user local object here or force a reload
+         const stored = JSON.parse(localStorage.getItem("user") || "{}");
+         stored.avatar = base64Data;
+         localStorage.setItem("user", JSON.stringify(stored));
+         setTimeout(() => window.location.reload(), 500); 
+      } catch (err) {
+         toast.error("Failed to upload photo.");
+      } finally {
+         setAvatarUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -186,11 +220,11 @@ export default function TopBar() {
             >
               <div style={{
                 width: 24, height: 24, borderRadius: "50%",
-                background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
+                background: user?.avatar ? `url(${user.avatar}) center/cover no-repeat` : "linear-gradient(135deg, #8B5CF6, #06B6D4)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 10, fontWeight: 700, color: "white", flexShrink: 0,
               }}>
-                {(user?.name || user?.email || "U")[0].toUpperCase()}
+                {!user?.avatar && (user?.name || user?.email || "U")[0].toUpperCase()}
               </div>
               <span className="desktop-only" style={{ maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user?.name?.split(" ")[0] || "Account"}
@@ -238,6 +272,25 @@ export default function TopBar() {
                       <User size={15} style={{ opacity: 0.6 }} />
                       View Profile
                     </button>
+
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={avatarUploading}
+                      style={{
+                        width: "100%", display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 12px", borderRadius: 9,
+                        background: "transparent", border: "none",
+                        color: "var(--text-secondary)", fontSize: 13, fontWeight: 500,
+                        cursor: avatarUploading ? "wait" : "pointer", textAlign: "left",
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <Camera size={15} style={{ opacity: 0.6 }} />
+                      {avatarUploading ? "Uploading..." : "Change Photo"}
+                    </button>
+                    <input type="file" accept="image/*" ref={fileInputRef} style={{ display: "none" }} onChange={handleAvatarUpload} />
 
                     <button
                       onClick={() => { setDropdownOpen(false); setSignOutModalOpen(true); }}

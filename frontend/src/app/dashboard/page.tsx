@@ -19,7 +19,7 @@ import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
 import dynamic from "next/dynamic";
 import { ReviewForm } from "@/components/ReviewForm";
-
+import { LiveAgentPrompt } from "@/components/dashboard/LiveAgentPrompt";
 
 const ActivityMap = dynamic(() => import("@/components/dashboard/ActivityMap").then(mod => mod.ActivityMap), {
   ssr: false,
@@ -207,56 +207,9 @@ export default function DashboardPage() {
   return (
     <motion.div initial="hidden" animate="show" variants={container} style={{ maxWidth: 1400, margin: "0 auto", paddingBottom: 60 }}>
 
-      {/* Dynamic Welcome Banner */}
-      <motion.div variants={item} className="glass-card banner-card" style={{
-        marginBottom: 40, border: "1px solid rgba(255,255,255,0.06)",
-        position: "relative", overflow: "hidden",
-        background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.08) 100%)"
-      }}>
-        <div style={{ position: "absolute", top: -100, right: -100, width: 400, height: 400, background: "radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)", filter: "blur(60px)" }} />
-        <div style={{ position: "absolute", bottom: -80, left: -50, width: 300, height: 300, background: "radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%)", filter: "blur(50px)" }} />
-
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 800 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <span style={{ fontSize: 13, fontWeight: 900, color: isFounder ? "#F59E0B" : "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>
-              {isFounder ? "Vanguard Founder & Architect" : userType.replace("_", " ")}
-            </span>
-            <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.1)" }} />
-          </div>
-          <h1 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 12, letterSpacing: "-1.5px", lineHeight: 1.1 }}>
-            {isFounder ? "Commander of Innovation," : "Vanguard of Learning,"} <span className="gradient-text">{isFounder ? "Abishek R" : userName}</span>
-          </h1>
-          <p style={{ fontSize: 18, color: "var(--text-secondary)", marginBottom: 32, maxWidth: 680, lineHeight: 1.6 }}>
-            The SaaS-native engine for engineering excellence. Access your high-fidelity modules
-            and track your XP velocity below.
-          </p>
-
-          <div className="hero-buttons">
-            <Link href="/dashboard/chat" style={{ flex: 1 }}>
-              <button
-                onClick={() => {
-                  try {
-                    const ctx = new window.AudioContext();
-                    const osc = ctx.createOscillator();
-                    osc.type = "sine";
-                    osc.frequency.setValueAtTime(600, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
-                    osc.connect(ctx.destination);
-                    osc.start(); osc.stop(ctx.currentTime + 0.1);
-                  } catch (e) { }
-                  confetti({ particleCount: 50, spread: 40, colors: ['#8B5CF6', '#ffffff'] });
-                }}
-                className="btn-primary" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700, width: "100%" }}>
-                Initiate New Chat <Sparkles size={16} />
-              </button>
-            </Link>
-            <Link href="/dashboard/analytics" style={{ flex: 1 }}>
-              <button className="btn-ghost" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 15, display: "flex", alignItems: "center", gap: 8, fontWeight: 700, width: "100%" }}>
-                Audit Stats <TrendingUp size={16} />
-              </button>
-            </Link>
-          </div>
-        </div>
+      {/* Dynamic Gemini-Style Live Agent */}
+      <motion.div variants={item} style={{ marginBottom: 40 }}>
+        <LiveAgentPrompt userName={isFounder ? "Abishek R" : userName} />
       </motion.div>
 
       {/* Your Daily Path & Mission Control */}
