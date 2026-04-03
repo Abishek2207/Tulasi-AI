@@ -140,6 +140,9 @@ async def lifespan(app: FastAPI):
                 add_column_if_missing("user", "user_type", "VARCHAR", default="'student'")
                 add_column_if_missing("user", "abuse_count", "INTEGER", default="0")
                 add_column_if_missing("user", "is_onboarded", "BOOLEAN", default="FALSE")
+                add_column_if_missing("user", "user_intelligence_profile", "VARCHAR", default="'{}'")
+                add_column_if_missing("user", "last_intelligence_update", "TIMESTAMP", default="CURRENT_TIMESTAMP")
+                add_column_if_missing("user", "behavioral_patterns", "VARCHAR", default="'{}'")
 
             # Step 7: Seeding
             # Seed Admin User

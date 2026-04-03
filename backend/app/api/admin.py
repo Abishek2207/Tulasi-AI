@@ -9,6 +9,10 @@ from app.core.database import get_session
 from app.api.auth import get_admin_user, get_current_user
 from app.models.models import User, Review, ActivityLog
 
+class ProtocolRequest(BaseModel):
+    topic: str
+    depth: Optional[str] = "Deep"
+
 router = APIRouter()
 
 
@@ -19,65 +23,40 @@ router = APIRouter()
 @router.get("/stats")
 def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
     from datetime import date, timedelta
-    from app.models.models import SolvedProblem, ChatMessage
+    from app.models.models import SolvedProblem, ChatMessage, ActivityLog
     from sqlalchemy import text
 
     users = db.exec(select(User)).all()
     total = len(users)
-    students = [u for u in users if u.role == "student"]
     pro_users = [u for u in users if u.is_pro]
-
-    # Active today (last_activity_date)
+    
+    # Growth metrics
     today_str = date.today().isoformat()
     active_today = len([u for u in users if u.last_activity_date == today_str])
+    
+    # Safety metrics
+    flagged_users = len([u for u in users if getattr(u, 'abuse_count', 0) > 0])
+    high_risk_users = len([u for u in users if getattr(u, 'abuse_count', 0) >= 3])
 
-    # Active in last 24 hours (from activity logs)
-    cutoff_24h = datetime.utcnow() - timedelta(hours=24)
-    try:
-        recent_activity = db.exec(
-            select(ActivityLog).where(ActivityLog.created_at >= cutoff_24h)
-        ).all()
-        active_24h_users = len(set(a.user_id for a in recent_activity))
-    except Exception:
-        active_24h_users = active_today
-
-    # Total reviews
-    try:
-        from app.models.models import Review as ReviewModel
-        total_reviews = len(db.exec(select(ReviewModel)).all())
-    except Exception:
-        total_reviews = 0
-
-    # Total code submissions
-    try:
-        total_submissions = len(db.exec(select(SolvedProblem)).all())
-    except Exception:
-        total_submissions = 0
-
-    # Total hackathon participants
-    try:
-        from app.models.models import HackathonApplication
-        total_hack_participants = len(db.exec(select(HackathonApplication)).all())
-    except Exception:
-        total_hack_participants = 0
-
-    # Total chat messages
-    try:
-        total_chat_messages = len(db.exec(select(ChatMessage)).all())
-    except Exception:
-        total_chat_messages = 0
+    # Platform metrics
+    total_reviews = db.exec(text("SELECT count(*) FROM review")).scalar() or 0
+    total_submissions = db.exec(select(SolvedProblem)).all()
+    total_chat_messages = db.exec(select(ChatMessage)).all()
+    
+    # Intelligence coverage
+    intel_coverage = len([u for u in users if len(u.user_intelligence_profile or "{}") > 10])
 
     return {
         "total_users": total,
-        "students": len(students),
-        "admins": total - len(students),
         "pro_users": len(pro_users),
         "active_today": active_today,
-        "active_24h": active_24h_users,
+        "flagged_users": flagged_users,
+        "high_risk_users": high_risk_users,
+        "intelligence_coverage": intel_coverage,
         "total_reviews": total_reviews,
-        "total_submissions": total_submissions,
-        "total_hackathon_participants": total_hack_participants,
-        "total_chat_messages": total_chat_messages,
+        "total_submissions": len(total_submissions),
+        "total_chat_messages": len(total_chat_messages),
+        "conversion_rate": round((len(pro_users) / max(total, 1)) * 100, 1)
     }
 
 
@@ -489,90 +468,139 @@ def get_chat_analytics(db: Session = Depends(get_session), admin: User = Depends
 
 @router.get("/analytics")
 def get_admin_analytics(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
-    """Fetch 14-day aggregated analytics with robust date parsing for SQLite."""
+    """Fetch 14-day aggregated analytics with advanced Cohort and Heatmap matrices."""
     try:
+        from datetime import date, timedelta
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=13)
 
-        users = db.exec(select(User).where(User.created_at >= start_date)).all()
-        logs = db.exec(select(ActivityLog).where(ActivityLog.created_at >= start_date)).all()
+        all_users = db.exec(select(User)).all()
+        # Get more logs for matrix generation (30 days)
+        logs = db.exec(select(ActivityLog).where(ActivityLog.created_at >= (end_date - timedelta(days=30)))).all()
         all_reviews = db.exec(select(Review)).all()
-        recent_reviews = [r for r in all_reviews if r.created_at and r.created_at >= start_date]
 
-        def to_day(dt):
-            if not dt: return None
-            if hasattr(dt, 'strftime'):
-                return dt.strftime("%Y-%m-%d")
-            if isinstance(dt, str):
-                return dt.split(" ")[0]
-            return str(dt).split(" ")[0]
-
+        # ── 1. Growth History (14 Days) ───────────────────────────────
         daily_stats = {}
         for i in range(14):
-            date_str = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
-            # Added "reviews" to the stats tracker
-            daily_stats[date_str] = {"date": date_str, "signups": 0, "actions": 0, "reviews": 0}
+            d = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+            daily_stats[d] = {"date": d, "signups": 0, "actions": 0, "reviews": 0}
 
-        for u in users:
-            try:
-                day = to_day(u.created_at)
-                if day in daily_stats:
-                    daily_stats[day]["signups"] += 1
-            except Exception:
-                pass
-
+        for u in all_users:
+            if u.created_at:
+                d = u.created_at.strftime("%Y-%m-%d")
+                if d in daily_stats: daily_stats[d]["signups"] += 1
+            
         for log in logs:
-            try:
-                day = to_day(log.created_at)
-                if day in daily_stats:
-                    daily_stats[day]["actions"] += 1
-            except Exception:
-                pass
-                
-        for rev in recent_reviews:
-            try:
-                day = to_day(rev.created_at)
-                if day in daily_stats:
-                    daily_stats[day]["reviews"] += 1
-            except Exception:
-                pass
+            if log.created_at:
+                d = log.created_at.strftime("%Y-%m-%d")
+                if d in daily_stats: daily_stats[d]["actions"] += 1
 
         growth_history = [daily_stats[d] for d in sorted(daily_stats.keys())]
 
-        all_users = db.exec(select(User)).all()
+        # ── 2. Segmentation ───────────────────────────────────────────
         pro_count = sum(1 for u in all_users if getattr(u, 'is_pro', False))
-        free_count = len(all_users) - pro_count
-        
-        # Calculate review stats
-        total_reviews = len(all_reviews)
-        approved_reviews = sum(1 for r in all_reviews if getattr(r, 'is_approved', False))
-        pending_reviews = total_reviews - approved_reviews
+        segmentation = [
+            {"name": "Pro 👑", "value": pro_count, "color": "#A78BFA"},
+            {"name": "Free", "value": len(all_users) - pro_count, "color": "rgba(255,255,255,0.1)"}
+        ]
 
-        # Calculate retention (Cohort: users joined > 7 days ago who were active in last 7 days)
-        cutoff_retention = datetime.utcnow() - timedelta(days=7)
-        old_users = [u for u in all_users if u.created_at and u.created_at < (datetime.utcnow() - timedelta(days=7))]
-        retained_users = [u for u in old_users if u.last_seen and u.last_seen >= cutoff_retention]
-        retention_rate = round((len(retained_users) / max(len(old_users), 1)) * 100, 1)
+        # ── 3. Advanced Retention (Standard KPIs) ─────────────────────
+        now = datetime.utcnow()
+        def get_retention(days):
+            cutoff = now - timedelta(days=days)
+            cohort = [u for u in all_users if u.created_at and u.created_at <= cutoff]
+            if not cohort: return 0.0
+            retained = [u for u in cohort if u.last_seen and u.last_seen >= (now - timedelta(days=1))]
+            return round((len(retained) / len(cohort)) * 100, 1)
+
+        # ── 4. Weekly Cohort Matrix ───────────────────────────────────
+        weekly_retention = []
+        for i in range(5): 
+            w_start = now - timedelta(days=(i+1)*7)
+            w_end = now - timedelta(days=i*7)
+            cohort = [u for u in all_users if u.created_at and w_start <= u.created_at < w_end]
+            if cohort:
+                retained = [u for u in cohort if u.last_seen and u.last_seen >= (now - timedelta(days=7))]
+                weekly_retention.append({
+                    "week": f"Week -{i}",
+                    "cohort_size": len(cohort),
+                    "retained": len(retained),
+                    "rate": round((len(retained) / len(cohort)) * 100, 1)
+                })
+
+        # ── 5. Activity Heatmap Matrix (Day/Hour) ──────────────────────
+        h_matrix = []
+        for d in range(7):
+            for h in range(24):
+                count = sum(1 for l in logs if l.created_at.weekday() == d and l.created_at.hour == h)
+                h_matrix.append({"day_index": d, "hour": h, "count": count})
+        
+        peak_cell = max(h_matrix, key=lambda x: x["count"]) if h_matrix else {"count": 0}
 
         return {
             "growth": growth_history,
-            "segmentation": [
-                {"name": "Pro 👑", "value": pro_count, "color": "#A78BFA"},
-                {"name": "Free", "value": free_count, "color": "rgba(255,255,255,0.1)"}
-            ],
+            "segmentation": segmentation,
             "total_users": len(all_users),
-            "pro_percentage": round((pro_count / len(all_users) * 100), 1) if all_users else 0,
-            "retention_rate": retention_rate,
-            
-            # Review metrics
-            "total_reviews": total_reviews,
-            "approved_reviews": approved_reviews,
-            "pending_reviews": pending_reviews
+            "retention": {
+                "d1_retention": get_retention(1),
+                "d7_retention": get_retention(7),
+                "d30_retention": get_retention(30),
+                "dau_mau_ratio": round((len([u for u in all_users if u.last_activity_date == now.date().isoformat()]) / max(len(all_users),1)) * 100, 1),
+                "active_7d": len([u for u in all_users if u.last_seen and u.last_seen >= (now - timedelta(days=7))]),
+                "active_30d": len([u for u in all_users if u.last_seen and u.last_seen >= (now - timedelta(days=30))]),
+                "weekly_retention": weekly_retention
+            },
+            "heatmap": {
+                "matrix": h_matrix,
+                "peak": {"day": ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][peak_cell.get("day_index",0)], "hour": peak_cell.get("hour",0), "count": peak_cell.get("count",0)}
+            },
+            "total_reviews": len(all_reviews),
+            "pending_reviews": len([r for r in all_reviews if not getattr(r, 'is_approved', False)])
         }
     except Exception as e:
         import traceback
-        print(traceback.format_exc())
-        return {"growth": [], "segmentation": [], "error": str(e), "success": False}
+        return {"error": f"Analytics Sync Failed: {str(e)}", "trace": traceback.format_exc()}
+
+@router.get("/live-users")
+def get_live_users(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Fetch users active in the last 5 minutes for the live pulse indicator."""
+    cutoff = datetime.utcnow() - timedelta(minutes=5)
+    online = db.exec(select(User).where(User.last_seen >= cutoff)).all()
+    return {
+        "online_now": len(online),
+        "online_users": [
+            {"id": u.id, "name": u.name or u.email.split("@")[0], "email": u.email, "role": u.role}
+            for u in online
+        ]
+    }
+
+@router.post("/founders-protocol")
+def run_founders_protocol(req: ProtocolRequest, db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """
+    Executes the 'Founder's Protocol' — A high-token reasoning chain for
+    board-level technical and strategic research.
+    """
+    prompt = f"""
+    [CRITICAL MISSION: FOUNDER'S PROTOCOL 2.0]
+    You are the Lead Strategist and Principal Architect for Tulasi AI.
+    The Founder has requested a "{req.depth or 'Deep'}" research report on: "{req.topic}"
+
+    Instructions:
+    1. Perform a multi-step analytical breakdown.
+    2. Provide Architectural Decisions (ADR style).
+    3. Include a 'Risk vs Reward' matrix.
+    4. Propose a Next.js / FastAPI / LLM implementation roadmap.
+    5. Maintain a professional, executive, yet slightly cyberpunk 'Founders Only' tone.
+
+    Format the response in premium Markdown with clear headers and Mermaid diagrams.
+    """
+
+    try:
+        from app.core.ai_client import ai_client
+        report = ai_client.get_response(prompt, force_model="complex_reasoning")
+        return {"topic": req.topic, "report": report, "generated_at": datetime.utcnow().isoformat()}
+    except Exception as e:
+        return {"error": f"Protocol Execution Halted: {str(e)}"}
 
 
 # ─────────────────────────────────────────────────────────────────────

@@ -117,7 +117,9 @@ def search_users(q: str, current_user: User = Depends(get_current_user), db: Ses
             User.id != current_user.id,
             or_(
                 User.name.ilike(f"%{q}%"),
-                User.email.ilike(f"%{q}%")
+                User.email.ilike(f"%{q}%"),
+                User.target_role.ilike(f"%{q}%"),
+                User.interest_areas.ilike(f"%{q}%")
             )
         )
     ).limit(20)
@@ -129,6 +131,8 @@ def search_users(q: str, current_user: User = Depends(get_current_user), db: Ses
             "name": u.name or u.email.split("@")[0], 
             "email": u.email,
             "target_role": u.target_role,
-            "level": u.level
+            "interest_areas": u.interest_areas,
+            "level": u.level,
+            "is_pro": u.is_pro
         } for u in users
     ]}
