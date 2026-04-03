@@ -43,8 +43,9 @@ class User(SQLModel, table=True):
     onboarding_step: int = 0             # Track multi-step onboarding progress
     
     # ── [NEW] Super Intelligence Profile ──
-    user_intelligence_profile: Optional[str] = "{}" # JSON: {facts: [], strengths: [], gaps: []}
+    user_intelligence_profile: Optional[str] = "{}" # JSON: {facts: [], strengths: [], gaps: [], career_velocity: 50, technical_depth: 30}
     last_intelligence_update: datetime = Field(default_factory=datetime.utcnow)
+    behavioral_patterns: Optional[str] = "{}" # JSON: {learning_style: "visual", responsiveness: "high", focus_areas: []}
     
     # Relationships
     resumes: List["SavedResume"] = Relationship(back_populates="user")

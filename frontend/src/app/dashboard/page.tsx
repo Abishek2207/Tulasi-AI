@@ -26,9 +26,11 @@ const ActivityMap = dynamic(() => import("@/components/dashboard/ActivityMap").t
   loading: () => <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 13 }}>Loading Real-time Activity...</div>
 });
 
+import { MissionControl } from "@/components/dashboard/MissionControl";
+import { RoutineCard } from "@/components/dashboard/RoutineCard";
+
 const SkillRadar = dynamic(() => import("@/components/dashboard/SkillRadar").then(mod => mod.SkillRadar), { ssr: false });
 const ReadinessCard = dynamic(() => import("@/components/dashboard/ReadinessCard").then(mod => mod.ReadinessCard), { ssr: false });
-const MissionControl = dynamic(() => import("@/components/dashboard/MissionControl").then(mod => mod.MissionControl), { ssr: false });
 const NeuralStrategist = dynamic(() => import("@/components/dashboard/NeuralStrategist").then(mod => mod.NeuralStrategist), { ssr: false });
 
 function LiveActivityFeed({ activities: initialActivities }: { activities: any[] }) {
@@ -281,39 +283,16 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Your Daily Path & Mission Control */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: 24, marginBottom: 40 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(450px, 1fr))", gap: 24, marginBottom: 40 }}>
         {/* Mission Control - Personalized AI Mission */}
-        <motion.div variants={item} className="glass-card" style={{ padding: 0, overflow: "hidden", minHeight: 300 }}>
+        <motion.div variants={item} style={{ minHeight: 400 }}>
           <MissionControl token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
         </motion.div>
 
-        {/* Action Path */}
-        {dailyPlan.length > 0 && (
-          <motion.div variants={item}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Recommended Path</h3>
-              <Link href="/dashboard/next-action" style={{ fontSize: 11, fontWeight: 800, color: "var(--brand-primary)", textDecoration: "none" }}>VIEW ALL →</Link>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {dailyPlan.map((action: any, i: number) => (
-                <div key={i} className="glass-card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", border: action.urgent ? "1px solid rgba(244,63,94,0.3)" : undefined }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.1)", color: "#8B5CF6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                      {action.icon}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 800 }}>{action.title}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>+{action.xp} XP available</div>
-                    </div>
-                  </div>
-                  <Link href={action.link}>
-                    <ArrowRight size={16} color="var(--brand-primary)" />
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+        {/* Daily Routine - AI Schedule */}
+        <motion.div variants={item} style={{ minHeight: 400 }}>
+          <RoutineCard />
+        </motion.div>
       </div>
 
       {/* Matched Opportunities */}

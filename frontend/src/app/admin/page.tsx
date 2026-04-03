@@ -134,6 +134,12 @@ export default function AdminPage() {
   const [heatmap, setHeatmap] = useState<HeatmapData | null>(null);
   const [liveUsers, setLiveUsers] = useState<LiveUsers | null>(null);
 
+  // Founder's Protocol
+  const [protocolQuery, setProtocolQuery] = useState("");
+  const [protocolDepth, setProtocolDepth] = useState("Deep");
+  const [protocolResult, setProtocolResult] = useState<{ topic: string; report: string; generated_at: string } | null>(null);
+  const [protocolLoading, setProtocolLoading] = useState(false);
+
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth");
     if (status === "authenticated" && user?.role !== "admin") router.push("/dashboard");
@@ -229,6 +235,21 @@ export default function AdminPage() {
   const featureReview = async (id: number) => {
     try { const d = await adminApi.featureReview(id); setReviews(r => r.map(x => x.id === id ? { ...x, is_featured: d.is_featured } : x)); }
     catch { toast.error("Failed to update."); }
+  };
+
+  const runProtocol = async () => {
+    if (!protocolQuery) return toast.error("Enter a research topic");
+    setProtocolLoading(true);
+    setProtocolResult(null);
+    try {
+      const res = await adminApi.foundersProtocol(protocolQuery, protocolDepth);
+      setProtocolResult(res);
+      toast.success("Founder's Protocol generated!");
+    } catch (e: any) {
+      toast.error(e.message || "Protocol execution failed");
+    } finally {
+      setProtocolLoading(false);
+    }
   };
 
   const seedHackathons = async () => {
@@ -1256,6 +1277,50 @@ export default function AdminPage() {
                       ))}
                     </div>
                   ) : <div style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", padding: 24 }}>No referrals yet</div>}
+                </div>
+
+                {/* Founder's Protocol */}
+                <div className="glass-card premium-glow" style={{ padding: 28, gridColumn: "1 / -1", border: "1px solid rgba(139,92,246,0.3)", background: "linear-gradient(135deg, rgba(8,8,18,0.9), rgba(139,92,246,0.05))" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                    <div>
+                      <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 4, color: "#A78BFA", fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>🔮 Founder's Protocol 2.0</h3>
+                      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Deep technical research and strategy advisor powered by recursive reasoning.</p>
+                    </div>
+                    <div style={{ padding: "4px 10px", borderRadius: 20, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", fontSize: 10, fontWeight: 800, color: "#A78BFA", textTransform: "uppercase", letterSpacing: 1 }}>Deep Research Mode</div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+                    <input value={protocolQuery} onChange={e => setProtocolQuery(e.target.value)}
+                      placeholder="Enter research topic (e.g. 'TulasiAI Scaling Strategy to 1M users')..."
+                      style={{ flex: 1, padding: "14px 18px", borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "white", fontSize: 14, outline: "none", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }} />
+                    <select value={protocolDepth} onChange={e => setProtocolDepth(e.target.value)}
+                      style={{ padding: "0 16px", borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: 13, cursor: "pointer", fontWeight: 700 }}>
+                      <option value="Standard">Standard</option>
+                      <option value="Deep">Deep</option>
+                      <option value="Extreme">Extreme (Slow)</option>
+                    </select>
+                    <button onClick={runProtocol} disabled={protocolLoading}
+                      style={{ padding: "0 28px", borderRadius: 12, background: "linear-gradient(135deg, #8B5CF6, #6D28D9)", border: "none", color: "white", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 12px rgba(139,92,246,0.3)", opacity: protocolLoading ? 0.6 : 1, transition: "all 0.2s" }}>
+                      {protocolLoading ? "🔬 Processing..." : "🚀 Execute"}
+                    </button>
+                  </div>
+
+                  {protocolResult && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                      style={{ background: "rgba(0,0,0,0.4)", borderRadius: 16, border: "1px solid rgba(139,92,246,0.2)", padding: 32, maxHeight: 600, overflowY: "auto", boxShadow: "inset 0 4px 20px rgba(0,0,0,0.3)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 16, marginBottom: 20 }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 2 }}>Research Output: {protocolResult.topic}</div>
+                        <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{fmtDT(protocolResult.generated_at)}</div>
+                      </div>
+                      <div className="prose prose-invert max-w-none" style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(255,255,255,0.9)" }}>
+                        {protocolResult.report.split('\n').map((line, i) => (
+                           <div key={i} style={{ marginBottom: line.startsWith('#') ? 16 : 8, fontWeight: line.startsWith('#') ? 800 : 400, color: line.startsWith('#') ? '#A78BFA' : 'inherit' }}>
+                             {line}
+                           </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
 
               </div>

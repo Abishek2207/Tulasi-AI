@@ -187,11 +187,13 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
     
     system_instruction = f"{system_prompt}. {awareness}{context_str}"
 
-    # Generate AI Response (with fallback chain)
+    # Generate AI Response using Reasoning Engine
     try:
-        response_text = get_ai_response(req.message, history, image_data=image_data, system_instruction=system_instruction)
+        from app.services.ai_agents.reasoning import reasoning_engine
+        reasoning_res = reasoning_engine.process_query(req.message, user, history, db)
+        response_text = reasoning_res["response"]
     except Exception as e:
-        print(f"Error generating AI response: {e}")
+        print(f"❌ Chat Error: {e}")
         response_text = "⏳ AI is temporarily busy. Please try again."
 
     # Save messages
@@ -246,6 +248,25 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     
+    # ── AI Safety Triage (Streaming) ─────────────────────────────────
+    safety_prompt = f"""
+    Evaluate this message for policy violations. 
+    Message: "{req.message}"
+    Return JSON: {{"is_safe": true|false, "reason": "short reason"}}
+    """
+    try:
+        from app.core.ai_router import get_ai_response
+        import re
+        safety_res = get_ai_response(safety_prompt, force_model="fast_flash")
+        safety_data = json.loads(re.search(r'\{.*\}', safety_res, re.DOTALL).group())
+        if not safety_data.get("is_safe", True):
+            user.abuse_count = getattr(user, "abuse_count", 0) + 1
+            db.add(user)
+            db.commit()
+            error_msg = f"⚠️ **Safety Alert ({user.abuse_count}/5):** {safety_data.get('reason', 'Policy violation.')}"
+            return StreamingResponse(iter([f"data: {json.dumps({'token': error_msg})}\n\n", "data: [DONE]\n\n"]), media_type="text/event-stream")
+    except Exception:
+        pass
     # ── AI Safety Triage ─────────────────────────────────────────────
     safety_prompt = f"Evaluate safety of: '{req.message}'. Return {{\"is_safe\": bool, \"reason\": string}}"
     try:
@@ -292,13 +313,13 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
     
     system_instruction = f"{system_prompt}. {awareness}{context_str}"
 
-    from app.core.ai_client import ai_client
+    from app.services.ai_agents.reasoning import reasoning_engine
 
     def generate():
         full_response = ""
         try:
-            # Use unified hybrid client with streaming
-            stream_gen = ai_client.get_response(req.message, history=history, stream=True, system_instruction=system_instruction)
+            # Use Reasoning Engine with Streaming
+            stream_gen = reasoning_engine.process_query(req.message, user, history, db, stream=True)
             
             for token in stream_gen:
                 if token:

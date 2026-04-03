@@ -328,12 +328,18 @@ export const adminApi = {
     request<{ message: string }>(`/api/admin/hackathons/${id}`, { method: "DELETE" }),
   approveReview: (id: number) =>
     request<{ message: string; is_approved: boolean }>(`/api/admin/reviews/${id}/approve`, { method: "PUT" }),
+  foundersProtocol: (topic: string, depth: string = "Deep") =>
+    request<{ topic: string; report: string; generated_at: string }>("/api/admin/founders-protocol", {
+      method: "POST",
+      body: JSON.stringify({ topic, depth }),
+    }),
 };
 
 // ─── Intelligence ────────────────────────────────────────────────────────────
 export const intelligenceApi = {
   getReadiness: () => request<ReadinessStats>("/api/intelligence/career-readiness"),
   getDailyMission: () => request<{ mission_title: string; mission_description: string; reward_xp: number; module_link: string }>("/api/intelligence/daily-mission"),
+  getDailyRoutine: () => request<{ routine: { time: string; task: string; topic: string; intensity: string }[]; generated_at: string; is_fallback?: boolean }>("/api/intelligence/daily-routine"),
   getStrategicPlan: () => request<{ master_goal: string; current_standing: string; six_month_roadmap: { month: string; focus: string; milestone: string }[]; immediate_pivot: string }>("/api/intelligence/strategic-plan"),
   getSystemDesignSolution: (problem_id: string, user_query: string) =>
     request<{ analysis: string; guidance: string; architecture_tip: string; next_step: string }>("/api/system-design/guided-solution", {
