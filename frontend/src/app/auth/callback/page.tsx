@@ -27,36 +27,40 @@ export default function AuthCallbackPage() {
         // ── PKCE flow: exchange the ?code param ──────────────────────────────
         const code = url.searchParams.get("code");
         if (code) {
-          console.log("[OAuth Callback] Exchanging auth code for session...");
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
           if (error) {
-            console.error("[OAuth Callback] Code exchange failed:", error.message);
             setErrorMsg(error.message);
             setStatus("error");
             return;
           }
 
           const session = data.session;
-          console.log("[OAuth Callback] Session established:", session?.user?.email);
+          const userEmail = session?.user?.email;
+          const userName = session?.user?.user_metadata?.full_name
+            || session?.user?.user_metadata?.name
+            || session?.user?.user_metadata?.user_name  // GitHub uses user_name
+            || userEmail?.split("@")[0];
+          const provider = session?.user?.app_metadata?.provider || "google";
 
-          // ── Upsert user into DB ────────────────────────────────────────────
-          if (session?.user) {
-            const { error: upsertErr } = await supabase.from("users").upsert(
-              {
-                id: session.user.id,
-                email: session.user.email,
-                name:
-                  session.user.user_metadata?.full_name ||
-                  session.user.user_metadata?.name ||
-                  null,
-                avatar_url: session.user.user_metadata?.avatar_url || null,
-                created_at: new Date().toISOString(),
-              },
-              { onConflict: "email" }
-            );
-            if (upsertErr) {
-              console.warn("[OAuth Callback] users upsert warning:", upsertErr.message);
+          // Exchange Supabase session for FastAPI JWT immediately
+          if (userEmail) {
+            try {
+              const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+              const res = await fetch(`${API_URL}/api/auth/google-oauth`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: userEmail, name: userName, provider }),
+              });
+              if (res.ok) {
+                const result = await res.json();
+                if (result.access_token) {
+                  localStorage.setItem("token", result.access_token);
+                  localStorage.setItem("user", JSON.stringify(result.user));
+                }
+              }
+            } catch (err) {
+              console.warn("[Callback] Backend JWT exchange failed — fallback to Supabase session.");
             }
           }
 
