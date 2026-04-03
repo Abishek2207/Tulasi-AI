@@ -8,5 +8,7 @@ from app.main import app
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 10000))
+    # Use $PORT from environment (defaulting to 8000 for local dev)
+    port = int(os.environ.get("PORT", 8000))
+    # Note: Use 'app.main:app' to ensure the same module reload path
     uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
