@@ -42,16 +42,8 @@ function LiveActivityFeed({ activities: initialActivities }: { activities: any[]
 
   useEffect(() => {
     if (activities.length === 0) return;
-    const cycle = setInterval(() => {
-      setActivities((prev) => {
-        if (prev.length === 0) return prev;
-        const newArr = [...prev];
-        const last = newArr.pop();
-        if (last) newArr.unshift({ ...last, time: "Just now" });
-        return newArr;
-      });
-    }, 4500);
-    return () => clearInterval(cycle);
+  // Removed shuffle interval to prevent CPU lag and "fake" updates.
+  // Data is now static until the next manual refresh or socket update.
   }, [activities.length]);
 
   const getIcon = (type: string) => {
@@ -75,41 +67,33 @@ function LiveActivityFeed({ activities: initialActivities }: { activities: any[]
         <span style={{ fontSize: 11, color: "var(--brand-primary)", fontWeight: 700, background: "rgba(124,58,237,0.1)", padding: "4px 10px", borderRadius: 12 }}>SYNCING</span>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative", height: 260, overflow: "hidden" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, height: 260, overflowY: "auto" }}>
         {activities.length === 0 ? (
           <div style={{ textAlign: "center", paddingTop: 80, fontSize: 13, color: "var(--text-muted)", fontWeight: 500 }}>
-            Syncing live activities...
+            No recent activity sync found.
           </div>
         ) : (
-          <AnimatePresence>
-            {activities.map((act, i) => (
-              <motion.div
-                key={act.id + act.time}
-                initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                animate={{ opacity: 1 - (i * 0.2), y: 0, scale: 1 - (i * 0.02) }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.05)",
-                  boxShadow: i === 0 ? "0 4px 20px rgba(0,0,0,0.1)" : "none",
-                  position: "absolute", top: i * 68, left: 0, right: 0, zIndex: 10 - i
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {getIcon(act.type)}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, color: "var(--text-primary)" }}>
-                      <span style={{ fontWeight: 800, color: "white" }}>{act.user}</span> {act.action} <span style={{ fontWeight: 700, color: "var(--brand-primary)" }}>{act.target}</span>
-                    </div>
+          activities.map((act, i) => (
+            <div
+              key={act.id + i}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.05)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {getIcon(act.type)}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                    <span style={{ fontWeight: 800, color: "white" }}>{act.user}</span> {act.action} <span style={{ fontWeight: 700, color: "var(--brand-primary)" }}>{act.target}</span>
                   </div>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", opacity: 0.6 }}>{act.time}</span>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", opacity: 0.6 }}>{act.time}</span>
+            </div>
+          ))
         )}
       </div>
     </div>
@@ -197,11 +181,7 @@ export default function DashboardPage() {
       if (me?.user_type) setUserType(me.user_type);
       if (me?.is_onboarded === false) setNeedsOnboarding(true);
 
-      if (statsData && (statsData as any).level > 1) {
-        setTimeout(() => {
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#8B5CF6', '#06B6D4', '#F43F5E'] });
-        }, 600);
-      }
+      // Removed auto-confetti to reduce main thread load and "fake" flair
     } catch (e) { /* silent */ }
   };
 
@@ -209,20 +189,17 @@ export default function DashboardPage() {
 
   const container: Variants = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.05 } }
+    show: { opacity: 1, transition: { staggerChildren: 0 } } // Instant entries
   };
 
   const item: Variants = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    hidden: { opacity: 0, y: 10 },
     show: { 
       opacity: 1, 
       y: 0, 
-      scale: 1, 
       transition: { 
-        type: "spring", 
-        stiffness: 300, 
-        damping: 24, 
-        mass: 1.2 
+        duration: 0.1, // Near-instant fade
+        ease: "easeOut"
       } 
     }
   };
