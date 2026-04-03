@@ -36,6 +36,7 @@ export default function MessagesPage() {
   const [inputObj, setInputObj] = useState("");
   const [loading, setLoading] = useState(true);
   const [showVoice, setShowVoice] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getSharedCode = (id1: number, id2: number) => {
@@ -206,11 +207,21 @@ export default function MessagesPage() {
           </button>
         </div>
         
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.01)" }}>
+          <input
+            type="text"
+            placeholder={`Search ${activeTab === "dm" ? "users" : "groups"}...`}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ width: "100%", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "white", fontSize: 13, outline: "none" }}
+          />
+        </div>
+        
         <div style={{ flex: 1, overflowY: "auto" }}>
           {loading ? <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)" }}>Loading...</div> :
            activeTab === "dm" ? (
-             users.length === 0 ? <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)" }}>No users found.</div> :
-             users.map(u => (
+             users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)" }}>No users found.</div> :
+             users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
               <div key={u.id} onClick={() => setActiveUser(u)}
                 style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", background: activeUser?.id === u.id ? "rgba(108,99,255,0.1)" : "transparent", borderLeft: activeUser?.id === u.id ? "3px solid var(--brand-primary)" : "3px solid transparent" }}
               >
@@ -222,7 +233,7 @@ export default function MessagesPage() {
               </div>
             ))
            ) : (
-             groups.map(g => (
+             groups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase())).map(g => (
               <div key={g.id} onClick={() => { setActiveGroup(g); fetchGroupMessages(g.id); }}
                 style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", background: activeGroup?.id === g.id ? "rgba(108,99,255,0.1)" : "transparent", borderLeft: activeGroup?.id === g.id ? "3px solid var(--brand-primary)" : "3px solid transparent" }}
               >

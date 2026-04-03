@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Send, X, CheckCircle2, User, Mail, Briefcase, MessageSquare } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -11,9 +11,11 @@ interface ReviewFormProps {
 }
 
 export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
-  const [step, setStep] = useState<"form" | "submitting" | "success">("form");
+  const [step, setStep] = useState<"loading" | "form" | "submitting" | "success">("loading");
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
+  const [existingReviewId, setExistingReviewId] = useState<number | null>(null);
+  const [isApproved, setIsApproved] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,6 +23,42 @@ export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
     review: ""
   });
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Check for existing review
+    const checkExisting = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setStep("form");
+          return;
+        }
+
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+        const res = await fetch(`${API_URL}/api/reviews/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setFormData({
+            name: data.name || "",
+            email: data.email || "",
+            role: data.role || "",
+            review: data.review || ""
+          });
+          setRating(data.rating || 5);
+          setExistingReviewId(data.id);
+          setIsApproved(data.is_approved);
+        }
+      } catch (e) {
+        // fail silently, just a check
+      } finally {
+        setStep("form");
+      }
+    };
+    checkExisting();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,10 +70,24 @@ export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
     setStep("submitting");
 
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("You need to be logged in to submit a review.");
+        setStep("form");
+        return;
+      }
+
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
-      const res = await fetch(`${API_URL}/api/reviews`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const url = existingReviewId 
+        ? `${API_URL}/api/reviews/${existingReviewId}` 
+        : `${API_URL}/api/reviews`;
+        
+      const res = await fetch(url, {
+        method: existingReviewId ? "PUT" : "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           ...formData,
           rating
@@ -44,6 +96,8 @@ export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
 
       if (res.ok) {
         setStep("success");
+        setIsApproved(false); // Edits go back to pending
+        setExistingReviewId(true as any); // Just so we trigger the success text appropriately
         confetti({
           particleCount: 150,
           spread: 70,
@@ -76,9 +130,11 @@ export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
         }}>
           <CheckCircle2 size={48} />
         </div>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 12 }}>Review Received!</h2>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: "white", marginBottom: 12 }}>
+          {existingReviewId ? "Review Updated!" : "Review Received!"}
+        </h2>
         <p style={{ color: "var(--text-secondary)", marginBottom: 32, lineHeight: 1.6 }}>
-          Thank you for helping us build the future of AI learning. Your feedback is invaluable to the Tulasi AI community.
+          Thank you for helping us build the future of AI learning. Your review is currently <strong style={{color: "var(--brand-primary)"}}>pending approval</strong>.
         </p>
         <button 
           onClick={onClose}
@@ -110,13 +166,28 @@ export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
 
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 22, fontWeight: 800, color: "white", marginBottom: 8, letterSpacing: "-0.5px" }}>
-          Share Your Experience
+          {existingReviewId ? "Update Your Experience" : "Share Your Experience"}
         </h2>
         <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
           How is Tulasi AI helping you engineer your career?
         </p>
+        
+        {existingReviewId && (
+          <div style={{
+            marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 700,
+            background: isApproved ? "rgba(16,185,129,0.1)" : "rgba(234,179,8,0.1)",
+            color: isApproved ? "#10B981" : "#EAB308", border: `1px solid ${isApproved ? "rgba(16,185,129,0.2)" : "rgba(234,179,8,0.2)"}`
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: isApproved ? "#10B981" : "#EAB308" }} />
+            {isApproved ? "Review Published" : "Pending Approval"}
+          </div>
+        )}
       </div>
 
+      {step === "loading" ? (
+        <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>Loading form...</div>
+      ) : (
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         
         {/* Rating Picker */}
@@ -248,11 +319,14 @@ export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
           }}
         >
           {step === "submitting" ? "Transmitting..." : (
-            <>Submit Review <Send size={18} /></>
+            <>
+              {existingReviewId ? "Update Review" : "Submit Review"} <Send size={18} />
+            </>
           )}
         </button>
 
       </form>
+      )}
     </div>
   );
 }

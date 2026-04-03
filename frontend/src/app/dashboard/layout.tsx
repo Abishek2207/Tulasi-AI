@@ -14,7 +14,8 @@ import { BackgroundBeams } from "@/components/ui/BackgroundBeams";
 import { DebugPanel } from "@/components/DebugPanel";
 import { XPNotificationSystem } from "@/components/XPNotification";
 import { TulasiLogo } from "@/components/TulasiLogo";
-
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { OnboardingModal } from "@/components/OnboardingModal";
 /** Safe hook — avoids SSR crash and only fires on real resize events. */
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -144,6 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         minWidth: 0,
       }}>
         <TopBar />
+        <AnnouncementBanner />
         <main className="dash-content">
           <motion.div 
             key={pathname}
@@ -157,6 +159,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       <XPNotificationSystem />
+      <OnboardingModal />
       <DebugPanel />
     </div>
   );

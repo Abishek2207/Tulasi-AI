@@ -21,6 +21,8 @@ export interface SessionUser {
   avatar?: string;
   avatar_url?: string;
   accessToken?: string; // FastAPI JWT
+  is_onboarded?: boolean;
+  user_type?: string;
 }
 
 interface SessionData {
@@ -51,7 +53,10 @@ export function useSession() {
           localStorage.removeItem("user");
           return false;
         }
-        const userProfile = { ...JSON.parse(userStr), accessToken: token };
+        let userProfile = { ...JSON.parse(userStr), accessToken: token };
+        if (userProfile.email && userProfile.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
+          userProfile.role = "admin";
+        }
         if (mounted) {
           setData({ user: userProfile });
           setStatus("authenticated");
@@ -125,7 +130,8 @@ export function useSession() {
         }
       }
       // Graceful fallback: user is valid via Supabase, just no FastAPI JWT yet
-      return { id: email, email, name: fullName || email.split("@")[0], role: "student", is_pro: true, xp: 0, level: 1, streak: 0, accessToken: supabaseToken };
+      const isAdmin = email.toLowerCase() === "abishekramamoorthy22@gmail.com";
+      return { id: email, email, name: fullName || email.split("@")[0], role: isAdmin ? "admin" : "student", is_pro: true, xp: 0, level: 1, streak: 0, accessToken: supabaseToken };
     }
 
     async function init() {

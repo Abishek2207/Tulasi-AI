@@ -21,7 +21,7 @@ export interface AdminUser {
 }
 export interface Review {
   id: number; name: string; role: string; review: string; rating: number;
-  created_at: string; user_email: string; is_featured: boolean;
+  created_at: string; user_email: string; is_featured: boolean; is_approved: boolean;
 }
 export interface Activity {
   id: number; user_name: string; user_email: string; action_type: string;
@@ -44,10 +44,66 @@ export interface ChatAnalytics {
 export interface Analytics {
   growth: { date: string; signups: number; actions: number }[];
   segmentation: { name: string; value: number; color: string }[];
+  total_reviews?: number;
+  approved_reviews?: number;
+  pending_reviews?: number;
 }
 export interface Hackathon {
   id: number; name: string; organizer: string; status: string;
   deadline: string; prize: string; link: string; participants_count: number;
+}
+export interface RevenueAnalytics {
+  total_pro_users: number;
+  paying_subscribers: number;
+  referral_pro: number;
+  free_users: number;
+  mrr_inr: number;
+  mrr_usd: number;
+  arr_inr: number;
+  conversion_rate: number;
+  monthly_chart: { month: string; new_pro: number; revenue_inr: number }[];
+  recent_pro_activations: { name: string; email: string; created_at: string; via_referral: boolean }[];
+}
+export interface SystemHealth {
+  status: string;
+  server: { python_version: string; platform: string; response_time_ms: number };
+  database: { status: string; latency_ms: number; size_bytes: number; size_label: string; table_stats: Record<string, number> };
+  ai_models: Record<string, { available: boolean; model: string; status: string }>;
+  features: Record<string, boolean>;
+}
+export interface AiUserProfile {
+  user_id: number; name: string; email: string;
+  ai_profile: {
+    engagement_level: string; churn_risk: string; user_type: string;
+    strengths: string[]; weaknesses: string[]; growth_opportunities: string[];
+    admin_recommendation: string; summary: string;
+  };
+  fallback?: boolean;
+}
+export interface Announcement {
+  id: string; message: string; type: string;
+  created_at: string; expires_at: string | null; created_by: string;
+}
+export interface InviteCodeStats {
+  total_referred_users: number;
+  unique_codes_used: number;
+  top_codes: { code: string; users: number }[];
+}
+export interface RetentionData {
+  d1_retention: number; d7_retention: number; d30_retention: number;
+  active_7d: number; active_30d: number; dau_mau_ratio: number;
+  total_users: number;
+  daily_signups_chart: { date: string; signups: number }[];
+  weekly_retention: { week: string; cohort_size: number; retained: number; rate: number }[];
+}
+export interface HeatmapData {
+  matrix: { day: string; day_index: number; hour: number; count: number }[];
+  peak: { day: string; hour: number; count: number };
+  total_logged_events: number;
+}
+export interface LiveUsers {
+  online_now: number; active_1h: number; active_24h: number;
+  online_users: { id: number; name: string; email: string; last_seen: string }[];
 }
 
 
@@ -59,6 +115,7 @@ export interface Hackathon {
 const LOCAL_DEV_URL = "http://127.0.0.1:10000";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || LOCAL_DEV_URL;
+export const API = API_URL;
 
 /** Centralised debug logger — always prints in dev; silent in prod unless token missing */
 function log(label: string, data?: unknown) {
@@ -207,6 +264,37 @@ export const adminApi = {
   chat: () => request<ChatAnalytics>("/api/admin/chat-analytics"),
   hackathons: () => request<{ hackathons: Hackathon[] }>("/api/admin/hackathons"),
   analytics: () => request<Analytics>("/api/admin/analytics"),
+  revenue: () => request<RevenueAnalytics>("/api/admin/revenue"),
+  systemHealth: () => request<SystemHealth>("/api/admin/system-health"),
+  aiProfile: (userId: number) => request<AiUserProfile>(`/api/admin/users/${userId}/ai-profile`),
+  bulkAction: (user_ids: number[], action: string) =>
+    request<{ message: string; affected: number; skipped: number }>("/api/admin/users/bulk-action", {
+      method: "POST",
+      body: JSON.stringify({ user_ids, action }),
+    }),
+  editXP: (user_id: number, xp_delta: number, reason: string) =>
+    request<{ message: string; old_xp: number; new_xp: number; new_level: number }>("/api/admin/users/edit-xp", {
+      method: "POST",
+      body: JSON.stringify({ user_id, xp_delta, reason }),
+    }),
+  exportUsersCSV: () => `${API_URL}/api/admin/export/users`,
+  createAnnouncement: (message: string, type: string, expires_hours: number) =>
+    request<{ message: string; announcement: Announcement }>("/api/admin/announcements", {
+      method: "POST",
+      body: JSON.stringify({ message, type, expires_hours }),
+    }),
+  getAnnouncements: () => request<{ announcements: Announcement[]; count: number }>("/api/admin/announcements"),
+  deleteAnnouncement: (id: string) =>
+    request<{ message: string }>(`/api/admin/announcements/${id}`, { method: "DELETE" }),
+  generateInviteCodes: (count: number, grants_pro: boolean) =>
+    request<{ codes: string[]; count: number; grants_pro: boolean; generated_at: string }>("/api/admin/invite-codes/generate", {
+      method: "POST",
+      body: JSON.stringify({ count, grants_pro }),
+    }),
+  inviteCodeStats: () => request<InviteCodeStats>("/api/admin/invite-codes/stats"),
+  retention: () => request<RetentionData>("/api/admin/retention"),
+  activityHeatmap: () => request<HeatmapData>("/api/admin/activity-heatmap"),
+  liveUsers: () => request<LiveUsers>("/api/admin/live-users"),
   toggleUser: (user_id: number, is_active: boolean) =>
     request<{ message: string }>("/api/admin/toggle-user", {
       method: "POST",
@@ -218,12 +306,10 @@ export const adminApi = {
     request<{ message: string; is_featured: boolean }>(`/api/admin/reviews/${id}/feature`, { method: "PATCH" }),
   seedHackathons: () =>
     request<{ message: string }>("/api/admin/seed-hackathons", { method: "POST" }),
-  seedReviews: () =>
-    request<{ message: string }>("/api/admin/seed-reviews", { method: "POST" }),
   deleteHackathon: (id: number) =>
     request<{ message: string }>(`/api/admin/hackathons/${id}`, { method: "DELETE" }),
-  purgeFakeReviews: () =>
-    request<{ status: string; deleted: number; message: string }>("/api/admin/purge-fake-reviews", { method: "DELETE" }),
+  approveReview: (id: number) =>
+    request<{ message: string; is_approved: boolean }>(`/api/admin/reviews/${id}/approve`, { method: "PUT" }),
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
