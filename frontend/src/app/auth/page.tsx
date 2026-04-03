@@ -159,7 +159,7 @@ export default function AuthPage() {
             transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
             style={{ display: "flex", justifyContent: "center", marginBottom: 40 }}
           >
-            <TulasiLogo size={64} showText badge="Platinum" glow />
+            <TulasiLogo size={64} showText glow />
           </motion.div>
 
           <div style={{ textAlign: "center", marginBottom: 32 }}>
@@ -172,35 +172,12 @@ export default function AuthPage() {
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* OAuth Buttons */}
+            {/* OAuth Buttons completely disabled 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
-              <button type="button" onClick={handleGoogleLogin} disabled={!!oAuthLoading}
-                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading ? "not-allowed" : "pointer", transition: "all 0.2s", opacity: oAuthLoading ? 0.6 : 1 }}
-                onMouseEnter={e => { if (!oAuthLoading) e.currentTarget.style.background = "#23252E"; }}
-                onMouseLeave={e => { if (!oAuthLoading) e.currentTarget.style.background = "#1A1C23"; }}
-              >
-                {oAuthLoading === "google" ? (
-                  <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
-                ) : (
-                  <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
-                )}
-                {oAuthLoading === "google" ? "Redirecting…" : "Google"}
-              </button>
-              <button type="button" 
-                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#23252E"}
-                onMouseLeave={e => e.currentTarget.style.background = "#1A1C23"}
-              >
-                <img src="https://authjs.dev/img/providers/github.svg" width={18} height={18} alt="GitHub" style={{ filter: "invert(1)" }} />
-                GitHub
-              </button>
+              ... Google ...
             </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, fontWeight: 500, textTransform: "uppercase" }}>Or continue with email</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>...</div> 
+            */}
 
             <AnimatePresence mode="popLayout">
               {!isLogin && (
