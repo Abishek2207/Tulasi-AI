@@ -16,6 +16,7 @@ import { XPNotificationSystem } from "@/components/XPNotification";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { OnboardingModal } from "@/components/OnboardingModal";
+import { PageTransition } from "@/components/PageTransition";
 /** Safe hook — avoids SSR crash and only fires on real resize events. */
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -68,10 +69,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (status === "authenticated") fetchGlobalStats();
   }, [status, dispatch]);
 
+  const isFounder = session?.user?.email === "abishekramamoorthy22@gmail.com";
+
   if (!mounted) {
     return (
       <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
-        <TulasiLogo size={72} glow showText={false} />
+        <TulasiLogo size={72} glow showText={false} isFounder={isFounder} />
         <motion.div
           animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
@@ -167,14 +170,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <TopBar />
         <AnnouncementBanner />
         <main className="dash-content">
-          <motion.div 
-            key={pathname}
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.35 }}
-          >
+          <PageTransition>
             {children}
-          </motion.div>
+          </PageTransition>
         </main>
       </div>
 

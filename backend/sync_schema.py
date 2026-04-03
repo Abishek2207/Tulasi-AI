@@ -28,9 +28,13 @@ def sync_schema():
         print("Adding 'last_reset_date' column...")
         cursor.execute("ALTER TABLE \"user\" ADD COLUMN last_reset_date TEXT;")
         
-    if "pro_expiry_date" not in columns:
-        print("Adding 'pro_expiry_date' column...")
-        cursor.execute("ALTER TABLE \"user\" ADD COLUMN pro_expiry_date TEXT;")
+    if "user_intelligence_profile" not in columns:
+        print("Adding 'user_intelligence_profile' column...")
+        cursor.execute("ALTER TABLE \"user\" ADD COLUMN user_intelligence_profile TEXT DEFAULT '{}';")
+        
+    if "last_intelligence_update" not in columns:
+        print("Adding 'last_intelligence_update' column...")
+        cursor.execute("ALTER TABLE \"user\" ADD COLUMN last_intelligence_update TEXT;")
 
     conn.commit()
     print("Schema synchronized successfully!")

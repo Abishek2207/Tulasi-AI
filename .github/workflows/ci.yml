@@ -48,6 +48,6 @@ jobs:
           # Skip linting during build to avoid minor style errors blocking deployment
           NEXT_TELEMETRY_DISABLED=1 npm run build
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://tulasi-ai-wgwl.onrender.com' }}
       - name: Build Status
         run: echo "Frontend CI Check Passed"

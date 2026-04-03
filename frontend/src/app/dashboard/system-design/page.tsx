@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
-import { Server, Database, Activity, ShieldCheck, Cpu, ArrowRight } from "lucide-react";
-import { TiltCard } from "@/components/ui/TiltCard";
+import { Server, Database, Activity, ShieldCheck, Cpu, ArrowRight, Sparkles } from "lucide-react";
+import { GuidedArchitectView } from "@/components/system-design/GuidedArchitectView";
 
 export default function SystemDesignPage() {
   const { data: session } = useSession();
@@ -13,6 +13,7 @@ export default function SystemDesignPage() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [practice, setPractice] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProblem, setSelectedProblem] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -38,6 +39,10 @@ export default function SystemDesignPage() {
     fetchData();
   }, []);
 
+  if (selectedProblem) {
+    return <GuidedArchitectView problem={selectedProblem} onBack={() => setSelectedProblem(null)} />;
+  }
+
   const TABS = ["Concepts", "Company Prep", "Practice"];
 
   return (
@@ -45,14 +50,14 @@ export default function SystemDesignPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 40, textAlign: "center" }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 16px", background: "rgba(139,92,246,0.1)", borderRadius: 30, color: "#8B5CF6", marginBottom: 16 }}>
-          <Server size={18} />
-          <span style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>Architect Orbit</span>
+          <Sparkles size={18} className="animate-pulse" />
+          <span style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>Architect Orbit V2.0</span>
         </div>
         <h1 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 16 }}>
           System Design Mastery
         </h1>
         <p style={{ fontSize: 18, color: "var(--text-secondary)", maxWidth: 600, margin: "0 auto", lineHeight: 1.6 }}>
-          Learn to build highly scalable, resilient, and fault-tolerant distributed systems capable of handling millions of users.
+          Learn to build highly scalable, resilient, and fault-tolerant distributed systems with AI-guided Socratic mentoring.
         </p>
       </motion.div>
 
@@ -67,10 +72,14 @@ export default function SystemDesignPage() {
               fontSize: 14, fontWeight: 800, transition: "0.2s all",
               background: activeTab === tab ? "rgba(255,255,255,0.1)" : "transparent",
               color: activeTab === tab ? "white" : "var(--text-muted)",
-              boxShadow: activeTab === tab ? "0 4px 12px rgba(0,0,0,0.2)" : "none"
+              boxShadow: activeTab === tab ? "0 4px 12px rgba(0,0,0,0.2)" : "none",
+              position: "relative"
             }}
           >
             {tab}
+            {tab === "Practice" && (
+              <span style={{ position: "absolute", top: -8, right: -8, background: "#8B5CF6", color: "white", fontSize: 9, fontWeight: 900, padding: "2px 6px", borderRadius: 6, boxShadow: "0 0 10px #8B5CF6" }}>AI</span>
+            )}
           </button>
         ))}
       </div>
@@ -119,6 +128,10 @@ export default function SystemDesignPage() {
 
           {activeTab === "Practice" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div style={{ padding: 20, background: "rgba(139,92,246,0.1)", borderRadius: 16, border: "1px dashed rgba(139,92,246,0.3)", display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                <Sparkles size={20} color="#8B5CF6" />
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#8B5CF6" }}>Select a problem to start a <b>Guided Socratic Design Session</b> with the Senior Architect.</span>
+              </div>
               {practice.map((p) => (
                 <div key={p.id} className="glass-card" style={{ padding: 32 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -141,7 +154,13 @@ export default function SystemDesignPage() {
                     </div>
                   </div>
                   <div style={{ marginTop: 30, display: "flex", gap: 16 }}>
-                    <button className="btn-primary" style={{ padding: "12px 24px", borderRadius: 12, fontSize: 14, fontWeight: 800 }}>Start Whiteboarding</button>
+                    <button 
+                      onClick={() => setSelectedProblem(p)}
+                      className="btn-primary" 
+                      style={{ padding: "12px 32px", borderRadius: 12, fontSize: 14, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      Guided Architect <Sparkles size={16} />
+                    </button>
                     <button className="btn-ghost" style={{ padding: "12px 24px", borderRadius: 12, fontSize: 14, fontWeight: 800 }}>View Exemplar</button>
                   </div>
                 </div>

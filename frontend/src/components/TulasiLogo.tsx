@@ -21,6 +21,7 @@ export function TulasiLogo({
   glow = true,
   showText = false,
   badge,
+  isFounder = false,
   style,
 }: {
   className?: string;
@@ -28,8 +29,14 @@ export function TulasiLogo({
   glow?: boolean;
   showText?: boolean;
   badge?: string;
+  isFounder?: boolean;
   style?: React.CSSProperties;
 }) {
+  const glowColor = isFounder 
+    ? "radial-gradient(circle at center, rgba(245,158,11,0.45) 0%, rgba(217,119,6,0.3) 35%, rgba(180,83,9,0.2) 65%, transparent 100%)"
+    : "radial-gradient(circle at center, rgba(34,211,238,0.35) 0%, rgba(168,85,247,0.25) 35%, rgba(236,72,153,0.15) 65%, transparent 100%)";
+
+  const effectiveBadge = isFounder ? "FOUNDER" : badge;
   return (
     <div
       className={`tulasi-logo-root ${className}`}
@@ -45,8 +52,7 @@ export function TulasiLogo({
               position: "absolute",
               inset: -size * 0.2,
               borderRadius: "50%",
-              background:
-                "radial-gradient(circle at center, rgba(34,211,238,0.35) 0%, rgba(168,85,247,0.25) 35%, rgba(236,72,153,0.15) 65%, transparent 100%)",
+              background: glowColor,
               filter: `blur(${size * 0.25}px)`,
               pointerEvents: "none",
             }}
@@ -92,26 +98,26 @@ export function TulasiLogo({
               lineHeight: 1,
             }}
           >
-            Tulasi<span style={{ color: "#22D3EE" }}>AI</span>
+            Tulasi<span style={{ color: "#22D3EE" }}>AI v2</span>
           </span>
 
-          {badge && (
+          {effectiveBadge && (
             <span
               style={{
                 marginTop: size * 0.1,
-                background: "linear-gradient(135deg, #A855F7, #22D3EE)",
+                background: isFounder ? "#F59E0B" : "linear-gradient(135deg, #A855F7, #22D3EE)",
                 padding: `${size * 0.04}px ${size * 0.14}px`,
                 borderRadius: size * 0.12,
                 fontSize: size * 0.2,
                 fontWeight: 900,
-                color: "white",
+                color: isFounder ? "black" : "white",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                boxShadow: "0 0 18px rgba(168,85,247,0.5)",
+                boxShadow: isFounder ? "0 0 15px rgba(245,158,11,0.5)" : "0 0 18px rgba(168,85,247,0.5)",
                 display: "inline-block",
               }}
             >
-              {badge}
+              {effectiveBadge}
             </span>
           )}
         </div>

@@ -161,65 +161,98 @@ function Navbar() {
 // ── Hero Section ─────────────────────────────────────────────────
 function Hero() {
   const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const y = useTransform(scrollYProgress, [0, 1], [0, -150]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
+  // 3D Parallax Scroll Mechanics
+  const dashboardRotateX = useTransform(scrollYProgress, [0, 0.35], [45, 0]);
+  const dashboardScale = useTransform(scrollYProgress, [0, 0.35], [0.85, 1]);
+  const dashboardY = useTransform(scrollYProgress, [0, 0.35], [200, 0]);
+  const dashboardOpacity = useTransform(scrollYProgress, [0, 0.1], [0.3, 1]);
+
   return (
-    <section ref={ref} style={{ minHeight: "100svh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "160px 20px 80px", overflow: "hidden", boxSizing: "border-box" }}>
-      <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
-        <motion.div animate={{ x: [-20, 20, -20], y: [-20, 20, -20] }} transition={{ duration: 10, repeat: Infinity }}
-          style={{ position: "absolute", top: "10%", left: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)", filter: "blur(80px)" }} />
-        <motion.div animate={{ x: [20, -20, 20], y: [20, -20, 20] }} transition={{ duration: 12, repeat: Infinity }}
-          style={{ position: "absolute", bottom: "10%", right: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)", filter: "blur(80px)" }} />
+    <section ref={ref} style={{ height: "200vh", position: "relative" }}>
+      <div style={{ position: "sticky", top: 0, height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", perspective: 1200, perspectiveOrigin: "50% 0%" }}>
+        
+        <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
+          <div className="animate-pulse-slow"
+            style={{ position: "absolute", top: "10%", left: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", filter: "blur(80px)" }} />
+          <div className="animate-pulse-slow"
+            style={{ position: "absolute", bottom: "10%", right: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(10,132,255,0.05) 0%, transparent 70%)", filter: "blur(80px)", animationDelay: "1s" }} />
+        </div>
+
+        {/* Floating Title (Stays Flat) */}
+        <motion.div style={{ y, opacity, position: "absolute", zIndex: 10, textAlign: "center", width: "100%", top: "15%" }}>
+          <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
+            style={{ fontSize: "clamp(42px, 9vw, 108px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 0.95, letterSpacing: "-0.04em", wordBreak: "break-word" }}>
+            {["Architect", "Your", "Trajectory."].map((w, i) => (
+              <motion.span key={i} initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 100, damping: 12, delay: 0.2 + i * 0.1 }}
+                style={{ display: "inline-block", marginRight: "0.2em" }} className={i === 2 ? "gradient-text" : ""}>{w}
+              </motion.span>
+            ))}
+          </motion.h1>
+        </motion.div>
+
+        {/* 3D Dashboard Content Box */}
+        <motion.div
+           style={{
+             rotateX: dashboardRotateX,
+             scale: dashboardScale,
+             y: dashboardY,
+             opacity: dashboardOpacity,
+             width: "min(95%, 1200px)",
+             background: "rgba(9, 9, 11, 0.6)",
+             backdropFilter: "blur(40px) saturate(200%)",
+             border: "1px solid rgba(255,255,255,0.08)",
+             borderRadius: 32,
+             padding: "clamp(32px, 5vw, 64px)",
+             position: "absolute",
+             bottom: "-5%",
+             zIndex: 20,
+             transformStyle: "preserve-3d",
+             boxShadow: "0 -20px 80px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.05)",
+             textAlign: "center"
+           }}
+        >
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} style={{ marginBottom: 28 }}>
+            <span className="animate-shimmer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 18px", borderRadius: 30, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#FFF", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2 }}>
+              <Sparkles size={13} color="#0A84FF" /> THE AUTONOMOUS CAREER ENGINE
+            </span>
+          </motion.div>
+
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
+            style={{ fontSize: "clamp(15px, 2.5vw, 20px)", color: "var(--text-secondary)", maxWidth: 720, margin: "0 auto 48px", lineHeight: 1.6, fontWeight: 500, padding: "0 4px" }}>
+            Tulasi AI is the high-fidelity workspace for future engineers.
+            Bridge the gap from theory to global offers with precision-engineered AI intelligence.
+          </motion.p>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
+            className="hero-buttons" style={{ justifyContent: "center" }}>
+            <Link href="/auth" style={{ textDecoration: "none" }}>
+              <motion.button whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="btn-primary"
+                style={{ padding: "18px 40px", fontSize: "clamp(15px, 2vw, 18px)", borderRadius: 16, fontWeight: 900, boxShadow: "0 12px 32px rgba(255,255,255,0.1)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, position: "relative", overflow: "hidden" }}>
+                <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 8 }}>INITIALIZE SESSION <ArrowRight size={18} /></span>
+                <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
+              </motion.button>
+            </Link>
+            <motion.a href="#reviews" className="animate-float" whileHover={{ scale: 1.02, y: -2 }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "18px 32px", borderRadius: 16, textDecoration: "none", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-secondary)", fontWeight: 800, fontSize: "clamp(13px, 2vw, 15px)", boxSizing: "border-box" }}>
+              See Reviews
+            </motion.a>
+          </motion.div>
+        </motion.div>
+
+        {/* Floating icons */}
+        {/* Floating icons with custom user CSS animation */}
+        <div className="hide-mobile animate-float" style={{ position: "absolute", left: "5%", top: "30%", opacity: 0.3, zIndex: 5 }}>
+          <Cpu size={64} className="text-brand" color="white" />
+        </div>
+        <div className="hide-mobile animate-float" style={{ position: "absolute", right: "5%", top: "40%", opacity: 0.3, zIndex: 5, animationDelay: "1s" }}>
+          <HardDrive size={64} color="#0A84FF" />
+        </div>
+
       </div>
-
-      <motion.div style={{ y, opacity, position: "relative", zIndex: 10, textAlign: "center", maxWidth: 1000, width: "100%" }}>
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} style={{ marginBottom: 28 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 18px", borderRadius: 30, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10B981", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2 }}>
-            <Sparkles size={13} /> THE AUTONOMOUS CAREER ENGINE
-          </span>
-        </motion.div>
-
-        <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
-          style={{ fontSize: "clamp(42px, 9vw, 108px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 0.95, letterSpacing: "-0.04em", marginBottom: 28, wordBreak: "break-word" }}>
-          {["Architect", "Your", "Trajectory."].map((w, i) => (
-            <motion.span key={i} initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 100, damping: 12, delay: 0.2 + i * 0.1 }}
-              style={{ display: "inline-block", marginRight: "0.2em" }} className={i === 2 ? "gradient-text" : ""}>{w}
-            </motion.span>
-          ))}
-        </motion.h1>
-
-        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
-          style={{ fontSize: "clamp(15px, 2.5vw, 20px)", color: "var(--text-secondary)", maxWidth: 720, margin: "0 auto 48px", lineHeight: 1.6, fontWeight: 500, padding: "0 4px" }}>
-          Tulasi AI is the high-fidelity workspace for future engineers.
-          Bridge the gap from theory to global offers with precision-engineered AI intelligence.
-        </motion.p>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
-          className="hero-buttons" style={{ justifyContent: "center", marginBottom: 60 }}>
-          <Link href="/auth" style={{ textDecoration: "none" }}>
-            <motion.button whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="btn-primary"
-              style={{ padding: "18px 40px", fontSize: "clamp(15px, 2vw, 18px)", borderRadius: 16, fontWeight: 900, boxShadow: "0 12px 32px rgba(6,182,212,0.3)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              INITIALIZE SESSION <ArrowRight size={18} />
-            </motion.button>
-          </Link>
-          <motion.a href="#reviews" whileHover={{ scale: 1.02, y: -2 }}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "18px 32px", borderRadius: 16, textDecoration: "none", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-secondary)", fontWeight: 800, fontSize: "clamp(13px, 2vw, 15px)", boxSizing: "border-box" }}>
-            See Reviews
-          </motion.a>
-        </motion.div>
-      </motion.div>
-
-      {/* Floating icons — hidden on small screens to avoid overlap */}
-      <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="hide-mobile" style={{ position: "absolute", left: "5%", top: "30%", opacity: 0.3 }}>
-        <Cpu size={64} className="text-brand" />
-      </motion.div>
-      <motion.div animate={{ y: [0, 20, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="hide-mobile" style={{ position: "absolute", right: "5%", top: "40%", opacity: 0.3 }}>
-        <HardDrive size={64} style={{ color: "#7C3AED" }} />
-      </motion.div>
     </section>
   );
 }
@@ -241,11 +274,15 @@ function BentoFeatures() {
         {/* Primary Features — desktop: 3-col bento, mobile: single col */}
         <div className="bento-grid" style={{ marginBottom: 28 }}>
           {primaryFeatures.map((f, i) => (
-            <motion.div key={f.id} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+            <motion.div key={f.id} 
+              initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30, y: 20 }} 
+              whileInView={{ opacity: 1, x: 0, y: 0 }} 
+              viewport={{ once: true, margin: "-50px" }} 
+              transition={{ delay: i * 0.1, type: "spring", stiffness: 100, damping: 15 }}
               className={`bento-item bento-span-${f.span}`}>
               <TiltCard intensity={5} style={{ height: "100%" }}>
                 <div className="glass-card" style={{ padding: "clamp(24px, 4vw, 48px)", background: f.bg, border: `1px solid ${f.color}20`, height: "100%", position: "relative", overflow: "hidden", boxSizing: "border-box" }}>
-                  <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: `radial-gradient(circle, ${f.color}10 0%, transparent 70%)`, filter: "blur(40px)" }} />
+                  <div className="animate-pulse-slow" style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: `radial-gradient(circle, ${f.color}10 0%, transparent 70%)`, filter: "blur(40px)" }} />
                   <f.icon size={40} color={f.color} style={{ marginBottom: 24 }} />
                   <h3 style={{ fontSize: "clamp(18px, 2.5vw, 24px)", fontWeight: 900, marginBottom: 12, color: "white" }}>{f.title}</h3>
                   <p style={{ color: "var(--text-secondary)", fontSize: "clamp(13px, 1.5vw, 16px)", lineHeight: 1.6, maxWidth: 400 }}>{f.desc}</p>
@@ -255,17 +292,20 @@ function BentoFeatures() {
           ))}
         </div>
 
-        {/* Secondary Features — auto-fill grid, wraps to 2 col on tablet, 1 col on mobile */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: 20 }}>
+        {/* Secondary Features Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: 24 }}>
           {secondaryFeatures.map((f, i) => (
-            <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
-              <div className="glass-card" style={{ padding: "clamp(20px, 3vw, 32px)", borderColor: "rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.015)" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, color: f.color }}>
-                  <f.icon size={22} />
-                </div>
-                <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: "white" }}>{f.title}</h4>
-                <p style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.5 }}>{f.desc}</p>
+            <motion.div key={f.title} 
+              initial={{ opacity: 0, y: 30 }} 
+              whileInView={{ opacity: 1, y: 0 }} 
+              viewport={{ once: true }} 
+              transition={{ delay: 0.4 + i * 0.1, type: "spring", stiffness: 100, damping: 20 }}
+              style={{ padding: "32px", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)", height: "100%", boxSizing: "border-box" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, color: "white" }}>
+                <f.icon size={22} />
               </div>
+              <h4 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: "white" }}>{f.title}</h4>
+              <p style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.5 }}>{f.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -401,44 +441,32 @@ function ReviewsSection() {
 
         {/* Dynamic Reviews Display */}
         <div style={{ marginBottom: 64 }}>
-          {fetchingReviews ? (
-            <div style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 20 }}>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="glass-card" style={{ minWidth: 320, height: 200, padding: 24, background: "rgba(255,255,255,0.02)" }}>
-                  <div style={{ width: "40%", height: 20, background: "rgba(255,255,255,0.05)", borderRadius: 4, marginBottom: 16 }} />
-                  <div style={{ width: "80%", height: 16, background: "rgba(255,255,255,0.03)", borderRadius: 4, marginBottom: 8 }} />
-                  <div style={{ width: "95%", height: 16, background: "rgba(255,255,255,0.03)", borderRadius: 4, marginBottom: 8 }} />
-                  <div style={{ width: "60%", height: 16, background: "rgba(255,255,255,0.03)", borderRadius: 4 }} />
-                </div>
-              ))}
-            </div>
-          ) : reviews.length > 0 ? (
+          {fetchingReviews ? <div>Loading...</div> : reviews.length > 0 ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
               {reviews.map((r, i) => (
-                <motion.div key={r.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+                <motion.div key={r.id || i}
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, type: "spring", stiffness: 80, damping: 15 }}
+                >
                   <TiltCard intensity={3} style={{ height: "100%" }}>
-                    <div className="glass-card" style={{ padding: 24, background: "rgba(255,255,255,0.02)", height: "100%", display: "flex", flexDirection: "column" }}>
+                    <div style={{ padding: 32, borderRadius: 32, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", height: "100%", display: "flex", flexDirection: "column" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-                        <div>
-                          <h4 style={{ fontWeight: 800, fontSize: 16, color: "white" }}>{r.name}</h4>
-                          {r.role && <span style={{ fontSize: 12, color: "var(--brand-primary)" }}>{r.role}</span>}
-                        </div>
+                        <div><h4 style={{ fontWeight: 800, fontSize: 18, color: "white" }}>{r.name}</h4>{r.role && <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{r.role}</span>}</div>
                         <StarRating rating={r.rating} />
                       </div>
-                      <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6, flex: 1 }}>"{r.review}"</p>
-                      <div style={{ marginTop: 16, fontSize: 11, color: "var(--text-muted)" }}>
-                        {new Date(r.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                      </div>
+                      <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.6, flex: 1, fontStyle: "italic" }}>"{r.review}"</p>
                     </div>
                   </TiltCard>
                 </motion.div>
               ))}
             </div>
           ) : (
-             <div style={{ textAlign: "center", padding: "64px 20px", background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px dashed rgba(255,255,255,0.1)" }}>
-               <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>No reviews yet</h3>
-               <p style={{ color: "var(--text-muted)", fontSize: 15 }}>Be the first to share your experience with Tulasi AI!</p>
-             </div>
+            <div style={{ textAlign: "center", padding: "64px 20px", background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px dashed rgba(255,255,255,0.1)" }}>
+              <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>No reviews yet</h3>
+              <p style={{ color: "var(--text-muted)", fontSize: 15 }}>Be the first to share your experience with Tulasi AI!</p>
+            </div>
           )}
         </div>
 
@@ -575,7 +603,7 @@ function Footer() {
 // ── Main Page ─────────────────────────────────────────────────────
 export default function LandingPage() {
   return (
-    <main style={{ background: "#05070D", minHeight: "100vh", color: "white", position: "relative", overflowX: "hidden" }}>
+    <main style={{ background: "var(--bg-primary)", minHeight: "100vh", color: "var(--text-primary)", position: "relative", overflowX: "hidden" }}>
       <div style={{ position: "fixed", inset: 0, opacity: 0.05, pointerEvents: "none", zIndex: 100, background: "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyAQMAAAAk8RryAAAABlBMVEUAAAD///+l2Z/dAAAAAXRSTlMAQObYZgAAAAxJREFUCNdjYBgF6AAAAyAAAbe7v7sAAAAASUVORK5CYII=')" }} />
       <Navbar />
       <Hero />

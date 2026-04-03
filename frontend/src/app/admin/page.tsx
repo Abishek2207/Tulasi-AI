@@ -390,6 +390,7 @@ export default function AdminPage() {
                 <KPI label="Pending Reviews"    value={analytics?.pending_reviews ?? 0}          icon="⏳" color="#F43F5E" />
                 <KPI label="Submissions"        value={stats?.total_submissions ?? 0}            icon="💻" color="#06B6D4" />
                 <KPI label="AI Chats"           value={stats?.total_chat_messages ?? 0}          icon="💬" color="#A78BFA" />
+                <KPI label="Retention (7D)"     value={`${analytics?.retention_rate ?? 0}%`}     icon="🔄" color="#3B82F6" />
                 <KPI label="Pro Users"          value={stats?.pro_users ?? 0}                    icon="👑" color="#FFD700" />
               </div>
 
@@ -1032,6 +1033,17 @@ export default function AdminPage() {
                         <span>🗄️ Database</span>
                         <span className={`badge ${health.database.status === "healthy" ? "badge-green" : "badge-pink"}`} style={{ fontSize: 9 }}>{health.database.status.toUpperCase()}</span>
                       </h3>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                        {[
+                          { label: "CPU Usage", value: `${health.server.cpu_usage_percent ?? 0}%`, color: (health.server.cpu_usage_percent ?? 0) > 80 ? "#F43F5E" : "#8B5CF6" },
+                          { label: "Mem Usage", value: `${health.server.memory_usage_percent ?? 0}%`, color: (health.server.memory_usage_percent ?? 0) > 80 ? "#F43F5E" : "#10B981" },
+                        ].map(s => (
+                          <div key={s.label} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                            <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</div>
+                            <div style={{ fontSize: 22, fontWeight: 900, color: s.color, marginTop: 4 }}>{s.value}</div>
+                          </div>
+                        ))}
+                      </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                         {[
                           { label: "Latency", value: `${health.database.latency_ms}ms`, color: health.database.latency_ms < 100 ? "#10B981" : "#F59E0B" },

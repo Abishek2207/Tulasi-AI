@@ -35,6 +35,17 @@ class User(SQLModel, table=True):
     abuse_count: int = 0                 # Safety: incremented on harmful input
     is_onboarded: bool = False           # True after user completes onboarding modal
     
+    # ── Career Intelligence Metadata ──
+    department: Optional[str] = None     # e.g. "Computer Science", "Information Technology"
+    target_role: Optional[str] = None    # e.g. "AI Engineer", "Frontend Developer"
+    target_companies: Optional[str] = None # comma-separated
+    interest_areas: Optional[str] = None # comma-separated (e.g. "Web3, LLMs, DevOps")
+    onboarding_step: int = 0             # Track multi-step onboarding progress
+    
+    # ── [NEW] Super Intelligence Profile ──
+    user_intelligence_profile: Optional[str] = "{}" # JSON: {facts: [], strengths: [], gaps: []}
+    last_intelligence_update: datetime = Field(default_factory=datetime.utcnow)
+    
     # Relationships
     resumes: List["SavedResume"] = Relationship(back_populates="user")
 
@@ -341,3 +352,23 @@ class PrepPlan(SQLModel, table=True):
     plan_json: str = "[]"        # Serialised JSON of the week-by-week plan
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Announcement(SQLModel, table=True):
+    id: Optional[str] = Field(default=None, primary_key=True)  # Using string ID (UUID or slug)
+    message: str
+    type: str = "info"  # info, warning, success, pink
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: Optional[datetime] = None
+    created_by: str = "admin"
+    is_active: bool = True
+
+
+class InviteCode(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    code: str = Field(unique=True, index=True)
+    usage_count: int = 0
+    usage_limit: int = 100
+    grants_pro: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: Optional[datetime] = None

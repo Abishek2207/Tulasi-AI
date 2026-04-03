@@ -32,9 +32,19 @@ def generate_roadmap(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
+    # Fetch intelligence context
+    intelligence = json.loads(current_user.user_intelligence_profile or "{}")
+    user_context = (
+        f"USER: {current_user.user_type}, Role: {current_user.target_role or 'General SE'}, Level: {current_user.level}. "
+        f"STRENGTHS: {intelligence.get('strengths', [])}. GAPS: {intelligence.get('gaps', [])}."
+    )
     
     prompt = f"""You are an elite career technical advisor. A student wants to become a "{req.goal}". 
+User Context: {user_context}
+
 Create a detailed, step-by-step learning roadmap divided into exactly 5 logical phases/milestones.
+IMPORTANT: Tailor symbols, depth, and starting point to their STRENGTHS and GAPS. If they have gaps in fundamental logic, start there. 
+If they match the role already, provide advanced, elite MAANG-level scaling challenges.
 
 Output strictly as a valid JSON object matching this exact schema:
 {{

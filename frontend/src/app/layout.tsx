@@ -20,17 +20,37 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: { default: "Tulasi AI — AI Career & Learning Platform", template: "%s | Tulasi AI" },
-  description: "AI-powered mock interviews and career acceleration tools for engineers and students. Led by CEO Akshaya R, building the tech of 2026.",
-  manifest: "/manifest.json",
-  keywords: ["AI interview prep", "career roadmaps", "mock interview", "student platform", "tech prep", "resume analyzer", "coding practice"],
-  openGraph: {
-    title: "Tulasi AI — AI Career & Learning Platform",
-    description: "AI-powered mock interviews, resume analysis, coding practice, and career roadmaps.",
-    type: "website",
-    siteName: "Tulasi AI",
+  metadataBase: new URL("https://tulasiai.vercel.app"),
+  title: {
+    default: "TulasiAI v2 | Personalized Career Intelligence Engine",
+    template: "%s | TulasiAI v2",
   },
-  twitter: { card: "summary_large_image", title: "Tulasi AI", description: "AI Career & Learning Platform" },
+  description: "Bridge the gap from theory to global offers. TulasiAI v2 provides personalized mock interviews, neural skill mapping, and daily AI missions for engineers.",
+  manifest: "/manifest.json",
+  keywords: [
+    "AI career coach", "mock interview AI", "personalized roadmaps", "skill radar chart", 
+    "engineering career platform", "ATS resume builder", "technical interview prep",
+    "personalized learning AI", "career readiness score", "TulasiAI v2", "Tulasiai v2"
+  ],
+  openGraph: {
+    title: "TulasiAI v2 | Personalized Career Intelligence Engine",
+    description: "The autonomous career engine: Neural skill mapping, AI mock interviews, and personalized missions.",
+    type: "website",
+    siteName: "TulasiAI v2",
+    url: "https://tulasiai.vercel.app",
+    images: [{
+      url: "/opengraph-image.png",
+      width: 1200,
+      height: 630,
+      alt: "TulasiAI v2 Interface Preview"
+    }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TulasiAI v2 | Personalized Career Intelligence",
+    description: "Personalized AI engineering missions and career intelligence mapped to your skills.",
+    creator: "@_.abi22._",
+  },
   icons: {
     icon: "/images/logo.png",
     shortcut: "/images/logo-transparent.png",
@@ -44,8 +64,36 @@ export const viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${mono.variable}`}>
+      <head>
+        <meta name="theme-color" content="#05070D" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "TulasiAI v2",
+              "alternateName": ["tulasiai", "tulasiai v2", "tulasi ai", "Tulasi AI"],
+              "applicationCategory": "EducationalApplication",
+              "operatingSystem": "All",
+              "url": "https://tulasiai.vercel.app",
+              "image": "https://tulasiai.vercel.app/opengraph-image.png",
+              "description": "Personalized AI engineering missions and career intelligence mapped to your skills.",
+              "producer": {
+                "@type": "Person",
+                "name": "Abishek R"
+              },
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              }
+            })
+          }}
+        />
+      </head>
+      <body>
         {/* Google Analytics */}
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-PLACEHOLDER" strategy="afterInteractive" />
         <Script id="ga-init" strategy="afterInteractive" dangerouslySetInnerHTML={{

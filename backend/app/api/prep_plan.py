@@ -20,7 +20,11 @@ def generate_prep_plan(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session)
 ):
-    prompt = f"""You are an elite career technical advisor. A student wants to prepare for a "{req.role}" role in {req.duration_months} months.
+    target = req.role or current_user.target_role or "Software Engineering"
+    demographic = f"They are a {current_user.user_type} with {current_user.xp} platform XP."
+    
+    prompt = f"""You are an elite career technical advisor. A student wants to prepare for a "{target}" role in {req.duration_months} months.
+{demographic} Customize the difficulty and core topics to strictly match their current level.
 Create a detailed week-by-week preparation plan.
 Output strictly as a valid JSON object matching this schema:
 {{

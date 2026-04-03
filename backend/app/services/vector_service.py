@@ -142,4 +142,52 @@ class VectorService:
             print(f"FAISS search failed: {e}")
             return ""
 
+    def update_user_intelligence(self, user_id: int, interaction: str, db: Session):
+        """Uses AI to extract key facts about the user from an interaction and updates their profile."""
+        from app.models.models import User
+        from app.core.ai_router import get_ai_response
+        import json
+
+        user = db.get(User, user_id)
+        if not user: return
+
+        current_profile = json.loads(user.user_intelligence_profile or "{}")
+        
+        prompt = f"""
+        Analyze this interaction and extract key user intelligence (technical skills, career goals, strengths, or knowledge gaps).
+        Update the existing profile JSON with NEW facts. Do not repeat old facts.
+        
+        Current Profile: {json.dumps(current_profile)}
+        New Interaction: {interaction}
+        
+        Return ONLY valid JSON matching this schema:
+        {{
+          "facts": ["list of user facts/facts about background"],
+          "strengths": ["extracted technical strengths"],
+          "gaps": ["knowledge gaps or weaknesses"],
+          "sentiment": "positive|neutral|frustrated"
+        }}
+        """
+        
+        try:
+            res = get_ai_response(prompt, force_model="fast_flash")
+            import re
+            match = re.search(r'\{.*\}', res, re.DOTALL)
+            if match:
+                new_profile = json.loads(match.group())
+                # Strategic merge (keep set of unique facts)
+                combined = {
+                    "facts": list(set((current_profile.get("facts", []) + new_profile.get("facts", []))[-20:])),
+                    "strengths": list(set((current_profile.get("strengths", []) + new_profile.get("strengths", []))[-10:])),
+                    "gaps": list(set((current_profile.get("gaps", []) + new_profile.get("gaps", []))[-10:])),
+                    "sentiment": new_profile.get("sentiment", "neutral")
+                }
+                user.user_intelligence_profile = json.dumps(combined)
+                from datetime import datetime
+                user.last_intelligence_update = datetime.utcnow()
+                db.add(user)
+                db.commit()
+        except Exception as e:
+            print(f"⚠️ Intelligence update failed: {e}")
+
 vector_service = VectorService()

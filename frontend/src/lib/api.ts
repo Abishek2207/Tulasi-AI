@@ -47,6 +47,7 @@ export interface Analytics {
   total_reviews?: number;
   approved_reviews?: number;
   pending_reviews?: number;
+  retention_rate?: number;
 }
 export interface Hackathon {
   id: number; name: string; organizer: string; status: string;
@@ -66,10 +67,27 @@ export interface RevenueAnalytics {
 }
 export interface SystemHealth {
   status: string;
-  server: { python_version: string; platform: string; response_time_ms: number };
+  server: { 
+    python_version: string; 
+    platform: string; 
+    response_time_ms: number;
+    cpu_usage_percent?: number;
+    memory_usage_percent?: number;
+    memory_available_gb?: number;
+  };
   database: { status: string; latency_ms: number; size_bytes: number; size_label: string; table_stats: Record<string, number> };
   ai_models: Record<string, { available: boolean; model: string; status: string }>;
   features: Record<string, boolean>;
+}
+
+export interface ReadinessStats {
+  readiness_score: number;
+  label: string;
+  readiness_matrix: Record<string, number>;
+  strengths: string[];
+  gaps: string[];
+  target_role: string;
+  consistency: number;
 }
 export interface AiUserProfile {
   user_id: number; name: string; email: string;
@@ -310,6 +328,18 @@ export const adminApi = {
     request<{ message: string }>(`/api/admin/hackathons/${id}`, { method: "DELETE" }),
   approveReview: (id: number) =>
     request<{ message: string; is_approved: boolean }>(`/api/admin/reviews/${id}/approve`, { method: "PUT" }),
+};
+
+// ─── Intelligence ────────────────────────────────────────────────────────────
+export const intelligenceApi = {
+  getReadiness: () => request<ReadinessStats>("/api/intelligence/career-readiness"),
+  getDailyMission: () => request<{ mission_title: string; mission_description: string; reward_xp: number; module_link: string }>("/api/intelligence/daily-mission"),
+  getStrategicPlan: () => request<{ master_goal: string; current_standing: string; six_month_roadmap: { month: string; focus: string; milestone: string }[]; immediate_pivot: string }>("/api/intelligence/strategic-plan"),
+  getSystemDesignSolution: (problem_id: string, user_query: string) =>
+    request<{ analysis: string; guidance: string; architecture_tip: string; next_step: string }>("/api/system-design/guided-solution", {
+      method: "POST",
+      body: JSON.stringify({ problem_id, user_query }),
+    }),
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────

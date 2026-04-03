@@ -90,7 +90,7 @@ def get_conversation(other_user_id: int, current_user: User = Depends(get_curren
 @router.get("/users/directory")
 def get_user_directory(current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
     from datetime import datetime, timedelta
-    statement = select(User).where(User.id != current_user.id)
+    statement = select(User).where(User.id != current_user.id).limit(50)
     users = db.exec(statement).all()
     
     five_mins_ago = datetime.utcnow() - timedelta(minutes=5)
@@ -103,5 +103,32 @@ def get_user_directory(current_user: User = Depends(get_current_user), db: Sessi
             "role": u.role,
             "last_seen": u.last_seen.isoformat() if u.last_seen else None,
             "is_online": u.last_seen > five_mins_ago if u.last_seen else False
+        } for u in users
+    ]}
+
+@router.get("/search")
+def search_users(q: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+    """Search for users by name or email to start a conversation."""
+    if not q or len(q) < 2:
+        return {"users": []}
+    
+    query = select(User).where(
+        and_(
+            User.id != current_user.id,
+            or_(
+                User.name.ilike(f"%{q}%"),
+                User.email.ilike(f"%{q}%")
+            )
+        )
+    ).limit(20)
+    
+    users = db.exec(query).all()
+    return {"users": [
+        {
+            "id": u.id, 
+            "name": u.name or u.email.split("@")[0], 
+            "email": u.email,
+            "target_role": u.target_role,
+            "level": u.level
         } for u in users
     ]}
