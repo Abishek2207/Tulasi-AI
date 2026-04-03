@@ -19,6 +19,7 @@ import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
 import dynamic from "next/dynamic";
 import { ReviewForm } from "@/components/ReviewForm";
+import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
 
 const ActivityMap = dynamic(() => import("@/components/dashboard/ActivityMap").then(mod => mod.ActivityMap), {
   ssr: false,
@@ -155,43 +156,45 @@ export default function DashboardPage() {
   };
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [feed, setFeed] = useState<any[]>([]);
+  const [dailyPlan, setDailyPlan] = useState<any[]>([]);
+  const [userType, setUserType] = useState<string>("student");
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-        const [statsData, lbData, meData, feedData] = await Promise.all([
-          activityApi.getStats(token).catch(() => null),
-          activityApi.getLeaderboard(token).catch(() => null),
-          authApi.me(token).catch(() => ({})),
-          activityApi.getPublicFeed().catch(() => null)
-        ]);
-        if (statsData) {
-          setLocalStats({
-            problems_solved: (statsData as any).problems_solved || 0,
-            videos_watched: (statsData as any).videos_watched || 0,
-            hackathons_joined: (statsData as any).hackathons_joined || 0,
-            invite_code: (meData as any)?.invite_code || "TULASI25"
-          });
-        }
-        if (lbData?.leaderboard) setLeaderboard(lbData.leaderboard.slice(0, 5));
-        if (feedData?.feed) setFeed(feedData.feed);
+  const loadData = async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const [statsData, lbData, meData, feedData, planData] = await Promise.all([
+        activityApi.getStats(token).catch(() => null),
+        activityApi.getLeaderboard(token).catch(() => null),
+        authApi.me(token).catch(() => ({})),
+        activityApi.getPublicFeed().catch(() => null),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/next-action`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null)
+      ]);
+      if (statsData) {
+        setLocalStats({
+          problems_solved: (statsData as any).problems_solved || 0,
+          videos_watched: (statsData as any).videos_watched || 0,
+          hackathons_joined: (statsData as any).hackathons_joined || 0,
+          invite_code: (meData as any)?.invite_code || "TULASI25"
+        });
+      }
+      if (lbData?.leaderboard) setLeaderboard(lbData.leaderboard.slice(0, 5));
+      if (feedData?.feed) setFeed(feedData.feed);
+      if (planData?.actions) setDailyPlan(planData.actions.slice(0, 3)); // Display top 3 next actions
+      
+      const me = meData as any;
+      if (me?.user_type) setUserType(me.user_type);
+      if (me?.is_onboarded === false) setNeedsOnboarding(true);
 
-        // Gamification: Trigger confetti on load if level > 1
-        if (statsData && (statsData as any).level > 1) {
-          setTimeout(() => {
-            confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 },
-              colors: ['#8B5CF6', '#06B6D4', '#F43F5E']
-            });
-          }, 600);
-        }
-      } catch (e) { /* silent */ }
-    };
-    fetchStats();
-  }, [session]);
+      if (statsData && (statsData as any).level > 1) {
+        setTimeout(() => {
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#8B5CF6', '#06B6D4', '#F43F5E'] });
+        }, 600);
+      }
+    } catch (e) { /* silent */ }
+  };
+
+  useEffect(() => { loadData(); }, [session]);
 
   const container: Variants = {
     hidden: { opacity: 0 },
@@ -217,7 +220,7 @@ export default function DashboardPage() {
 
         <div style={{ position: "relative", zIndex: 1, maxWidth: 800 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <span style={{ fontSize: 13, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>Command Center</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>{userType.replace("_", " ")}</span>
             <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.1)" }} />
           </div>
           <h1 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 12, letterSpacing: "-1.5px", lineHeight: 1.1 }}>
@@ -255,6 +258,42 @@ export default function DashboardPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Your Daily Path */}
+      {dailyPlan.length > 0 && (
+        <motion.div variants={item} style={{ marginBottom: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 4, height: 24, background: "var(--brand-primary)", borderRadius: 4 }} />
+              <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Recommended Action Path</h2>
+            </div>
+            <Link href="/dashboard/next-action" style={{ textDecoration: "none" }}>
+              <button className="btn-ghost" style={{ fontSize: 13, fontWeight: 800, color: "var(--brand-primary)" }}>View Full Plan →</button>
+            </Link>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+            {dailyPlan.map((action: any, i: number) => (
+              <div key={i} className="glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 12, border: action.urgent ? "1px solid rgba(244,63,94,0.3)" : undefined }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.15)", color: "#8B5CF6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 16 }}>{action.icon}</span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: "#10B981", background: "rgba(16,185,129,0.15)", padding: "4px 10px", borderRadius: 20 }}>+{action.xp} XP</span>
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 900 }}>{action.title}</h3>
+                <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>{action.desc}</p>
+                <Link href={action.link}>
+                  <button className="btn-primary" style={{ width: "100%", padding: "12px", borderRadius: 10, fontSize: 14, fontWeight: 700, marginTop: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    Action <ArrowRight size={14} />
+                  </button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* High Density Grid */}
       <div className="dashboard-grid">
@@ -454,6 +493,12 @@ export default function DashboardPage() {
               <ReviewForm onClose={() => setShowReviewModal(false)} />
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {needsOnboarding && (
+          <OnboardingModal onComplete={() => { setNeedsOnboarding(false); loadData(); }} />
         )}
       </AnimatePresence>
 

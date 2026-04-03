@@ -3,7 +3,7 @@ Tulasi AI — Public Reviews API
 - GET  /reviews   : Return latest 10 reviews (email hidden for privacy)
 - POST /reviews   : Submit a review (public endpoint, optional XP award if email matches)
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
 from pydantic import BaseModel, Field, validator
@@ -11,6 +11,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from app.core.database import get_session
+from app.api.deps import get_current_user
 from app.models.models import Review, User
 from app.api.activity import log_activity_internal
 
@@ -34,6 +35,7 @@ class ReviewOut(BaseModel):
     role: Optional[str] = None
     review: str
     rating: int
+    is_approved: bool = False
     created_at: datetime
 
     @validator("created_at", pre=True)
@@ -67,10 +69,13 @@ def _parse_dt(val) -> datetime:
 
 @router.get("", response_model=List[ReviewOut])
 def get_reviews(session: Session = Depends(get_session)):
-    """Return the latest 10 approved reviews for public display (email hidden)."""
+    """Return the latest approved reviews for public display."""
     try:
         reviews_raw = session.exec(
-            select(Review).order_by(Review.created_at.desc()).limit(10)
+            select(Review)
+            .where(Review.is_approved == True)
+            .order_by(Review.created_at.desc())
+            .limit(50)
         ).all()
 
         return [
@@ -81,6 +86,7 @@ def get_reviews(session: Session = Depends(get_session)):
                 role=r.role,
                 review=r.review,
                 rating=r.rating,
+                is_approved=True,
                 created_at=_parse_dt(r.created_at),
             )
             for r in reviews_raw
@@ -89,57 +95,84 @@ def get_reviews(session: Session = Depends(get_session)):
         print(f"❌ [Reviews] GET failed: {e}")
         return []
 
+@router.get("/me", response_model=ReviewOut)
+def get_my_review(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Fetch the current logged in user's review if it exists."""
+    review = session.exec(
+        select(Review).where(Review.user_id == current_user.id)
+    ).first()
+    
+    if not review:
+        raise HTTPException(status_code=404, detail="No review found.")
+        
+    return ReviewOut(
+        id=review.id,
+        name=review.name,
+        email=review.email,
+        role=review.role,
+        review=review.review,
+        rating=review.rating,
+        is_approved=review.is_approved,
+        created_at=_parse_dt(review.created_at),
+    )
+
 
 @router.post("", response_model=ReviewOut, status_code=201)
 def submit_review(
     data: ReviewCreate,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
-    Submit a new platform review (public — no auth required).
-    If the supplied email matches a registered user, award 100 XP.
+    Submit a new platform review. Only logged-in users.
+    Limits to 1 review per user.
     """
-    now = datetime.utcnow()
-    reviewer_name = data.name.strip() or "Anonymous"
-    reviewer_email = (data.email or "").strip() or None
+    # 1. Enforce Unique Constraint
+    existing = session.exec(
+        select(Review).where(Review.user_id == current_user.id)
+    ).first()
+    
+    if existing:
+        raise HTTPException(
+            status_code=400, 
+            detail="You have already submitted a review. You can edit it from your dashboard."
+        )
 
-    # Build the ORM object
+    now = datetime.utcnow()
+    # Use user's real email, name from payload if provided else user's name
+    reviewer_name = data.name.strip() or current_user.name or "Anonymous"
+    reviewer_email = current_user.email
+
     new_review = Review(
-        user_id=None,
+        user_id=current_user.id,
         name=reviewer_name,
         email=reviewer_email,
         role=data.role,
         review=data.review,
         rating=data.rating,
+        is_approved=False,
         created_at=now,
     )
 
-    # Optional: link to a registered user by email and award XP
-    if reviewer_email:
-        try:
-            user: Optional[User] = session.exec(
-                select(User).where(User.email == reviewer_email)
-            ).first()
-            if user:
-                new_review.user_id = user.id
-                user.xp = (user.xp or 0) + 100
-                session.add(user)
-                try:
-                    log_activity_internal(
-                        user, session,
-                        "review_submitted",
-                        "Awarded 100 XP for platform review",
-                        None,
-                    )
-                except Exception as log_err:
-                    print(f"⚠️ [Reviews] XP activity log failed (non-fatal): {log_err}")
-        except Exception as lookup_err:
-            print(f"⚠️ [Reviews] User lookup failed (non-fatal): {lookup_err}")
-
     try:
         session.add(new_review)
+        current_user.xp = (current_user.xp or 0) + 100
+        session.add(current_user)
         session.commit()
         session.refresh(new_review)
+        
+        try:
+            log_activity_internal(
+                current_user, session,
+                "review_submitted",
+                "Awarded 100 XP for platform review",
+                None,
+            )
+        except Exception:
+            pass
 
         return ReviewOut(
             id=new_review.id,
@@ -148,58 +181,47 @@ def submit_review(
             role=new_review.role,
             review=new_review.review,
             rating=new_review.rating,
+            is_approved=new_review.is_approved,
             created_at=_parse_dt(new_review.created_at),
         )
 
     except Exception as orm_err:
         session.rollback()
-        print(f"❌ [Reviews] ORM insert failed: {orm_err}")
+        raise HTTPException(status_code=500, detail="Failed to save review.")
 
-        # ── Raw SQL fallback (handles email column presence differences) ──
-        from sqlalchemy import text
-        try:
-            session.execute(
-                text(
-                    "INSERT INTO review (name, role, review, rating, created_at) "
-                    "VALUES (:name, :role, :review, :rating, :created_at)"
-                ),
-                {
-                    "name": reviewer_name,
-                    "role": data.role,
-                    "review": data.review,
-                    "rating": data.rating,
-                    "created_at": now,
-                },
-            )
-            session.commit()
 
-            row = session.execute(
-                text(
-                    "SELECT id, name, role, review, rating, created_at "
-                    "FROM review ORDER BY id DESC LIMIT 1"
-                )
-            ).mappings().first()
+@router.put("/{review_id}", response_model=ReviewOut)
+def edit_review(
+    review_id: int,
+    data: ReviewCreate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Edit own review. Resets approval status to pending."""
+    review = session.get(Review, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found.")
+    
+    if review.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to edit this review.")
 
-            if row:
-                return ReviewOut(
-                    id=row["id"],
-                    name=row["name"],
-                    email=None,
-                    role=row.get("role"),
-                    review=row["review"],
-                    rating=row["rating"],
-                    created_at=_parse_dt(row["created_at"]),
-                )
-        except Exception as sql_err:
-            session.rollback()
-            print(f"❌ [Reviews] SQL fallback also failed: {sql_err}")
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Review could not be saved. Please try again later."},
-            )
-
-        # ORM failed but SQL also returned no row (very unlikely)
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Review saved but could not be retrieved."},
-        )
+    review.name = data.name.strip() or current_user.name or "Anonymous"
+    review.role = data.role
+    review.review = data.review
+    review.rating = data.rating
+    review.is_approved = False  # Need admin to re-approve
+    
+    session.add(review)
+    session.commit()
+    session.refresh(review)
+    
+    return ReviewOut(
+        id=review.id,
+        name=review.name,
+        email=review.email,
+        role=review.role,
+        review=review.review,
+        rating=review.rating,
+        is_approved=review.is_approved,
+        created_at=_parse_dt(review.created_at),
+    )

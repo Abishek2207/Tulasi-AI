@@ -33,6 +33,15 @@ TOOL_PROMPTS = {
         "You were created by Abishek R. If anyone asks who created you, who built you, or who is your founder, "
         "always answer: 'I was created by Abishek R, the founder of Tulasi AI.'"
     ),
+    "doubt": (
+        "You are Tulasi AI's Private Doubt Solver — a secure, expert tutor for students and working professionals. "
+        "Answer technical and career-related doubts with clarity, depth, and accuracy. "
+        "Provide code examples, conceptual explanations, and step-by-step reasoning. "
+        "Be warm, encouraging, and professional at all times. "
+        "IMPORTANT: This is a private, secure session. Never reveal, store, or discuss personal information shared in this conversation with others. "
+        "If asked about your privacy policy, assure the user their doubts are confidential and session-isolated. "
+        "You were created by Abishek R, the founder of Tulasi AI."
+    ),
     "resume": (
         "You are an elite resume and career coach AI. Help the user craft powerful, ATS-optimized resumes, "
         "suggest action verbs, quantify achievements, and tailor content to job descriptions. "
@@ -101,6 +110,35 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
     db.add(user)
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
+    
+    # ── Feature #10: Abuse Detection ─────────────────────────────
+    ABUSE_KEYWORDS = [
+        "your personal address", "give me your phone", "tell me your password",
+        "private details", "leak data", "expose user", "share private",
+        "send nude", "drug", "hack into", "ddos", "bomb", "kill", "threat",
+        "personal email of", "phone number of user", "user's password",
+    ]
+    msg_lower = req.message.lower()
+    is_abusive = any(kw in msg_lower for kw in ABUSE_KEYWORDS)
+
+    if is_abusive:
+        abuse_count = getattr(user, "abuse_count", 0) or 0
+        abuse_count += 1
+        user.abuse_count = abuse_count
+        if abuse_count > 5:
+            user.is_active = False
+            db.add(user)
+            db.commit()
+            from fastapi import HTTPException
+            raise HTTPException(403, "Account suspended due to repeated policy violations.")
+        db.add(user)
+        db.commit()
+        warning_msg = (
+            f"⚠️ **Warning ({abuse_count}/5):** Your message was flagged for potentially harmful or privacy-violating content. "
+            f"Please use Tulasi AI responsibly. Repeated violations will result in account suspension."
+        )
+        return ChatResponse(response=warning_msg, session_id=session_id, ai_model="tulasi-ai")
+    # ────────────────────────────────────────────────────
     
     # Check memory for context (Safe retrieve)
     rag_context = ""

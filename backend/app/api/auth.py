@@ -22,6 +22,7 @@ class RegisterRequest(BaseModel):
     password: str
     name: str
     invite_code: Optional[str] = None
+    user_type: Optional[str] = "student"
 
 
 class LoginRequest(BaseModel):
@@ -45,6 +46,7 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
         hashed_password=get_password_hash(req.password),
         name=req.name,
         role="admin" if is_admin else "student",
+        user_type=req.user_type if hasattr(req, "user_type") and req.user_type else "student",
         invite_code=uuid.uuid4().hex[:8].upper(),
     )
     
@@ -99,6 +101,8 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
             "name": user.name,
             "role": user.role,
             "invite_code": user.invite_code, "is_pro": True, "chats_today": 0,
+            "user_type": getattr(user, "user_type", "student") or "student",
+            "is_onboarded": getattr(user, "is_onboarded", False) or False,
         }
     }
 
@@ -159,7 +163,9 @@ def get_me(current_user: User = Depends(get_current_user)):
         "invite_code": current_user.invite_code,
         "chats_today": 0,
         "is_pro": True,
-        "pro_expiry_date": "Unlimited Lifetime Access"
+        "pro_expiry_date": "Unlimited Lifetime Access",
+        "user_type": getattr(current_user, "user_type", "student") or "student",
+        "is_onboarded": getattr(current_user, "is_onboarded", False) or False,
     }
 
 

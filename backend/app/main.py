@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 import time
 
-from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan
 from app.core.database import init_db, engine
 from sqlalchemy import inspect
 from slowapi.errors import RateLimitExceeded
@@ -71,6 +71,7 @@ async def lifespan(app: FastAPI):
                 add_column_if_missing("review", "rating", "INTEGER")
                 add_column_if_missing("review", "created_at", "TIMESTAMP")
                 add_column_if_missing("review", "is_featured", "BOOLEAN", default="FALSE")
+                add_column_if_missing("review", "is_approved", "BOOLEAN", default="FALSE")
 
             # Step 2: User Table
             if "user" in tables:
@@ -129,7 +130,18 @@ async def lifespan(app: FastAPI):
                 # Ensure resume_mode exists if neither 'mode' nor 'resume_mode' were found (edge case)
                 add_column_if_missing("savedresume", "resume_mode", "VARCHAR", default="'ATS-Optimized'")
 
-            # Step 6: Seeding
+            # Step 6: PersistentInterviewSession
+            if "persistentinterviewsession" in tables:
+                add_column_if_missing("persistentinterviewsession", "scores_json", "VARCHAR", default="'{}'")
+                add_column_if_missing("persistentinterviewsession", "current_difficulty", "INTEGER", default="5")
+
+            # Step 8: User — Platform Upgrade fields
+            if "user" in tables:
+                add_column_if_missing("user", "user_type", "VARCHAR", default="'student'")
+                add_column_if_missing("user", "abuse_count", "INTEGER", default="0")
+                add_column_if_missing("user", "is_onboarded", "BOOLEAN", default="FALSE")
+
+            # Step 7: Seeding
             # Seed Admin User
             try:
                 with engine.begin() as conn:
@@ -175,6 +187,32 @@ async def lifespan(app: FastAPI):
                         print("[Migration] 🌱 Seeded initial high-tech hackathons.")
             except Exception as e:
                 print(f"[Migration Warning] Failed to seed Hackathons: {e}")
+
+            # Seed Real Reviews
+            try:
+                with engine.begin() as conn:
+                    REAL_REVIEWS = [
+                        {"name": "Gurucharan",    "role": None,               "review": "GOOD NOT BAD",                                                                                                                                                                         "rating": 5},
+                        {"name": "KRISHNA",       "role": "STUDENT",          "review": "Really amazing....!!!!",                                                                                                                                                               "rating": 5},
+                        {"name": "Aadhi",         "role": "PAAVAI",           "review": "It is incredibly easy for beginners to learn, yet powerful enough to handle the complex needs of advanced users",                                                                       "rating": 5},
+                        {"name": "Bharat",        "role": "Student@Paavai",   "review": "All in one AI excellent for beginners",                                                                                                                                                 "rating": 5},
+                        {"name": "Yogeshwaran",   "role": "Student@Paavai",   "review": "Good features \u2764\ufe0f\U0001f525",                                                                                                                                                                "rating": 5},
+                        {"name": "Santhosh",      "role": "Designer@Airbus",  "review": "Tulsi AI is an outstanding platform that perfectly balances simplicity and power. Its intuitive design makes it incredibly accessible for beginners, while its robust features provide all the depth that advanced users need. Highly recommended", "rating": 5},
+                        {"name": "Krishna",       "role": None,               "review": "Excellent Platform",                                                                                                                                                                    "rating": 5},
+                        {"name": "Abdul",         "role": "student",          "review": "this AI will beat the open AI",                                                                                                                                                         "rating": 5},
+                        {"name": "Hami",          "role": None,               "review": "Really, It's amazing to use this website\U0001f44c!!!",                                                                                                                                  "rating": 5},
+                        {"name": "Abhimanyu S S", "role": "Student@PEC",      "review": "Excellent platform for Students\U0001f525\U0001f525",                                                                                                                                   "rating": 5},
+                    ]
+                    for r in REAL_REVIEWS:
+                        existing = conn.execute(text("SELECT id FROM review WHERE name = :n AND review = :rev"), {"n": r["name"], "rev": r["review"]}).first()
+                        if not existing:
+                            conn.execute(text("""
+                                INSERT INTO review (name, role, review, rating, is_approved, is_featured, created_at)
+                                VALUES (:n, :ro, :rev, :ra, TRUE, FALSE, CURRENT_TIMESTAMP)
+                            """), {"n": r["name"], "ro": r["role"], "rev": r["review"], "ra": r["rating"]})
+                    print("[Migration] 🌱 Ensured default real reviews exist.")
+            except Exception as e:
+                print(f"[Migration Warning] Failed to seed Real Reviews: {e}")
 
             # ───────────────────────────────────────────────────
             
@@ -311,7 +349,10 @@ app.include_router(payment.router,      prefix="/api/payment",      tags=["Payme
 app.include_router(reviews.router,      prefix="/api/reviews",      tags=["Reviews"])
 app.include_router(users.router,        prefix="/api/users",        tags=["Users"])
 app.include_router(pdf.router,          prefix="/api/pdf",          tags=["Document Q&A"])
-
+app.include_router(next_action.router,  prefix="/api/next-action",  tags=["Next Action Engine"])
+app.include_router(internships.router,  prefix="/api/internships",  tags=["Internship Discovery"])
+app.include_router(system_design.router,  prefix="/api/system-design",  tags=["System Design Module"])
+app.include_router(prep_plan.router,      prefix="/api/prep-plan",      tags=["Prep Plan"])
 
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────
 from app.api import ws as ws_router

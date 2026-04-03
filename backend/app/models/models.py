@@ -30,6 +30,10 @@ class User(SQLModel, table=True):
     chats_today: int = 0
     last_reset_date: Optional[str] = None
     pro_expiry_date: Optional[str] = None  # Tracks 2-month free pro rewards
+    # ── Platform Upgrade Fields ──
+    user_type: str = "student"           # 1st_year | 2nd_year | 3rd_year | 4th_year | professional | professor
+    abuse_count: int = 0                 # Safety: incremented on harmful input
+    is_onboarded: bool = False           # True after user completes onboarding modal
     
     # Relationships
     resumes: List["SavedResume"] = Relationship(back_populates="user")
@@ -288,6 +292,16 @@ class Review(SQLModel, table=True):
     review: str
     rating: int = Field(ge=1, le=5)
     is_featured: bool = False
+    is_approved: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class PrepPlan(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    role: str
+    duration_months: int
+    plan_json: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -303,5 +317,36 @@ class PersistentInterviewSession(SQLModel, table=True):
     history_json: str = "[]"
     status: str = "in_progress" # in_progress, completed
     feedback_json: Optional[str] = None
+    scores_json: str = "{}"
+    current_difficulty: int = 5
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ── Feature #7: Internship Discovery ─────────────────────────────────────────
+class Internship(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    company: str
+    domain: str                  # AI, Web Dev, DevOps, Data Science, etc.
+    type: str = "Paid"           # Paid | Unpaid
+    mode: str = "Online"         # Online | Offline | Hybrid
+    location: Optional[str] = None
+    stipend: Optional[str] = None
+    duration: Optional[str] = None
+    description: Optional[str] = None
+    apply_link: str = ""
+    deadline: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ── Feature #6: Prep Plan ─────────────────────────────────────────────────────
+class PrepPlan(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    role: str                    # Software Engineer | AI/ML Engineer | Data Analyst
+    duration: str                # 1-month | 3-month | 6-month
+    plan_json: str = "[]"        # Serialised JSON of the week-by-week plan
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
