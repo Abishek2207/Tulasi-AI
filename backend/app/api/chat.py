@@ -56,6 +56,20 @@ TOOL_PROMPTS = {
         "You are an expert cover letter writer. Create compelling, personalized cover letters "
         "that highlight the candidate's unique value proposition. Ask for the job description if needed."
     ),
+    "learning_engine": (
+        "You are Tulasi AI's Learning Engine. Act as an interactive, Socratic tutor. "
+        "Instead of just giving the answer, guide the user to discover it themselves through hints and fundamental concepts. "
+        "Use analogies, break down complex concepts into bite-sized pieces, and check for understanding before moving on."
+    ),
+    "system_design": (
+        "You are a Principal Architect and System Design Expert at a MAANG company. "
+        "Guide the user through complex system design problems, focusing on scalability, availability, performance, "
+        "database choices, caching, APIs, and microservices. Ask clarifying questions regarding constraints before proposing architectures."
+    ),
+    "career_strategy": (
+        "You are an Elite Career Strategist. Provide extremely calculated, personalized, step-by-step career blueprints. "
+        "Focus on high-ROI skills, networking tactics, interview prep strategies, and project building that will maximize the user's chances of getting into heavily competitive roles like AI Engineer or AI Research Scientist at a top FAANG company."
+    ),
 }
 
 
@@ -111,34 +125,30 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     
-    # ── Feature #10: Abuse Detection ─────────────────────────────
-    ABUSE_KEYWORDS = [
-        "your personal address", "give me your phone", "tell me your password",
-        "private details", "leak data", "expose user", "share private",
-        "send nude", "drug", "hack into", "ddos", "bomb", "kill", "threat",
-        "personal email of", "phone number of user", "user's password",
-    ]
-    msg_lower = req.message.lower()
-    is_abusive = any(kw in msg_lower for kw in ABUSE_KEYWORDS)
-
-    if is_abusive:
-        abuse_count = getattr(user, "abuse_count", 0) or 0
-        abuse_count += 1
-        user.abuse_count = abuse_count
-        if abuse_count > 5:
-            user.is_active = False
+    # ── AI Safety Triage ─────────────────────────────────────────────
+    safety_prompt = f"""
+    Evaluate this message for policy violations (PII leaks, extreme toxicity, illegal acts, or harmful intent). 
+    Message: "{req.message}"
+    Return JSON: {{"is_safe": true|false, "reason": "short reason if unsafe"}}
+    """
+    try:
+        from app.core.ai_router import get_ai_response
+        safety_res = get_ai_response(safety_prompt, force_model="fast_flash")
+        safety_data = json.loads(re.search(r'\{.*\}', safety_res, re.DOTALL).group())
+        if not safety_data.get("is_safe", True):
+            abuse_count = getattr(user, "abuse_count", 0) or 0
+            abuse_count += 1
+            user.abuse_count = abuse_count
             db.add(user)
             db.commit()
-            from fastapi import HTTPException
-            raise HTTPException(403, "Account suspended due to repeated policy violations.")
-        db.add(user)
-        db.commit()
-        warning_msg = (
-            f"⚠️ **Warning ({abuse_count}/5):** Your message was flagged for potentially harmful or privacy-violating content. "
-            f"Please use Tulasi AI responsibly. Repeated violations will result in account suspension."
-        )
-        return ChatResponse(response=warning_msg, session_id=session_id, ai_model="tulasi-ai")
-    # ────────────────────────────────────────────────────
+            return ChatResponse(
+                response=f"⚠️ **Safety Alert ({abuse_count}/5):** {safety_data.get('reason', 'Policy violation detected.')}", 
+                session_id=session_id, 
+                ai_model="tulasi-safety"
+            )
+    except Exception:
+        pass # Fallback to allowing if safety check itself fails
+    # ─────────────────────────────────────────────────────────────
     
     # Check memory for context (Safe retrieve)
     rag_context = ""
@@ -148,7 +158,32 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
         print(f"⚠️ RAG retrieval failed: {re}")
     
     context_str = f"\n[Previous Context & Memory:\n{rag_context}\n]" if rag_context else ""
-    awareness = "You are operating in the year 2026. The CEO of Tulasi AI is Akshaya R. Answer accordingly."
+    
+    # Adaptive Decision Engine Integration
+    intelligence = json.loads(user.user_intelligence_profile or "{}")
+    is_founder = user.email == "abishekramamoorthy22@gmail.com"
+    
+    founder_context = ""
+    if is_founder:
+        founder_context = (
+            "FOUNDER_PROTOCOL ACTIVE: You are speaking with Abishek R, the Founder and CEO of Tulasi AI. "
+            "He is a B.Tech AI/ML student and an aspiring AI Research Scientist. "
+            "Provide him with elite-level, absolute-fidelity technical insights. "
+            "Discuss high-order architectural patterns, the Tulasi AI vision (Safety, AGI, Career Mastery), "
+            "and assist him in scaling this platform to a world-class standard."
+        )
+
+    awareness = (
+        f"You are operating in the year 2026. The Founder and CEO of Tulasi AI is Abishek R. "
+        f"{founder_context} "
+        f"USER DEMOGRAPHIC: [Type: {user.user_type}, Dept: {user.department or 'N/A'}, "
+        f"Role Target: {user.target_role or 'Software Engineer'}, Interests: {user.interest_areas or 'General Tech'}, "
+        f"Level: {user.level}]. "
+        f"INTELLIGENCE PROFILE: {json.dumps(intelligence)}. "
+        f"THINKING PROTOCOL: ALWAYS think deeply and internally before you respond. "
+        f"Critically analyze user intent, cross-reference their intelligence profile, and "
+        f"adjust your domain knowledge, tone, and challenge level dynamically."
+    )
     
     system_instruction = f"{system_prompt}. {awareness}{context_str}"
 
@@ -163,11 +198,11 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
     db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
     db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=response_text))
     
-    # Save persistent memory chunk (Backgrounded safety)
+    # Update long-term user intelligence
     try:
-        vector_service.store_embeddings(user.id, f"User: {req.message}\nAI: {response_text}", db)
-    except Exception as ve:
-        print(f"⚠️ Vector storage failed: {ve}")
+        vector_service.update_user_intelligence(user.id, f"User: {req.message}\nAI: {response_text}", db)
+    except Exception as ie:
+        print(f"⚠️ Intelligence update failed: {ie}")
     
     db.commit()
 
@@ -211,41 +246,49 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     
-    # ── Feature #10: Abuse Detection ─────────────────────────────
-    ABUSE_KEYWORDS = [
-        "your personal address", "give me your phone", "tell me your password",
-        "private details", "leak data", "expose user", "share private",
-        "send nude", "drug", "hack into", "ddos", "bomb", "kill", "threat",
-        "personal email of", "phone number of user", "user's password",
-    ]
-    msg_lower = req.message.lower()
-    is_abusive = any(kw in msg_lower for kw in ABUSE_KEYWORDS)
-
-    if is_abusive:
-        abuse_count = getattr(user, "abuse_count", 0) or 0
-        abuse_count += 1
-        user.abuse_count = abuse_count
-        if abuse_count > 5:
-            user.is_active = False
+    # ── AI Safety Triage ─────────────────────────────────────────────
+    safety_prompt = f"Evaluate safety of: '{req.message}'. Return {{\"is_safe\": bool, \"reason\": string}}"
+    try:
+        safety_res = get_ai_response(safety_prompt, force_model="fast_flash")
+        safety_data = json.loads(re.search(r'\{.*\}', safety_res, re.DOTALL).group())
+        if not safety_data.get("is_safe", True):
+            abuse_count = getattr(user, "abuse_count", 0) or 0
+            abuse_count += 1
+            user.abuse_count = abuse_count
             db.add(user)
             db.commit()
-            from fastapi import HTTPException
-            raise HTTPException(403, "Account suspended due to repeated policy violations.")
-        db.add(user)
-        db.commit()
-        warning_msg = (
-            f"⚠️ **Warning ({abuse_count}/5):** Your message was flagged for potentially harmful or privacy-violating content. "
-            f"Please use Tulasi AI responsibly. Repeated violations will result in account suspension."
-        )
-        async def mock_stream():
-            yield f"data: {json.dumps({'token': warning_msg, 'session_id': session_id, 'done': True})}\n\n"
-        return StreamingResponse(mock_stream(), media_type="text/event-stream")
-    # ────────────────────────────────────────────────────
+            warning_msg = f"⚠️ **Safety Alert ({abuse_count}/5):** {safety_data.get('reason')}"
+            async def mock_stream():
+                yield f"data: {json.dumps({'token': warning_msg, 'session_id': session_id, 'done': True})}\n\n"
+            return StreamingResponse(mock_stream(), media_type="text/event-stream")
+    except Exception:
+        pass
+    # ─────────────────────────────────────────────────────────────
     
     # Check memory for context
     rag_context = vector_service.retrieve_context(user.id, req.message, db)
     context_str = f"\n[Previous Context & Memory:\n{rag_context}\n]" if rag_context else ""
-    awareness = "You are operating in the year 2026. The CEO of Tulasi AI is Akshaya R. Answer accordingly."
+    
+    # Adaptive Decision Engine Integration
+    intelligence = json.loads(user.user_intelligence_profile or "{}" )
+    is_founder = user.email == "abishekramamoorthy22@gmail.com"
+    
+    founder_context = ""
+    if is_founder:
+        founder_context = (
+            "FOUNDER_PROTOCOL ACTIVE: You are speaking with Abishek R, the Founder and CEO of Tulasi AI. "
+            "Provide him with elite-level research scientist insights and assist in system-level scaling."
+        )
+
+    awareness = (
+        f"You are operating in the year 2026. The Founder and CEO of Tulasi AI is Abishek R. "
+        f"{founder_context} "
+        f"USER DEMOGRAPHIC: [Type: {user.user_type}, Dept: {user.department or 'N/A'}, "
+        f"Role Target: {user.target_role or 'Software Engineer'}, Interests: {user.interest_areas or 'General Tech'}, "
+        f"Level: {user.level}]. "
+        f"INTELLIGENCE PROFILE: {json.dumps(intelligence)}. "
+        f"THINKING PROTOCOL: ALWAYS think deeply and internally before you respond."
+    )
     
     system_instruction = f"{system_prompt}. {awareness}{context_str}"
 
@@ -277,9 +320,8 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
                 _db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
                 _db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=full_response))
                 
-                # Save persistent memory chunk
-                vector_service.store_embeddings(user.id, f"User: {req.message}\nAI: {full_response}", _db)
-                
+                # Sync intelligence asynchronously in the stream
+                vector_service.update_user_intelligence(db_user.id, f"User: {req.message}\nAssistant: {full_response}", _db)
                 _db.commit()
 
         except Exception as e:

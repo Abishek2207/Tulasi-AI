@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 import time
 
-from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, intelligence
 from app.core.database import init_db, engine
 from sqlalchemy import inspect
 from slowapi.errors import RateLimitExceeded
@@ -214,6 +214,21 @@ async def lifespan(app: FastAPI):
             except Exception as e:
                 print(f"[Migration Warning] Failed to seed Real Reviews: {e}")
 
+            # Seed Internships
+            try:
+                from app.api.internships import INTERNSHIP_SEED_DATA
+                with engine.begin() as conn:
+                    count = conn.execute(text("SELECT count(*) as c FROM internship")).mappings().first()["c"]
+                    if count == 0:
+                        for i in INTERNSHIP_SEED_DATA:
+                            conn.execute(text("""
+                                INSERT INTO internship (title, company, domain, type, mode, location, stipend, duration, description, apply_link, deadline, is_active)
+                                VALUES (:title, :company, :domain, :type, :mode, :location, :stipend, :duration, :description, :apply_link, :deadline, TRUE)
+                            """), i)
+                        print(f"[Migration] 🌱 Seeded {len(INTERNSHIP_SEED_DATA)} curated internships.")
+            except Exception as e:
+                print(f"[Migration Warning] Failed to seed Internships: {e}")
+
             # ───────────────────────────────────────────────────
             
         except Exception as e:
@@ -348,11 +363,14 @@ app.include_router(stripe.router,       prefix="/api/stripe",       tags=["Monet
 app.include_router(payment.router,      prefix="/api/payment",      tags=["Payment"])
 app.include_router(reviews.router,      prefix="/api/reviews",      tags=["Reviews"])
 app.include_router(users.router,        prefix="/api/users",        tags=["Users"])
+app.include_router(roadmap.router, prefix="/api/roadmap", tags=["Roadmap"])
+app.include_router(intelligence.router, prefix="/api/intelligence", tags=["Intelligence"])
 app.include_router(pdf.router,          prefix="/api/pdf",          tags=["Document Q&A"])
 app.include_router(next_action.router,  prefix="/api/next-action",  tags=["Next Action Engine"])
 app.include_router(internships.router,  prefix="/api/internships",  tags=["Internship Discovery"])
 app.include_router(system_design.router,  prefix="/api/system-design",  tags=["System Design Module"])
 app.include_router(prep_plan.router,      prefix="/api/prep-plan",      tags=["Prep Plan"])
+app.include_router(rag.router,            prefix="/api/rag",            tags=["Knowledge Base"])
 
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────
 from app.api import ws as ws_router

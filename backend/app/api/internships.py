@@ -86,3 +86,40 @@ def get_domains(current_user: User = Depends(get_current_user)):
     """Return list of available internship domains."""
     domains = list({i["domain"] for i in INTERNSHIP_SEED_DATA})
     return {"domains": sorted(domains)}
+@router.get("/matches")
+def get_matched_internships(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Intelligently recommends internships from the curated dataset based on the user's role and interests.
+    """
+    all_internships = db.exec(select(Internship)).all()
+    if not all_internships:
+        all_internships = [Internship(**i) for i in INTERNSHIP_SEED_DATA]
+
+    # Matching Logic
+    target_role = (current_user.target_role or "").lower()
+    interests = (current_user.interest_areas or "").lower().split(",")
+    matches = []
+
+    for i in all_internships:
+        score = 0
+        desc = i.description.lower()
+        title = i.title.lower()
+        
+        # Role match
+        if target_role and (target_role in title or target_role in desc):
+            score += 50
+            
+        # Interests match
+        for interest in interests:
+            if interest.strip() and (interest.strip() in title or interest.strip() in desc):
+                score += 25
+                
+        if score > 0:
+            matches.append({"internship": i if isinstance(i, dict) else i.dict(), "match_score": score})
+
+    # Sort by score and take top 5
+    matches = sorted(matches, key=lambda x: x["match_score"], reverse=True)[:5]
+    return {"matches": matches}

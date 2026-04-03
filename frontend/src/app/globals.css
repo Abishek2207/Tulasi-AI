@@ -1,74 +1,75 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+/* ============================
+   APPLE LUXURY UI THEME
+   ============================ */
 :root {
-  /* Brand - Neon Futuristic */
-  --brand-primary:   #7C3AED; /* Neon Violet */
-  --brand-secondary: #06B6D4; /* Cyan */
-  --brand-accent:    #F43F5E; /* Rose */
-  --brand-green:     #10B981; /* Emerald */
-  --brand-yellow:    #F59E0B; /* Amber */
-  --brand-glow:      rgba(124, 58, 237, 0.5);
+  /* Brand - Minimalist High-End */
+  --brand-primary:   #FFFFFF; /* Stark stark white */
+  --brand-secondary: #0A84FF; /* Apple iOS Blue */
+  --brand-accent:    #5E5CE6; /* Apple Indigo */
+  --brand-green:     #30D158; /* Apple Green */
+  --brand-yellow:    #FF9F0A; /* Apple Orange */
+  --brand-glow:      rgba(255, 255, 255, 0.1);
 
-  /* Backgrounds — Deep SaaS Dark */
-  --bg-primary: #05070D; /* Apple Deep Black */
-  --bg-secondary: #0A0C14;
-  --bg-tertiary: #111421; /* Slightly lighter for sidebars */
-  --bg-card:      rgba(24, 24, 27, 0.6);
-  --bg-card-2:    rgba(39, 39, 42, 0.7);
-  --bg-glass:     rgba(9, 9, 11, 0.6);
-  --bg-glass-hover: rgba(24, 24, 27, 0.8);
+  /* Backgrounds — OLED Absolute Black */
+  --bg-primary:   #000000; /* True pitch black */
+  --bg-secondary: #0A0A0C; /* Barely lighter black */
+  --bg-tertiary:  #121214; 
+  --bg-card:      rgba(24, 24, 26, 0.5); /* Ultra sheer for heavy blur */
+  --bg-card-2:    rgba(32, 32, 35, 0.6);
+  --bg-glass:     rgba(10, 10, 10, 0.65);
+  --bg-glass-hover: rgba(40, 40, 44, 0.65);
 
-  /* Text — Ultra Crisp */
-  --text-primary:   #FFFFFF;
-  --text-secondary: #D4D4D8;
-  --text-muted:     #A1A1AA;
+  /* Text — Soft iOS Crispness */
+  --text-primary:   #F5F5F7; /* Apple's off-white for less eye-strain */
+  --text-secondary: #86868B;
+  --text-muted:     #515154;
 
   /* Borders / Glass */
   --border:       rgba(255, 255, 255, 0.08);
-  --border-glow:  rgba(124, 58, 237, 0.3);
-  --border-hover: rgba(124, 58, 237, 0.5);
+  --border-glow:  rgba(255, 255, 255, 0.15);
+  --border-hover: rgba(255, 255, 255, 0.2);
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
-  --gradient-brand:   linear-gradient(135deg, #7C3AED 0%, #F43F5E 50%, #06B6D4 100%);
-  --gradient-card:    linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(6,182,212,0.04) 100%);
+  --gradient-primary: linear-gradient(135deg, #FFFFFF 0%, #A1A1A6 100%);
+  --gradient-brand:   linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%);
+  --gradient-card:    linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.00) 100%);
 
   /* Transitions */
-  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-premium: cubic-bezier(0.25, 1, 0.5, 1); /* iOS Spring feel */
   --font-inter: 'Inter', sans-serif;
   --font-outfit: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 [data-theme="light"] {
-  /* Brand - Neon Futuristic (Keep these vibrant in light mode too) */
-  --brand-glow:      rgba(124, 58, 237, 0.2);
+  --brand-glow:      rgba(0, 0, 0, 0.05);
 
-  /* Backgrounds — Clean SaaS Light */
-  --bg-primary: #F9FAFB; /* Off-white */
-  --bg-secondary: #F3F4F6;
-  --bg-tertiary: #E5E7EB; 
-  --bg-card:      rgba(255, 255, 255, 0.9);
-  --bg-card-2:    rgba(249, 250, 251, 0.95);
+  /* Backgrounds — Apple Store Stark White */
+  --bg-primary:   #FFFFFF;
+  --bg-secondary: #F5F5F7;
+  --bg-tertiary:  #EBEBF0; 
+  --bg-card:      rgba(255, 255, 255, 0.7);
+  --bg-card-2:    rgba(242, 242, 247, 0.8);
   --bg-glass:     rgba(255, 255, 255, 0.8);
   --bg-glass-hover: rgba(255, 255, 255, 1);
 
   /* Text — Ultra Crisp Light Mode */
-  --text-primary:   #111827; /* Tailwind gray-900 */
-  --text-secondary: #374151; /* Tailwind gray-700 */
-  --text-muted:     #6B7280; /* Tailwind gray-500 */
+  --text-primary:   #1D1D1F; 
+  --text-secondary: #86868B; 
+  --text-muted:     #AEAEB2; 
 
   /* Borders / Glass */
-  --border:       rgba(0, 0, 0, 0.08);
-  --border-glow:  rgba(124, 58, 237, 0.15);
-  --border-hover: rgba(124, 58, 237, 0.3);
+  --border:       rgba(0, 0, 0, 0.06);
+  --border-glow:  rgba(0, 0, 0, 0.1);
+  --border-hover: rgba(0, 0, 0, 0.15);
 
   /* Gradients */
-  --gradient-card:    linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(6,182,212,0.03) 100%);
+  --gradient-primary: linear-gradient(135deg, #1D1D1F 0%, #424245 100%);
+  --gradient-card:    linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.00) 100%);
 }
 
 /* ============================
@@ -81,46 +82,42 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.03), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.03), transparent 25%);
-  background-attachment: fixed;
+  background-image: none; /* Removed neon radial gradients for extreme minimalism */
+  letter-spacing: -0.015em;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-outfit);
-  letter-spacing: -0.02em;
-  font-weight: 700;
+  font-family: var(--font-inter); /* Apple prefers single uniform font family */
+  letter-spacing: -0.03em;
+  font-weight: 600;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
 /* ============================
    PREMIUM GLASS COMPONENT
    ============================ */
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 24px; /* Heavy squircles */
   box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.2), 
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  transition: all 0.3s var(--ease-premium);
+    0 10px 30px -10px rgba(0, 0, 0, 0.5), 
+    inset 0 1px 1px rgba(255,255,255,0.08); /* Inner white bezel */
+  transition: all 0.5s var(--ease-premium);
 }
 .glass-card:hover {
   background: var(--bg-glass-hover);
   border-color: var(--border-hover);
   box-shadow: 
-    0 10px 25px -5px rgba(0, 0, 0, 0.3),
-    0 0 15px rgba(124, 58, 237, 0.15),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  transform: translateY(-2px);
+    0 20px 40px -10px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255,255,255,0.15);
+  transform: translateY(-4px) scale(1.01); /* Deep spring hover */
 }
 
 .premium-glow {
@@ -129,16 +126,16 @@ h1, h2, h3, h4, h5, h6 {
 .premium-glow::after {
   content: "";
   position: absolute;
-  inset: -1px;
-  background: var(--gradient-brand);
+  inset: -2px;
+  background: var(--gradient-primary);
   border-radius: inherit;
   z-index: -1;
   opacity: 0;
-  transition: opacity 0.3s var(--ease-premium);
-  filter: blur(10px);
+  transition: opacity 0.5s var(--ease-premium);
+  filter: blur(14px);
 }
 .premium-glow:hover::after {
-  opacity: 0.4;
+  opacity: 0.2;
 }
 
 .gradient-text {
@@ -236,6 +233,13 @@ select:focus {
    ============================ */
 .animate-fade-in { animation: fadeIn 0.5s var(--ease-premium) forwards; }
 .animate-slide-up { animation: slideUp 0.6s var(--ease-premium) forwards; }
+.animate-pulse-slow { animation: pulseSlow 3s infinite alternate var(--ease-premium); }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -244,6 +248,18 @@ select:focus {
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseSlow {
+  0% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 0 rgba(124, 58, 237, 0); }
+  100% { transform: scale(1.02); opacity: 1; box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 /* ============================

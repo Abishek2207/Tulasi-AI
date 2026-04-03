@@ -50,34 +50,42 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
         invite_code=uuid.uuid4().hex[:8].upper(),
     )
     
-    # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
+    # ── REFERRAL & ADMIN INVITE SYSTEM ───────────────────────────
     if req.invite_code:
-        query = select(User).where(User.invite_code == req.invite_code)
-        result = db.exec(query)
-        referer = result.first()
-        if referer:
-            referer.xp = (referer.xp or 0) + 500
-            user.xp = 500
-            user.referred_by = referer.invite_code
-            db.add(referer)
-            db.commit() # Save XP to prevent race conditions
-            
-            # Check if this hit the 10 referral threshold
-            total_referrals = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
-            if len(total_referrals) >= 9: # >= 9 because the current user is not yet committed
-                referer.is_pro = True
-                
-                # Set 2 months expiry from today
-                from datetime import datetime, timedelta
-                # We grant 60 days of Pro
-                expiry_date = datetime.utcnow() + timedelta(days=60)
-                referer.stripe_subscription_id = f"referral_reward_{user.id}"
-                
-                # In your system, you probably just check boolean is_pro
-                # To handle expiration, we could store it in last_reset_date or similar,
-                # but for now granting permanent is_pro is safe if expiry field doesn't exist yet.
+        from app.models.models import InviteCode
+        # 1. Check against Admin-generated codes first
+        admin_code = db.exec(select(InviteCode).where(InviteCode.code == req.invite_code)).first()
+        if admin_code:
+            if admin_code.usage_count < admin_code.usage_limit:
+                admin_code.usage_count += 1
+                if admin_code.grants_pro:
+                    user.is_pro = True
+                user.referred_by = f"ADMIN:{admin_code.code}"
+                db.add(admin_code)
+                # Keep committing for each registration to avoid lock contention if high volume
+                db.commit()
+            else:
+                # Code reached limit, but we don't block registration, just don't grant rewards
+                pass
+        else:
+            # 2. Fallback to User Referral rewards
+            query = select(User).where(User.invite_code == req.invite_code)
+            result = db.exec(query)
+            referer = result.first()
+            if referer:
+                referer.xp = (referer.xp or 0) + 500
+                user.xp = 500
+                user.referred_by = referer.invite_code
                 db.add(referer)
+                db.commit() # Save XP
+                
+                # Check if this hit the 10 referral threshold
+                total_referrals = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
+                if len(total_referrals) >= 9: # >= 9 because the current user is not yet committed
+                    referer.is_pro = True
+                    db.add(referer)
     # ─────────────────────────────────────────────────────────────
+
 
     db.add(user)
     db.commit()
@@ -142,6 +150,8 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_session
             "name": user.name,
             "role": user.role,
             "invite_code": user.invite_code, "is_pro": True, "chats_today": 0,
+            "user_type": getattr(user, "user_type", "student") or "student",
+            "is_onboarded": getattr(user, "is_onboarded", False) or False,
         }
     }
 
@@ -279,6 +289,8 @@ def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
             "role": user.role,
             "invite_code": user.invite_code,
             "is_pro": True,
-            "chats_today": 0
+            "chats_today": 0,
+            "user_type": getattr(user, "user_type", "student") or "student",
+            "is_onboarded": getattr(user, "is_onboarded", False) or False,
         }
     }

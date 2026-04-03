@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "@/hooks/useSession";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatApi, ChatMsg, ChatSession } from "@/lib/api";
-import { Bot, Send, Trash2, Plus, MessageSquare, Menu, X, Clock, History, BrainCircuit, Copy, Check } from "lucide-react";
+import { Bot, Send, Trash2, Plus, MessageSquare, Menu, X, Clock, History, BrainCircuit, Copy, Check, GraduationCap, Building2, TrendingUp, HelpCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -177,6 +177,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [mode, setMode] = useState<string>("chat");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [msgCount, setMsgCount] = useState(0);
@@ -252,7 +253,7 @@ export default function ChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const res = await chatApi.send(text, sessionId || undefined);
+      const res = await chatApi.send(text, sessionId || undefined, mode);
       if (res.session_id && !sessionId) {
         setSessionId(res.session_id);
         localStorage.setItem("tulasi_chat_session", res.session_id);
@@ -303,6 +304,33 @@ export default function ChatPage() {
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
             <span style={{ fontSize: 11, fontWeight: 800, color: "#10B981", textTransform: "uppercase", letterSpacing: 0.5 }}>Neural Link Established</span>
           </div>
+        </div>
+
+        {/* AI Mode Selector */}
+        <div style={{ display: "flex", gap: 10, padding: "4px 4px", overflowX: "auto", scrollbarWidth: "none", marginBottom: 16 }}>
+          {[
+            { id: "chat", label: "General Chat", icon: <MessageSquare size={14} /> },
+            { id: "learning_engine", label: "Learning Engine", icon: <GraduationCap size={14} /> },
+            { id: "doubt", label: "Doubt Solver", icon: <HelpCircle size={14} /> },
+            { id: "system_design", label: "System Design", icon: <Building2 size={14} /> },
+            { id: "career_strategy", label: "Career Strategy", icon: <TrendingUp size={14} /> },
+            { id: "interview", label: "Mock Interview", icon: <BrainCircuit size={14} /> }
+          ].map(m => (
+            <button
+              key={m.id}
+              onClick={() => setMode(m.id)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+                padding: "8px 14px", borderRadius: 20, fontSize: 13, fontWeight: 700,
+                background: mode === m.id ? "var(--gradient-primary)" : "rgba(255,255,255,0.03)",
+                color: mode === m.id ? "white" : "var(--text-muted)",
+                border: "1px solid", borderColor: mode === m.id ? "transparent" : "rgba(255,255,255,0.08)",
+                cursor: "pointer", transition: "all 0.2s"
+              }}
+            >
+              {m.icon} {m.label}
+            </button>
+          ))}
         </div>
 
         {/* Messages */}

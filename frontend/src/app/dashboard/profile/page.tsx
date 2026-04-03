@@ -3,8 +3,8 @@
 import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { activityApi, profileApi, usersApi } from "@/lib/api";
-import { Zap, Flame, Code, Target, Trophy, Award, Edit3, Check, X, Camera, Image as ImageIcon, Sparkles, Loader2 } from "lucide-react";
+import { activityApi, profileApi, usersApi, certificateApi, Certificate } from "@/lib/api";
+import { Zap, Flame, Code, Target, Trophy, Award, Edit3, Check, X, Camera, Image as ImageIcon, Sparkles, Loader2, FileDown } from "lucide-react";
 
 interface UserStats {
   xp?: number; level?: number; problems_solved?: number;
@@ -38,6 +38,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({ name: "", bio: "", skills: "" });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [removingBg, setRemovingBg] = useState(false);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 
@@ -49,6 +50,11 @@ export default function ProfilePage() {
       // Google OAuth photo or custom uploaded avatar
       if (u.avatar) setAvatarUrl(u.avatar);
       else if (u.image) setAvatarUrl(u.image);
+      
+      // Fetch certificates
+      certificateApi.list(token).then((res) => {
+        setCertificates(res.certificates || []);
+      }).catch(err => console.error(err));
     }
   }, [session]);
 
@@ -251,6 +257,28 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
+          {/* Certificates Row */}
+          {certificates.length > 0 && (
+            <div className="glass-card" style={{ padding: 32, borderRadius: 24, marginTop: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}>
+                <Award size={16} color="#06B6D4" /> Earned Certificates
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+                {certificates.map(cert => (
+                  <div key={cert.id} style={{ padding: "16px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 12 }}>
+                     <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(6,182,212,0.15)", color: "#06B6D4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Trophy size={20} />
+                     </div>
+                     <div style={{ fontSize: 14, fontWeight: 700 }}>{cert.title}</div>
+                     <a href={cert.file_path} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#06B6D4", marginTop: "auto", padding: "6px 0", cursor: "pointer" }}>
+                       <FileDown size={14} /> Download PDF
+                     </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </motion.div>
       )}
 

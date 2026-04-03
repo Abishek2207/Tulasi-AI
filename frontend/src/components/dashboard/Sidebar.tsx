@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
-import { Logo as TulasiLogo } from "@/components/Logo";
+import { TulasiLogo } from "@/components/TulasiLogo";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -14,7 +14,7 @@ import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
   FileText, Award, BarChart3, MessageCircle, 
-  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap
+  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -33,6 +33,8 @@ const NAV_SECTIONS = [
     items: [
       { icon: BrainCircuit,    name: "Flashcards",      href: "/dashboard/flashcards" },
       { icon: Code,            name: "Code Practice",   href: "/dashboard/code" },
+      { icon: Layers,          name: "System Design",   href: "/dashboard/system-design" },
+      { icon: Compass,         name: "Preparation Plan", href: "/dashboard/prep-plan" },
       { icon: Users,           name: "Study Rooms",     href: "/dashboard/study-rooms" },
       { icon: Trophy,          name: "Hackathons",      href: "/dashboard/hackathons" },
       { icon: BookOpen,        name: "Platform Guides", href: "/dashboard/platform-guides" },
@@ -123,7 +125,7 @@ export default function Sidebar() {
             boxShadow: "0 0 25px rgba(168, 85, 247, 0.5)",
             flexShrink: 0
           }}>
-            <TulasiLogo size={28} showText={false} />
+            {TulasiLogo ? <TulasiLogo size={28} showText={false} /> : <div style={{width: 28, height: 28, background: "gray"}} />}
           </div>
           <div>
             <div style={{
@@ -184,7 +186,9 @@ export default function Sidebar() {
                     <span style={{
                       display: "flex", alignItems: "center", justifyContent: "center", width: 20, flexShrink: 0,
                       color: active ? "#8B5CF6" : "inherit",
-                    }}><item.icon size={16} /></span>
+                    }}>
+                      {item.icon ? <item.icon size={16} /> : <CircleHelp size={16} />}
+                    </span>
                     <span style={{ flex: 1 }}>{item.name}</span>
                     {isLocked && (
                       <span style={{
@@ -212,7 +216,7 @@ export default function Sidebar() {
               borderRadius: 9, textDecoration: "none", color: "#FF6B9D", fontSize: 13, fontWeight: 600,
               background: "rgba(255,107,157,0.06)",
             }}>
-              <Settings size={14} />
+              {Settings ? <Settings size={14} /> : <CircleHelp size={14} />}
               Admin Panel
               <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "rgba(255,107,157,0.15)", fontWeight: 700 }}>ADMIN</span>
             </Link>

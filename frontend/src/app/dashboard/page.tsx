@@ -13,18 +13,23 @@ import {
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award,
   Flame, Zap, Linkedin, Share2, MessageCircle, Terminal,
   CheckCircle2, Star, Sparkles, BrainCircuit, Lightbulb,
-  LayoutDashboard, TrendingUp, ArrowRight, Share
+  LayoutDashboard, TrendingUp, ArrowRight, Share, MapPin, Clock, Link2
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
 import dynamic from "next/dynamic";
 import { ReviewForm } from "@/components/ReviewForm";
-import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
+
 
 const ActivityMap = dynamic(() => import("@/components/dashboard/ActivityMap").then(mod => mod.ActivityMap), {
   ssr: false,
   loading: () => <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 13 }}>Loading Real-time Activity...</div>
 });
+
+const SkillRadar = dynamic(() => import("@/components/dashboard/SkillRadar").then(mod => mod.SkillRadar), { ssr: false });
+const ReadinessCard = dynamic(() => import("@/components/dashboard/ReadinessCard").then(mod => mod.ReadinessCard), { ssr: false });
+const MissionControl = dynamic(() => import("@/components/dashboard/MissionControl").then(mod => mod.MissionControl), { ssr: false });
+const NeuralStrategist = dynamic(() => import("@/components/dashboard/NeuralStrategist").then(mod => mod.NeuralStrategist), { ssr: false });
 
 function LiveActivityFeed({ activities: initialActivities }: { activities: any[] }) {
   const [activities, setActivities] = useState<any[]>(initialActivities);
@@ -159,16 +164,19 @@ export default function DashboardPage() {
   const [dailyPlan, setDailyPlan] = useState<any[]>([]);
   const [userType, setUserType] = useState<string>("student");
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [matchedInternships, setMatchedInternships] = useState<any[]>([]);
+  const isFounder = session?.user?.email === "abishekramamoorthy22@gmail.com";
 
   const loadData = async () => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-      const [statsData, lbData, meData, feedData, planData] = await Promise.all([
+      const [statsData, lbData, meData, feedData, planData, matchData] = await Promise.all([
         activityApi.getStats(token).catch(() => null),
         activityApi.getLeaderboard(token).catch(() => null),
         authApi.me(token).catch(() => ({})),
         activityApi.getPublicFeed().catch(() => null),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/next-action`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/next-action`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/internships/matches`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null)
       ]);
       if (statsData) {
         setLocalStats({
@@ -180,7 +188,8 @@ export default function DashboardPage() {
       }
       if (lbData?.leaderboard) setLeaderboard(lbData.leaderboard.slice(0, 5));
       if (feedData?.feed) setFeed(feedData.feed);
-      if (planData?.actions) setDailyPlan(planData.actions.slice(0, 3)); // Display top 3 next actions
+      if (planData?.actions) setDailyPlan(planData.actions.slice(0, 3)); 
+      if (matchData?.matches) setMatchedInternships(matchData.matches);
       
       const me = meData as any;
       if (me?.user_type) setUserType(me.user_type);
@@ -198,12 +207,22 @@ export default function DashboardPage() {
 
   const container: Variants = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+    show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.05 } }
   };
 
   const item: Variants = {
-    hidden: { opacity: 0, y: 15 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1, 
+      transition: { 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 24, 
+        mass: 1.2 
+      } 
+    }
   };
 
   return (
@@ -220,11 +239,13 @@ export default function DashboardPage() {
 
         <div style={{ position: "relative", zIndex: 1, maxWidth: 800 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <span style={{ fontSize: 13, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>{userType.replace("_", " ")}</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: isFounder ? "#F59E0B" : "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>
+              {isFounder ? "Vanguard Founder & Architect" : userType.replace("_", " ")}
+            </span>
             <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.1)" }} />
           </div>
           <h1 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 12, letterSpacing: "-1.5px", lineHeight: 1.1 }}>
-            Vanguard of Learning, <span className="gradient-text">{userName}</span>
+            {isFounder ? "Commander of Innovation," : "Vanguard of Learning,"} <span className="gradient-text">{isFounder ? "Abishek R" : userName}</span>
           </h1>
           <p style={{ fontSize: 18, color: "var(--text-secondary)", marginBottom: 32, maxWidth: 680, lineHeight: 1.6 }}>
             The SaaS-native engine for engineering excellence. Access your high-fidelity modules
@@ -259,41 +280,90 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Your Daily Path */}
-      {dailyPlan.length > 0 && (
-        <motion.div variants={item} style={{ marginBottom: 40 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 4, height: 24, background: "var(--brand-primary)", borderRadius: 4 }} />
-              <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Recommended Action Path</h2>
+      {/* Your Daily Path & Mission Control */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: 24, marginBottom: 40 }}>
+        {/* Mission Control - Personalized AI Mission */}
+        <motion.div variants={item} className="glass-card" style={{ padding: 0, overflow: "hidden", minHeight: 300 }}>
+          <MissionControl token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
+        </motion.div>
+
+        {/* Action Path */}
+        {dailyPlan.length > 0 && (
+          <motion.div variants={item}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Recommended Path</h3>
+              <Link href="/dashboard/next-action" style={{ fontSize: 11, fontWeight: 800, color: "var(--brand-primary)", textDecoration: "none" }}>VIEW ALL →</Link>
             </div>
-            <Link href="/dashboard/next-action" style={{ textDecoration: "none" }}>
-              <button className="btn-ghost" style={{ fontSize: 13, fontWeight: 800, color: "var(--brand-primary)" }}>View Full Plan →</button>
-            </Link>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-            {dailyPlan.map((action: any, i: number) => (
-              <div key={i} className="glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 12, border: action.urgent ? "1px solid rgba(244,63,94,0.3)" : undefined }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.15)", color: "#8B5CF6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: 16 }}>{action.icon}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {dailyPlan.map((action: any, i: number) => (
+                <div key={i} className="glass-card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", border: action.urgent ? "1px solid rgba(244,63,94,0.3)" : undefined }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(139,92,246,0.1)", color: "#8B5CF6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                      {action.icon}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 800 }}>{action.title}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>+{action.xp} XP available</div>
                     </div>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: "#10B981", background: "rgba(16,185,129,0.15)", padding: "4px 10px", borderRadius: 20 }}>+{action.xp} XP</span>
+                  <Link href={action.link}>
+                    <ArrowRight size={16} color="var(--brand-primary)" />
+                  </Link>
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 900 }}>{action.title}</h3>
-                <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>{action.desc}</p>
-                <Link href={action.link}>
-                  <button className="btn-primary" style={{ width: "100%", padding: "12px", borderRadius: 10, fontSize: 14, fontWeight: 700, marginTop: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    Action <ArrowRight size={14} />
-                  </button>
-                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Matched Opportunities */}
+      {matchedInternships.length > 0 && (
+        <motion.div variants={item} style={{ marginBottom: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+            <div style={{ width: 4, height: 24, background: "#10B981", borderRadius: 4 }} />
+            <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Matched Opportunities</h2>
+          </div>
+          <div style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none" }}>
+            {matchedInternships.map((match: any, i: number) => (
+              <div key={i} className="glass-card" style={{ minWidth: 320, padding: 24, flexShrink: 0, background: "linear-gradient(135deg, rgba(16,185,129,0.05), rgba(255,255,255,0.02))", border: "1px solid rgba(16,185,129,0.2)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                  <span style={{ fontSize: 11, fontWeight: 900, color: "#10B981", background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: 12 }}>{match.match_score}% MATCH</span>
+                  <div style={{ color: "var(--text-muted)" }}><Link2 size={14} /></div>
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 4 }}>{match.internship.title}</h3>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--brand-primary)", marginBottom: 12 }}>{match.internship.company}</div>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 20, height: 36, overflow: "hidden" }}>{match.internship.description}</p>
+                <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+                   <span style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {match.internship.location || match.internship.mode}</span>
+                   <span style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}><Clock size={12} /> {match.internship.duration}</span>
+                </div>
+                <a href={match.internship.apply_link} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                   <button className="btn-primary" style={{ width: "100%", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800 }}>Apply Now</button>
+                </a>
               </div>
             ))}
           </div>
         </motion.div>
       )}
+
+      {/* Neural Intelligence Section */}
+      <motion.div variants={item} style={{ marginBottom: 40 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <div style={{ width: 4, height: 24, background: "#8B5CF6", borderRadius: 4 }} />
+          <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Neural Intelligence</h2>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
+          <div className="glass-card" style={{ minHeight: 420 }}>
+            <SkillRadar token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
+          </div>
+          <div className="glass-card" style={{ minHeight: 420 }}>
+            <ReadinessCard token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
+          </div>
+          <div className="glass-card" style={{ minHeight: 420, gridColumn: "span 1" }}>
+            <NeuralStrategist token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
+          </div>
+        </div>
+      </motion.div>
 
       {/* High Density Grid */}
       <div className="dashboard-grid">
@@ -496,11 +566,6 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {needsOnboarding && (
-          <OnboardingModal onComplete={() => { setNeedsOnboarding(false); loadData(); }} />
-        )}
-      </AnimatePresence>
 
       <style>{`
         .dashboard-grid { 

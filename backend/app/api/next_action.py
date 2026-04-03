@@ -6,7 +6,7 @@ and returns a personalised list of "what to do next" actions.
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import List, Dict, Optional
 import json
 
 from app.api.deps import get_current_user
@@ -184,6 +184,10 @@ from pydantic import BaseModel
 
 class OnboardPayload(BaseModel):
     user_type: str  # 1st_year | 2nd_year | 3rd_year | 4th_year | professional | professor
+    department: Optional[str] = None
+    target_role: Optional[str] = None
+    target_companies: Optional[List[str]] = []
+    interest_areas: Optional[List[str]] = []
 
 VALID_USER_TYPES = {"1st_year", "2nd_year", "3rd_year", "4th_year", "professional", "professor", "student"}
 
@@ -194,13 +198,44 @@ def complete_onboarding(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    """Sets user_type and marks onboarding complete."""
+    """Sets user_type and marks onboarding complete with career metadata."""
     if payload.user_type not in VALID_USER_TYPES:
         from fastapi import HTTPException
         raise HTTPException(400, f"Invalid user_type. Valid: {VALID_USER_TYPES}")
 
     current_user.user_type = payload.user_type
+    current_user.department = payload.department
+    current_user.target_role = payload.target_role
+    if payload.target_companies:
+        current_user.target_companies = ",".join(payload.target_companies)
+    if payload.interest_areas:
+        current_user.interest_areas = ",".join(payload.interest_areas)
+        
     current_user.is_onboarded = True
+    
+    # ── Grant Signing Bonus ─────────────────────────────────────────
+    from app.api.activity import log_activity_internal
+    log_activity_internal(current_user, db, "onboarding_completed", "Completed Career Setup", xp_override=200)
+    # ─────────────────────────────────────────────────────────────────
+
     db.add(current_user)
     db.commit()
-    return {"message": "Onboarding complete!", "user_type": payload.user_type}
+    db.refresh(current_user)
+
+    return {
+        "message": "Onboarding complete! +200 XP Granted.",
+        "user": {
+            "id": current_user.id,
+            "email": current_user.email,
+            "name": current_user.name,
+            "role": current_user.role,
+            "is_pro": current_user.is_pro,
+            "xp": current_user.xp,
+            "level": current_user.level,
+            "streak": current_user.streak,
+            "is_onboarded": current_user.is_onboarded,
+            "user_type": current_user.user_type,
+            "department": current_user.department,
+            "target_role": current_user.target_role
+        }
+    }

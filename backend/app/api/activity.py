@@ -141,9 +141,9 @@ def _update_progress(user_id: int, category: str, db: Session):
         db.add(new_prog)
 
 
-def log_activity_internal(user: User, db: Session, action_type: str, title: str, metadata_json: Optional[str] = None):
+def log_activity_internal(user: User, db: Session, action_type: str, title: str, metadata_json: Optional[str] = None, xp_override: Optional[int] = None):
     """Centralized logic to log activity, update XP, streak, and progress."""
-    xp = XP_TABLE.get(action_type, 0)
+    xp = xp_override if xp_override is not None else XP_TABLE.get(action_type, 0)
 
     log_entry = ActivityLog(
         user_id=user.id,
