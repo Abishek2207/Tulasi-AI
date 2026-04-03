@@ -21,6 +21,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = result.first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account disabled due to abuse policy violations")
 
     # Best-effort last_seen update — do NOT commit here (causes SQLite write-lock under load)
     try:

@@ -211,6 +211,37 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
     
+    # ── Feature #10: Abuse Detection ─────────────────────────────
+    ABUSE_KEYWORDS = [
+        "your personal address", "give me your phone", "tell me your password",
+        "private details", "leak data", "expose user", "share private",
+        "send nude", "drug", "hack into", "ddos", "bomb", "kill", "threat",
+        "personal email of", "phone number of user", "user's password",
+    ]
+    msg_lower = req.message.lower()
+    is_abusive = any(kw in msg_lower for kw in ABUSE_KEYWORDS)
+
+    if is_abusive:
+        abuse_count = getattr(user, "abuse_count", 0) or 0
+        abuse_count += 1
+        user.abuse_count = abuse_count
+        if abuse_count > 5:
+            user.is_active = False
+            db.add(user)
+            db.commit()
+            from fastapi import HTTPException
+            raise HTTPException(403, "Account suspended due to repeated policy violations.")
+        db.add(user)
+        db.commit()
+        warning_msg = (
+            f"⚠️ **Warning ({abuse_count}/5):** Your message was flagged for potentially harmful or privacy-violating content. "
+            f"Please use Tulasi AI responsibly. Repeated violations will result in account suspension."
+        )
+        async def mock_stream():
+            yield f"data: {json.dumps({'token': warning_msg, 'session_id': session_id, 'done': True})}\n\n"
+        return StreamingResponse(mock_stream(), media_type="text/event-stream")
+    # ────────────────────────────────────────────────────
+    
     # Check memory for context
     rag_context = vector_service.retrieve_context(user.id, req.message, db)
     context_str = f"\n[Previous Context & Memory:\n{rag_context}\n]" if rag_context else ""
