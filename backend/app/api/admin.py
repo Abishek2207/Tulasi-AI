@@ -81,6 +81,25 @@ def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admi
     }
 
 
+@router.get("/login-activity")
+def get_login_activity(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    from sqlmodel import func
+
+    results = db.exec(
+        select(ActivityLog.user_id, User.email, User.name, func.count(ActivityLog.id).label("login_count"))
+        .join(User)
+        .where(ActivityLog.action_type == "user_login")
+        .group_by(ActivityLog.user_id, User.email, User.name)
+        .order_by(func.count(ActivityLog.id).desc())
+    ).all()
+
+    return {
+        "login_activity": [
+            {"user_id": r[0], "email": r[1], "name": r[2], "login_count": r[3]}
+            for r in results
+        ]
+    }
+
 # ─────────────────────────────────────────────────────────────────────
 # USERS (Full list)
 # ─────────────────────────────────────────────────────────────────────

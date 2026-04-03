@@ -225,6 +225,7 @@ Provide a structured evaluation. Return ONLY valid JSON with EXACTLY these keys:
   "weaknesses": [<2-3 specific weakness strings>],
   "missing_keywords": [<2-4 key concepts the candidate should have mentioned>],
   "improvement_tip": "<one actionable improvement sentence>",
+  "improved_answer": "<a complete, perfect example answer to the question based on reference examples>",
   "summary": "<2 sentence overall evaluation>"
 }}
 
@@ -242,6 +243,7 @@ Be precise and specific. Base all feedback on the reference examples above. No g
             "weaknesses": ["Response lacked depth", "Missing technical specifics"],
             "missing_keywords": all_keywords[:3],
             "improvement_tip": "Study the core concepts more deeply and use structured answer formats.",
+            "improved_answer": "A truly strong answer would provide deep technical specifics and structured formatting.",
             "summary": "The candidate provided a partial answer. More depth and technical specificity is needed."
         }
 

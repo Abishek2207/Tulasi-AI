@@ -151,6 +151,30 @@ def get_daily_plan(
         "total_xp_available": sum(a.get("xp", 0) for a in actions),
     }
 
+@router.get("/weekly-plan")
+def get_weekly_plan(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    """Returns a structured weekly plan expanding daily tasks."""
+    user_type = getattr(current_user, "user_type", "student") or "student"
+    actions = YEAR_PLANS.get(user_type, YEAR_PLANS["student"])
+    
+    weekly_schedule = [
+        {"day": "Monday", "focus": "Core Principles", "tasks": actions[:2]},
+        {"day": "Tuesday", "focus": "Deep Dive", "tasks": actions[1:3]},
+        {"day": "Wednesday", "focus": "Problem Solving", "tasks": actions[0:1]},
+        {"day": "Thursday", "focus": "Building", "tasks": actions[2:3]},
+        {"day": "Friday", "focus": "Review & Iterate", "tasks": actions[:1]},
+        {"day": "Saturday", "focus": "Mock Test", "tasks": actions},
+        {"day": "Sunday", "focus": "Rest & Light Reading", "tasks": []},
+    ]
+
+    return {
+        "user_type": user_type,
+        "weekly_schedule": weekly_schedule
+    }
+
 
 class OnboardRequest:
     pass
