@@ -43,23 +43,33 @@ export default function AuthPage() {
     if (oAuthLoading) return;
     setOAuthLoading("google");
     try {
-      console.log("[Auth] Triggering Supabase Google OAuth...");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          // Must match the Authorized Redirect URI set in Google Cloud Console
-          // and the Supabase Auth → Providers → Google → Redirect URL
-          redirectTo: `${appUrl}/auth/callback`,
-        },
+        options: { redirectTo: `${appUrl}/auth/callback` },
       });
       if (error) {
-        console.error("[Auth] Google OAuth error:", error.message);
         toast.error("Google sign-in failed: " + error.message);
         setOAuthLoading(null);
       }
-      // On success Supabase redirects the browser — no further code runs here
     } catch (err: any) {
-      console.error("[Auth Error] Unexpected Google OAuth failure:", err);
+      toast.error("Unexpected authentication error. Please try again.");
+      setOAuthLoading(null);
+    }
+  };
+
+  const handleGithubLogin = async () => {
+    if (oAuthLoading) return;
+    setOAuthLoading("github");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "github",
+        options: { redirectTo: `${appUrl}/auth/callback` },
+      });
+      if (error) {
+        toast.error("GitHub sign-in failed: " + error.message);
+        setOAuthLoading(null);
+      }
+    } catch (err: any) {
       toast.error("Unexpected authentication error. Please try again.");
       setOAuthLoading(null);
     }
@@ -172,12 +182,49 @@ export default function AuthPage() {
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* OAuth Buttons completely disabled 
+            {/* OAuth Buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
-              ... Google ...
+              {/* Google */}
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={!!oAuthLoading}
+                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading ? "not-allowed" : "pointer", transition: "all 0.2s", opacity: oAuthLoading ? 0.6 : 1 }}
+                onMouseEnter={e => { if (!oAuthLoading) e.currentTarget.style.background = "#23252E"; }}
+                onMouseLeave={e => { if (!oAuthLoading) e.currentTarget.style.background = "#1A1C23"; }}
+              >
+                {oAuthLoading === "google" ? (
+                  <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
+                ) : (
+                  <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />
+                )}
+                {oAuthLoading === "google" ? "Redirecting…" : "Google"}
+              </button>
+
+              {/* GitHub */}
+              <button
+                type="button"
+                onClick={handleGithubLogin}
+                disabled={!!oAuthLoading}
+                style={{ background: "#1A1C23", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px", color: "white", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading ? "not-allowed" : "pointer", transition: "all 0.2s", opacity: oAuthLoading ? 0.6 : 1 }}
+                onMouseEnter={e => { if (!oAuthLoading) e.currentTarget.style.background = "#23252E"; }}
+                onMouseLeave={e => { if (!oAuthLoading) e.currentTarget.style.background = "#1A1C23"; }}
+              >
+                {oAuthLoading === "github" ? (
+                  <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
+                ) : (
+                  <img src="https://authjs.dev/img/providers/github.svg" width={18} height={18} alt="GitHub" style={{ filter: "invert(1)" }} />
+                )}
+                {oAuthLoading === "github" ? "Redirecting…" : "GitHub"}
+              </button>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>...</div> 
-            */}
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, fontWeight: 500, textTransform: "uppercase" }}>Or continue with email</span>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+            </div>
+
 
             <AnimatePresence mode="popLayout">
               {!isLogin && (
