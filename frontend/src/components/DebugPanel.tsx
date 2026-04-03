@@ -36,22 +36,9 @@ export function DebugPanel() {
     checkApi();
     const apiInterval = setInterval(checkApi, 15000); // Ping every 15s
 
-    // Intercept Console Errors
-    const originalConsoleError = console.error;
-    console.error = (...args: unknown[]) => {
-      originalConsoleError.apply(console, args);
-      const errText = args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ");
-      setErrors(prev => [...prev.slice(-9), { 
-        id: Date.now(), 
-        msg: errText.substring(0, 100) + (errText.length > 100 ? "..." : ""),
-        time: new Date().toLocaleTimeString('en-US', { hour12: false })
-      }]);
-    };
-
     return () => {
       clearInterval(tokenInterval);
       clearInterval(apiInterval);
-      console.error = originalConsoleError;
     };
   }, []);
 

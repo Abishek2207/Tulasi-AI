@@ -46,7 +46,7 @@ Return ONLY raw JSON, nothing else."""
         new_plan = PrepPlan(
             user_id=current_user.id,
             role=req.role,
-            duration_months=req.duration_months,
+            duration=f"{req.duration_months} Months",
             plan_json=json.dumps(plan_data)
         )
         db.add(new_plan)
@@ -64,7 +64,7 @@ def get_my_plans(
     db: Session = Depends(get_session)
 ):
     plans = db.exec(select(PrepPlan).where(PrepPlan.user_id == current_user.id)).all()
-    return {"plans": [{"id": p.id, "role": p.role, "duration": p.duration_months, "plan": json.loads(p.plan_json)} for p in plans]}
+    return {"plans": [{"id": p.id, "role": p.role, "duration": p.duration, "plan": json.loads(p.plan_json)} for p in plans]}
 
 @router.delete("/{plan_id}")
 def delete_plan(

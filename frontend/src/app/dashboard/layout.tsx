@@ -37,7 +37,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isDesktop = useIsDesktop();
   const user = session?.user;
 
-  const hasLocalToken = typeof window !== "undefined" && !!localStorage.getItem("token");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const hasLocalToken = mounted && !!localStorage.getItem("token");
 
   useEffect(() => {
     if (status === "unauthenticated" && !hasLocalToken) router.push("/auth");
@@ -62,6 +67,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
     if (status === "authenticated") fetchGlobalStats();
   }, [status, dispatch]);
+
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
+        <TulasiLogo size={72} glow showText={false} />
+        <motion.div
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}
+        >
+          Neural Link Establishing…
+        </motion.div>
+      </div>
+    );
+  }
 
   // Optimistic rendering: If we have a local token, don't show the full-screen sync message
   // to avoid artificial delays. The hooks/components will handle their own loading states.
