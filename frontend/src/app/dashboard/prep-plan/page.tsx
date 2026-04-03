@@ -136,7 +136,7 @@ export default function PrepPlanPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                    {p.duration} Month Strategy
+                    {p.duration} Strategy
                   </div>
                   <h3 style={{ fontSize: 24, fontWeight: 900 }}>{p.plan.title}</h3>
                 </div>

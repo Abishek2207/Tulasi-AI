@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
-import { X, Sparkles, User, Briefcase, GraduationCap, Code } from "lucide-react";
+import { X, Sparkles, User, Briefcase, GraduationCap, Code, Target, Rocket } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
@@ -16,7 +16,6 @@ const USER_TYPES = [
   { id: "professor", label: "Professor / Educator", icon: <GraduationCap size={24} />, desc: "Teaching & Mentoring", color: "#3B82F6" },
 ];
 
-import { Target, Rocket } from "lucide-react";
 
 export function OnboardingModal() {
   const { data: session } = useSession();
