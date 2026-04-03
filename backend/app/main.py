@@ -22,6 +22,8 @@ from fastapi.responses import RedirectResponse
 ALLOW_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
     "https://tulasiai.vercel.app",
     "https://tulasi-ai.vercel.app",
     "https://tulasi-ai-wgwl.onrender.com",
@@ -308,12 +310,16 @@ async def general_exception_handler(request: Request, exc: Exception):
     from fastapi.responses import PlainTextResponse
     import traceback
     tb = traceback.format_exc()
-    print(f"\u274c CRITICAL ERROR on {request.method} {request.url}:\n{tb}")
+    print(f"❌ CRITICAL ERROR on {request.method} {request.url}:\n{tb}")
     
-    # Returning plain text traceback to avoid JSON serialization failures
+    origin = request.headers.get("origin", "*")
+    headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {"Access-Control-Allow-Origin": "http://localhost:3000"}
+    
+    # Returning plain text traceback with CORS headers to avoid silent browser blockers
     return PlainTextResponse(
         content=f"--- CRITICAL BACKEND ERROR ---\n\n{tb}",
-        status_code=500
+        status_code=500,
+        headers=headers
     )
 
 
