@@ -22,32 +22,32 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 export const metadata: Metadata = {
   metadataBase: new URL("https://tulasiai.vercel.app"),
   title: {
-    default: "TulasiAI v2 | Personalized Career Intelligence Engine",
-    template: "%s | TulasiAI v2",
+    default: "TulasiAI | Personalized Career Intelligence Engine",
+    template: "%s | TulasiAI",
   },
-  description: "Bridge the gap from theory to global offers. TulasiAI v2 provides personalized mock interviews, neural skill mapping, and daily AI missions for engineers.",
+  description: "Bridge the gap from theory to global offers. TulasiAI provides personalized mock interviews, neural skill mapping, and daily AI missions for engineers.",
   manifest: "/manifest.json",
   keywords: [
     "AI career coach", "mock interview AI", "personalized roadmaps", "skill radar chart", 
     "engineering career platform", "ATS resume builder", "technical interview prep",
-    "personalized learning AI", "career readiness score", "TulasiAI v2", "Tulasiai v2"
+    "personalized learning AI", "career readiness score", "TulasiAI", "Tulasiai"
   ],
   openGraph: {
-    title: "TulasiAI v2 | Personalized Career Intelligence Engine",
+    title: "TulasiAI | Personalized Career Intelligence Engine",
     description: "The autonomous career engine: Neural skill mapping, AI mock interviews, and personalized missions.",
     type: "website",
-    siteName: "TulasiAI v2",
+    siteName: "TulasiAI",
     url: "https://tulasiai.vercel.app",
     images: [{
       url: "/opengraph-image.png",
       width: 1200,
       height: 630,
-      alt: "TulasiAI v2 Interface Preview"
+      alt: "TulasiAI Interface Preview"
     }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "TulasiAI v2 | Personalized Career Intelligence",
+    title: "TulasiAI | Personalized Career Intelligence",
     description: "Personalized AI engineering missions and career intelligence mapped to your skills.",
     creator: "@_.abi22._",
   },
@@ -73,8 +73,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              "name": "TulasiAI v2",
-              "alternateName": ["tulasiai", "tulasiai v2", "tulasi ai", "Tulasi AI"],
+              "name": "TulasiAI",
+              "alternateName": ["tulasiai", "tulasi ai", "Tulasi AI"],
               "applicationCategory": "EducationalApplication",
               "operatingSystem": "All",
               "url": "https://tulasiai.vercel.app",

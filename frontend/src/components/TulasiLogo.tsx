@@ -98,7 +98,7 @@ export function TulasiLogo({
               lineHeight: 1,
             }}
           >
-            Tulasi<span style={{ color: "#22D3EE" }}>AI v2</span>
+            Tulasi<span style={{ color: "#22D3EE" }}>AI</span>
           </span>
 
           {effectiveBadge && (

@@ -51,7 +51,7 @@ export default function SystemDesignPage() {
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 40, textAlign: "center" }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 16px", background: "rgba(139,92,246,0.1)", borderRadius: 30, color: "#8B5CF6", marginBottom: 16 }}>
           <Sparkles size={18} className="animate-pulse" />
-          <span style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>Architect Orbit V2.0</span>
+          <span style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>Architect Orbit</span>
         </div>
         <h1 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 16 }}>
           System Design Mastery
