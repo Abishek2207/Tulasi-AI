@@ -365,6 +365,12 @@ export const authApi = {
 
   me: (token: string) =>
     request<User & { invite_code: string }>("/api/auth/me", {}, token),
+
+  updateProfile: (data: { name?: string; bio?: string; skills?: string; avatar?: string }) =>
+    request<{ message: string; user: User }>("/api/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
 };
 
 // ─── Chat ────────────────────────────────────────────────────────────────────

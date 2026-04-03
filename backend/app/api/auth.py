@@ -183,7 +183,7 @@ class ProfileUpdateRequest(BaseModel):
     name: Optional[str] = None
     bio: Optional[str] = None
     skills: Optional[str] = None  # comma-separated
-
+    avatar: Optional[str] = None  # Base64 encoded string
 
 @router.patch("/profile")
 def update_profile(
@@ -197,6 +197,9 @@ def update_profile(
         current_user.bio = req.bio.strip()
     if req.skills is not None:
         current_user.skills = req.skills.strip()
+    if req.avatar is not None:
+        current_user.avatar = req.avatar
+        
     db.add(current_user)
     db.commit()
     db.refresh(current_user)
@@ -207,6 +210,7 @@ def update_profile(
             "name": current_user.name,
             "bio": current_user.bio or "",
             "skills": current_user.skills or "",
+            "avatar": current_user.avatar or "",
             "email": current_user.email,
         },
     }
