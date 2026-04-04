@@ -3,7 +3,31 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { intelligenceApi } from "@/lib/api";
-import { Sparkles, Send, Brain, ShieldCheck, Cpu, ArrowLeft, Loader2, Lightbulb, ArrowRight } from "lucide-react";
+import { Sparkles, Send, Brain, ShieldCheck, Cpu, ArrowLeft, Loader2, Lightbulb, ArrowRight, RefreshCw } from "lucide-react";
+
+function RetryCountdown({ seconds, onRetry, message = "Neural Sync in Progress..." }: { seconds: number; onRetry: () => void; message?: string }) {
+  const [count, setCount] = useState(seconds);
+  useEffect(() => {
+    if (count <= 0) { onRetry(); return; }
+    const t = setTimeout(() => setCount(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [count, onRetry]);
+  const pct = ((seconds - count) / seconds) * 100;
+  return (
+    <div style={{ padding: "16px", borderRadius: 16, background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.2)", display: "flex", alignItems: "center", gap: 16, width: "fit-content" }}>
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+        <RefreshCw size={20} color="#8B5CF6" />
+      </motion.div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 800, color: "white", marginBottom: 4 }}>{message}</div>
+        <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", width: 120 }}>
+          <motion.div animate={{ width: `${pct}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#8B5CF6,#06B6D4)", borderRadius: 10 }} />
+        </div>
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 900, color: "#8B5CF6", width: 20 }}>{count}s</div>
+    </div>
+  );
+}
 
 interface Message {
   role: "user" | "architect";
@@ -22,6 +46,8 @@ export function GuidedArchitectView({ problem, onBack }: { problem: any; onBack:
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [lastFailedMsg, setLastFailedMsg] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,13 +56,18 @@ export function GuidedArchitectView({ problem, onBack }: { problem: any; onBack:
     }
   }, [messages, loading]);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
-
-    const userMsg = input;
-    setInput("");
-    setMessages((prev) => [...prev, { role: "user", guidance: userMsg }]);
+  const handleSend = async (isRetry = false) => {
+    let userMsg = input;
+    if (!isRetry) {
+      if (!input.trim() || loading) return;
+      setInput("");
+      setMessages((prev) => [...prev, { role: "user", guidance: userMsg }]);
+    } else {
+      userMsg = lastFailedMsg;
+    }
+    
     setLoading(true);
+    setRetrying(false);
 
     try {
       const response = await intelligenceApi.getSystemDesignSolution(problem.id, userMsg);
@@ -50,11 +81,10 @@ export function GuidedArchitectView({ problem, onBack }: { problem: any; onBack:
           next_step: response.next_step,
         },
       ]);
+      setLastFailedMsg("");
     } catch (e) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "architect", guidance: "I apologize, my neural link is flickering. Could you repeat that architectural concern?" },
-      ]);
+      setLastFailedMsg(userMsg);
+      setRetrying(true);
     } finally {
       setLoading(false);
     }
@@ -161,11 +191,16 @@ export function GuidedArchitectView({ problem, onBack }: { problem: any; onBack:
               )}
             </motion.div>
           ))}
-          {loading && (
+          {loading && !retrying && (
             <div style={{ display: "flex", gap: 8, padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: 12, width: "fit-content" }}>
               <Loader2 size={18} className="animate-spin" color="var(--brand-primary)" />
               <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>Philosophizing...</span>
             </div>
+          )}
+          {retrying && (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+               <RetryCountdown seconds={5} onRetry={() => handleSend(true)} message="Reconnecting Architect..." />
+            </motion.div>
           )}
         </div>
 
@@ -174,13 +209,13 @@ export function GuidedArchitectView({ problem, onBack }: { problem: any; onBack:
             <input 
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) => e.key === "Enter" && handleSend(false)}
               placeholder="Propose your solution or ask a concern..."
               style={{ width: "100%", padding: "16px 60px 16px 20px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: 16, color: "white", fontSize: 15 }}
             />
             <button 
-              onClick={handleSend}
-              disabled={loading || !input.trim()}
+              onClick={() => handleSend(false)}
+              disabled={loading || !input.trim() || retrying}
               style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: 10, background: loading || !input.trim() ? "rgba(255,255,255,0.1)" : "var(--brand-primary)", border: "none", color: "white", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading || !input.trim() ? "not-allowed" : "pointer" }}
             >
               <Send size={18} />

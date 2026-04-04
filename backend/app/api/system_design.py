@@ -106,12 +106,10 @@ def get_guided_solution(req: SolutionRequest, current_user: User = Depends(get_c
     
     Return ONLY JSON:
     {{
-      "feedback": "Expert architectural assessment",
-      "guidance": "Instructions for next phase",
-      "current_step": {req.current_step + 1},
-      "checklist": ["Critical items for this phase"],
-      "hint": "Subtle, powerful technical hint",
-      "architect_question": "A deep question to test their scalability mindset"
+      "analysis": "Expert architectural assessment of their input",
+      "guidance": "Instructions or probing question for the next phase",
+      "architecture_tip": "A crisp, powerful technical hint or best practice",
+      "next_step": "Short title of the next logical phase (e.g. Database Scaling)"
     }}
     """
     
@@ -124,6 +122,12 @@ def get_guided_solution(req: SolutionRequest, current_user: User = Depends(get_c
         match = re.search(r'\{.*\}', res, re.DOTALL)
         if match:
             return json.loads(match.group())
-        return {"error": "Neural Link synchronization failed. Retrying logic..."}
+        raise Exception("Failed to parse valid JSON from architect.")
     except Exception as e:
-        return {"error": f"Senior Architect is currently scaled: {str(e)}"}
+        print(f"⚠️ [System Design Fallback] Architect Error: {e}")
+        return {
+            "analysis": "Your foundation is solid. (Note: Senior Architect link is temporarily scaled down). We will proceed with the standard fault-tolerance protocol.",
+            "guidance": "Consider how you would partition the database to handle massive throughput without creating a single point of failure. How would you handle replication lag?",
+            "architecture_tip": "Consistent hashing minimizes data movement during shard rebalancing.",
+            "next_step": "Database Sharding & Replication"
+        }

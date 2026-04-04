@@ -5,13 +5,37 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import {
   Zap, Trophy, Timer, Flame, ChevronRight, Send,
-  CheckCircle2, Star, Calendar, BarChart3, Target, Sparkles
+  CheckCircle2, Star, Calendar, BarChart3, Target, Sparkles, RefreshCw
 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
 
 function getToken() {
   return typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+}
+
+function RetryCountdown({ seconds, onRetry, message = "Neural Sync in Progress..." }: { seconds: number; onRetry: () => void; message?: string }) {
+  const [count, setCount] = useState(seconds);
+  useEffect(() => {
+    if (count <= 0) { onRetry(); return; }
+    const t = setTimeout(() => setCount(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [count, onRetry]);
+  const pct = ((seconds - count) / seconds) * 100;
+  return (
+    <div style={{ padding: "16px", borderRadius: 16, background: "rgba(249,115,22,0.05)", border: "1px solid rgba(249,115,22,0.2)", display: "flex", alignItems: "center", gap: 16, width: "fit-content", marginTop: 16 }}>
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+        <RefreshCw size={20} color="#F97316" />
+      </motion.div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 800, color: "white", marginBottom: 4 }}>{message}</div>
+        <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", width: 120 }}>
+          <motion.div animate={{ width: `${pct}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#F97316,#FBBF24)", borderRadius: 10 }} />
+        </div>
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 900, color: "#F97316", width: 20 }}>{count}s</div>
+    </div>
+  );
 }
 
 function TypeBadge({ type }: { type: string }) {
@@ -100,6 +124,7 @@ export default function DailyChallengePage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
+  const [retrying, setRetrying] = useState(false);
   const [activeTab, setActiveTab] = useState<"challenge" | "leaderboard" | "history">("challenge");
   const [history, setHistory] = useState<any[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -140,9 +165,9 @@ export default function DailyChallengePage() {
     } catch {}
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (isRetry = false) => {
     if (!answer.trim()) { setError("Write your answer first!"); return; }
-    setSubmitting(true); setError("");
+    setSubmitting(true); setError(""); setRetrying(false);
     const token = getToken();
     try {
       const res = await fetch(`${API}/api/daily-challenge/submit`, {
@@ -151,10 +176,13 @@ export default function DailyChallengePage() {
         body: JSON.stringify({ answer }),
       });
       const d = await res.json();
-      if (!res.ok) { setError(d.detail || "Submission failed."); return; }
+      if (!res.ok) { throw new Error(d.detail || "Submission failed."); }
       setResult(d);
       fetchAll(); // refresh leaderboard
-    } catch { setError("Submission failed. Try again."); }
+    } catch (e: any) { 
+      setError(e.message || "Submission failed. Try again.");
+      setRetrying(true);
+    }
     setSubmitting(false);
   };
 
@@ -274,7 +302,7 @@ export default function DailyChallengePage() {
                     <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                       className="glass-card" style={{ padding: 28 }}>
                       <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 16 }}>YOUR ANSWER</div>
-                      {error && (
+                      {error && !retrying && (
                         <div style={{ color: "#F43F5E", fontSize: 13, marginBottom: 12, padding: "8px 12px", background: "rgba(244,63,94,0.08)", borderRadius: 8 }}>⚠️ {error}</div>
                       )}
                       <textarea
@@ -293,7 +321,7 @@ export default function DailyChallengePage() {
                         <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{answer.length} chars</span>
                         <motion.button
                           whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                          onClick={handleSubmit} disabled={submitting || !answer.trim()}
+                          onClick={() => handleSubmit(false)} disabled={submitting || !answer.trim()}
                           className="btn-primary"
                           style={{ padding: "14px 32px", borderRadius: 14, fontWeight: 900, fontSize: 14, display: "flex", alignItems: "center", gap: 8,
                             background: "linear-gradient(135deg, #F97316, #FBBF24)", opacity: submitting || !answer.trim() ? 0.6 : 1 }}>
@@ -304,6 +332,12 @@ export default function DailyChallengePage() {
                           ) : <><Send size={16} /> Submit Answer</>}
                         </motion.button>
                       </div>
+                      
+                      {retrying && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+                          <RetryCountdown seconds={5} onRetry={() => handleSubmit(true)} message="Evaluating your orbit sequence..." />
+                        </motion.div>
+                      )}
                     </motion.div>
                   ) : (
                     <motion.div key="result" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}

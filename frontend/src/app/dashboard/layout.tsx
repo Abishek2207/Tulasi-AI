@@ -69,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (status === "authenticated") fetchGlobalStats();
   }, [status, dispatch]);
 
-  const isFounder = session?.user?.email === "abishekramamoorthy22@gmail.com";
+  const isFounder = session?.user?.email?.toLowerCase() === "abishekramamoorthy22@gmail.com";
 
   if (!mounted) {
     return (

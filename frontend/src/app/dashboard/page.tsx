@@ -153,7 +153,7 @@ export default function DashboardPage() {
   const [userType, setUserType] = useState<string>("student");
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [matchedInternships, setMatchedInternships] = useState<any[]>([]);
-  const isFounder = session?.user?.email === "abishekramamoorthy22@gmail.com";
+  const isFounder = session?.user?.email?.toLowerCase() === "abishekramamoorthy22@gmail.com";
 
   const loadData = async () => {
     try {

@@ -1393,9 +1393,10 @@ def seed_hackathons(db: Session = Depends(get_session), admin: User = Depends(ge
 def emergency_sync(db: Session = Depends(get_session)):
     """Secret emergency sync to promote admin and delete spam on LIVE site."""
     from app.models.models import User
+    from sqlmodel import func
     admin_emails = ["abishekramamoorthy22@gmail.com", "abishek.ramamoorthy.dev@gmail.com"]
     for email in admin_emails:
-        query = select(User).where(User.email == email)
+        query = select(User).where(func.lower(User.email) == email.lower())
         result = db.exec(query)
         user = result.first()
         if user:
