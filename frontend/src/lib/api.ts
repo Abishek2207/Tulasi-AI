@@ -18,6 +18,8 @@ export interface AdminUser {
   id: number; name: string; email: string; role: string; xp: number;
   level: number; streak: number; is_pro: boolean; created_at: string;
   last_seen: string; last_activity_date: string; is_active: boolean;
+  user_type?: string; is_onboarded?: boolean; abuse_count?: number;
+  provider?: string; invite_code?: string; referred_by?: string;
 }
 export interface Review {
   id: number; name: string; role: string; review: string; rating: number;
