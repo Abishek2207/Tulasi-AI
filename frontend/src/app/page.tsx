@@ -6,7 +6,7 @@ import Link from "next/link";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import {
   FileText, Target, Map, Code, Award, Trophy, Users,
-  Sparkles, ArrowRight, Layout, BrainCircuit, HardDrive, Cpu, Menu, X,
+  Sparkles, ArrowRight, Layout, BrainCircuit, Cpu, Menu, X,
   Phone, Mail, Instagram
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";

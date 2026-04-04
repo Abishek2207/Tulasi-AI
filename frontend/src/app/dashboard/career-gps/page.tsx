@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
-import { Navigation, ChevronRight, Clock, Star, Zap, CheckCircle, ArrowRight } from "lucide-react";
+import { Navigation, ChevronRight, Clock, Star, Zap, CheckCircle, ArrowRight, RefreshCw, Sparkles, Target, BookOpen, Building2 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
 const YEARS = [
-  { value: "1st_year", label: "1st Year", desc: "Foundation & Basics" },
-  { value: "2nd_year", label: "2nd Year", desc: "DSA & Projects" },
-  { value: "3rd_year", label: "3rd Year", desc: "Internships & Advanced" },
-  { value: "4th_year", label: "4th Year", desc: "Placements & FAANG Prep" },
-  { value: "professional", label: "Professional", desc: "Upskill & Role Switch" },
+  { value: "1st_year", label: "1st Year", desc: "Foundation & Basics", icon: "🌱" },
+  { value: "2nd_year", label: "2nd Year", desc: "DSA & Projects", icon: "⚡" },
+  { value: "3rd_year", label: "3rd Year", desc: "Internships & Advanced", icon: "🚀" },
+  { value: "4th_year", label: "4th Year", desc: "Placements & FAANG Prep", icon: "🎯" },
+  { value: "professional", label: "Professional", desc: "Upskill & Role Switch", icon: "💎" },
 ];
 const ROLES = [
   "AI Engineer", "AI Research Scientist", "Software Engineer", "Data Scientist",
@@ -22,26 +22,60 @@ const PATH_COLORS = ["#8B5CF6", "#10B981", "#F59E0B"];
 
 function getToken() { return typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""; }
 
-function MilestoneTimeline({ milestones }: { milestones: any[] }) {
+function MilestoneTimeline({ milestones, color }: { milestones: any[], color: string }) {
   return (
-    <div style={{ position: "relative", paddingLeft: 24 }}>
-      <div style={{ position: "absolute", left: 9, top: 0, bottom: 0, width: 2, background: "rgba(255,255,255,0.06)" }} />
+    <div style={{ position: "relative", paddingLeft: 28 }}>
+      <div style={{ position: "absolute", left: 9, top: 0, bottom: 0, width: 2, background: `linear-gradient(to bottom, ${color}60, transparent)` }} />
       {milestones.map((m, i) => (
-        <div key={i} style={{ position: "relative", marginBottom: 20 }}>
-          <div style={{ position: "absolute", left: -20, top: 4, width: 10, height: 10, borderRadius: "50%", background: "var(--brand-primary)", border: "2px solid var(--bg-primary)" }} />
-          <div style={{ fontSize: 10, fontWeight: 900, color: "var(--text-muted)", marginBottom: 4 }}>MONTH {m.month}</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "white", marginBottom: 6 }}>{m.goal}</div>
+        <motion.div key={i}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.1 }}
+          style={{ position: "relative", marginBottom: 24 }}>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: i * 0.1 + 0.05, type: "spring" }}
+            style={{ position: "absolute", left: -24, top: 4, width: 12, height: 12, borderRadius: "50%", background: color, border: "2px solid var(--bg-primary)", boxShadow: `0 0 8px ${color}60` }} />
+          <div style={{ fontSize: 10, fontWeight: 900, color, marginBottom: 4, letterSpacing: 1 }}>MONTH {m.month}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "white", marginBottom: 8, lineHeight: 1.4 }}>{m.goal}</div>
           {m.resources?.length > 0 && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {m.resources.map((r: string, ri: number) => (
-                <span key={ri} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "var(--text-secondary)", fontWeight: 600 }}>
+                <span key={ri} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: `${color}12`, color, fontWeight: 700, border: `1px solid ${color}30` }}>
                   {r}
                 </span>
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
       ))}
+    </div>
+  );
+}
+
+function RetryCountdown({ seconds, onRetry }: { seconds: number; onRetry: () => void }) {
+  const [count, setCount] = useState(seconds);
+  useEffect(() => {
+    if (count <= 0) { onRetry(); return; }
+    const t = setTimeout(() => setCount(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [count]);
+  const pct = ((seconds - count) / seconds) * 100;
+  return (
+    <div style={{ textAlign: "center", padding: "40px 20px" }}>
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+        style={{ display: "inline-block", marginBottom: 20 }}>
+        <RefreshCw size={32} color="#8B5CF6" />
+      </motion.div>
+      <div style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 8 }}>Neural Engine Warming Up...</div>
+      <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>Auto-retrying in <span style={{ color: "#8B5CF6", fontWeight: 900 }}>{count}s</span></div>
+      <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", maxWidth: 200, margin: "0 auto 20px" }}>
+        <motion.div animate={{ width: `${pct}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#8B5CF6,#06B6D4)", borderRadius: 10 }} />
+      </div>
+      <button onClick={onRetry} style={{ padding: "10px 24px", borderRadius: 12, background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)", color: "#8B5CF6", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
+        Retry Now
+      </button>
     </div>
   );
 }
@@ -49,15 +83,16 @@ function MilestoneTimeline({ milestones }: { milestones: any[] }) {
 export default function CareerGPSPage() {
   const { data: session } = useSession();
   const [year, setYear] = useState("3rd_year");
-  const [role, setRole] = useState("AI Engineer");
+  const [role, setRole] = useState("Software Engineer");
   const [skills, setSkills] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
+  const [retrying, setRetrying] = useState(false);
   const [selectedPath, setSelectedPath] = useState(0);
 
-  const handleGenerate = async () => {
-    setLoading(true); setError(""); setResult(null);
+  const handleGenerate = async (isRetry = false) => {
+    setLoading(true); setError(""); if (!isRetry) setResult(null); setRetrying(false);
     const token = getToken();
     try {
       const res = await fetch(`${API}/api/intel/career-gps`, {
@@ -66,11 +101,14 @@ export default function CareerGPSPage() {
         body: JSON.stringify({ year, target_role: role, current_skills: skills }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d.detail || "GPS failed");
+      if (!res.ok) throw new Error(d.detail || d.error || "GPS generation failed");
       setResult(d);
       const recommended = d.paths?.findIndex((p: any) => p.id === d.recommendation);
       setSelectedPath(recommended >= 0 ? recommended : 0);
-    } catch (e: any) { setError(e.message || "Career GPS failed. Try again."); }
+    } catch (e: any) {
+      setError(e.message || "Career GPS failed. Retrying...");
+      setRetrying(true);
+    }
     setLoading(false);
   };
 
@@ -78,209 +116,284 @@ export default function CareerGPSPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 80 }}>
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 40 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(139,92,246,0.3)" }}>
-            <Navigation size={22} color="white" />
+      {/* Animated background */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.03, 0.07, 0.03] }} transition={{ repeat: Infinity, duration: 8 }}
+          style={{ position: "absolute", top: "10%", left: "20%", width: 500, height: 500, background: "radial-gradient(circle, #8B5CF6 0%, transparent 70%)", filter: "blur(80px)" }} />
+        <motion.div animate={{ scale: [1.2, 1, 1.2], opacity: [0.04, 0.08, 0.04] }} transition={{ repeat: Infinity, duration: 10, delay: 3 }}
+          style={{ position: "absolute", bottom: "20%", right: "10%", width: 400, height: 400, background: "radial-gradient(circle, #10B981 0%, transparent 70%)", filter: "blur(80px)" }} />
+      </div>
+
+      <div style={{ position: "relative", zIndex: 1 }}>
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ marginBottom: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <motion.div
+              animate={{ boxShadow: ["0 8px 20px rgba(139,92,246,0.3)", "0 8px 40px rgba(139,92,246,0.6)", "0 8px 20px rgba(139,92,246,0.3)"] }}
+              transition={{ repeat: Infinity, duration: 2.5 }}
+              style={{ width: 48, height: 48, borderRadius: 16, background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Navigation size={22} color="white" />
+            </motion.div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 900, color: "#8B5CF6", textTransform: "uppercase", letterSpacing: 2 }}>AGI Career Intelligence</div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>3 paths · Real milestones · Company targets</div>
+            </div>
           </div>
-          <span style={{ fontSize: 12, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2 }}>AGI Career Intelligence</span>
-        </div>
-        <h1 style={{ fontSize: "clamp(28px,5vw,44px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-1.5px", marginBottom: 8 }}>
-          Career <span className="gradient-text">GPS</span>
-        </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 17 }}>
-          3 personalized roadmaps to your dream role — built by AI, tailored to your exact year and skills.
-        </p>
-      </motion.div>
+          <h1 style={{ fontSize: "clamp(32px,5vw,52px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-2px", marginBottom: 10, lineHeight: 1 }}>
+            Career{" "}
+            <span style={{ background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>GPS</span>
+          </h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: 17, maxWidth: 500 }}>
+            3 personalized roadmaps to your dream role — built by AGI, tailored to your exact year and skills.
+          </p>
+        </motion.div>
 
-      <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
-        {/* Config Panel */}
-        <div style={{ width: 320, flexShrink: 0 }}>
-          <div className="glass-card" style={{ padding: 28, position: "sticky", top: 20, display: "flex", flexDirection: "column", gap: 24 }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 14 }}>YOUR YEAR</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {YEARS.map(y => (
-                  <button key={y.value} onClick={() => setYear(y.value)}
-                    style={{
-                      padding: "12px 14px", borderRadius: 12, border: "none", cursor: "pointer", textAlign: "left", transition: "all 0.2s",
-                      background: year === y.value ? "rgba(139,92,246,0.12)" : "rgba(255,255,255,0.02)",
-                      borderLeft: year === y.value ? "3px solid var(--brand-primary)" : "3px solid transparent",
-                    }}>
-                    <div style={{ fontWeight: 800, fontSize: 13, color: year === y.value ? "white" : "var(--text-secondary)" }}>{y.label}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{y.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 10 }}>TARGET ROLE</div>
-              <select value={role} onChange={e => setRole(e.target.value)} className="input-field"
-                style={{ width: "100%", padding: "12px 14px", borderRadius: 12, fontSize: 14, background: "rgba(255,255,255,0.04)" }}>
-                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 10 }}>CURRENT SKILLS (Optional)</div>
-              <input value={skills} onChange={e => setSkills(e.target.value)} placeholder="e.g. Python, React, SQL..."
-                className="input-field"
-                style={{ width: "100%", padding: "12px 14px", borderRadius: 12, fontSize: 14, background: "rgba(255,255,255,0.04)", boxSizing: "border-box" }} />
-            </div>
-
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={handleGenerate} disabled={loading} className="btn-primary"
-              style={{ width: "100%", padding: "14px", borderRadius: 14, fontWeight: 900, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              {loading ? (
-                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }}
-                  style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%" }} />
-              ) : <><Navigation size={16} /> Generate My GPS</>}
-            </motion.button>
-            {error && <div style={{ color: "#F43F5E", fontSize: 12, textAlign: "center" }}>⚠️ {error}</div>}
-          </div>
-        </div>
-
-        {/* Results */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <AnimatePresence mode="wait">
-            {!result && !loading && (
-              <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="glass-card" style={{ padding: 80, textAlign: "center" }}>
-                <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 4 }}
-                  style={{ fontSize: 64, marginBottom: 20 }}>🗺️</motion.div>
-                <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 8 }}>Your Career GPS</div>
-                <div style={{ color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 320, margin: "0 auto" }}>
-                  Tell the AI your year and target role — get 3 precise career paths with timelines, milestones, and company targets.
-                </div>
-              </motion.div>
-            )}
-
-            {loading && (
-              <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card"
-                style={{ padding: 60, textAlign: "center" }}>
-                <motion.div animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5 }}
-                  style={{ fontSize: 48, marginBottom: 20 }}>🧭</motion.div>
-                <div style={{ fontWeight: 700, color: "var(--text-secondary)" }}>Calculating your career trajectory...</div>
-                <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 8 }}>Analyzing {year} + {role} + market data</div>
-              </motion.div>
-            )}
-
-            {result && !loading && (
-              <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                {/* Path Selector */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
-                  {result.paths?.map((path: any, i: number) => (
-                    <motion.div key={i} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                      onClick={() => setSelectedPath(i)}
+        <div style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
+          {/* Config Panel */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
+            style={{ width: 300, flexShrink: 0, minWidth: 260 }}>
+            <div style={{ padding: 28, position: "sticky", top: 20, display: "flex", flexDirection: "column", gap: 24, background: "rgba(255,255,255,0.02)", borderRadius: 28, border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(20px)" }}>
+              {/* Year selector */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1.5, marginBottom: 12, textTransform: "uppercase" }}>Your Year</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {YEARS.map(y => (
+                    <motion.button key={y.value}
+                      whileHover={{ x: 4 }}
+                      onClick={() => setYear(y.value)}
                       style={{
-                        padding: 20, borderRadius: 18, cursor: "pointer", transition: "all 0.25s",
-                        background: selectedPath === i ? `${PATH_COLORS[i]}12` : "rgba(255,255,255,0.02)",
-                        border: selectedPath === i ? `2px solid ${PATH_COLORS[i]}` : "2px solid rgba(255,255,255,0.06)",
+                        padding: "12px 14px", borderRadius: 14, border: "none", cursor: "pointer", textAlign: "left", transition: "all 0.2s",
+                        background: year === y.value ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.02)",
+                        borderLeft: `3px solid ${year === y.value ? "#8B5CF6" : "transparent"}`,
+                        display: "flex", alignItems: "center", gap: 10
                       }}>
-                      <div style={{ fontSize: 11, fontWeight: 900, color: PATH_COLORS[i], marginBottom: 6, letterSpacing: 0.5 }}>{path.difficulty?.toUpperCase()}</div>
-                      <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 4, color: "white" }}>{path.title}</div>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 10, lineHeight: 1.4 }}>{path.tagline}</div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
-                        <span style={{ color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
-                          <Clock size={10} /> {path.timeline_months}mo
-                        </span>
-                        <span style={{ color: PATH_COLORS[i], fontWeight: 900 }}>{path.job_readiness_pct}% ready</span>
+                      <span style={{ fontSize: 18 }}>{y.icon}</span>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 13, color: year === y.value ? "white" : "var(--text-secondary)" }}>{y.label}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{y.desc}</div>
                       </div>
-                      {result.recommendation === path.id && (
-                        <div style={{ marginTop: 8, fontSize: 10, fontWeight: 900, color: PATH_COLORS[i], background: `${PATH_COLORS[i]}15`, padding: "3px 8px", borderRadius: 6, display: "inline-block" }}>
-                          ⭐ RECOMMENDED
-                        </div>
-                      )}
-                    </motion.div>
+                      {year === y.value && <motion.div layoutId="yearActive" style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#8B5CF6", boxShadow: "0 0 8px #8B5CF6" }} />}
+                    </motion.button>
                   ))}
                 </div>
+              </div>
 
-                {/* Active Path Detail */}
-                {activePath && (
-                  <motion.div key={selectedPath} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                    {/* Path Overview */}
-                    <div className="glass-card" style={{ padding: 32, border: `1px solid ${PATH_COLORS[selectedPath]}25` }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 900, color: PATH_COLORS[selectedPath], marginBottom: 4 }}>{activePath.difficulty} PATH</div>
-                          <h2 style={{ fontSize: 26, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px", marginBottom: 4 }}>{activePath.title}</h2>
-                          <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>{activePath.tagline}</p>
+              {/* Role selector */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1.5, marginBottom: 10, textTransform: "uppercase" }}>Target Role</div>
+                <select value={role} onChange={e => setRole(e.target.value)}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 14, fontSize: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "white", outline: "none", fontFamily: "inherit" }}>
+                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+
+              {/* Skills */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1.5, marginBottom: 10, textTransform: "uppercase" }}>Current Skills <span style={{ color: "rgba(255,255,255,0.2)" }}>(optional)</span></div>
+                <input value={skills} onChange={e => setSkills(e.target.value)} placeholder="e.g. Python, React, SQL..."
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 14, fontSize: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "white", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+              </div>
+
+              <motion.button whileHover={{ scale: 1.03, boxShadow: "0 10px 30px rgba(139,92,246,0.4)" }} whileTap={{ scale: 0.97 }}
+                onClick={() => handleGenerate()} disabled={loading}
+                style={{ width: "100%", padding: "16px", borderRadius: 16, fontWeight: 900, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", border: "none", color: "white", cursor: loading ? "wait" : "pointer", boxShadow: "0 8px 24px rgba(139,92,246,0.3)" }}>
+                {loading ? (
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }}
+                    style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%" }} />
+                ) : <><Navigation size={16} /> Generate My GPS</>}
+              </motion.button>
+            </div>
+          </motion.div>
+
+          {/* Results */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <AnimatePresence mode="wait">
+              {/* Empty state */}
+              {!result && !loading && !retrying && (
+                <motion.div key="empty" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                  style={{ padding: 80, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <motion.div animate={{ rotate: [0, 15, -15, 0], y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 5 }}
+                    style={{ fontSize: 72, marginBottom: 24, display: "inline-block" }}>🗺️</motion.div>
+                  <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 10, fontFamily: "var(--font-outfit)" }}>Your Career GPS</div>
+                  <div style={{ color: "var(--text-secondary)", lineHeight: 1.7, maxWidth: 340, margin: "0 auto", fontSize: 15 }}>
+                    Select your year and target role, then hit <strong style={{ color: "white" }}>Generate My GPS</strong> to receive 3 precision-engineered career paths.
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 32, flexWrap: "wrap" }}>
+                    {["3 Career Paths", "Monthly Milestones", "Company Targets"].map((tag, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)", fontWeight: 700 }}>
+                        <CheckCircle size={14} color="#10B981" /> {tag}
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Loading */}
+              {loading && (
+                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ padding: 80, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(139,92,246,0.1)" }}>
+                  <div style={{ position: "relative", width: 80, height: 80, margin: "0 auto 28px" }}>
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                      style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "3px solid transparent", borderTopColor: "#8B5CF6", borderRightColor: "#06B6D4" }} />
+                    <div style={{ position: "absolute", inset: 8, borderRadius: "50%", background: "rgba(139,92,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🧭</div>
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: "white", marginBottom: 8 }}>Calculating your career trajectory...</div>
+                  <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Analyzing {year.replace("_", " ")} + {role} + 2025 market data</div>
+                  <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 24 }}>
+                    {[0, 1, 2].map(i => (
+                      <motion.div key={i} animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.2 }}
+                        style={{ width: 8, height: 8, borderRadius: "50%", background: "#8B5CF6" }} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Retry countdown */}
+              {retrying && !loading && (
+                <motion.div key="retry" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <RetryCountdown seconds={5} onRetry={() => handleGenerate(true)} />
+                </motion.div>
+              )}
+
+              {/* Results */}
+              {result && !loading && (
+                <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                  {/* Path Selector */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
+                    {result.paths?.map((path: any, i: number) => (
+                      <motion.div key={i}
+                        whileHover={{ scale: 1.03, y: -4 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setSelectedPath(i)}
+                        style={{
+                          padding: 20, borderRadius: 20, cursor: "pointer", transition: "all 0.25s",
+                          background: selectedPath === i ? `${PATH_COLORS[i]}12` : "rgba(255,255,255,0.02)",
+                          border: selectedPath === i ? `2px solid ${PATH_COLORS[i]}` : "2px solid rgba(255,255,255,0.06)",
+                          boxShadow: selectedPath === i ? `0 0 24px ${PATH_COLORS[i]}20` : "none",
+                        }}>
+                        <div style={{ fontSize: 11, fontWeight: 900, color: PATH_COLORS[i], marginBottom: 6, letterSpacing: 0.5 }}>{path.difficulty?.toUpperCase()}</div>
+                        <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 4, color: "white", lineHeight: 1.3 }}>{path.title}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 10, lineHeight: 1.4 }}>{path.tagline}</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                          <span style={{ color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
+                            <Clock size={10} /> {path.timeline_months}mo
+                          </span>
+                          <span style={{ color: PATH_COLORS[i], fontWeight: 900 }}>{path.job_readiness_pct}% ready</span>
                         </div>
-                        {/* Readiness Ring */}
-                        <div style={{ position: "relative", width: 80, height: 80 }}>
-                          <svg width={80} height={80} style={{ transform: "rotate(-90deg)" }}>
-                            <circle cx={40} cy={40} r={32} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={6} />
-                            <motion.circle cx={40} cy={40} r={32} fill="none" stroke={PATH_COLORS[selectedPath]} strokeWidth={6}
-                              strokeDasharray={201}
-                              initial={{ strokeDashoffset: 201 }}
-                              animate={{ strokeDashoffset: 201 - (activePath.job_readiness_pct / 100) * 201 }}
-                              transition={{ duration: 1.5, ease: "easeOut" }} />
-                          </svg>
-                          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                            <div style={{ fontSize: 16, fontWeight: 900, color: PATH_COLORS[selectedPath] }}>{activePath.job_readiness_pct}%</div>
-                            <div style={{ fontSize: 8, color: "var(--text-muted)", fontWeight: 700 }}>READY</div>
+                        {result.recommendation === path.id && (
+                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}
+                            style={{ marginTop: 8, fontSize: 10, fontWeight: 900, color: PATH_COLORS[i], background: `${PATH_COLORS[i]}15`, padding: "4px 10px", borderRadius: 8, display: "inline-flex", alignItems: "center", gap: 4, border: `1px solid ${PATH_COLORS[i]}30` }}>
+                            <Star size={10} fill={PATH_COLORS[i]} /> RECOMMENDED
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Active Path Detail */}
+                  {activePath && (
+                    <motion.div key={selectedPath} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                      {/* Path Overview */}
+                      <div style={{ padding: 32, background: "rgba(255,255,255,0.02)", borderRadius: 28, border: `1px solid ${PATH_COLORS[selectedPath]}25`, backdropFilter: "blur(20px)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 900, color: PATH_COLORS[selectedPath], marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>{activePath.difficulty} PATH</div>
+                            <h2 style={{ fontSize: 26, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px", marginBottom: 6, color: "white" }}>{activePath.title}</h2>
+                            <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6 }}>{activePath.tagline}</p>
+                          </div>
+                          {/* Readiness Ring */}
+                          <div style={{ position: "relative", width: 90, height: 90, flexShrink: 0 }}>
+                            <svg width={90} height={90} style={{ transform: "rotate(-90deg)" }}>
+                              <circle cx={45} cy={45} r={36} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={7} />
+                              <motion.circle cx={45} cy={45} r={36} fill="none" stroke={PATH_COLORS[selectedPath]} strokeWidth={7}
+                                strokeDasharray={226}
+                                initial={{ strokeDashoffset: 226 }}
+                                animate={{ strokeDashoffset: 226 - (activePath.job_readiness_pct / 100) * 226 }}
+                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                strokeLinecap="round" />
+                            </svg>
+                            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                              <div style={{ fontSize: 17, fontWeight: 900, color: PATH_COLORS[selectedPath] }}>{activePath.job_readiness_pct}%</div>
+                              <div style={{ fontSize: 8, color: "var(--text-muted)", fontWeight: 700, letterSpacing: 0.5 }}>READY</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
+                          {[
+                            { icon: <Clock size={14} />, label: "Timeline", val: `${activePath.timeline_months} months` },
+                            { icon: <Target size={14} />, label: "Top Skills", val: activePath.key_skills?.slice(0, 2).join(", ") || "—" },
+                            { icon: <Building2 size={14} />, label: "Companies", val: activePath.companies?.slice(0, 2).join(", ") || "—" },
+                          ].map((item, i) => (
+                            <div key={i} style={{ padding: "14px 16px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--text-muted)", fontWeight: 700, marginBottom: 6, textTransform: "uppercase" }}>
+                                <span style={{ color: PATH_COLORS[selectedPath] }}>{item.icon}</span> {item.label}
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: "white" }}>{item.val}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Skills */}
+                        <div style={{ marginBottom: 20 }}>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
+                            <BookOpen size={12} /> Key Skills to Master
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                            {activePath.key_skills?.map((skill: string, i: number) => (
+                              <motion.span key={i}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: i * 0.05 }}
+                                style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20, background: `${PATH_COLORS[selectedPath]}12`, color: PATH_COLORS[selectedPath], fontWeight: 700, border: `1px solid ${PATH_COLORS[selectedPath]}25` }}>
+                                {skill}
+                              </motion.span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Companies */}
+                        <div>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
+                            <Building2 size={12} /> Target Companies
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            {activePath.companies?.map((co: string, i: number) => (
+                              <span key={i} style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20, background: "rgba(255,255,255,0.04)", color: "var(--text-secondary)", fontWeight: 700, border: "1px solid rgba(255,255,255,0.08)" }}>
+                                🏢 {co}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       </div>
 
-                      {/* Key Info */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
-                        <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.03)" }}>
-                          <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>TIMELINE</div>
-                          <div style={{ fontSize: 18, fontWeight: 900 }}>{activePath.timeline_months} months</div>
+                      {/* Milestones */}
+                      {activePath.milestones?.length > 0 && (
+                        <div style={{ padding: 28, background: "rgba(255,255,255,0.02)", borderRadius: 28, border: "1px solid rgba(255,255,255,0.05)" }}>
+                          <div style={{ fontSize: 12, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 24, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ color: PATH_COLORS[selectedPath] }}>📍</span> Monthly Milestone Roadmap
+                          </div>
+                          <MilestoneTimeline milestones={activePath.milestones} color={PATH_COLORS[selectedPath]} />
                         </div>
-                        <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.03)" }}>
-                          <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>KEY SKILLS</div>
-                          <div style={{ fontSize: 12, fontWeight: 700 }}>{activePath.key_skills?.slice(0, 2).join(", ")}</div>
-                        </div>
-                        <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.03)" }}>
-                          <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>TARGET COs</div>
-                          <div style={{ fontSize: 12, fontWeight: 700 }}>{activePath.companies?.slice(0, 2).join(", ")}</div>
-                        </div>
-                      </div>
+                      )}
 
-                      {/* Skills */}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-                        {activePath.key_skills?.map((skill: string, i: number) => (
-                          <span key={i} style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20, background: `${PATH_COLORS[selectedPath]}12`, color: PATH_COLORS[selectedPath], fontWeight: 700, border: `1px solid ${PATH_COLORS[selectedPath]}25` }}>
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Companies */}
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        {activePath.companies?.map((co: string, i: number) => (
-                          <span key={i} style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20, background: "rgba(255,255,255,0.04)", color: "var(--text-secondary)", fontWeight: 700, border: "1px solid rgba(255,255,255,0.08)" }}>
-                            🏢 {co}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Milestones */}
-                    {activePath.milestones?.length > 0 && (
-                      <div className="glass-card" style={{ padding: 28 }}>
-                        <div style={{ fontSize: 12, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 20 }}>📍 MILESTONE ROADMAP</div>
-                        <MilestoneTimeline milestones={activePath.milestones} />
-                      </div>
-                    )}
-
-                    {/* Founder Note */}
-                    {result.founder_note && (
-                      <div className="glass-card" style={{ padding: 24, border: "1px solid rgba(139,92,246,0.2)", background: "rgba(139,92,246,0.03)" }}>
-                        <div style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-primary)", marginBottom: 10 }}>💬 FROM ABISHEK R — FOUNDER, TULASIAI</div>
-                        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.7, fontStyle: "italic" }}>{result.founder_note}</p>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                      {/* Founder Note */}
+                      {result.founder_note && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                          style={{ padding: 24, background: "rgba(139,92,246,0.04)", borderRadius: 24, border: "1px solid rgba(139,92,246,0.2)" }}>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: "#8B5CF6", marginBottom: 12, letterSpacing: 1 }}>💬 FROM ABISHEK R — FOUNDER, TULASIAI</div>
+                          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>"{result.founder_note}"</p>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
