@@ -14,7 +14,7 @@ import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
   FileText, Award, BarChart3, MessageCircle, 
-  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass
+  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass, TrendingUp, Navigation, Flame
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -23,9 +23,10 @@ const NAV_SECTIONS = [
     items: [
       { icon: LayoutDashboard, name: "Dashboard",       href: "/dashboard" },
       { icon: MessageSquare,   name: "AI Chat",         href: "/dashboard/chat" },
+      { icon: Flame,           name: "ORBIT DAILY",     href: "/dashboard/daily-challenge", badge: "NEW" },
       { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
       { icon: Map,             name: "Career Roadmaps", href: "/dashboard/roadmaps" },
-      { icon: Rocket,           name: "Startup Lab",     href: "/dashboard/startup-lab" },
+      { icon: Rocket,          name: "Startup Lab",     href: "/dashboard/startup-lab" },
     ]
   },
   {
@@ -45,6 +46,8 @@ const NAV_SECTIONS = [
   {
     label: "Tools",
     items: [
+      { icon: Navigation,      name: "Career GPS",      href: "/dashboard/career-gps",     badge: "NEW" },
+      { icon: TrendingUp,      name: "Salary Intel",    href: "/dashboard/salary-intel",   badge: "NEW" },
       { icon: Lightbulb,       name: "Project Ideas",   href: "/dashboard/projects" },
       { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
       { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
@@ -55,7 +58,7 @@ const NAV_SECTIONS = [
     label: "Community",
     items: [
       { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
-      { icon: Mail,            name: "Messages",        href: "mailto:support@tulasiai.com" },
+      { icon: Mail,            name: "Messages",        href: "/dashboard/messages" },
       { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
     ]
   },
@@ -194,6 +197,12 @@ export default function Sidebar() {
                       {item.icon ? <item.icon size={16} /> : <CircleHelp size={16} />}
                     </span>
                     <span style={{ flex: 1 }}>{item.name}</span>
+                    {(item as any).badge && (
+                      <span style={{
+                        fontSize: 8, padding: "2px 5px", borderRadius: 4,
+                        background: "rgba(249,115,22,0.2)", color: "#F97316", fontWeight: 900, letterSpacing: 0.5
+                      }}>{(item as any).badge}</span>
+                    )}
                     {isLocked && (
                       <span style={{
                         fontSize: 9, padding: "2px 5px", borderRadius: 4,

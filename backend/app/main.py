@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 import time
 
-from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, intelligence
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, intelligence, daily_challenge
 from app.core.database import init_db, engine
 from sqlalchemy import inspect
 from slowapi.errors import RateLimitExceeded
@@ -385,6 +385,10 @@ app.include_router(internships.router,  prefix="/api/internships",  tags=["Inter
 app.include_router(system_design.router,  prefix="/api/system-design",  tags=["System Design Module"])
 app.include_router(prep_plan.router,      prefix="/api/prep-plan",      tags=["Prep Plan"])
 app.include_router(rag.router,            prefix="/api/rag",            tags=["Knowledge Base"])
+app.include_router(daily_challenge.router, prefix="/api/daily-challenge", tags=["ORBIT DAILY"])
+
+from app.api import intelligence_v2
+app.include_router(intelligence_v2.router, prefix="/api/intel", tags=["Super Intelligence"])
 
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────
 from app.api import ws as ws_router

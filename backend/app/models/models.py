@@ -372,4 +372,34 @@ class InviteCode(SQLModel, table=True):
     usage_limit: int = 100
     grants_pro: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    expires_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+
+
+# ── ORBIT DAILY — Daily Challenge System ──────────────────────────────────────
+class DailyChallenge(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    date: str = Field(unique=True, index=True)          # YYYY-MM-DD (IST)
+    challenge_type: str = "coding"                      # coding | interview | design | behavioral
+    title: str
+    question: str
+    difficulty: str = "Medium"                          # Easy | Medium | Hard
+    xp_reward: int = 50
+    tags: str = ""                                      # comma-separated e.g. "DSA,Arrays"
+    hint: Optional[str] = None
+    sample_answer: Optional[str] = None                 # Hidden until submission
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class DailyChallengeSubmission(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    challenge_id: int = Field(foreign_key="dailychallenge.id", index=True)
+    date: str = Field(index=True)                       # YYYY-MM-DD for quick lookup
+    answer: str
+    score: int = 0                                      # 0-100 from AI eval
+    ai_feedback: str = ""
+    strengths: str = "[]"                               # JSON list
+    improvements: str = "[]"                            # JSON list
+    xp_awarded: int = 0
+    completed: bool = False
+    submitted_at: datetime = Field(default_factory=datetime.utcnow)
