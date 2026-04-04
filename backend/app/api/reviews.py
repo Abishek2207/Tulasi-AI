@@ -298,3 +298,42 @@ def seed_reviews(
         raise HTTPException(status_code=500, detail=f"Seed failed: {str(e)}")
     
     return {"success": True, "inserted": inserted}
+
+
+@router.post("/seed-public", status_code=201)
+def seed_reviews_public(
+    reviews: List[SeedReview],
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    """
+    Public seed endpoint protected by SEED_SECRET header.
+    POST /api/reviews/seed-public  with header  X-Seed-Secret: <SEED_SECRET env value>
+    """
+    import os
+    seed_secret = os.environ.get("SEED_SECRET", "")
+    incoming = request.headers.get("X-Seed-Secret", "")
+    if not seed_secret or incoming != seed_secret:
+        raise HTTPException(status_code=403, detail="Invalid seed secret.")
+
+    inserted = 0
+    for r in reviews:
+        exists = session.exec(
+            select(Review).where(Review.name == r.name, Review.review == r.review)
+        ).first()
+        if exists:
+            continue
+        new_review = Review(
+            name=r.name, role=r.role, review=r.review, rating=r.rating,
+            is_approved=True, is_featured=False, created_at=datetime.utcnow(),
+        )
+        session.add(new_review)
+        inserted += 1
+
+    try:
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Seed failed: {str(e)}")
+
+    return {"success": True, "inserted": inserted}
