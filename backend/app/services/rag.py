@@ -46,7 +46,7 @@ class RAGEvaluator:
         try:
             if client:
                 result = client.models.embed_content(
-                    model="text-embedding-004",
+                    model="gemini-embedding-001",
                     contents=texts_to_embed,
                 )
                 self._embeddings = np.array([e.values for e in result.embeddings])
@@ -62,7 +62,7 @@ class RAGEvaluator:
         try:
             client = genai.Client(api_key=settings.effective_gemini_key)
             result = client.models.embed_content(
-                model="text-embedding-004",
+                model="gemini-embedding-001",
                 contents=user_answer_context
             )
             query_emb = result.embeddings[0].values

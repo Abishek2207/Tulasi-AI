@@ -29,7 +29,7 @@ class VectorService:
                 from google.genai import types
                 client = genai.Client(api_key=api_key)
                 result = client.models.embed_content(
-                    model="text-embedding-004",
+                    model="gemini-embedding-001",
                     contents=text,
                     config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
                 )
@@ -66,7 +66,7 @@ class VectorService:
                 from google.genai import types
                 client = genai.Client(api_key=api_key)
                 result = client.models.embed_content(
-                    model="text-embedding-004",
+                    model="gemini-embedding-001",
                     contents=texts,
                     config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
                 )
