@@ -232,11 +232,6 @@ function Hero() {
 
         {/* Floating Title */}
         <motion.div style={{ y, opacity, position: "absolute", zIndex: 10, textAlign: "center", width: "100%", top: isMobile ? "12%" : "15%" }}>
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 16 }}>
-            <span style={{ fontSize: 10, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 5, textTransform: "uppercase", background: "rgba(255,255,255,0.03)", padding: "6px 16px", borderRadius: 30, border: "1px solid rgba(255,255,255,0.1)" }}>
-              SYSTEM READY // 0.0ms LATENCY
-            </span>
-          </motion.div>
           <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
             className="hero-title" style={{ fontSize: "clamp(48px, 9vw, 110px)", lineHeight: 0.9, letterSpacing: "-0.04em" }}>
             {["Architect", "Your", "Trajectory."].map((w, i) => (
@@ -278,19 +273,9 @@ function Hero() {
              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"
            }}
         >
-          {/* Subtle Apple-style status updates */}
-          {!isMobile && (
-            <motion.div 
-              animate={{ opacity: [0.4, 0.8, 0.4] }} 
-              transition={{ duration: 3, repeat: Infinity }} 
-              style={{ position: "absolute", left: -80, top: "10%", padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(20px)", zIndex: 30 }}>
-              <div style={{ fontSize: 8, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 2 }}>ENGINE_V3.1</div>
-            </motion.div>
-          )}
-
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} style={{ marginBottom: 28, position: "relative" }}>
             <span className="animate-shimmer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 30, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#FFF", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2.5 }}>
-              <Zap size={14} color="#0A84FF" /> PLATINUM PRODUCTION ENV v2.1
+              <Zap size={14} color="#0A84FF" /> TULASI AI INTELLIGENCE HUB
             </span>
           </motion.div>
 
@@ -318,14 +303,16 @@ function Hero() {
 
         {/* Floating background elements */}
         <div className="hide-mobile" style={{ position: "absolute", left: "8%", top: "35%", opacity: 0.4, zIndex: 5 }}>
-          <div className="animate-float" style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <Cpu size={48} color="white" />
-          </div>
+          <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 6, repeat: Infinity }} style={{ padding: "16px 24px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}>
+            <div style={{ fontSize: 9, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 2 }}>ORBIT KNOWLEDGE GRAPH</div>
+            <div style={{ fontSize: 14, fontWeight: 900, color: "white", marginTop: 4 }}>SYNCED</div>
+          </motion.div>
         </div>
         <div className="hide-mobile" style={{ position: "absolute", right: "8%", top: "45%", opacity: 0.4, zIndex: 5 }}>
-          <div className="animate-float" style={{ animationDelay: "1.5s", padding: 24, borderRadius: 24, background: "rgba(10,132,255,0.03)", border: "1px solid rgba(10,132,255,0.1)" }}>
-            <HardDrive size={48} color="#0A84FF" />
-          </div>
+          <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 7, repeat: Infinity, delay: 1 }} style={{ padding: "16px 24px", borderRadius: 16, background: "rgba(10,132,255,0.05)", border: "1px solid rgba(10,132,255,0.15)" }}>
+            <div style={{ fontSize: 9, fontWeight: 900, color: "#0A84FF", letterSpacing: 2 }}>USER TRAJECTORY DATA</div>
+            <div style={{ fontSize: 14, fontWeight: 900, color: "white", marginTop: 4 }}>OPTIMIZED</div>
+          </motion.div>
         </div>
 
       </div>
@@ -336,22 +323,27 @@ function Hero() {
 // ── Neural Engine Core (Consolidated High-Fidelity) ───
 function NeuralEngineCore() {
   const steps = [
-    { label: "ADAPTIVE SYNTHESIS", desc: "Complex career data parsed into actionable intuition.", icon: Cpu, color: "#8B5CF6" },
-    { label: "COGNITIVE MAPPING", desc: "Dynamic roadmaps that restructure in real-time.", icon: Target, color: "#06B6D4" },
-    { label: "SIMULATION FIDELITY", desc: "Sub-millisecond feedback on MAANG-grade sims.", icon: Code, color: "#F43F5E" },
-    { label: "GLOBAL NEXUS", desc: "Direct pipelines to frontier tech opportunities.", icon: Award, color: "#10B981" },
+    { label: "ADAPTIVE SYNTHESIS", desc: "Tulasi parses your raw career data into actionable intuition instantly.", icon: Cpu, color: "#8B5CF6" },
+    { label: "COGNITIVE MAPPING", desc: "Dynamic roadmaps that restructure based on your Tulasi skill profile.", icon: Target, color: "#06B6D4" },
+    { label: "SIMULATION FIDELITY", desc: "Sub-millisecond feedback on MAANG-grade interviews in the Tulasi Lab.", icon: Code, color: "#F43F5E" },
+    { label: "GLOBAL NEXUS", desc: "Direct pipelines connecting your verified Tulasi portfolio to frontier tech.", icon: Award, color: "#10B981" },
   ];
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto 80px", position: "relative", zIndex: 30, padding: "0 24px" }}>
       <div className="glass-card-premium" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 1, background: "rgba(255,255,255,0.04)", padding: 1, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" }}>
-        {steps.map(s => (
-          <div key={s.label} className="premium-glow" style={{ background: "rgba(9,9,11,0.85)", padding: "48px 32px", textAlign: "center" }}>
+        {steps.map((s, i) => (
+          <motion.div key={s.label} 
+            initial={{ opacity: 0, y: 30 }} 
+            whileInView={{ opacity: 1, y: 0 }} 
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ delay: i * 0.1, type: "spring", stiffness: 120, damping: 20 }}
+            className="premium-glow" style={{ background: "rgba(9,9,11,0.85)", padding: "48px 32px", textAlign: "center" }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
               <s.icon size={28} color={s.color} />
             </div>
             <div style={{ fontSize: 13, fontWeight: 900, color: "white", letterSpacing: 2, marginBottom: 10 }}>{s.label}</div>
             <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6, fontWeight: 500 }}>{s.desc}</div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
@@ -709,8 +701,12 @@ function Footer() {
               Tulasi AI is an autonomous intelligence platform meticulously designed to close the gap between theoretical knowledge and global professional offers.
             </p>
             <div style={{ display: "flex", gap: 20, marginTop: 32 }}>
-              {[Instagram, Mail, Users].map((Icon, i) => (
-                <motion.a key={i} whileHover={{ y: -4, color: "white" }} href="#" style={{ color: "var(--text-muted)", transition: "color 0.2s" }}><Icon size={24} /></motion.a>
+              {[
+                { Icon: Instagram, href: "https://instagram.com/_.abi22._" },
+                { Icon: Mail, href: "mailto:abishekramamoorthy22@gmail.com" },
+                { Icon: Users, href: "https://github.com/Abishek2207" }
+              ].map(({ Icon, href }, i) => (
+                <motion.a key={i} whileHover={{ y: -4, color: "white" }} href={href} target="_blank" rel="noreferrer" style={{ color: "var(--text-muted)", transition: "color 0.2s" }}><Icon size={24} /></motion.a>
               ))}
             </div>
           </div>

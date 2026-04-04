@@ -18,6 +18,15 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "recharts"],
   },
+  async redirects() {
+    return [
+      {
+        source: '/dashboard/roadmap',
+        destination: '/dashboard/roadmaps',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

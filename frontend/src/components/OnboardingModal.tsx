@@ -51,8 +51,11 @@ export function OnboardingModal() {
     });
   };
 
+  const [error, setError] = useState("");
+
   const handleSubmit = async () => {
     setLoading(true);
+    setError("");
     try {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
@@ -62,12 +65,18 @@ export function OnboardingModal() {
         body: JSON.stringify(data),
       });
 
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Onboarding synchronization failed. Our neural core might be under heavy load.");
+      }
+
       const result = await res.json();
       if (result.user) localStorage.setItem("user", JSON.stringify(result.user));
       setVisible(false);
       window.location.href = "/dashboard";
-    } catch (e) {
+    } catch (e: any) {
       console.error("Onboarding failed:", e);
+      setError(e.message || "Connection timed out. Please try initializing again.");
     } finally {
       setLoading(false);
     }
@@ -162,9 +171,15 @@ export function OnboardingModal() {
                 </div>
 
                 <button onClick={handleSubmit} disabled={loading || data.interest_areas.length === 0}
-                  style={{ width: "100%", padding: "16px", borderRadius: 16, border: "none", background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", color: "white", fontWeight: 800, cursor: "pointer", fontSize: 16 }}>
+                  style={{ width: "100%", padding: "16px", borderRadius: 16, border: "none", background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", color: "white", fontWeight: 800, cursor: "pointer", fontSize: 16, marginBottom: 12 }}>
                   {loading ? "Engaging Career Architect..." : "Architect My Future"}
                 </button>
+                {error && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ fontSize: 13, color: "#F43F5E", textAlign: "center", fontWeight: 700, background: "rgba(244,63,94,0.1)", padding: "12px", borderRadius: 12, border: "1px solid rgba(244,63,94,0.15)" }}>
+                    {error}
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

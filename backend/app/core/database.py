@@ -32,11 +32,12 @@ def init_db():
 
 def get_session():
     if engine is None:
-        yield None
-        return
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Database engine initialization failed. Check connection.")
     try:
         with Session(engine) as session:
             yield session
     except Exception as e:
         print(f"DB session error: {e}")
-        raise
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Database connection error.")
