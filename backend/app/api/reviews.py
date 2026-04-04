@@ -337,3 +337,29 @@ def seed_reviews_public(
         raise HTTPException(status_code=500, detail=f"Seed failed: {str(e)}")
 
     return {"success": True, "inserted": inserted}
+
+
+@router.post("/approve-all", status_code=200)
+def approve_all_reviews(
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    """Admin-only: Approve all pending reviews (Migration helper)."""
+    import os
+    seed_secret = os.environ.get("SEED_SECRET", "")
+    incoming = request.headers.get("X-Seed-Secret", "")
+    if not seed_secret or incoming != seed_secret:
+        raise HTTPException(status_code=403, detail="Invalid seed secret.")
+
+    try:
+        from sqlmodel import update
+        # Using SQLAlchemy update style for efficiency
+        session.exec(
+            update(Review).where(Review.is_approved == False).values(is_approved=True)
+        )
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Approve-all failed: {str(e)}")
+
+    return {"success": True, "message": "All pending reviews approved."}
