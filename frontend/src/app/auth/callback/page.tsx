@@ -45,30 +45,36 @@ export default function AuthCallbackPage() {
 
           // Exchange Supabase session for FastAPI JWT immediately
           if (userEmail) {
-            try {
-              const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
-              const res = await fetch(`${API_URL}/api/auth/google-oauth`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: userEmail, name: userName, provider }),
-              });
-              if (res.ok) {
-                const result = await res.json();
-                if (result.access_token) {
-                  localStorage.setItem("token", result.access_token);
-                  localStorage.setItem("user", JSON.stringify(result.user));
-                }
-              }
-            } catch (err) {
-              console.warn("[Callback] Backend JWT exchange failed — fallback to Supabase session.");
+            // Remove any trailing slash from API_URL to prevent CORS issues
+            const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "https://tulasi-ai-wgwl.onrender.com";
+            
+            const res = await fetch(`${API_URL}/api/auth/google-oauth`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail, name: userName, provider }),
+            });
+
+            if (!res.ok) {
+              const errorData = await res.json().catch(() => ({}));
+              throw new Error(`Backend rejected login: ${errorData.detail || res.status}`);
+            }
+
+            const result = await res.json();
+            if (result.access_token) {
+              localStorage.setItem("token", result.access_token);
+              localStorage.setItem("user", JSON.stringify(result.user));
+              
+              // Wait briefly for localStorage to write before redirecting
+              setTimeout(() => {
+                router.replace("/dashboard");
+              }, 100);
+              return;
+            } else {
+              throw new Error("No access_token returned from your FastAPI backend.");
             }
           }
-
-          router.replace("/dashboard");
-          return;
         }
 
-        // ── Implicit / hash flow: session is already set by Supabase JS ──────
         const { data: sessionData, error: sessionError } =
           await supabase.auth.getSession();
 

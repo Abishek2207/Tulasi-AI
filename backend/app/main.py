@@ -426,19 +426,26 @@ def health():
     from app.core.database import engine
     from sqlalchemy import text
     db_status = "connected"
+    db_detail = "Ready"
     try:
-        with engine.begin() as conn:
-            conn.execute(text("SELECT 1"))
+        if engine:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+        else:
+            db_status = "unreachable"
+            db_detail = "Engine is None (check DATABASE_URL)"
     except Exception as e:
-        db_status = f"unreachable: {str(e)}"
+        db_status = "error"
+        db_detail = f"Unreachable: {str(e)}"
         print(f"❌ Database Health Check Failed: {e}")
 
     return {
         "status": "ok" if db_status == "connected" else "error",
+        "api": "Tulasi AI Backend v3.1.2",
         "db": db_status,
+        "db_detail": db_detail,
         "uptime_seconds": uptime,
-        "version": "3.0.2",
-        "server": "Tulasi AI Backend"
+        "environment": "production" if "render" in str(engine.url) else "development" if engine else "error-state"
     }
 
 
