@@ -18,6 +18,46 @@ except Exception as e:
     engine = None
 
 
+def sync_user_schema(engine):
+    """Safely adds missing columns to the 'user' table on startup."""
+    if engine is None:
+        return
+        
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    existing_columns = [c['name'] for c in inspector.get_columns("user")]
+    
+    # New columns added in Super Intelligence / Professional upgrades
+    new_columns = [
+        ("user_type", "VARCHAR DEFAULT 'student'"),
+        ("abuse_count", "INTEGER DEFAULT 0"),
+        ("is_onboarded", "BOOLEAN DEFAULT FALSE"),
+        ("department", "VARCHAR"),
+        ("target_role", "VARCHAR"),
+        ("target_companies", "VARCHAR"),
+        ("interest_areas", "VARCHAR"),
+        ("onboarding_step", "INTEGER DEFAULT 0"),
+        ("user_intelligence_profile", "TEXT DEFAULT '{}'"),
+        ("last_intelligence_update", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("behavioral_patterns", "TEXT DEFAULT '{}'")
+    ]
+    
+    try:
+        with engine.begin() as conn:
+            for col_name, col_def in new_columns:
+                if col_name not in existing_columns:
+                    print(f"  - Syncing User Schema: Adding column '{col_name}'...")
+                    if "sqlite" in str(engine.url):
+                        # SQLite doesn't support IF NOT EXISTS in ALTER TABLE
+                        query = f'ALTER TABLE "user" ADD COLUMN {col_name} {col_def};'
+                    else:
+                        # PostgreSQL (Render) supports it
+                        query = f'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS {col_name} {col_def};'
+                    conn.execute(text(query))
+            print("✅ User schema synchronized (Auto-Migration)")
+    except Exception as e:
+        print(f"⚠️  Manual schema sync failed: {e}")
+
 def init_db():
     if engine is None:
         print("⚠️  Skipping DB init: No engine available.")
@@ -25,9 +65,15 @@ def init_db():
 
     from app.models.models import Hackathon, StudyRoom, Review, UserFeedback, UserMemoryChunk, GroupMessage, SavedResume, HackathonBookmark, HackathonApplication
     try:
+        # 1. Create tables if they don't exist
         SQLModel.metadata.create_all(engine)
+        
+        # 2. Sync existing tables with new columns (Safe Migration Layer)
+        sync_user_schema(engine)
+        
     except Exception as e:
-        print(f"⚠️  Failed to create metadata: {e}")
+        # If it's a known error like already existing column, we skip
+        print(f"⚠️  Database Init/Sync Warning: {e}")
         return
 
 def get_session():
