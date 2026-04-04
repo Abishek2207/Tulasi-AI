@@ -297,7 +297,7 @@ export default function ChatPage() {
             </div>
             <div>
               <h1 style={{ fontSize: 20, fontWeight: 900, margin: 0, letterSpacing: "-0.5px", background: "linear-gradient(90deg, #fff, #A78BFA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Tulasi AI Chat</h1>
-              <p style={{ fontSize: 11, color: "#8B5CF6", margin: 0, fontWeight: 700, letterSpacing: "0.5px" }}>⚡ Powered by Gemini 2.5 Flash</p>
+              {/* Branding Removed per Founder Request */}
             </div>
           </div>
           <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(16,185,129,0.15)", padding: "4px 12px", borderRadius: 20, border: "1px solid rgba(16,185,129,0.3)" }}>

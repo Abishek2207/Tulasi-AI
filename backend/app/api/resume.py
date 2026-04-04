@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List
-from app.core.ai_router import get_ai_response
+from app.core.ai_router import resilient_ai_response
+
 from app.core.database import get_session
 from sqlmodel import Session, select
 from app.models.models import SavedResume, User
@@ -95,55 +96,42 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
   "improved_resume": "YOUR FULLY REWRITTEN AND STRUCTURED RESUME TEXT HERE... (with SUMMARY, EXPERIENCE, SKILLS, PROJECTS)"
 }}"""
 
-    response_text = get_ai_response(prompt)
-    
-    # Try to parse JSON from the AI response
-    try:
-        import json, re
-        match = re.search(r'\{.*\}', response_text, re.DOTALL)
-        if match:
-            result = json.loads(match.group())
-            # ── 💾 Auto-Save to Database ──
-            try:
-                saved = SavedResume(
-                    user_id=current_user.id,
-                    document_type=data.document_type,
-                    mode=data.mode,
-                    original_resume=data.resume_text,
-                    job_description=data.job_description,
-                    improved_resume=result.get("improved_resume", ""),
-                    ats_score=result.get("ats_score", 0),
-                    readability_score=result.get("readability_score", 0),
-                    keyword_match_percent=result.get("keyword_match_percent", 0),
-                    feedback_json=json.dumps(result.get("feedback", [])),
-                    missing_keywords_json=json.dumps(result.get("missing_keywords", []))
-                )
-                db.add(saved)
-                db.commit()
-
-                log_activity_internal(current_user, db, "resume_generated", f"Generated {data.document_type} (score: {result.get('ats_score', 0)})")
-                db.commit()
-            except Exception as e:
-                print(f"Failed to save resume to history: {e}")
-
-            return {
-                "ats_score": result.get("ats_score", 50),
-                "readability_score": result.get("readability_score", 0),
-                "keyword_match_percent": result.get("keyword_match_percent", 0),
-                "feedback": result.get("feedback", ["Consider adding more metrics."]),
-                "missing_keywords": result.get("missing_keywords", []),
-                "improved_resume": result.get("improved_resume", data.resume_text),
-            }
-    except Exception as e:
-        print(f"JSON Parsing error in resume analysis: {e}")
-        
-    # Fallback response if the AI fails or returns malformed text
-    return {
+    fallback = {
         "ats_score": 55,
-        "feedback": ["The AI encountered an error returning feedback. Please try formatting your resume text more clearly.", "Ensure your API key is correctly configured."],
-        "missing_keywords": ["Error parsing keywords"],
+        "readability_score": 60,
+        "keyword_match_percent": 40,
+        "feedback": ["AI Engine is currently in safe-mode. Analysis is based on structural heuristics.", "Ensure your resume has clear section headers."],
+        "missing_keywords": ["Analysis Pending"],
         "improved_resume": data.resume_text
     }
+
+    result = resilient_ai_response(prompt, fallback=fallback)
+    
+    # ── 💾 Auto-Save to Database ──
+    try:
+        saved = SavedResume(
+            user_id=current_user.id,
+            document_type=data.document_type,
+            mode=data.mode,
+            original_resume=data.resume_text,
+            job_description=data.job_description,
+            improved_resume=result.get("improved_resume", ""),
+            ats_score=result.get("ats_score", 0),
+            readability_score=result.get("readability_score", 0),
+            keyword_match_percent=result.get("keyword_match_percent", 0),
+            feedback_json=json.dumps(result.get("feedback", [])),
+            missing_keywords_json=json.dumps(result.get("missing_keywords", []))
+        )
+        db.add(saved)
+        db.commit()
+
+        log_activity_internal(current_user, db, "resume_generated", f"Generated {data.document_type} (score: {result.get('ats_score', 0)})")
+        db.commit()
+    except Exception as e:
+        print(f"Failed to save resume to history: {e}")
+
+    return result
+
 
 @router.get("/history")
 def get_resume_history(

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import { MapPin, Briefcase, Clock, Zap, TrendingUp, Copy, CheckCircle, RefreshCw, Building2, Shield, Sparkles, ArrowUpRight } from "lucide-react";
+import { AIResilienceWrapper } from "@/components/dashboard/AIResilienceWrapper";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
 const ROLES = ["Software Engineer", "AI Engineer", "ML Engineer", "Data Scientist", "Product Manager", "Frontend Developer", "Backend Developer", "DevOps Engineer", "Full Stack Developer", "AI Research Scientist", "Cybersecurity Engineer", "Cloud Architect"];
@@ -42,34 +43,6 @@ function PercentileBar({ label, val, color, maxVal }: { label: string; val: numb
           transition={{ duration: 1, ease: "easeOut" }}
           style={{ height: "100%", background: `linear-gradient(90deg, ${color}60, ${color})`, borderRadius: 10, boxShadow: `0 0 8px ${color}40` }} />
       </div>
-    </div>
-  );
-}
-
-function RetryCountdown({ seconds, onRetry }: { seconds: number; onRetry: () => void }) {
-  const [count, setCount] = useState(seconds);
-  useEffect(() => {
-    if (count <= 0) { onRetry(); return; }
-    const t = setTimeout(() => setCount(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [count]);
-  return (
-    <div style={{ padding: "60px 40px", textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.06)" }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} style={{ display: "inline-block", marginBottom: 20 }}>
-        <RefreshCw size={36} color="#10B981" />
-      </motion.div>
-      <div style={{ fontSize: 17, fontWeight: 800, color: "white", marginBottom: 8 }}>Intelligence Engine Warming Up...</div>
-      <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 24 }}>
-        Auto-retrying in <span style={{ color: "#10B981", fontWeight: 900 }}>{count}s</span>
-      </div>
-      <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", maxWidth: 180, margin: "0 auto 24px" }}>
-        <motion.div
-          animate={{ width: `${((seconds - count) / seconds) * 100}%` }}
-          style={{ height: "100%", background: "linear-gradient(90deg, #10B981, #06B6D4)", borderRadius: 10 }} />
-      </div>
-      <button onClick={onRetry} style={{ padding: "10px 24px", borderRadius: 12, background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", color: "#10B981", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
-        Retry Now
-      </button>
     </div>
   );
 }
@@ -201,8 +174,17 @@ export default function SalaryIntelPage() {
 
           {/* Results Panel */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <AnimatePresence mode="wait">
-              {/* Empty state */}
+            <AIResilienceWrapper
+              loading={loading}
+              retrying={retrying}
+              result={result}
+              onRetry={() => handleAnalyze(true)}
+              title="Salary Intelligence Engine"
+              subtitle={`Analyzing ${role} · ${location} · ${yoe === 0 ? "Fresher" : `${yoe} yrs exp`} 2025 Market Data`}
+              color="#10B981"
+              icon={<TrendingUp size={40} color="#10B981" />}
+            >
+              {/* Empty state (only shown when no result and not loading) */}
               {!result && !loading && !retrying && (
                 <motion.div key="empty" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                   style={{ padding: 80, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.05)" }}>
@@ -222,36 +204,9 @@ export default function SalaryIntelPage() {
                 </motion.div>
               )}
 
-              {/* Loading */}
-              {loading && (
-                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  style={{ padding: 80, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(16,185,129,0.1)" }}>
-                  <div style={{ position: "relative", width: 80, height: 80, margin: "0 auto 28px" }}>
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                      style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "3px solid transparent", borderTopColor: "#10B981", borderRightColor: "#06B6D4" }} />
-                    <div style={{ position: "absolute", inset: 8, borderRadius: "50%", background: "rgba(16,185,129,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🔍</div>
-                  </div>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: "white", marginBottom: 8 }}>Scanning 2025 market data...</div>
-                  <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Analyzing {role} · {location} · {yoe === 0 ? "Fresher" : `${yoe} yrs exp`}</div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 24 }}>
-                    {[0, 1, 2].map(i => (
-                      <motion.div key={i} animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.2 }}
-                        style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Retry */}
-              {retrying && !loading && (
-                <motion.div key="retry" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <RetryCountdown seconds={5} onRetry={() => handleAnalyze(true)} />
-                </motion.div>
-              )}
-
-              {/* Results */}
-              {result && !loading && (
-                <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+              {/* Actual Results Content */}
+              {result && (
+                <motion.div key="result-content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
                   style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
                   {/* Salary Hero Card */}
@@ -415,7 +370,7 @@ export default function SalaryIntelPage() {
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
+            </AIResilienceWrapper>
           </div>
         </div>
       </div>
