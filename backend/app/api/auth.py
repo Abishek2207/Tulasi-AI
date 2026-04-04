@@ -78,7 +78,18 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
                 user.referred_by = referer.invite_code
                 db.add(referer)
                 db.commit() # Save XP
-                
+
+                # 📧 Notify referrer of reward
+                import threading
+                _ref_email = referer.email
+                _ref_name = referer.name or "Engineer"
+                _new_name = req.name or req.email.split("@")[0]
+                threading.Thread(
+                    target=email_service.send_invite_reward_email,
+                    args=(_ref_email, _ref_name, _new_name, 500),
+                    daemon=True
+                ).start()
+
                 # Check if this hit the 10 referral threshold
                 total_referrals = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
                 if len(total_referrals) >= 9: # >= 9 because the current user is not yet committed
