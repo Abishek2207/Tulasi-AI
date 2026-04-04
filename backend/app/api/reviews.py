@@ -363,3 +363,45 @@ def approve_all_reviews(
         raise HTTPException(status_code=500, detail=f"Approve-all failed: {str(e)}")
 
     return {"success": True, "message": "All pending reviews approved."}
+
+
+@router.post("/reset-and-seed", status_code=201)
+def reset_and_seed_reviews(
+    reviews: List[SeedReview],
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    """Admin-only: Wipe and re-seed 10 reviews (Cleanup helper)."""
+    import os
+    from sqlalchemy import text
+    seed_secret = os.environ.get("SEED_SECRET", "")
+    incoming = request.headers.get("X-Seed-Secret", "")
+    if not seed_secret or incoming != seed_secret:
+        raise HTTPException(status_code=403, detail="Invalid seed secret.")
+
+    try:
+        # Wipe all existing reviews
+        session.exec(text("DELETE FROM review"))
+        
+        # Reset ID sequence if Postgres
+        try:
+            session.exec(text("ALTER SEQUENCE review_id_seq RESTART WITH 1"))
+        except:
+            pass # Skip if not pg/sequence doesn't exist
+            
+        # Seed new ones
+        inserted = 0
+        for r in reviews:
+            new_review = Review(
+                name=r.name, role=r.role, review=r.review, rating=r.rating,
+                is_approved=True, is_featured=False, created_at=datetime.utcnow(),
+            )
+            session.add(new_review)
+            inserted += 1
+        
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Reset and Seed failed: {str(e)}")
+
+    return {"success": True, "inserted": inserted}
