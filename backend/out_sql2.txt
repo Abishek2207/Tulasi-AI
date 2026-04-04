@@ -1,3 +1,0 @@
-SELECT hackathon.id, hackathon.name, hackathon.organizer, hackathon.description, hackathon.prize, hackathon.prize_pool, hackathon.deadline, hackathon.link, hackathon.registration_link, hackathon.tags, hackathon.image_url, hackathon.participants_count, hackathon.status, hackathon.is_active, hackathon."mode", hackathon.difficulty, hackathon.team_size, hackathon.start_date, hackathon.end_date, hackathon.registration_deadline, hackathon.domains, hackathon.currency, hackathon.location 
-FROM hackathon ORDER BY hackathon.id DESC 
- LIMIT 10 OFFSET 0
