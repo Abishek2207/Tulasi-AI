@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
 from typing import List, Dict
 from datetime import datetime, timedelta
@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from app.core.database import get_session
 from app.api.deps import get_current_user
 from app.models.models import User, ActivityLog, SolvedProblem
+from app.core.rate_limit import limiter
 
 router = APIRouter()
 
@@ -120,7 +121,9 @@ def get_career_readiness(
 
 
 @router.get("/daily-mission")
+@limiter.limit("15/minute")
 def get_daily_mission(
+    request: Request,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
@@ -206,7 +209,9 @@ def get_next_best_action(
 
 
 @router.get("/strategic-plan")
+@limiter.limit("5/minute")
 def get_strategic_plan(
+    request: Request,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
@@ -252,7 +257,9 @@ def get_strategic_plan(
 
 
 @router.get("/daily-routine")
+@limiter.limit("5/minute")
 def get_daily_routine(
+    request: Request,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
