@@ -38,7 +38,7 @@ class SimpleVectorStoreManager:
         try:
             if client is None: return None
             result = client.models.embed_content(
-                model="text-embedding-004",
+                model="gemini-embedding-001",
                 contents=text,
                 config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
             )
@@ -65,7 +65,7 @@ class SimpleVectorStoreManager:
         try:
             if client is None: return []
             result = client.models.embed_content(
-                model="text-embedding-004",
+                model="gemini-embedding-001",
                 contents=query,
                 config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
             )

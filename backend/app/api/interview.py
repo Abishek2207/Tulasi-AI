@@ -96,7 +96,7 @@ class _RAGEvaluator:
             for item in self._dataset
         ]
         try:
-            result = client.models.embed_content(model="text-embedding-004", contents=texts)
+            result = client.models.embed_content(model="gemini-embedding-001", contents=texts)
             self._embeddings = np.array([e.values for e in result.embeddings])
             print(f"✅ [RAG] Pre-embedded {len(self._dataset)} QA pairs.")
         except Exception as e:
@@ -113,7 +113,7 @@ class _RAGEvaluator:
             client = genai.Client(api_key=settings.effective_gemini_key) if settings.effective_gemini_key else None
             
             if client:
-                res = client.models.embed_content(model="text-embedding-004", contents=query)
+                res = client.models.embed_content(model="gemini-embedding-001", contents=query)
                 q_emb = np.array(res.embeddings[0].values)
             else:
                 return []
