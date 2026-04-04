@@ -34,37 +34,49 @@ export function RoutineCard() {
   }
 
   return (
-    <div className="glass-card premium-glow" style={{ padding: 24, height: 400, display: "flex", flexDirection: "column", border: "1px solid rgba(139,92,246,0.2)", background: "linear-gradient(180deg, rgba(8,8,18,0.95), rgba(139,92,246,0.02))" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+    <div className="glass-card-premium" style={{ 
+      padding: "28px", 
+      height: "100%", 
+      display: "flex", 
+      flexDirection: "column", 
+      background: "linear-gradient(180deg, rgba(8,8,18,0.95), rgba(139,92,246,0.02))", 
+      position: "relative", 
+      overflow: "hidden",
+      borderRadius: 32,
+      border: "1px solid rgba(139,92,246,0.2)",
+      boxSizing: "border-box"
+    }}>
+      <div className="neural-pulse" style={{ position: "absolute", top: -20, right: -20, width: 120, height: 120, background: "radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%)", filter: "blur(20px)", zIndex: 0 }} />
+      
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, position: "relative", zIndex: 1 }}>
         <div>
-          <h3 style={{ fontSize: 16, fontWeight: 900, color: "white", marginBottom: 2 }}>📅 Daily Routine</h3>
-          <p style={{ fontSize: 11, color: "var(--text-muted)" }}>AI-Optimized Learning Blocks</p>
+          <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 2 }}>📅 Daily Routine</h3>
+          <p style={{ fontSize: 11, color: "#A78BFA", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>Neural Schedule</p>
         </div>
-        <div style={{ padding: "4px 8px", borderRadius: 8, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", fontSize: 9, fontWeight: 800, color: "#A78BFA" }}>
-          LIVE FEED
+        <div className="animate-pulse-slow" style={{ padding: "6px 12px", borderRadius: 30, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", fontSize: 10, fontWeight: 900, color: "#A78BFA", letterSpacing: 1 }}>
+          SYNCED
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", paddingRight: 8 }} className="custom-scrollbar">
+      <div style={{ flex: 1, overflowY: "auto", paddingRight: 8, position: "relative", zIndex: 1 }} className="custom-scrollbar">
         {routine.map((item, i) => (
           <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-            style={{ display: "flex", gap: 16, marginBottom: 16, position: "relative" }}>
+            style={{ display: "flex", gap: 20, marginBottom: 20, position: "relative" }}>
             
-            {/* Timeline Line */}
             {i < routine.length - 1 && (
-              <div style={{ position: "absolute", left: 19, top: 40, bottom: -16, width: 2, background: "rgba(139,92,246,0.1)" }} />
+              <div style={{ position: "absolute", left: 51, top: 24, bottom: -24, width: 2, background: "linear-gradient(to bottom, rgba(139,92,246,0.3), transparent)" }} />
             )}
 
-            <div style={{ minWidth: 40, textAlign: "right" }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)" }}>{item.time}</div>
-                <div style={{ fontSize: 9, fontWeight: 700, color: item.intensity === "Deep Work" ? "#F43F5E" : item.intensity === "Focus" ? "#A78BFA" : "#10B981", marginTop: 2 }}>{item.intensity}</div>
+            <div style={{ minWidth: 44, textAlign: "right", marginTop: 4 }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-primary)" }}>{item.time}</div>
+                <div style={{ fontSize: 9, fontWeight: 800, color: item.intensity === "Deep Work" ? "#F43F5E" : item.intensity === "Focus" ? "#A78BFA" : "#10B981", marginTop: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>{item.intensity}</div>
             </div>
 
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#8B5CF6", marginTop: 4, zIndex: 1, boxShadow: "0 0 10px #8B5CF6" }} />
+            <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#8B5CF6", marginTop: 8, zIndex: 1, boxShadow: "0 0 12px #8B5CF6", border: "2px solid rgba(255,255,255,0.1)" }} />
 
-            <div style={{ flex: 1, padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "white", marginBottom: 2 }}>{item.task}</div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.4 }}>{item.topic}</div>
+            <div style={{ flex: 1, padding: "16px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(10px)" }}>
+              <div style={{ fontSize: 14, fontWeight: 900, color: "white", marginBottom: 4, letterSpacing: "-0.3px" }}>{item.task}</div>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.5, fontWeight: 500 }}>{item.topic}</div>
             </div>
 
           </motion.div>
@@ -72,8 +84,8 @@ export function RoutineCard() {
       </div>
 
       {generatedAt && (
-        <div style={{ fontSize: 10, color: "var(--text-muted)", textAlign: "center", marginTop: 12, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 12 }}>
-          Last Synced: {new Date(generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        <div style={{ fontSize: 10, color: "var(--text-muted)", textAlign: "center", marginTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 16, fontWeight: 600, letterSpacing: 0.5 }}>
+          LAST OPTIMIZED: {new Date(generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toUpperCase()}
         </div>
       )}
     </div>

@@ -261,6 +261,45 @@ select:focus {
 }
 
 /* ============================
+   TECHNICAL BACKGROUNDS
+   ============================ */
+.bg-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+}
+
+.bg-dot {
+  background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.neural-pulse {
+  animation: neuralPulse 4s infinite alternate ease-in-out;
+}
+
+@keyframes neuralPulse {
+  0% { opacity: 0.2; filter: blur(40px); }
+  50% { opacity: 0.5; filter: blur(60px); }
+  100% { opacity: 0.3; filter: blur(45px); }
+}
+
+/* ============================
+   MARQUEE ANIMATION
+   ============================ */
+.marquee {
+  display: flex;
+  width: fit-content;
+  animation: marquee 30s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ============================
    CHAT BUBBLE ENHANCEMENTS
    ============================ */
 .chat-bubble-user {
@@ -512,11 +551,19 @@ select option {
 @media (min-width: 1024px) { .card-padding { padding: 48px; } }
 
 .hero-title {
-  font-size: 32px;
-  line-height: 1.1;
+  font-size: clamp(36px, 8vw, 108px);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-weight: 900;
 }
-@media (min-width: 768px) { .hero-title { font-size: 44px; } }
-@media (min-width: 1024px) { .hero-title { font-size: 56px; } }
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: clamp(32px, 12vw, 48px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+}
 
 .responsive-grid {
   display: grid;

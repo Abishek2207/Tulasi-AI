@@ -102,12 +102,15 @@ export default function Sidebar() {
   return (
     <div style={{
       width: 280, height: "100vh",
-      background: "linear-gradient(180deg, #09090f 0%, #0b0d14 100%)",
-      borderRight: "1px solid rgba(255,255,255,0.04)",
+      background: "rgba(10, 10, 15, 0.95)",
+      borderRight: "1px solid rgba(255,255,255,0.08)",
       display: "flex", flexDirection: "column",
       overflow: "hidden",
-      boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
+      position: "relative"
     }} className="sidebar-container">
+      {/* Premium Ambient Background */}
+      <div className="bg-dot" style={{ position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none" }} />
+      <div className="neural-pulse" style={{ position: "absolute", top: "20%", left: "-20%", width: "100%", height: "40%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)", pointerEvents: "none" }} />
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
@@ -167,10 +170,11 @@ export default function Sidebar() {
                       textDecoration: "none",
                       color: active ? "#fff" : "rgba(255,255,255,0.45)",
                       background: active
-                        ? "linear-gradient(90deg, rgba(139,92,246,0.18), rgba(6,182,212,0.06))"
+                        ? "rgba(139,92,246,0.08)"
                         : "transparent",
-                      borderLeft: active ? "2px solid #8B5CF6" : "2px solid transparent",
-                      transition: "all 0.15s ease",
+                      borderLeft: active ? "3px solid #8B5CF6" : "3px solid transparent",
+                      backdropFilter: active ? "blur(10px)" : "none",
+                      transition: "all 0.2s var(--ease-premium)",
                       fontSize: 13, fontWeight: active ? 600 : 400,
                       opacity: isLocked ? 0.55 : 1,
                     }}
@@ -229,40 +233,33 @@ export default function Sidebar() {
 
       {/* User footer */}
       {currentUser && (
-        <div style={{ padding: "12px 12px 16px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="glass-card-premium" style={{ 
+          margin: "12px",
+          padding: "16px", 
+          borderRadius: 20,
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          boxShadow: "0 10px 20px rgba(0,0,0,0.2)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{
-              width: 34, height: 34, borderRadius: "50%",
+              width: 40, height: 40, borderRadius: 14,
               background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 700, fontSize: 13, color: "white", flexShrink: 0,
-              boxShadow: "0 0 12px rgba(139,92,246,0.3)",
+              fontWeight: 900, fontSize: 15, color: "white", flexShrink: 0,
+              boxShadow: "0 8px 16px rgba(139,92,246,0.4)",
             }}>
               {(currentUser.name || currentUser.email || "U")[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.3px" }}>
                 {currentUser.name || "Student"}
               </div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {currentUser.email}
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>
+                 {isPro ? "PLATINUM" : "FREE MEMBER"}
               </div>
             </div>
-            {isPro ? (
-              <span style={{ 
-                fontSize: 10, padding: "4px 10px", borderRadius: 8, 
-                background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(217,70,239,0.15))", 
-                border: "1px solid rgba(139,92,246,0.4)",
-                color: "#A78BFA", fontWeight: 800, whiteSpace: "nowrap",
-                boxShadow: "0 0 15px rgba(139,92,246,0.2)",
-                backdropFilter: "blur(10px)"
-              }}>PLATINUM</span>
-            ) : (
-              <span style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>Free</span>
-            )}
           </div>
-
-          {/* Upgrade button removed - Everyone is Platinum */}
         </div>
       )}
       <style>{`
