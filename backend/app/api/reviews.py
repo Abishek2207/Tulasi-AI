@@ -3,7 +3,7 @@ Tulasi AI — Public Reviews API
 - GET  /reviews   : Return latest 10 reviews (email hidden for privacy)
 - POST /reviews   : Submit a review (public endpoint, optional XP award if email matches)
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
 from pydantic import BaseModel, Field, validator
@@ -225,3 +225,76 @@ def edit_review(
         is_approved=review.is_approved,
         created_at=_parse_dt(review.created_at),
     )
+@router.delete("/{review_id}")
+def delete_review(
+    review_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Admin-only: Delete a review."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only.")
+    review = session.get(Review, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found.")
+    session.delete(review)
+    session.commit()
+    return {"success": True, "message": f"Review {review_id} deleted."}
+
+
+@router.patch("/approve/{review_id}")
+def approve_review(
+    review_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Admin-only: Approve a pending review."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only.")
+    review = session.get(Review, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found.")
+    review.is_approved = True
+    session.add(review)
+    session.commit()
+    return {"success": True, "message": f"Review {review_id} approved."}
+
+
+class SeedReview(BaseModel):
+    name: str
+    role: Optional[str] = None
+    review: str
+    rating: int = 5
+
+
+@router.post("/seed", status_code=201)
+def seed_reviews(
+    reviews: List[SeedReview],
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Admin-only: Bulk insert reviews with auto-approval (for DB migration)."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only.")
+    
+    inserted = 0
+    for r in reviews:
+        new_review = Review(
+            name=r.name,
+            role=r.role,
+            review=r.review,
+            rating=r.rating,
+            is_approved=True,    # Auto-approve seeded reviews
+            is_featured=False,
+            created_at=datetime.utcnow(),
+        )
+        session.add(new_review)
+        inserted += 1
+    
+    try:
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Seed failed: {str(e)}")
+    
+    return {"success": True, "inserted": inserted}
