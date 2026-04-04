@@ -73,7 +73,7 @@ class _RAGEvaluator:
         if self._ready:
             return
         import os, numpy as np
-        import google.generativeai as genai
+        from google import genai
 
         dataset_path = os.path.join(
             os.path.dirname(__file__), "..", "..", "data", "rag_interview.json"
@@ -90,14 +90,14 @@ class _RAGEvaluator:
             self._ready = True
             return
 
-        genai.configure(api_key=settings.effective_gemini_key)
+        client = genai.Client(api_key=settings.effective_gemini_key)
         texts = [
             f"Question: {item.get('question', '')}\nIdeal Answer: {item.get('ideal_answer', '')}"
             for item in self._dataset
         ]
         try:
-            result = genai.embed_content(model="models/text-embedding-004", content=texts)
-            self._embeddings = np.array(result["embedding"])
+            result = client.models.embed_content(model="text-embedding-004", contents=texts)
+            self._embeddings = np.array([e.values for e in result.embeddings])
             print(f"✅ [RAG] Pre-embedded {len(self._dataset)} QA pairs.")
         except Exception as e:
             print(f"❌ [RAG] Embedding failed: {e}")
@@ -109,12 +109,14 @@ class _RAGEvaluator:
             return []
         try:
             import numpy as np
-            import google.generativeai as genai
-            if settings.effective_gemini_key:
-                genai.configure(api_key=settings.effective_gemini_key)
-            q_emb = np.array(
-                genai.embed_content(model="models/text-embedding-004", content=query)["embedding"]
-            )
+            from google import genai
+            client = genai.Client(api_key=settings.effective_gemini_key) if settings.effective_gemini_key else None
+            
+            if client:
+                res = client.models.embed_content(model="text-embedding-004", contents=query)
+                q_emb = np.array(res.embeddings[0].values)
+            else:
+                return []
             norms = np.linalg.norm(self._embeddings, axis=1) * np.linalg.norm(q_emb)
             norms = np.where(norms == 0, 1e-9, norms)
             sims = np.dot(self._embeddings, q_emb) / norms

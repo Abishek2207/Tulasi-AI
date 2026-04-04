@@ -1,13 +1,15 @@
 import os
 import json
 import numpy as np
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 FAISS_INDEX_DIR = os.path.join(os.path.dirname(__file__), '../../../../database/faiss')
 _GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
 
+client = None
 if _GOOGLE_API_KEY:
-    genai.configure(api_key=_GOOGLE_API_KEY)
+    client = genai.Client(api_key=_GOOGLE_API_KEY)
 
 class SimpleVectorStoreManager:
     def __init__(self):
@@ -34,12 +36,13 @@ class SimpleVectorStoreManager:
 
     def embed_text(self, text: str):
         try:
-            result = genai.embed_content(
-                model="models/embedding-001",
-                content=text,
-                task_type="retrieval_document"
+            if client is None: return None
+            result = client.models.embed_content(
+                model="text-embedding-004",
+                contents=text,
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
             )
-            return result['embedding']
+            return result.embeddings[0].values
         except Exception as e:
             print(f"⚠️  Embedding failed: {e}")
             return None
@@ -60,11 +63,13 @@ class SimpleVectorStoreManager:
 
     def search(self, query: str, top_k: int = 3):
         try:
-            query_embedding = genai.embed_content(
-                model="models/embedding-001",
-                content=query,
-                task_type="retrieval_query",
-            )['embedding']
+            if client is None: return []
+            result = client.models.embed_content(
+                model="text-embedding-004",
+                contents=query,
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
+            )
+            query_embedding = result.embeddings[0].values
         except Exception as e:
             print(f"⚠️  Query embedding failed: {e}")
             return []

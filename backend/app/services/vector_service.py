@@ -21,20 +21,21 @@ class VectorService:
 
     def embed_documents(self, text: str) -> list[float]:
         """Embed a single text string into a vector."""
-        import os
         # 🚨 Use Gemini API to prevent Render Server PyTorch OOM crashes
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if api_key:
             try:
-                import google.generativeai as genai
-                # Ensure it's configured in case it wasn't yet
-                genai.configure(api_key=api_key)
-                result = genai.embed_content(
-                    model="models/embedding-001",
-                    content=text,
-                    task_type="retrieval_document"
+                from google import genai
+                from google.genai import types
+                client = genai.Client(api_key=api_key)
+                result = client.models.embed_content(
+                    model="text-embedding-004",
+                    contents=text,
+                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
                 )
-                return result['embedding']
+                if result.embeddings and len(result.embeddings) > 0:
+                    return result.embeddings[0].values
+                return [0.0] * 768
             except Exception as e:
                 print(f"Gemini API embed failed: {e}")
                 # NEVER fallback to PyTorch on cloud! It will OOM crash the process!
@@ -61,14 +62,15 @@ class VectorService:
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if api_key:
             try:
-                import google.generativeai as genai
-                genai.configure(api_key=api_key)
-                result = genai.embed_content(
-                    model="models/embedding-001",
-                    content=texts,
-                    task_type="retrieval_document"
+                from google import genai
+                from google.genai import types
+                client = genai.Client(api_key=api_key)
+                result = client.models.embed_content(
+                    model="text-embedding-004",
+                    contents=texts,
+                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
                 )
-                embeddings = result['embedding']
+                embeddings = [e.values for e in result.embeddings]
             except Exception as e:
                 print(f"Batch embed failed: {e}")
                 return

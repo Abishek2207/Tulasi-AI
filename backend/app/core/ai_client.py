@@ -2,7 +2,8 @@ import os
 import time
 import json
 import httpx
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from typing import List, Dict, Optional, Generator, Union
 from app.core.config import settings
 
@@ -47,9 +48,6 @@ class HybridAIClient:
         env_or_model = settings.OPENROUTER_MODEL or ""
         self.openrouter_model = env_or_model if env_or_model else self.OPENROUTER_FREE_MODELS[0]
 
-        if self.gemini_key:
-            genai.configure(api_key=self.gemini_key)
-
     # ──────────────────────────────────────────────────────────────
     # Message Formatters
     # ──────────────────────────────────────────────────────────────
@@ -63,9 +61,9 @@ class HybridAIClient:
         contents = []
         for m in (history or []):
             role = "user" if m.get("role") == "user" else "model"
-            contents.append({"role": role, "parts": [m.get("content", "")]})
+            contents.append({"role": role, "parts": [{"text": m.get("content", "")}]})
 
-        current_parts: list = [message]
+        current_parts: list = [{"text": message}]
         if image_data:
             import base64
             current_parts.append({
@@ -125,25 +123,23 @@ class HybridAIClient:
         if not gemini_key:
             raise AIClientError("Gemini API key is missing.")
 
-        genai.configure(api_key=gemini_key)
+        client = genai.Client(api_key=gemini_key)
 
-        model_kwargs = {}
+        config = None
         if system_instruction:
-            model_kwargs["system_instruction"] = system_instruction
-
-        model = genai.GenerativeModel(model_name, **model_kwargs)
+            config = types.GenerateContentConfig(system_instruction=system_instruction)
 
         if stream:
-            response = model.generate_content(contents, stream=True)
+            response_stream = client.models.generate_content_stream(model=model_name, contents=contents, config=config)
 
             def gen():
-                for chunk in response:
+                for chunk in response_stream:
                     if hasattr(chunk, "text") and chunk.text:
                         yield chunk.text
 
             return gen()
         else:
-            response = model.generate_content(contents)
+            response = client.models.generate_content(model=model_name, contents=contents, config=config)
             if response and hasattr(response, "text") and response.text:
                 return response.text
             return "No response generated."

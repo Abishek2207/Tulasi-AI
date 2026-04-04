@@ -18,7 +18,7 @@ from app.core.security import get_current_user
 from datetime import date
 from app.services.vector_service import vector_service
 
-import google.generativeai as genai
+
 import time
 
 router = APIRouter()

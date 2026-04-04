@@ -10,7 +10,6 @@ import time
 from typing import Optional, List
 
 from dotenv import load_dotenv
-import google.generativeai as genai
 
 from app.core.ai_client import ai_client
 from app.core.config import settings
