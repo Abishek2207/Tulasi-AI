@@ -661,8 +661,16 @@ export default function AdminPage() {
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                               <Avatar name={u.name || u.email} pro={u.is_pro} />
                               <div>
-                                <div style={{ fontWeight: 700, fontSize: 13 }}>{u.name || "—"}</div>
-                                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{u.email}</div>
+                                <div style={{ fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                                  {u.name || "—"}
+                                  {u.user_type && <span style={{ fontSize: 9, background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: 4, color: "var(--text-muted)", textTransform: "capitalize" }}>{u.user_type}</span>}
+                                  {(u.abuse_count || 0) > 0 && <span style={{ fontSize: 9, background: "rgba(244,63,94,0.15)", padding: "2px 6px", borderRadius: 4, color: "#F43F5E", fontWeight: 800 }}>{u.abuse_count} ⚠️</span>}
+                                </div>
+                                <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                                  {u.email}
+                                  <span style={{ fontSize: 9, opacity: 0.5, borderLeft: "1px solid rgba(255,255,255,0.2)", paddingLeft: 6 }}>{u.provider || "google"}</span>
+                                  {!u.is_onboarded && <span style={{ fontSize: 9, opacity: 0.5, color: "#F59E0B" }}>(Pending Onboarding)</span>}
+                                </div>
                               </div>
                             </div>
                           </td>
