@@ -116,7 +116,7 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
 
 
 @router.post("/login")
-@limiter.limit("10/minute")
+@limiter.limit("5/minute")
 def login(request: Request, req: LoginRequest, db: Session = Depends(get_session)):
     query = select(User).where(User.email == req.email)
     result = db.exec(query)
@@ -224,7 +224,8 @@ class OAuthLoginRequest(BaseModel):
 
 
 @router.post("/google-oauth")
-def oauth_login(req: OAuthLoginRequest, db: Session = Depends(get_session)):
+@limiter.limit("5/minute")
+def oauth_login(request: Request, req: OAuthLoginRequest, db: Session = Depends(get_session)):
     """Auto-register or login OAuth users (Google/GitHub) and return a JWT token."""
     query = select(User).where(User.email == req.email)
     result = db.exec(query)
