@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { API_URL } from "@/lib/api";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -33,8 +34,7 @@ export default function AuthCallbackPage() {
         const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail?.split("@")[0] || "User";
         const provider = session.user.app_metadata?.provider || "google";
 
-        // 2. Safely get backend URL ensuring HTTPS and no trailing slash
-        const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "https://tulasi-ai-wgwl.onrender.com";
+        // 2. Clear backend URL ensuring HTTPS and no trailing slash
 
         console.log("[OAuth Callback] Exchanging with backend...");
 

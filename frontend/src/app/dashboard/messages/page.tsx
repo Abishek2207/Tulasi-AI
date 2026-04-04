@@ -10,7 +10,7 @@ import {
   Hash, User as UserIcon, ShieldCheck, Zap, Sparkles,
   ArrowLeft, Plus, Image as ImageIcon, Smile, Mic, BrainCircuit
 } from "lucide-react";
-import { intelligenceApi } from "@/lib/api";
+import { intelligenceApi, API_URL } from "@/lib/api";
 
 interface User {
   id: number;
@@ -126,7 +126,7 @@ export default function MessagesPage() {
   const fetchDirectory = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/users/directory`, {
+      const res = await fetch(`${API_URL}/api/messages/users/directory`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -141,7 +141,7 @@ export default function MessagesPage() {
   const fetchGroups = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups`, {
+      const res = await fetch(`${API_URL}/api/groups`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -159,7 +159,7 @@ export default function MessagesPage() {
   const fetchMessages = async (userId: number) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/${userId}`, {
+      const res = await fetch(`${API_URL}/api/messages/${userId}`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -181,7 +181,7 @@ export default function MessagesPage() {
   const fetchGroupMessages = async (groupId: number) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups/${groupId}/messages`, {
+      const res = await fetch(`${API_URL}/api/groups/${groupId}/messages`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -214,7 +214,7 @@ export default function MessagesPage() {
       const sharedCode = getSharedCode(currentUserId, activeUser.id);
       try {
         const { ciphertext, iv } = await encryptMessage(plaintext, sharedCode);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
+        const res = await fetch(`${API_URL}/api/messages`, {
           method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ receiver_id: activeUser.id, content: `${iv}:${ciphertext}` })
         });
@@ -222,7 +222,7 @@ export default function MessagesPage() {
       } catch (err) { console.error("DM failed:", err); }
     } else if (activeTab === "community" && activeGroup) {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups/${activeGroup.id}/messages`, {
+        const res = await fetch(`${API_URL}/api/groups/${activeGroup.id}/messages`, {
           method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ content: plaintext })
         });

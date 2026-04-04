@@ -8,7 +8,7 @@ import {
   CheckCircle2, Star, Calendar, BarChart3, Target, Sparkles, RefreshCw
 } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
+import { API } from "@/lib/api";
 
 function getToken() {
   return typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";

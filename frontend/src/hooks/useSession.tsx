@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
+import { API_URL } from "@/lib/api";
 
 // Global tracker to ensure one sync per session per user across all instances of the hook
 const syncTracker = new Set<string>();

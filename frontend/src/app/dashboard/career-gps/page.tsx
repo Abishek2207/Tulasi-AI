@@ -6,7 +6,7 @@ import { useSession } from "@/hooks/useSession";
 import { Navigation, ChevronRight, Clock, Star, Zap, CheckCircle, ArrowRight, RefreshCw, Sparkles, Target, BookOpen, Building2 } from "lucide-react";
 import { AIResilienceWrapper } from "@/components/dashboard/AIResilienceWrapper";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
+import { API } from "@/lib/api";
 const YEARS = [
   { value: "1st_year", label: "1st Year", desc: "Foundation & Basics", icon: "🌱" },
   { value: "2nd_year", label: "2nd Year", desc: "DSA & Projects", icon: "⚡" },

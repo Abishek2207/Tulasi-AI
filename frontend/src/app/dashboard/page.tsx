@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import confetti from "canvas-confetti";
-import { activityApi, authApi } from "@/lib/api";
+import { activityApi, authApi, API } from "@/lib/api";
 import {
   MessageSquare, Code, Target, Map, FileText,
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award,
@@ -163,8 +163,8 @@ export default function DashboardPage() {
         activityApi.getLeaderboard(token).catch(() => null),
         authApi.me(token).catch(() => ({})),
         activityApi.getPublicFeed().catch(() => null),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/next-action`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/internships/matches`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null)
+        fetch(`${API}/api/next-action`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null),
+        fetch(`${API}/api/internships/matches`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null)
       ]);
       if (statsData) {
         setLocalStats({

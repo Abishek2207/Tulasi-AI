@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/api";
 import { motion } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import { Server, Database, Activity, ShieldCheck, Cpu, ArrowRight, Sparkles } from "lucide-react";
@@ -19,7 +20,7 @@ export default function SystemDesignPage() {
     async function fetchData() {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
+      const baseUrl = API_URL;
       
       try {
         const [cRes, coRes, pRes] = await Promise.all([

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { API_URL } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Users } from "lucide-react";
 
@@ -39,7 +40,7 @@ export default function VoiceRoom({ roomId, userId, userName, onLeave }: VoiceRo
 
   // Build the WS URL pointing to the signaling backend
   const getSignalingUrl = () => {
-    const base = (process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com")
+    const base = (API_URL)
       .replace("https://", "wss://")
       .replace("http://", "ws://");
     return `${base}/api/voice/signal/ws/${roomId}`;

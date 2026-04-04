@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_URL } from "@/lib/api";
 import { motion } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
@@ -13,7 +14,7 @@ export default function BillingPage() {
   const handleSubscribe = async () => {
     setLoading(true);
     try {
-      const RENDER_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+      const RENDER_BACKEND_URL = API_URL;
       const res = await fetch(`${RENDER_BACKEND_URL}/api/payment/simulate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, credentials:"include", mode:"cors"

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Send, X, CheckCircle2, User, Mail, Briefcase, MessageSquare } from "lucide-react";
 import confetti from "canvas-confetti";
+import { API_URL } from "@/lib/api";
 
 interface ReviewFormProps {
   onClose?: () => void;
@@ -34,7 +35,6 @@ export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
           return;
         }
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
         const res = await fetch(`${API_URL}/api/reviews/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -77,7 +77,6 @@ export function ReviewForm({ onClose, onSuccess }: ReviewFormProps) {
         return;
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
       const url = existingReviewId 
         ? `${API_URL}/api/reviews/${existingReviewId}` 
         : `${API_URL}/api/reviews`;

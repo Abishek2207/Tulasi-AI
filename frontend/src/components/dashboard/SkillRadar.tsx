@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import { BrainCircuit, Info } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 interface SkillRadarProps {
   token: string;
@@ -18,8 +19,7 @@ export function SkillRadar({ token }: SkillRadarProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
-        const res = await fetch(`${apiUrl}/api/intelligence/skill-profile`, {
+        const res = await fetch(`${API_URL}/api/intelligence/skill-profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const result = await res.json();

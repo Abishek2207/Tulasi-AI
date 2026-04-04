@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import { Compass, Clock, Map, Target, Bot, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { API_URL } from "@/lib/api";
 
 export default function PrepPlanPage() {
   const { data: session } = useSession();
@@ -21,7 +22,7 @@ export default function PrepPlanPage() {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/prep-plan/my-plans`, {
+      const res = await fetch(`${API_URL}/api/prep-plan/my-plans`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -35,7 +36,7 @@ export default function PrepPlanPage() {
     setLoading(true);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000"}/api/prep-plan/generate`, {
+      const res = await fetch(`${API_URL}/api/prep-plan/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ role, duration_months: duration }),

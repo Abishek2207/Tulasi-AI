@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { API_URL } from "@/lib/api";
 
 // This is a server-side Route Handler — localStorage is unavailable here.
 // We ping the backend health endpoint without a user token (public endpoint).
 export async function GET() {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+  const backendUrl = API_URL;
   try {
     const res = await fetch(`${backendUrl}/api/health`, {
       method: 'GET',
