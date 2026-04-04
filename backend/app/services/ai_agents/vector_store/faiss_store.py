@@ -1,15 +1,13 @@
 import os
 import json
 import numpy as np
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
 FAISS_INDEX_DIR = os.path.join(os.path.dirname(__file__), '../../../../database/faiss')
 _GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
 
-client = None
 if _GOOGLE_API_KEY:
-    client = genai.Client(api_key=_GOOGLE_API_KEY)
+    genai.configure(api_key=_GOOGLE_API_KEY)
 
 class SimpleVectorStoreManager:
     def __init__(self):
@@ -36,13 +34,13 @@ class SimpleVectorStoreManager:
 
     def embed_text(self, text: str):
         try:
-            if client is None: return None
-            result = client.models.embed_content(
-                model="gemini-embedding-001",
-                contents=text,
-                config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+            if not _GOOGLE_API_KEY: return None
+            result = genai.embed_content(
+                model="models/gemini-embedding-001",
+                content=text,
+                task_type="retrieval_document"
             )
-            return result.embeddings[0].values
+            return result['embedding']
         except Exception as e:
             print(f"⚠️  Embedding failed: {e}")
             return None
@@ -63,13 +61,13 @@ class SimpleVectorStoreManager:
 
     def search(self, query: str, top_k: int = 3):
         try:
-            if client is None: return []
-            result = client.models.embed_content(
-                model="gemini-embedding-001",
-                contents=query,
-                config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
+            if not _GOOGLE_API_KEY: return []
+            result = genai.embed_content(
+                model="models/gemini-embedding-001",
+                content=query,
+                task_type="retrieval_query"
             )
-            query_embedding = result.embeddings[0].values
+            query_embedding = result['embedding']
         except Exception as e:
             print(f"⚠️  Query embedding failed: {e}")
             return []

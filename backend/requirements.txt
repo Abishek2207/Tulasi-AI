@@ -4,8 +4,8 @@ uvicorn[standard]==0.31.0
 gunicorn==21.2.0
 python-multipart==0.0.12
 
-# ── AI / Gemini (google-generativeai replaced by google-genai) ───────────
-google-genai>=0.3.0
+# ── AI / Gemini (reverted to stable google-generativeai) ───────────
+google-generativeai>=0.7.2
 
 # ── LangChain + RAG ─────────────────────────────────────────────────
 langchain==0.3.14

@@ -25,13 +25,12 @@ class VectorService:
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if api_key:
             try:
-                from google import genai
-                from google.genai import types
-                client = genai.Client(api_key=api_key)
-                result = client.models.embed_content(
-                    model="gemini-embedding-001",
-                    contents=text,
-                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                result = genai.embed_content(
+                    model="models/gemini-embedding-001",
+                    content=text,
+                    task_type="retrieval_document"
                 )
                 if result.embeddings and len(result.embeddings) > 0:
                     return result.embeddings[0].values
@@ -62,13 +61,12 @@ class VectorService:
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if api_key:
             try:
-                from google import genai
-                from google.genai import types
-                client = genai.Client(api_key=api_key)
-                result = client.models.embed_content(
-                    model="gemini-embedding-001",
-                    contents=texts,
-                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                result = genai.embed_content(
+                    model="models/gemini-embedding-001",
+                    content=texts,
+                    task_type="retrieval_document"
                 )
                 embeddings = [e.values for e in result.embeddings]
             except Exception as e:
