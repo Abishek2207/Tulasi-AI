@@ -31,7 +31,7 @@ class LoginRequest(BaseModel):
 
 
 @router.post("/register")
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 def register(request: Request, req: RegisterRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
     print("Incoming password length:", len(req.password))
     query = select(User).where(User.email == req.email)
@@ -127,7 +127,7 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
 
 
 @router.post("/login")
-@limiter.limit("10/minute")
+@limiter.limit("30/minute")
 def login(request: Request, req: LoginRequest, db: Session = Depends(get_session)):
     if not req.email or not req.password:
         raise HTTPException(status_code=400, detail="Email and password are required")
@@ -243,7 +243,7 @@ class OAuthLoginRequest(BaseModel):
 
 
 @router.post("/google-oauth")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 def oauth_login(request: Request, req: OAuthLoginRequest, db: Session = Depends(get_session)):
     """Auto-register or login OAuth users (Google/GitHub) and return a JWT token."""
     query = select(User).where(User.email == req.email)
