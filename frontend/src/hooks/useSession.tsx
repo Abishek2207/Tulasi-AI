@@ -30,10 +30,11 @@ interface SessionData {
 }
 
 /**
- * Hybrid session hook:
- * 1. Listens to Supabase auth state (handles Google OAuth redirects)
- * 2. When Supabase session exists, calls /api/auth/google-oauth to get a FastAPI JWT
- * 3. Also syncs user metadata to the Supabase 'users' table
+ * Hybrid session hook — Priority order:
+ * 1. localStorage JWT (email/password login) — ALWAYS takes priority
+ * 2. Supabase OAuth session (Google/GitHub)
+ *
+ * Key fix: Supabase's null INITIAL_SESSION will NEVER overwrite a valid localStorage token.
  */
 export function useSession() {
   const [data, setData] = useState<SessionData | null>(null);
@@ -42,7 +43,8 @@ export function useSession() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadFromLocalStorage() {
+    // ── 1. Try to load from localStorage (email/password users) ──────────────
+    function loadFromLocalStorage(): boolean {
       const token = localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
       if (!token || !userStr) return false;
@@ -67,104 +69,113 @@ export function useSession() {
       }
     }
 
-    async function syncUserToSupabase(session: any) {
-      if (!session?.user?.id || syncTracker.has(session.user.id)) return;
-      syncTracker.add(session.user.id);
-      
-      try {
-        const { error: upsertErr } = await supabase.from('users').upsert({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
-          avatar_url: session.user.user_metadata?.avatar_url || null,
-          created_at: new Date().toISOString()
-        }, { onConflict: 'email' });
-        
-        if (upsertErr) {
-          if (upsertErr.message?.includes("Lock broken") || upsertErr.message?.includes("AbortError")) {
-            console.warn("[Auth Sync] Lock handled by another tab/request. Skipping.");
-          } else {
-            console.error("⚠️ Failed to sync users table:", upsertErr.message);
-          }
-        }
-      } catch (err: any) {
-        if (err.name === "AbortError" || err.message?.includes("Lock broken")) {
-          console.warn("[Auth Sync] AbortError detected. Concurrent sync handled.");
-        } else {
-          console.error("⚠️ Failed to sync users table:", err);
-        }
-      } finally {
-        // Clear from tracker after a delay to allow re-syncing if needed after a long time
-        setTimeout(() => syncTracker.delete(session.user.id), 60_000);
-      }
-    }
-
-    async function exchangeSupabaseForJWT(supabaseToken: string, email: string, fullName?: string) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10_000); // 10s max
+    // ── 2. Exchange Supabase OAuth token for FastAPI JWT ──────────────────────
+    async function exchangeSupabaseForJWT(supabaseToken: string, email: string, fullName?: string, provider?: string): Promise<SessionUser> {
       try {
         const res = await fetch(`${API_URL}/api/auth/google-oauth`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, name: fullName || email.split("@")[0], provider: "google" }),
-          signal: controller.signal,
+          body: JSON.stringify({ email, name: fullName || email.split("@")[0], provider: provider || "google" }),
+          signal: AbortSignal.timeout(10_000),
         });
-        clearTimeout(timeoutId);
         if (res.ok) {
           const result = await res.json();
           if (result.access_token) {
             localStorage.setItem("token", result.access_token);
             localStorage.setItem("user", JSON.stringify(result.user));
-            console.log("[Auth] FastAPI JWT obtained for:", email, "role:", result.user?.role);
             return { ...result.user, accessToken: result.access_token };
           }
-        } else {
-          console.warn("[Auth] Backend returned", res.status, "for google-oauth \u2014 using Supabase fallback.");
         }
       } catch (err: any) {
-        clearTimeout(timeoutId);
-        if (err.name === "AbortError") {
-          console.warn("[Auth] Backend took >10s to respond, using Supabase session fallback.");
-        } else {
-          console.error("[Auth] Failed to exchange Supabase token for FastAPI JWT:", err);
+        if (err.name !== "TimeoutError" && err.name !== "AbortError") {
+          console.error("[Auth] Failed to exchange Supabase token:", err);
         }
       }
-      // Graceful fallback: user is valid via Supabase, just no FastAPI JWT yet
+      // Graceful fallback: user is valid via Supabase
       const isAdmin = email.toLowerCase() === "abishekramamoorthy22@gmail.com";
-      return { id: email, email, name: fullName || email.split("@")[0], role: isAdmin ? "admin" : "student", is_pro: true, xp: 0, level: 1, streak: 0, accessToken: supabaseToken };
+      return {
+        id: email,
+        email,
+        name: fullName || email.split("@")[0],
+        role: isAdmin ? "admin" : "student",
+        is_pro: true,
+        xp: 0,
+        level: 1,
+        streak: 0,
+        accessToken: supabaseToken,
+      };
     }
 
+    async function syncUserToSupabase(session: any) {
+      if (!session?.user?.id || syncTracker.has(session.user.id)) return;
+      syncTracker.add(session.user.id);
+      try {
+        await supabase.from("users").upsert({
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
+          avatar_url: session.user.user_metadata?.avatar_url || null,
+          created_at: new Date().toISOString(),
+        }, { onConflict: "email" });
+      } catch { /* silent */ }
+      setTimeout(() => syncTracker.delete(session.user.id), 60_000);
+    }
+
+    // ── Init: localStorage FIRST, Supabase only if no local token ────────────
     async function init() {
-      const hasLocalSession = await loadFromLocalStorage();
+      // CRITICAL: If we have a valid local JWT, skip Supabase entirely
+      const hasLocalSession = loadFromLocalStorage();
       if (hasLocalSession) return;
 
+      // No local JWT → check Supabase OAuth session
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          console.log("[Supabase Auth] Session found:", session.user.email);
           await syncUserToSupabase(session);
-          const user = await exchangeSupabaseForJWT(session.access_token, session.user.email!);
+          const provider = session.user.app_metadata?.provider || "google";
+          const userName = session.user.user_metadata?.full_name
+            || session.user.user_metadata?.name
+            || session.user.user_metadata?.user_name;
+          const user = await exchangeSupabaseForJWT(session.access_token, session.user.email!, userName, provider);
           if (mounted) {
             setData({ user });
             setStatus("authenticated");
           }
         } else {
-          if (mounted) setStatus("unauthenticated");
+          // Only mark unauthenticated if there's genuinely no local token either
+          if (mounted && !localStorage.getItem("token")) {
+            setStatus("unauthenticated");
+          } else if (mounted) {
+            // Double-check localStorage (race-safe)
+            const stillHasToken = loadFromLocalStorage();
+            if (!stillHasToken && mounted) setStatus("unauthenticated");
+          }
         }
       } catch {
-        if (mounted) setStatus("unauthenticated");
+        if (mounted) {
+          // Backend/Supabase down — try localStorage one more time before giving up
+          const fallback = loadFromLocalStorage();
+          if (!fallback) setStatus("unauthenticated");
+        }
       }
     }
 
     init();
 
+    // ── Supabase auth state listener (OAuth only — NEVER overrides local JWT) ──
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[Supabase Auth] State changed:", event);
+      // If user has a local FastAPI JWT, Supabase events have no authority
+      if (localStorage.getItem("token")) return;
+
       if (session?.user) {
         if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
           await syncUserToSupabase(session);
         }
-        const user = await exchangeSupabaseForJWT(session.access_token, session.user.email!);
+        const provider = session.user.app_metadata?.provider || "google";
+        const userName = session.user.user_metadata?.full_name
+          || session.user.user_metadata?.name
+          || session.user.user_metadata?.user_name;
+        const user = await exchangeSupabaseForJWT(session.access_token, session.user.email!, userName, provider);
         if (mounted) {
           setData({ user });
           setStatus("authenticated");
@@ -175,10 +186,12 @@ export function useSession() {
           setStatus("unauthenticated");
         }
       }
+      // INITIAL_SESSION with null = no OAuth session, ignore if no local JWT handled above
     });
 
-    const handleAuthChange = async () => {
-      await loadFromLocalStorage();
+    // ── Listen for custom email/password login events ─────────────────────────
+    const handleAuthChange = () => {
+      loadFromLocalStorage();
     };
     window.addEventListener("tulasi-auth-change", handleAuthChange);
 
@@ -210,4 +223,3 @@ export function signIn(provider: string, options?: any) {
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
-
