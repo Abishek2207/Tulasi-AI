@@ -161,7 +161,7 @@ def chat(request: Request, req: ChatRequest, db: Session = Depends(get_session),
     
     # Adaptive Decision Engine Integration
     intelligence = json.loads(user.user_intelligence_profile or "{}")
-    is_founder = user.email == "abishekramamoorthy22@gmail.com"
+    is_founder = user.email and user.email.lower() == "abishekramamoorthy22@gmail.com"
     
     founder_context = ""
     if is_founder:
@@ -292,7 +292,7 @@ def chat_stream(request: Request, req: ChatRequest, db: Session = Depends(get_se
     
     # Adaptive Decision Engine Integration
     intelligence = json.loads(user.user_intelligence_profile or "{}" )
-    is_founder = user.email == "abishekramamoorthy22@gmail.com"
+    is_founder = user.email and user.email.lower() == "abishekramamoorthy22@gmail.com"
     
     founder_context = ""
     if is_founder:

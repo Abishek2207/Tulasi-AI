@@ -11,7 +11,7 @@ import {
   Mic, MicOff, Volume2, VolumeX, ArrowRight, CheckCircle2,
   TrendingUp, BrainCircuit, Terminal, Briefcase, Users, Layout,
   Timer, Video, VideoOff, Zap, Target, Award, BarChart3, Star,
-  ChevronUp, ChevronDown
+  ChevronUp, ChevronDown, RefreshCw
 } from "lucide-react";
 
 const ROLES = [
@@ -31,6 +31,29 @@ const COMPANIES = [
   "Google", "Amazon", "Meta", "Apple", "Netflix", "Microsoft",
   "Startup", "Any Company", "TCS", "Infosys", "IBM", "Deloitte",
 ];
+
+function RetryCountdown({ seconds, onRetry, message = "Neural Sync in Progress..." }: { seconds: number; onRetry: () => void; message?: string }) {
+  const [count, setCount] = useState(seconds);
+  useEffect(() => {
+    if (count <= 0) { onRetry(); return; }
+    const t = setTimeout(() => setCount(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [count, onRetry]);
+  const pct = ((seconds - count) / seconds) * 100;
+  return (
+    <div style={{ textAlign: "center", padding: "20px" }}>
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+        style={{ display: "inline-block", marginBottom: 16 }}>
+        <RefreshCw size={24} color="#8B5CF6" />
+      </motion.div>
+      <div style={{ fontSize: 13, fontWeight: 800, color: "white", marginBottom: 6 }}>{message}</div>
+      <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 16 }}>Auto-retrying in <span style={{ color: "#8B5CF6", fontWeight: 900 }}>{count}s</span></div>
+      <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", maxWidth: 150, margin: "0 auto" }}>
+        <motion.div animate={{ width: `${pct}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#8B5CF6,#06B6D4)", borderRadius: 10 }} />
+      </div>
+    </div>
+  );
+}
 
 function VoiceWave({ active, color }: { active: boolean; color: string }) {
   return (
@@ -236,6 +259,8 @@ export default function InterviewPage() {
   const [currentDifficulty, setCurrentDifficulty] = useState(5);
   const [evalHistory, setEvalHistory] = useState<{ q: number; eval: EvalResult }[]>([]);
   const [currentEval, setCurrentEval] = useState<EvalResult | null>(null);
+  const [retryingStart, setRetryingStart] = useState(false);
+  const [retryingAnswer, setRetryingAnswer] = useState(false);
   const evalPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -291,9 +316,9 @@ export default function InterviewPage() {
     rec.start();
   };
 
-  const startInterview = async () => {
-    setLoading(true); setError("");
-    trackEvent("interview_started", { role, company, type: interviewType });
+  const startInterview = async (isRetry = false) => {
+    setLoading(true); setError(""); setRetryingStart(false);
+    if (!isRetry) trackEvent("interview_started", { role, company, type: interviewType });
     try {
       const token = localStorage.getItem("token") || "";
       const data = await interviewApi.start(role, company, interviewType, token);
@@ -307,12 +332,13 @@ export default function InterviewPage() {
       setPhase("active");
     } catch (e: any) {
       setError(e.message || "Failed to initialize interview engine.");
+      setRetryingStart(true);
     } finally { setLoading(false); }
   };
 
-  const submitAnswer = async () => {
+  const submitAnswer = async (isRetry = false) => {
     if (!answer.trim()) return;
-    setLoading(true); setError("");
+    setLoading(true); setError(""); setRetryingAnswer(false);
     try {
       const token = localStorage.getItem("token") || "";
       const data: any = await interviewApi.answer(answer, sessionId, token);
@@ -336,6 +362,7 @@ export default function InterviewPage() {
       }
     } catch (e: any) {
       setError(e.message || "Error processing response.");
+      setRetryingAnswer(true);
     } finally {
       setLoading(false); setIsListening(false);
     }
@@ -458,11 +485,17 @@ export default function InterviewPage() {
 
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                onClick={startInterview} disabled={loading} className="btn-primary"
+                onClick={() => startInterview(false)} disabled={loading} className="btn-primary"
                 style={{ width: "100%", padding: 18, borderRadius: 16, fontSize: 16, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, boxShadow: "0 10px 30px rgba(124,58,237,0.2)" }}
               >
                 {loading ? "Engaging AI Interlocutor..." : "INITIALIZE INTERVIEW ENGINE"} <ArrowRight size={20} />
               </motion.button>
+              
+              {retryingStart && (
+                 <div style={{ marginTop: 16, background: "rgba(139,92,246,0.05)", borderRadius: 16, border: "1px solid rgba(139,92,246,0.2)" }}>
+                    <RetryCountdown seconds={5} onRetry={() => startInterview(true)} message="Network hiccup detected. Resyncing..." />
+                 </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -544,7 +577,7 @@ export default function InterviewPage() {
                   <div style={{ display: "flex", gap: 10 }}>
                     <motion.button
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                      onClick={submitAnswer} disabled={loading || !answer.trim()}
+                      onClick={() => submitAnswer(false)} disabled={loading || !answer.trim()}
                       className="btn-primary"
                       style={{ flex: 1, padding: "14px", borderRadius: 12, fontWeight: 900, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                     >
@@ -559,9 +592,14 @@ export default function InterviewPage() {
                       border: "1px solid rgba(244,63,94,0.2)", color: "#F43F5E", fontWeight: 700, fontSize: 12, cursor: "pointer"
                     }}>Leave</button>
                   </div>
-                  {error && (
+                  {error && !retryingAnswer && (
                     <div style={{ fontSize: 12, color: "#F43F5E", padding: "8px 12px", borderRadius: 8, background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.15)" }}>
                       ⚠️ {error}
+                    </div>
+                  )}
+                  {retryingAnswer && (
+                    <div style={{ marginTop: 8, background: "rgba(139,92,246,0.05)", borderRadius: 12, border: "1px solid rgba(139,92,246,0.2)" }}>
+                      <RetryCountdown seconds={5} onRetry={() => submitAnswer(true)} message="Syncing AI response..." />
                     </div>
                   )}
                 </div>

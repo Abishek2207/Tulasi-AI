@@ -353,8 +353,13 @@ def start_interview(
     )
 
     try:
-        question = get_ai_response(prompt)
+        raw_question = get_ai_response(prompt)
+        question = raw_question
+    except Exception as fallback_e:
+        print(f"⚠️ [Interview Start Fallback] AI Error: {fallback_e}")
+        question = f"Let's begin the interview. Can you walk me through a complex {req.interview_type.lower()} problem you've solved recently relevant to a {req.role} role, and how you approached it?"
 
+    try:
         session_obj = PersistentInterviewSession(
             session_id=session_id,
             user_id=current_user.id,
@@ -382,7 +387,7 @@ def start_interview(
         }
     except Exception as e:
         db.rollback()
-        raise HTTPException(500, f"Error starting interview: {str(e)}")
+        raise HTTPException(500, f"Database Error starting interview: {str(e)}")
 
 
 @router.post("/answer")
@@ -562,7 +567,13 @@ Briefly acknowledge their last answer (1 short sentence), then ask question {int
 Do not break character. Keep it professional. Do not repeat previous questions."""
 
     try:
-        next_q = get_ai_response(next_q_prompt)
+        raw_next = get_ai_response(next_q_prompt)
+        next_q = raw_next
+    except Exception as fallback_e:
+        print(f"⚠️ [Interview Next Fallback] AI Error: {fallback_e}")
+        next_q = "Understood, that's a valid approach. Moving forward, could you discuss how you would ensure this implementation scales efficiently under heavy load, taking into account potential bottlenecks?"
+
+    try:
         history.append({"role": "ai", "content": next_q})
 
         interview_session.history_json = json.dumps(history)
@@ -581,4 +592,4 @@ Do not break character. Keep it professional. Do not repeat previous questions."
         }
     except Exception as e:
         db.rollback()
-        raise HTTPException(500, f"Error generating next question: {str(e)}")
+        raise HTTPException(500, f"Database Error saving next question: {str(e)}")
