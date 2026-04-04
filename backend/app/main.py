@@ -78,10 +78,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     origin = request.headers.get("origin", "*")
     headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
     return JSONResponse(
-        status_code=422,
+        status_code=400,
         content={
             "success": False,
-            "error": "Validation failed",
+            "error": "Bad Request",
             "detail": exc.errors(),
             "message": "Validation failed. Check your request payload.",
         },

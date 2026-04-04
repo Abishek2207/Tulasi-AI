@@ -247,7 +247,8 @@ async function request<T>(
         }
       } catch (e) {}
       
-      if (res.status >= 500) throw new Error(`500 Server Error: ${backendMsg}`);
+      if (res.status === 400) throw new Error(`Invalid Request: ${backendMsg}`);
+      if (res.status >= 500) throw new Error(`Server Error (503): ${backendMsg}`);
       throw new Error(backendMsg || `Request failed: ${res.status}`);
     }
     const data = await res.json();
