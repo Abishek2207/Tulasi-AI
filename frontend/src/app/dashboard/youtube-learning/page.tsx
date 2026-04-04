@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
-import { API_URL as API, chatApi, ChatMsg } from "@/lib/api";
+import { API_URL, chatApi, ChatMsg } from "@/lib/api";
 import { X, Send, Bot, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -135,7 +135,7 @@ export default function YouTubeLearningPage() {
   const logWatch = async (video: typeof ALL_VIDEOS[0]) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
         try {
-      await fetch(`${API}/api/activity/log`, {
+      await fetch(`${API_URL}/api/activity/log`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials: "include", mode: "cors",
         body: JSON.stringify({ 

@@ -10,7 +10,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line,
 } from "recharts";
 import toast from "react-hot-toast";
-import { API_URL as API, adminApi, Stats, AdminUser, Review, Activity, LeaderboardEntry,
+import { API_URL, adminApi, Stats, AdminUser, Review, Activity, LeaderboardEntry,
   CodeAnalytics, ChatAnalytics, Analytics, Hackathon,
   RevenueAnalytics, SystemHealth, AiUserProfile, Announcement, InviteCodeStats,
   RetentionData, HeatmapData, LiveUsers,
@@ -313,7 +313,7 @@ export default function AdminPage() {
 
   const downloadCSV = () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-    const url = `${API}/api/admin/export/users`;
+    const url = `${API_URL}/api/admin/export/users`;
     const a = document.createElement("a");
     a.href = url;
     a.setAttribute("download", "tulasi_users.csv");
