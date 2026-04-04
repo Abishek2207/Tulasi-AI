@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Announcement {
@@ -17,7 +18,6 @@ const COLORS = {
   error:   { bg: "rgba(244,63,94,0.12)",   border: "rgba(244,63,94,0.35)",   text: "#F43F5E",  icon: "🚨" },
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
 
 export function AnnouncementBanner() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);

@@ -10,18 +10,14 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line,
 } from "recharts";
 import toast from "react-hot-toast";
-import {
-  adminApi, Stats, AdminUser, Review, Activity, LeaderboardEntry,
+import { API_URL as API, adminApi, Stats, AdminUser, Review, Activity, LeaderboardEntry,
   CodeAnalytics, ChatAnalytics, Analytics, Hackathon,
   RevenueAnalytics, SystemHealth, AiUserProfile, Announcement, InviteCodeStats,
   RetentionData, HeatmapData, LiveUsers,
 } from "@/lib/api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
-
 type Tab = "overview" | "metrics" | "users" | "reviews" | "activity" | "leaderboard" | "code" | "chat" | "hackathons" | "revenue" | "health" | "tools";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
 const fmt = (d?: string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 const fmtDT = (d?: string | null) => d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 

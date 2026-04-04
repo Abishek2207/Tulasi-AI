@@ -16,7 +16,7 @@ const STEPS = [
     icon: <BrainCircuit size={28} />,
     color: "#06B6D4",
     title: "AI Chat & Flashcards",
-    desc: "Ask any engineering concept, generate 3D flashcard decks, and explore cross-domain insights—all synthesised by Gemini AI.",
+    desc: "Ask any engineering concept, generate 3D flashcard decks, and explore cross-domain insights—all synthesised by Neural Intelligence.",
   },
   {
     icon: <Target size={28} />,

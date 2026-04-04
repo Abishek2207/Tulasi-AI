@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import { X, Sparkles, User, Briefcase, GraduationCap, Code, Target, Rocket } from "lucide-react";
-import { authApi } from "@/lib/api";
+import { authApi, API_URL } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 const USER_TYPES = [
@@ -58,8 +58,7 @@ export function OnboardingModal() {
     setError("");
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
-      const res = await fetch(`${apiUrl}/api/next-action/onboard`, {
+      const res = await fetch(`${API_URL}/api/next-action/onboard`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(data),

@@ -128,13 +128,10 @@ export interface LiveUsers {
 
 
 
-// ─── API Base URL ─────────────────────────────────────────────────────────────
-// Priority: 1. ENV VAR (from .env.local or Vercel)
-//           2. Localhost:10000 (if in development)
-//           3. Production Render URL (Final Fallback)
 const LOCAL_DEV_URL = "http://127.0.0.1:10000";
 const PRODUCTION_URL = "https://tulasi-ai-wgwl.onrender.com";
 
+// If we are on Vercel (production), and no env var is set, we MUST use Render, not localhost.
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || (isDev ? LOCAL_DEV_URL : PRODUCTION_URL);
 export const API = API_URL;
 

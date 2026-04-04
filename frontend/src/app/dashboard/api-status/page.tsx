@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+const BACKEND = API_URL;
 const FRONTEND = typeof window !== "undefined" ? window.location.origin : "";
 
 const BACKEND_ENDPOINTS = [

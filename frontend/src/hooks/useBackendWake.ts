@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { API_URL } from "@/lib/api";
 
 interface BackendState {
   isOnline: boolean;
@@ -20,9 +21,9 @@ export function useBackendWake() {
   const checkHealth = useCallback(async () => {
     setState((s) => ({ ...s, isChecking: true }));
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health`, {
+      const res = await fetch(`${API_URL}/api/health`, {
         headers: {"Content-Type":"application/json","Authorization":`Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}`},
-        credentials:"include", mode:"cors",
+        credentials:"omit", mode:"cors",
         signal: AbortSignal.timeout(10_000),
         cache: "no-store",
       });

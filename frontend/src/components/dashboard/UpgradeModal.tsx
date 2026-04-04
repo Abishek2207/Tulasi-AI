@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { paymentApi } from "@/lib/api";
+import { paymentApi, API_URL } from "@/lib/api";
 import toast from "react-hot-toast";
 import { Copy } from "lucide-react";
 
@@ -62,7 +62,7 @@ export function UpgradeModal({ isOpen, onClose, onUpgradeSuccess }: {
 
   React.useEffect(() => {
     if (isOpen) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com"}/api/users/referrals`, {
+      fetch(`${API_URL}/api/users/referrals`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       })
       .then(res => res.json())

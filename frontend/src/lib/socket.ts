@@ -1,4 +1,5 @@
 import { io, Socket } from "socket.io-client";
+import { API_URL } from "@/lib/api";
 
 class SocketService {
   private socket: Socket | null = null;
@@ -8,7 +9,7 @@ class SocketService {
     if (this.socket?.connected && this.token === token) return;
     
     this.token = token;
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
+    const baseUrl = API_URL;
     
     this.socket = io(baseUrl, {
       auth: { token },

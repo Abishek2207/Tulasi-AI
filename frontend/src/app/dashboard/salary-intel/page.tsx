@@ -6,7 +6,7 @@ import { useSession } from "@/hooks/useSession";
 import { MapPin, Briefcase, Clock, Zap, TrendingUp, Copy, CheckCircle, RefreshCw, Building2, Shield, Sparkles, ArrowUpRight } from "lucide-react";
 import { AIResilienceWrapper } from "@/components/dashboard/AIResilienceWrapper";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
+import { API } from "@/lib/api";
 const ROLES = ["Software Engineer", "AI Engineer", "ML Engineer", "Data Scientist", "Product Manager", "Frontend Developer", "Backend Developer", "DevOps Engineer", "Full Stack Developer", "AI Research Scientist", "Cybersecurity Engineer", "Cloud Architect"];
 const LOCATIONS = ["Bangalore", "Hyderabad", "Chennai", "Pune", "Mumbai", "Delhi NCR", "Remote (India)", "USA", "UK", "Singapore"];
 

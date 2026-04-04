@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_URL } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Key, AlertCircle, Terminal, X, Wifi, WifiOff } from "lucide-react";
 
@@ -23,7 +24,7 @@ export function DebugPanel() {
     // Check API Status
     const checkApi = async () => {
       try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health`, { 
+                const res = await fetch(`${API_URL}/api/health`, { 
           method: "GET", 
           headers: { "Content-Type": "application/json" },
           mode: "cors" 

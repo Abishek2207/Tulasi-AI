@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/api";
 import { motion } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 
@@ -46,7 +47,7 @@ export default function HistoryPage() {
       const params = new URLSearchParams({ page: String(page), limit: "20" });
       if (filter !== "all") params.set("action_type", filter);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activity/history?${params}`, {
+      const res = await fetch(`${API_URL}/api/activity/history?${params}`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, credentials: "include", mode: "cors"
       });
       if (res.ok) {

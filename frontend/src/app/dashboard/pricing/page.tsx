@@ -9,7 +9,7 @@ const PRICING_PLANS = [
     price: "$0",
     desc: "Community Edition — Unlimited access for everyone.",
     features: [
-      "Unlimited AI Chats (Gemini 1.5 Flash)",
+      "Unlimited AI Chats (Neural Intelligence)",
       "Advanced ATS Resume Scanning",
       "Unlimited Mock Interviews",
       "Priority Startup Lab access",

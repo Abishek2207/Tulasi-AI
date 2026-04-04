@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { API_URL } from "@/lib/api";
 
 /**
  * Frontend Health Proxy / Redirect Warning
@@ -6,7 +7,7 @@ import { NextResponse } from "next/server";
  * pings the frontend port (3000) for backend health (10000).
  */
 export async function GET() {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+  const backendUrl = API_URL;
   
   return NextResponse.json({
     status: "frontend_active",
