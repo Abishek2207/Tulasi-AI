@@ -1,18 +1,7 @@
-"""
-Seed reviews to production using the admin /reviews/seed endpoint.
-Usage: python seed_reviews.py <admin_password>
-"""
-import sys
 import requests
 
 PROD = "https://tulasi-ai-wgwl.onrender.com"
-ADMIN_EMAIL = "abishekramamoorthy22@gmail.com"
-
-if len(sys.argv) < 2:
-    print("Usage: python seed_reviews.py <your_admin_password>")
-    sys.exit(1)
-
-password = sys.argv[1]
+SEED_SECRET = "tulasi-seed-2026"
 
 REVIEWS = [
     {"name": "Gurucharan", "review": "GOOD NOT BAD", "rating": 5},
@@ -27,25 +16,19 @@ REVIEWS = [
     {"name": "Abhimanyu S S", "role": "Student@PEC", "review": "Excellent platform for Students", "rating": 5},
 ]
 
-print(f"Logging in as {ADMIN_EMAIL}...")
-login_resp = requests.post(f"{PROD}/api/auth/login",
-    json={"email": ADMIN_EMAIL, "password": password}, timeout=60)
+def seed():
+    print(f"Seeding {len(REVIEWS)} reviews to {PROD}/api/reviews/seed-public...")
+    try:
+        resp = requests.post(
+            f"{PROD}/api/reviews/seed-public",
+            json=REVIEWS,
+            headers={"X-Seed-Secret": SEED_SECRET, "Content-Type": "application/json"},
+            timeout=30
+        )
+        print("Status:", resp.status_code)
+        print("Response:", resp.text)
+    except Exception as e:
+        print("Error:", e)
 
-if login_resp.status_code != 200:
-    print(f"Login failed ({login_resp.status_code}): {login_resp.text[:200]}")
-    sys.exit(1)
-
-token = login_resp.json()["access_token"]
-print(f"Logged in! Token: {token[:20]}...")
-
-print(f"\nSeeding {len(REVIEWS)} reviews via /api/reviews/seed...")
-resp = requests.post(f"{PROD}/api/reviews/seed",
-    json=REVIEWS,
-    headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-    timeout=60)
-
-if resp.status_code in (200, 201):
-    data = resp.json()
-    print(f"SUCCESS! Inserted {data.get('inserted', '?')} reviews to production.")
-else:
-    print(f"FAILED ({resp.status_code}): {resp.text[:300]}")
+if __name__ == "__main__":
+    seed()
