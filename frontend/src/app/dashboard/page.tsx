@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import { useSession } from "@/hooks/useSession";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -205,248 +207,286 @@ export default function DashboardPage() {
   };
 
   return (
-    <motion.div initial="hidden" animate="show" variants={container} style={{ maxWidth: 1400, margin: "0 auto", paddingBottom: 60 }}>
-
-      {/* Dynamic Gemini-Style Live Agent */}
-      <motion.div variants={item} style={{ marginBottom: 40 }}>
-        <LiveAgentPrompt userName={isFounder ? "Abishek R" : userName} />
-      </motion.div>
-
-      {/* Your Daily Path & Mission Control */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(450px, 1fr))", gap: 24, marginBottom: 40 }}>
-        {/* Mission Control - Personalized AI Mission */}
-        <motion.div variants={item} style={{ minHeight: 400 }}>
-          <MissionControl token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
-        </motion.div>
-
-        {/* Daily Routine - AI Schedule */}
-        <motion.div variants={item} style={{ minHeight: 400 }}>
-          <RoutineCard />
-        </motion.div>
+    <motion.div initial="hidden" animate="show" variants={container} style={{ maxWidth: 1400, margin: "0 auto", paddingBottom: 60, position: "relative" }}>
+      
+      {/* Technical Background Elements */}
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+        <div className="bg-grid" style={{ position: "absolute", inset: 0, opacity: 0.05 }} />
+        <div className="bg-dot" style={{ position: "absolute", inset: 0, opacity: 0.1, transform: "scale(1.2)" }} />
+        <div className="neural-pulse" style={{ position: "absolute", top: "10%", left: "5%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)" }} />
+        <div className="neural-pulse" style={{ position: "absolute", bottom: "10%", right: "5%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%)", animationDelay: "2s" }} />
       </div>
 
-      {/* Matched Opportunities */}
-      {matchedInternships.length > 0 && (
-        <motion.div variants={item} style={{ marginBottom: 40 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 4, height: 24, background: "#10B981", borderRadius: 4 }} />
-            <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Matched Opportunities</h2>
-          </div>
-          <div style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none" }}>
-            {matchedInternships.map((match: any, i: number) => (
-              <div key={i} className="glass-card" style={{ minWidth: 320, padding: 24, flexShrink: 0, background: "linear-gradient(135deg, rgba(16,185,129,0.05), rgba(255,255,255,0.02))", border: "1px solid rgba(16,185,129,0.2)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-                  <span style={{ fontSize: 11, fontWeight: 900, color: "#10B981", background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: 12 }}>{match.match_score}% MATCH</span>
-                  <div style={{ color: "var(--text-muted)" }}><Link2 size={14} /></div>
-                </div>
-                <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 4 }}>{match.internship.title}</h3>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--brand-primary)", marginBottom: 12 }}>{match.internship.company}</div>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 20, height: 36, overflow: "hidden" }}>{match.internship.description}</p>
-                <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-                   <span style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {match.internship.location || match.internship.mode}</span>
-                   <span style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}><Clock size={12} /> {match.internship.duration}</span>
-                </div>
-                <a href={match.internship.apply_link} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                   <button className="btn-primary" style={{ width: "100%", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800 }}>Apply Now</button>
-                </a>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Neural Intelligence Section */}
-      <motion.div variants={item} style={{ marginBottom: 40 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-          <div style={{ width: 4, height: 24, background: "#8B5CF6", borderRadius: 4 }} />
-          <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Neural Intelligence</h2>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
-          <div className="glass-card" style={{ minHeight: 420 }}>
-            <SkillRadar token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
-          </div>
-          <div className="glass-card" style={{ minHeight: 420 }}>
-            <ReadinessCard token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
-          </div>
-          <div className="glass-card" style={{ minHeight: 420, gridColumn: "span 1" }}>
-            <NeuralStrategist token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* High Density Grid */}
-      <div className="dashboard-grid">
-
-        {/* Real-time Stats Loop */}
-        <motion.div variants={item} className="stat-card">
-          <TiltCard intensity={5} style={{ height: "100%" }}>
-            <div className="glass-card" style={{ padding: 28, height: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Account Status</div>
-                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#43E97B", boxShadow: "0 0 10px #43E97B" }} />
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ width: 64, height: 64, borderRadius: 20, background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 900, color: "white" }}>{stats.level}</div>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 900 }}>Power Level {stats.level}</div>
-                  <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{stats.xp} Total XP Accumulated</div>
-                </div>
-              </div>
-              <div style={{ marginTop: "auto" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 11, fontWeight: 900 }}>
-                  <span style={{ color: "var(--text-muted)" }}>NEXT EVOLUTION</span>
-                  <span style={{ color: "var(--brand-primary)" }}>{stats.xp % 500} / 500 XP</span>
-                </div>
-                <div style={{ height: 6, width: "100%", background: "rgba(0,0,0,0.3)", borderRadius: 10, overflow: "hidden" }}>
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${((stats.xp % 500) / 500) * 100}%` }} style={{ height: "100%", background: "var(--brand-primary)", borderRadius: 10 }} />
-                </div>
-              </div>
-            </div>
-          </TiltCard>
+      <div style={{ position: "relative", zIndex: 1 }}>
+        {/* Dynamic Gemini-Style Live Agent */}
+        <motion.div variants={item} style={{ marginBottom: 32 }}>
+          <LiveAgentPrompt userName={isFounder ? "Abishek R" : userName} />
         </motion.div>
 
-        {/* Global Leaderboard Snapshot */}
-        <motion.div variants={item} className="stat-card">
-          <TiltCard intensity={5} style={{ height: "100%" }}>
-            <div className="glass-card" style={{ padding: 28, height: "100%" }}>
-              <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 18, display: "flex", alignItems: "center", gap: 8 }}>
+        {/* ── Desktop: Bento Hub | Mobile: Vertical Stack ── */}
+        <div className="bento-hub-grid" style={{ marginBottom: 40 }}>
+          {/* Mission Control - Personalized AI Mission */}
+          <motion.div variants={item} className="bento-span-2" style={{ minHeight: 440 }}>
+            <MissionControl token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
+          </motion.div>
+
+          {/* Daily Routine - AI Schedule */}
+          <motion.div variants={item} className="bento-span-1" style={{ minHeight: 440 }}>
+            <RoutineCard />
+          </motion.div>
+
+          {/* Leaderboard Snapshot (Desktop Only in Hub) */}
+          <motion.div variants={item} className="desktop-only bento-span-1" style={{ minHeight: 440 }}>
+            <div className="glass-card-premium" style={{ padding: 28, height: "100%", background: "rgba(255,255,255,0.015)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.04)" }}>
+              <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}>
                 <Trophy size={14} color="#FFD93D" /> Global Velocity
               </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {leaderboard.length > 0 ? leaderboard.map((u, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.02)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.03)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 12, fontWeight: 900, color: "var(--brand-primary)", width: 14 }}>{i + 1}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>{u.name}</span>
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: 14, border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontSize: 13, fontWeight: 900, color: "#8B5CF6", width: 14 }}>{i + 1}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "white" }}>{u.name}</span>
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 800, color: "var(--text-muted)" }}>{u.xp} XP</span>
                   </div>
-                )) : <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "10px 0" }}>Syncing global rankings...</div>}
+                )) : <div style={{ fontSize: 13, color: "var(--text-muted)", padding: "20px 0", textAlign: "center" }}>Syncing rankings...</div>}
+              </div>
+              <div style={{ marginTop: "auto", paddingTop: 20 }}>
+                 <Link href="/dashboard/leaderboard" style={{ textDecoration: "none", color: "#8B5CF6", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 6 }}>Full Arena <ArrowRight size={14} /></Link>
               </div>
             </div>
-          </TiltCard>
-        </motion.div>
+          </motion.div>
+        </div>
 
-        {/* Global Live Feed */}
-        <motion.div variants={item} className="stat-card">
-          <TiltCard intensity={3} style={{ height: "100%" }}>
-            <LiveActivityFeed activities={feed} />
-          </TiltCard>
-        </motion.div>
-
-        {/* Gamified Referral Card */}
-        <motion.div variants={item} className="stat-card">
-          <TiltCard intensity={5} style={{ height: "100%" }}>
-            <div className="glass-card" style={{
-              padding: 28, height: "100%", display: "flex", flexDirection: "column",
-              background: "linear-gradient(135deg, rgba(255,255,255,0.02), rgba(16,185,129,0.05))",
-              position: "relative", overflow: "hidden"
-            }}>
-              <div style={{ position: "absolute", top: -50, right: -50, width: 150, height: 150, background: "radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%)", filter: "blur(40px)" }} />
-
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981" }}>
-                  <Gift size={22} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: 18, fontWeight: 900, color: "white", letterSpacing: "-0.5px" }}>Earn +500 XP</h3>
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>Invite a friend to unlock more chats.</p>
-                </div>
+        {/* ── Mobile: Quick Action Ribbon ── */}
+        <div className="mobile-only" style={{ marginBottom: 40, overflowX: "auto", display: "flex", gap: 12, paddingBottom: 8, scrollbarWidth: "none" }}>
+          {MODULES.slice(0, 6).map(mod => (
+            <Link key={mod.id} href={mod.link} style={{ textDecoration: "none", flexShrink: 0 }}>
+              <div style={{ padding: "12px 20px", borderRadius: 16, background: `${mod.color}15`, border: `1px solid ${mod.color}30`, display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ color: mod.color }}>{React.cloneElement(mod.icon as any, { size: 18 })}</div>
+                <span style={{ fontSize: 13, fontWeight: 800, color: "white", whiteSpace: "nowrap" }}>{mod.title.split(" ")[0]}</span>
               </div>
+            </Link>
+          ))}
+        </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: "auto", background: "rgba(0,0,0,0.2)", padding: 6, borderRadius: 12, border: "1px dashed rgba(255,255,255,0.15)" }}>
-                <div style={{ flex: 1, textAlign: "center", fontSize: 15, fontWeight: 800, color: "white", letterSpacing: 2, fontFamily: "monospace" }}>
-                  {stats.invite_code || "TULASI25"}
-                </div>
-                <button
-                  onClick={() => {
-                    const code = stats.invite_code || "TULASI25";
-                    const text = `Hey! I'm using Tulasi AI to engineer my career and bypass the ATS. Use my invite code ${code} to get 500 XP instantly! Sign up here: https://tulasiai.vercel.app`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.8 }, colors: ['#10B981', '#ffffff', '#34D399'] });
-                  }}
-                  style={{
-                    padding: "8px 16px", borderRadius: 8, background: "#10B981", color: "black",
-                    fontWeight: 800, fontSize: 13, display: "flex", alignItems: "center", gap: 6, border: "none", cursor: "pointer"
-                  }}
-                >
-                  <Share size={14} /> Send
-                </button>
-              </div>
+        {/* Matched Opportunities */}
+        {matchedInternships.length > 0 && (
+          <motion.div variants={item} style={{ marginBottom: 48 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+              <div style={{ width: 4, height: 24, background: "#10B981", borderRadius: 4 }} />
+              <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Matched Opportunities</h2>
+              <span className="badge-green" style={{ marginLeft: "auto" }}>NEW MATCHES</span>
             </div>
-          </TiltCard>
+            <div style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 16, scrollbarWidth: "none" }}>
+              {matchedInternships.map((match: any, i: number) => (
+                <div key={i} className="glass-card-premium" style={{ minWidth: 340, padding: 28, flexShrink: 0, background: "rgba(16,185,129,0.03)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 28 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+                    <span style={{ fontSize: 11, fontWeight: 900, color: "#10B981", background: "rgba(16,185,129,0.1)", padding: "6px 12px", borderRadius: 30, border: "1px solid rgba(16,185,129,0.2)" }}>{match.match_score}% MATCH</span>
+                    <div style={{ color: "var(--text-muted)" }}><Link2 size={16} /></div>
+                  </div>
+                  <h3 style={{ fontSize: 19, fontWeight: 900, marginBottom: 6, color: "white" }}>{match.internship.title}</h3>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--brand-primary)", marginBottom: 16 }}>{match.internship.company}</div>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 24, height: 42, overflow: "hidden" }}>{match.internship.description}</p>
+                  <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
+                     <span style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}><MapPin size={14} /> {match.internship.location || match.internship.mode}</span>
+                     <span style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}><Clock size={14} /> {match.internship.duration}</span>
+                  </div>
+                  <a href={match.internship.apply_link} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                     <button className="btn-primary" style={{ width: "100%", padding: "14px", borderRadius: 14, fontSize: 14, fontWeight: 900 }}>INITIALIZE APPLICATION</button>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Neural Intelligence Section */}
+        <motion.div variants={item} style={{ marginBottom: 48 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <div style={{ width: 4, height: 24, background: "#8B5CF6", borderRadius: 4 }} />
+            <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Neural Intelligence</h2>
+          </div>
+          <div className="intelligence-grid">
+            <div className="glass-card-premium" style={{ minHeight: 440, borderRadius: 32 }}>
+              <SkillRadar token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
+            </div>
+            <div className="glass-card-premium" style={{ minHeight: 440, borderRadius: 32 }}>
+              <ReadinessCard token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
+            </div>
+            <div className="glass-card-premium" style={{ minHeight: 440, borderRadius: 32 }}>
+              <NeuralStrategist token={typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""} />
+            </div>
+          </div>
         </motion.div>
 
-        {/* Module Grid - Main */}
-        {MODULES.map((mod) => (
-          <motion.div key={mod.id} variants={item} className={`module-span-${mod.span}`}>
+        {/* High Density Grid */}
+        <div className="dashboard-main-grid">
+
+          {/* Account Velocity */}
+          <motion.div variants={item} className="stat-card">
             <TiltCard intensity={5} style={{ height: "100%" }}>
-              <Link href={mod.link} style={{ textDecoration: "none", display: "block", height: "100%" }}>
-                <div className="glass-card" style={{
-                  padding: 32, height: "100%", display: "flex", flexDirection: "column", transition: "all 0.3s",
-                  background: "rgba(255,255,255,0.02)"
-                }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}>
-                  <div style={{
-                    width: 56, height: 56, borderRadius: 16, background: `${mod.color}15`, border: `1px solid ${mod.color}30`,
-                    display: "flex", alignItems: "center", justifyContent: "center", color: mod.color, marginBottom: 24,
-                    boxShadow: `0 8px 16px ${mod.color}10`
-                  }}>
-                    {mod.icon}
-                  </div>
-                  <h3 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "white", fontFamily: "var(--font-outfit)" }}>{mod.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 24 }}>{mod.desc}</p>
-                  <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800, color: mod.color, textTransform: "uppercase", letterSpacing: 1 }}>
-                    Deploy Sequence <ArrowRight size={14} />
+              <div className="glass-card-premium" style={{ padding: 32, height: "100%", display: "flex", flexDirection: "column", gap: 20, borderRadius: 32 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 2 }}>System Status</div>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                  <div style={{ width: 72, height: 72, borderRadius: 24, background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 900, color: "white", boxShadow: "0 12px 24px rgba(139,92,246,0.3)" }}>{stats.level}</div>
+                  <div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: "white" }}>Tier {stats.level} Engineer</div>
+                    <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 500 }}>{stats.xp} Accumulated XP</div>
                   </div>
                 </div>
-              </Link>
+                <div style={{ marginTop: "auto" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 12, fontWeight: 900 }}>
+                    <span style={{ color: "var(--text-muted)", letterSpacing: 1 }}>EVOLUTION PROGRESS</span>
+                    <span style={{ color: "var(--brand-primary)" }}>{stats.xp % 500} / 500</span>
+                  </div>
+                  <div style={{ height: 8, width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${((stats.xp % 500) / 500) * 100}%` }} style={{ height: "100%", background: "linear-gradient(90deg, #8B5CF6, #06B6D4)", borderRadius: 10 }} />
+                  </div>
+                </div>
+              </div>
             </TiltCard>
           </motion.div>
-        ))}
 
-        {/* FEEDBACK MODULE */}
-        <motion.div variants={item} className="module-span-2">
-          <TiltCard intensity={5} style={{ height: "100%" }}>
-            <div className="glass-card" style={{
-              padding: 32, height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: "linear-gradient(135deg, rgba(168,85,247,0.05) 0%, rgba(6,182,212,0.05) 100%)",
-              border: "1px solid rgba(168,85,247,0.2)"
-            }}>
-              <div>
-                <h3 style={{ fontSize: 24, fontWeight: 900, marginBottom: 8 }}>Share Your Feedback</h3>
-                <p style={{ color: "var(--text-secondary)", fontSize: 15, maxWidth: 500 }}>
-                  Help us refine the Neural Engine. Submit a review and earn <span style={{ color: "var(--brand-primary)", fontWeight: 800 }}>+100 XP</span> for your contribution.
-                </p>
+          {/* Live Activity Feed */}
+          <motion.div variants={item} className="stat-card">
+            <TiltCard intensity={3} style={{ height: "100%" }}>
+              <div className="glass-card-premium" style={{ height: "100%", borderRadius: 32, overflow: "hidden" }}>
+                <LiveActivityFeed activities={feed} />
               </div>
-              <button 
-                onClick={() => setShowReviewModal(true)}
-                className="btn-primary" 
-                style={{ padding: "14px 28px", borderRadius: 14, fontWeight: 800 }}
-              >
-                Submit Review
-              </button>
-            </div>
-          </TiltCard>
+            </TiltCard>
+          </motion.div>
+
+          {/* Referral Power-up */}
+          <motion.div variants={item} className="stat-card">
+            <TiltCard intensity={5} style={{ height: "100%" }}>
+              <div className="glass-card-premium" style={{
+                padding: 32, height: "100%", display: "flex", flexDirection: "column", borderRadius: 32,
+                background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(255,255,255,0.01))",
+                position: "relative", overflow: "hidden", border: "1px solid rgba(16,185,129,0.2)"
+              }}>
+                <div style={{ position: "absolute", top: -50, right: -50, width: 150, height: 150, background: "radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%)", filter: "blur(40px)" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 16, background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981", boxShadow: "0 8px 16px rgba(16,185,129,0.1)" }}>
+                    <Gift size={26} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 19, fontWeight: 900, color: "white", letterSpacing: "-0.5px" }}>XP Multiplier</h3>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>Invite colleagues for +500 XP.</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: "auto", background: "rgba(0,0,0,0.3)", padding: 8, borderRadius: 16, border: "1px dashed rgba(255,255,255,0.15)" }}>
+                  <div style={{ flex: 1, textAlign: "center", fontSize: 16, fontWeight: 900, color: "white", letterSpacing: 3, fontFamily: "var(--font-mono)" }}>
+                    {stats.invite_code || "TULASI25"}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const code = stats.invite_code || "TULASI25";
+                      const text = `Hey! I'm using Tulasi AI to engineer my career and bypass the ATS. Use my invite code ${code} to get 500 XP instantly! Sign up here: https://tulasiai.vercel.app`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                      confetti({ particleCount: 150, spread: 80, origin: { y: 0.8 }, colors: ['#10B981', '#ffffff', '#34D399'] });
+                    }}
+                    style={{
+                      padding: "10px 18px", borderRadius: 12, background: "#10B981", color: "black",
+                      fontWeight: 900, fontSize: 13, display: "flex", alignItems: "center", gap: 8, border: "none", cursor: "pointer"
+                    }}
+                  >
+                    <Share size={16} /> SEND
+                  </button>
+                </div>
+              </div>
+            </TiltCard>
+          </motion.div>
+
+          {/* Module Grid - Main */}
+          {MODULES.map((mod) => (
+            <motion.div key={mod.id} variants={item} className={`module-span-${mod.span}`}>
+              <TiltCard intensity={5} style={{ height: "100%" }}>
+                <Link href={mod.link} style={{ textDecoration: "none", display: "block", height: "100%" }}>
+                  <div className="glass-card-premium" style={{
+                    padding: 36, height: "100%", display: "flex", flexDirection: "column", transition: "all 0.4s var(--ease-premium)",
+                    background: "rgba(255,255,255,0.015)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.04)"
+                  }} onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                    e.currentTarget.style.borderColor = `${mod.color}40`;
+                  }} onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.015)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)";
+                  }}>
+                    <div style={{
+                      width: 64, height: 64, borderRadius: 20, background: `${mod.color}10`, border: `1px solid ${mod.color}25`,
+                      display: "flex", alignItems: "center", justifyContent: "center", color: mod.color, marginBottom: 28,
+                      boxShadow: `0 12px 24px ${mod.color}15`
+                    }}>
+                      {React.cloneElement(mod.icon as any, { size: 32 })}
+                    </div>
+                    <h3 style={{ fontSize: 22, fontWeight: 900, marginBottom: 10, color: "white", fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>{mod.title}</h3>
+                    <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 28, fontWeight: 500 }}>{mod.desc}</p>
+                    <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 900, color: mod.color, textTransform: "uppercase", letterSpacing: 1.5 }}>
+                      Initialize Sequence <ArrowRight size={16} />
+                    </div>
+                  </div>
+                </Link>
+              </TiltCard>
+            </motion.div>
+          ))}
+
+          {/* Feedback Section */}
+          <motion.div variants={item} className="module-span-2">
+            <TiltCard intensity={5} style={{ height: "100%" }}>
+              <div className="glass-card-premium" style={{
+                padding: 40, height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                background: "linear-gradient(135deg, rgba(139,92,246,0.05) 0%, rgba(6,182,212,0.05) 100%)",
+                border: "1px solid rgba(139,92,246,0.2)", borderRadius: 32
+              }}>
+                <div style={{ maxWidth: "65%" }}>
+                  <h3 style={{ fontSize: 26, fontWeight: 900, marginBottom: 10, color: "white", letterSpacing: "-0.5px" }}>Refine the Neural Engine</h3>
+                  <p style={{ color: "var(--text-secondary)", fontSize: 16, lineHeight: 1.6, fontWeight: 500 }}>
+                    Your feedback drives our proprietary intelligence patterns. Contribute and earn <span style={{ color: "#8B5CF6", fontWeight: 900 }}>+100 XP</span> instantly.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowReviewModal(true)}
+                  className="btn-primary" 
+                  style={{ padding: "16px 32px", borderRadius: 16, fontWeight: 900, fontSize: 15, boxShadow: "0 15px 30px rgba(139,92,246,0.3)" }}
+                >
+                  Submit Intelligence
+                </button>
+              </div>
+            </TiltCard>
+          </motion.div>
+
+        </div>
+
+        {/* Global Activity Map */}
+        <motion.div variants={item} style={{ marginTop: 48 }}>
+           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <div style={{ width: 4, height: 24, background: "#06B6D4", borderRadius: 4 }} />
+            <h2 style={{ fontSize: 24, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Global Neural Connectivity</h2>
+          </div>
+          <div className="glass-card-premium" style={{ borderRadius: 32, overflow: "hidden" }}>
+            <ActivityMap />
+          </div>
         </motion.div>
 
-      </div>
-
-      {/* Activity Graph */}
-      <motion.div variants={item}>
-        <ActivityMap />
-      </motion.div>
-
-      {/* Mini Streak Tracker */}
-      <motion.div variants={item} style={{ marginTop: 40 }} className="glass-card">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, padding: "20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Flame size={20} color="#F43F5E" />
-            <span style={{ fontSize: 14, fontWeight: 900 }}>{stats.streak} DAY STREAK</span>
+        {/* Mini Streak Tracker */}
+        <motion.div variants={item} style={{ marginTop: 48 }}>
+           <div className="glass-card-premium" style={{ borderRadius: 24, background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.04)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(20px, 5vw, 48px)", padding: "24px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Flame size={24} color="#F43F5E" />
+                <span style={{ fontSize: 16, fontWeight: 900, color: "white", letterSpacing: 1 }}>{stats.streak} DAY NEURAL STREAK</span>
+              </div>
+              <div className="desktop-only" style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)" }} />
+              <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 500, textAlign: "center" }}>Maintain sequence synchronization to unlock high-order planetary models.</div>
+            </div>
           </div>
-          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.1)" }} />
-          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Maintain consistency to unlock high-order AI models.</div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* Review Modal */}
       <AnimatePresence>
@@ -457,16 +497,16 @@ export default function DashboardPage() {
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }}
               onClick={() => setShowReviewModal(false)}
-              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)" }}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)" }}
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               style={{ 
-                position: "relative", zIndex: 101, width: "100%", maxWidth: 600,
-                background: "#0B0E14", border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 32, padding: "40px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+                position: "relative", zIndex: 101, width: "100%", maxWidth: 640,
+                background: "#08080A", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 40, padding: "clamp(24px, 6vw, 48px)", boxShadow: "0 40px 100px -20px rgba(0,0,0,0.8)"
               }}
             >
               <ReviewForm onClose={() => setShowReviewModal(false)} />
@@ -475,32 +515,56 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-
       <style>{`
-        .dashboard-grid { 
+        .bento-hub-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+        }
+        .intelligence-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+        }
+        .dashboard-main-grid { 
           display: grid; 
-          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
+          grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); 
           gap: 24px; 
         }
         .stat-card { grid-column: span 1; }
         .module-span-2 { grid-column: span 2; }
         .module-span-1 { grid-column: span 1; }
+        .bento-span-2 { grid-column: span 2; }
+        .bento-span-1 { grid-column: span 1; }
 
-        @media (max-width: 1100px) {
-          .dashboard-grid { 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-          }
-          .module-span-2 { grid-column: span 1; }
+        @media (max-width: 1280px) {
+          .bento-hub-grid { grid-template-columns: repeat(2, 1fr); }
+          .intelligence-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 1024px) {
+          .dashboard-main-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+          .intelligence-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 850px) {
-          .dashboard-grid { 
-             grid-template-columns: 1fr; 
-             gap: 16px;
-          }
-          .banner-card { padding: 40px 24px !important; }
-          .hero-buttons { flex-direction: column; gap: 12px; }
-          .module-span-2, .module-span-1 { grid-column: span 1; }
+          .bento-hub-grid { grid-template-columns: 1fr; gap: 16px; }
+          .dashboard-main-grid { grid-template-columns: 1fr; gap: 16px; }
+          .module-span-2, .module-span-1, .bento-span-2, .bento-span-1 { grid-column: span 1; }
+        }
+
+        .glass-card-premium {
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(24px) saturate(200%);
+          -webkit-backdrop-filter: blur(24px) saturate(200%);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card-premium:hover {
+          background: rgba(255, 255, 255, 0.04);
+          border-color: rgba(255, 255, 255, 0.1);
+          transform: translateY(-4px);
         }
       `}</style>
     </motion.div>

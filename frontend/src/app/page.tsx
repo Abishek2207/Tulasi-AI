@@ -33,6 +33,22 @@ const secondaryFeatures = [
   { icon: Users, title: "Study Clusters", desc: "Collaborative focus with Pomodoro sync.", color: "#F43F5E" },
 ];
 
+const Zap = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M13 2 L3 14 L12 14 L11 22 L21 10 L12 10 Z" />
+  </svg>
+);
+
+const ecosystemTech = [
+  { name: "Next.js", icon: Layout, color: "#FFF" },
+  { name: "Python", icon: Code, color: "#3776AB" },
+  { name: "PostgreSQL", icon: HardDrive, color: "#336791" },
+  { name: "FastAPI", icon: Zap, color: "#05998B" },
+  { name: "Gemini AI", icon: Sparkles, color: "#8E75FF" },
+  { name: "TypeScript", icon: Cpu, color: "#3178C6" },
+  { name: "Tailwind", icon: Layout, color: "#06B6D4" },
+];
+
 // ── Shared Branding Component ────────────────────────────────────
 function BrandText({ size = 40 }: { size?: number }) {
   return (
@@ -162,36 +178,59 @@ function Navbar() {
 function Hero() {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const y = useTransform(scrollYProgress, [0, 1], [0, -150]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // 3D Parallax Scroll Mechanics
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const y = useTransform(scrollYProgress, [0, 1], [0, -150]);
+  const opacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
+
+  // 3D Dashboard Content Box
   const dashboardRotateX = useTransform(scrollYProgress, [0, 0.35], [45, 0]);
   const dashboardScale = useTransform(scrollYProgress, [0, 0.35], [0.85, 1]);
-  const dashboardY = useTransform(scrollYProgress, [0, 0.35], [200, 0]);
-  const dashboardOpacity = useTransform(scrollYProgress, [0, 0.1], [0.3, 1]);
+  const dashboardY = useTransform(scrollYProgress, [0, 0.4], [isMobile ? 100 : 250, 0]);
+  const dashboardOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
 
   return (
-    <section ref={ref} style={{ height: "200vh", position: "relative" }}>
+    <section ref={ref} style={{ height: "180vh", position: "relative" }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", perspective: 1200, perspectiveOrigin: "50% 0%" }}>
         
+        {/* Deep Field Background Patterns */}
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
-          <div className="animate-pulse-slow"
-            style={{ position: "absolute", top: "10%", left: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", filter: "blur(80px)" }} />
-          <div className="animate-pulse-slow"
-            style={{ position: "absolute", bottom: "10%", right: "20%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(10,132,255,0.05) 0%, transparent 70%)", filter: "blur(80px)", animationDelay: "1s" }} />
+          <div className="bg-grid" style={{ position: "absolute", inset: 0, opacity: 0.1 }} />
+          <div className="bg-dot" style={{ position: "absolute", inset: 0, opacity: 0.15, transform: "scale(1.5)" }} />
+          
+          {/* Technical Glows */}
+          <div className="neural-pulse"
+            style={{ position: "absolute", top: "-10%", left: "10%", width: "50%", height: "50%", background: "radial-gradient(circle, rgba(138,92,246,0.12) 0%, transparent 70%)" }} />
+          <div className="neural-pulse"
+            style={{ position: "absolute", bottom: "0%", right: "5%", width: "45%", height: "45%", background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)", animationDelay: "2s" }} />
         </div>
 
-        {/* Floating Title (Stays Flat) */}
-        <motion.div style={{ y, opacity, position: "absolute", zIndex: 10, textAlign: "center", width: "100%", top: "15%" }}>
+        {/* Floating Title */}
+        <motion.div style={{ y, opacity, position: "absolute", zIndex: 10, textAlign: "center", width: "100%", top: isMobile ? "12%" : "18%" }}>
           <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
-            style={{ fontSize: "clamp(42px, 9vw, 108px)", fontWeight: 900, fontFamily: "var(--font-outfit)", lineHeight: 0.95, letterSpacing: "-0.04em", wordBreak: "break-word" }}>
+            className="hero-title">
             {["Architect", "Your", "Trajectory."].map((w, i) => (
               <motion.span key={i} initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 100, damping: 12, delay: 0.2 + i * 0.1 }}
-                style={{ display: "inline-block", marginRight: "0.2em" }} className={i === 2 ? "gradient-text" : ""}>{w}
+                style={{ display: isMobile ? "block" : "inline-block", marginRight: isMobile ? 0 : "0.2em" }} className={i === 2 ? "gradient-text" : ""}>{w}
               </motion.span>
             ))}
           </motion.h1>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
+            style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", padding: "0 20px" }}>
+            {["Neural-Engineered", "Proprietary RAG", "MAANG Simulation"].map((tag, i) => (
+              <span key={tag} style={{ fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", padding: "6px 12px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 30 }}>
+                {tag}
+              </span>
+            ))}
+          </motion.div>
         </motion.div>
 
         {/* 3D Dashboard Content Box */}
@@ -201,59 +240,80 @@ function Hero() {
              scale: dashboardScale,
              y: dashboardY,
              opacity: dashboardOpacity,
-             width: "min(95%, 1200px)",
-             background: "rgba(9, 9, 11, 0.6)",
-             backdropFilter: "blur(40px) saturate(200%)",
-             border: "1px solid rgba(255,255,255,0.08)",
-             borderRadius: 32,
-             padding: "clamp(32px, 5vw, 64px)",
+             width: "min(95%, 1240px)",
+             background: "rgba(9, 9, 11, 0.7)",
+             backdropFilter: "blur(40px) saturate(220%)",
+             border: "1px solid rgba(255,255,255,0.1)",
+             borderRadius: 36,
+             padding: "clamp(32px, 6vw, 80px)",
              position: "absolute",
-             bottom: "-5%",
+             bottom: isMobile ? "5%" : "-10%",
              zIndex: 20,
              transformStyle: "preserve-3d",
-             boxShadow: "0 -20px 80px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.05)",
+             boxShadow: "0 -24px 120px rgba(0,0,0,0.95), inset 0 1px 2px rgba(255,255,255,0.1)",
              textAlign: "center"
            }}
         >
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} style={{ marginBottom: 28 }}>
-            <span className="animate-shimmer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 18px", borderRadius: 30, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#FFF", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2 }}>
-              <Sparkles size={13} color="#0A84FF" /> THE AUTONOMOUS CAREER ENGINE
+            <span className="animate-shimmer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 30, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#FFF", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2.5 }}>
+              <Zap size={14} color="#0A84FF" /> PLATINUM PRODUCTION ENV v2.1
             </span>
           </motion.div>
 
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
-            style={{ fontSize: "clamp(15px, 2.5vw, 20px)", color: "var(--text-secondary)", maxWidth: 720, margin: "0 auto 48px", lineHeight: 1.6, fontWeight: 500, padding: "0 4px" }}>
-            Tulasi AI is the high-fidelity workspace for future engineers.
-            Bridge the gap from theory to global offers with precision-engineered AI intelligence.
+            style={{ fontSize: "clamp(16px, 2.8vw, 22px)", color: "var(--text-secondary)", maxWidth: 780, margin: "0 auto 48px", lineHeight: 1.6, fontWeight: 500, padding: "0 4px" }}>
+            Tulasi AI is the high-fidelity workspace for world-class engineers.
+            Synthesize complexity into mastery with zero-latency career intelligence.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
             className="hero-buttons" style={{ justifyContent: "center" }}>
             <Link href="/auth" style={{ textDecoration: "none" }}>
               <motion.button whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="btn-primary"
-                style={{ padding: "18px 40px", fontSize: "clamp(15px, 2vw, 18px)", borderRadius: 16, fontWeight: 900, boxShadow: "0 12px 32px rgba(255,255,255,0.1)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, position: "relative", overflow: "hidden" }}>
-                <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 8 }}>INITIALIZE SESSION <ArrowRight size={18} /></span>
-                <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
+                style={{ padding: "20px 48px", fontSize: "clamp(16px, 2.2vw, 19px)", borderRadius: 18, fontWeight: 900, boxShadow: "0 20px 40px rgba(10, 132, 255, 0.2)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, position: "relative", overflow: "hidden" }}>
+                <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10 }}>INITIALIZE ACCESS <ArrowRight size={20} /></span>
+                <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.35 }} />
               </motion.button>
             </Link>
             <motion.a href="#reviews" className="animate-float" whileHover={{ scale: 1.02, y: -2 }}
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "18px 32px", borderRadius: 16, textDecoration: "none", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-secondary)", fontWeight: 800, fontSize: "clamp(13px, 2vw, 15px)", boxSizing: "border-box" }}>
-              See Reviews
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "20px 40px", borderRadius: 18, textDecoration: "none", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-primary)", fontWeight: 800, fontSize: "clamp(15px, 2vw, 17px)", boxSizing: "border-box" }}>
+              Verified Reviews
             </motion.a>
           </motion.div>
         </motion.div>
 
-        {/* Floating icons */}
-        {/* Floating icons with custom user CSS animation */}
-        <div className="hide-mobile animate-float" style={{ position: "absolute", left: "5%", top: "30%", opacity: 0.3, zIndex: 5 }}>
-          <Cpu size={64} className="text-brand" color="white" />
+        {/* Floating background elements */}
+        <div className="hide-mobile" style={{ position: "absolute", left: "8%", top: "35%", opacity: 0.4, zIndex: 5 }}>
+          <div className="animate-float" style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <Cpu size={48} color="white" />
+          </div>
         </div>
-        <div className="hide-mobile animate-float" style={{ position: "absolute", right: "5%", top: "40%", opacity: 0.3, zIndex: 5, animationDelay: "1s" }}>
-          <HardDrive size={64} color="#0A84FF" />
+        <div className="hide-mobile" style={{ position: "absolute", right: "8%", top: "45%", opacity: 0.4, zIndex: 5 }}>
+          <div className="animate-float" style={{ animationDelay: "1.5s", padding: 24, borderRadius: 24, background: "rgba(10,132,255,0.03)", border: "1px solid rgba(10,132,255,0.1)" }}>
+            <HardDrive size={48} color="#0A84FF" />
+          </div>
         </div>
 
       </div>
     </section>
+  );
+}
+
+// ── Ecosystem Section ─────────────────────────────────────────────
+function EcosystemSection() {
+  return (
+    <div style={{ padding: "40px 0", background: "rgba(0,0,0,0.4)", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)", overflow: "hidden" }}>
+      <div className="marquee">
+        {[...ecosystemTech, ...ecosystemTech].map((tech, i) => (
+          <div key={tech.name + i} style={{ display: "flex", alignItems: "center", gap: 14, margin: "0 40px", opacity: 0.5, transition: "opacity 0.3s" }} 
+            onMouseEnter={e => e.currentTarget.style.opacity = "1"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "0.5"}>
+            <tech.icon size={22} color={tech.color} />
+            <span style={{ color: "white", fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>{tech.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -534,65 +594,99 @@ function ReviewsSection() {
   );
 }
 
+// ── CTA Section ──────────────────────────────────────────────────
+function CTASection() {
+  return (
+    <section style={{ padding: "100px 20px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto", position: "relative" }}>
+        <div className="neural-pulse" style={{ position: "absolute", inset: -50, background: "radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%)", zIndex: 0 }} />
+        <div className="glass-card" style={{ padding: "clamp(48px, 8vw, 96px)", textAlign: "center", background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.0) 100%)", borderRadius: 48, border: "1px solid rgba(255,255,255,0.1)", position: "relative", zIndex: 1, overflow: "hidden" }}>
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
+            <h2 style={{ fontSize: "clamp(32px, 6vw, 64px)", fontWeight: 900, marginBottom: 24, letterSpacing: "-0.03em" }}>Ready to transform your <span className="gradient-text">Trajectory?</span></h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(16px, 2vw, 20px)", maxWidth: 600, margin: "0 auto 48px", lineHeight: 1.6 }}>
+              Join the elite ecosystem of engineers building the future. Your session is ready for initialization.
+            </p>
+            <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+              <Link href="/auth" style={{ textDecoration: "none" }}>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-primary" style={{ padding: "20px 48px", borderRadius: 20, fontSize: 17, fontWeight: 900 }}>GET LIFETIME ACCESS</motion.button>
+              </Link>
+              <Link href="/contact" style={{ textDecoration: "none" }}>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-ghost" style={{ padding: "20px 40px", borderRadius: 20, fontSize: 17, fontWeight: 900, border: "1px solid rgba(255,255,255,0.1)" }}>Talk to an Expert</motion.button>
+              </Link>
+            </div>
+          </motion.div>
+          <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none" }} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── Footer ───────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer style={{ borderTop: "1px solid var(--border)", padding: "64px 20px 40px", background: "rgba(0,0,0,0.6)" }}>
+    <footer style={{ borderTop: "1px solid var(--border)", padding: "100px 20px 60px", background: "rgba(0,0,0,0.8)", position: "relative" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)" }} />
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        {/* 3-col on desktop, stacks on mobile */}
-        <div className="footer-grid" style={{ marginBottom: 48 }}>
+        <div className="footer-grid" style={{ marginBottom: 80 }}>
           {/* LEFT: Logo + Tagline */}
           <div>
-            <BrandText size={28} />
-            <p style={{ color: "var(--text-secondary)", fontSize: 15, marginTop: 24, maxWidth: 340, lineHeight: 1.8 }}>
-              Precision-engineered career intelligence for engineers.
+            <BrandText size={32} />
+            <p style={{ color: "var(--text-secondary)", fontSize: 16, marginTop: 28, maxWidth: 360, lineHeight: 1.8 }}>
+              Tulasi AI is an autonomous intelligence platform meticulously designed to close the gap between theoretical knowledge and global professional offers.
             </p>
+            <div style={{ display: "flex", gap: 20, marginTop: 32 }}>
+              {[Instagram, Mail, Users].map((Icon, i) => (
+                <motion.a key={i} whileHover={{ y: -4, color: "white" }} href="#" style={{ color: "var(--text-muted)", transition: "color 0.2s" }}><Icon size={24} /></motion.a>
+              ))}
+            </div>
           </div>
 
           {/* CENTER: Product Links */}
-          <div>
-            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 20, fontSize: 11, textTransform: "uppercase", letterSpacing: 2.5 }}>Product</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {[
-                { label: "Roadmaps", href: "/dashboard/roadmap" },
-                { label: "Career Chat", href: "/dashboard/chat" },
-                { label: "Interviews", href: "/dashboard/interview" },
-                { label: "Flashcards", href: "/dashboard/flashcards" },
-              ].map(link => (
-                <Link key={link.label} href={link.href}
-                  style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 14, fontWeight: 500, transition: "color 0.2s" }}
-                  onMouseEnter={e => e.currentTarget.style.color = "white"}
-                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
-                >{link.label}</Link>
-              ))}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
+            <div>
+              <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Ecosystem</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {["Neural Roadmaps", "Interview Lab", "Project Nexus", "DS&A Arena", "Knowledge Base"].map(l => (
+                  <Link key={l} href="#" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 14, fontWeight: 600, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l}</Link>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Resources</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {["Documentation", "API Status", "Changelog", "Community", "Support"].map(l => (
+                  <Link key={l} href="#" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 14, fontWeight: 600, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l}</Link>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* RIGHT: Contact & Links */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right" }}>
-            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 20, fontSize: 11, textTransform: "uppercase", letterSpacing: 2.5 }}>Connect With Us</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-end" }}>
-              <a href="mailto:abishekramamoorthy22@gmail.com" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
-                abishekramamoorthy22@gmail.com <Mail size={16} />
-              </a>
-              <a href="tel:6369538345" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
-                +91 63695 38345 <Phone size={16} />
-              </a>
-              <a href="https://www.instagram.com/_.abi22._/" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)", textDecoration: "none", fontSize: 14 }}>
-                @_.abi22._ <Instagram size={16} />
-              </a>
+            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Secure Session</h4>
+            <div style={{ background: "rgba(255,255,255,0.03)", padding: 24, borderRadius: 24, border: "1px solid rgba(255,255,255,0.08)", width: "100%", maxWidth: 300 }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 16, textAlign: "left" }}>Receive occasional intelligence updates from our founder.</p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input placeholder="Email" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "white", fontSize: 13, flex: 1, outline: "none" }} />
+                <button style={{ background: "white", border: "none", borderRadius: 10, padding: "0 14px", color: "black", fontWeight: 900, fontSize: 12 }}>JOIN</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div style={{ paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          <span style={{ color: "var(--text-muted)", fontSize: 13, fontWeight: 600, textAlign: "center" }}>
-            Founded &amp; Built by Abishek R • © 2026 Tulasi AI Labs
+        <div style={{ paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
+            <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 800, letterSpacing: 0.5 }}>ALL SYSTEMS OPERATIONAL</span>
+          </div>
+          <span style={{ color: "var(--text-muted)", fontSize: 14, fontWeight: 600, textAlign: "center" }}>
+            Built with Precision by Abishek R • © 2026 Tulasi AI Labs. Absolute Privacy Guaranteed.
           </span>
-          <div style={{ display: "flex", gap: 24 }}>
-             <Link href="/contact" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Contact Us</Link>
-             <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Privacy</Link>
-             <Link href="/terms" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>Terms</Link>
+          <div style={{ display: "flex", gap: 32 }}>
+             <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Privacy</Link>
+             <Link href="/terms" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Terms</Link>
+             <Link href="/security" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Security</Link>
           </div>
         </div>
       </div>
@@ -607,9 +701,11 @@ export default function LandingPage() {
       <div style={{ position: "fixed", inset: 0, opacity: 0.05, pointerEvents: "none", zIndex: 100, background: "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyAQMAAAAk8RryAAAABlBMVEUAAAD///+l2Z/dAAAAAXRSTlMAQObYZgAAAAxJREFUCNdjYBgF6AAAAyAAAbe7v7sAAAAASUVORK5CYII=')" }} />
       <Navbar />
       <Hero />
+      <EcosystemSection />
       <RoleSelector />
       <BentoFeatures />
       <ReviewsSection />
+      <CTASection />
       <Footer />
     </main>
   );

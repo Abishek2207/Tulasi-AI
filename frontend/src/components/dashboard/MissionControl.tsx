@@ -52,49 +52,64 @@ export function MissionControl({ token }: { token: string }) {
   if (!mission) return null;
 
   return (
-    <div style={{ padding: "28px", height: "100%", display: "flex", flexDirection: "column", background: "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(244,63,94,0.05))", position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%)", filter: "blur(20px)" }} />
+    <div className="glass-card-premium" style={{ 
+      padding: "28px", 
+      height: "100%", 
+      display: "flex", 
+      flexDirection: "column", 
+      background: "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(244,63,94,0.05))", 
+      position: "relative", 
+      overflow: "hidden",
+      borderRadius: 32,
+      border: "1px solid rgba(139,92,246,0.2)",
+      boxSizing: "border-box"
+    }}>
+      <div className="neural-pulse" style={{ position: "absolute", top: -20, right: -20, width: 120, height: 120, background: "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)", filter: "blur(20px)", zIndex: 0 }} />
+      <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none" }} />
       
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(244,63,94,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F43F5E" }}>
-          <Rocket size={22} className={accepted ? "animate-bounce" : ""} />
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24, position: "relative", zIndex: 1 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 16, background: "rgba(244,63,94,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F43F5E", boxShadow: "0 8px 16px rgba(244,63,94,0.1)" }}>
+          <Rocket size={24} className={accepted ? "animate-bounce" : ""} />
         </div>
         <div>
-          <h3 style={{ fontSize: 16, fontWeight: 900, color: "white", letterSpacing: "-0.5px" }}>Mission Control</h3>
-          <p style={{ fontSize: 11, color: "#F43F5E", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Daily Directive</p>
+          <h3 style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 2 }}>Mission Control</h3>
+          <p style={{ fontSize: 11, color: "#F43F5E", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>Directive Active</p>
         </div>
       </div>
 
-      <div style={{ flex: 1 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 8, color: "white", fontFamily: "var(--font-outfit)" }}>{mission.mission_title}</h2>
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 24 }}>
+      <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
+        <h2 style={{ fontSize: "clamp(20px, 2.5vw, 26px)", fontWeight: 900, marginBottom: 12, color: "white", fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px", lineHeight: 1.2 }}>{mission.mission_title}</h2>
+        <p style={{ fontSize: "clamp(13px, 1.5vw, 15px)", color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 24, fontWeight: 500 }}>
           {mission.mission_description}
         </p>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ padding: "4px 10px", borderRadius: 20, background: "rgba(139,92,246,0.15)", color: "#8B5CF6", fontSize: 12, fontWeight: 900 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", position: "relative", zIndex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ padding: "6px 14px", borderRadius: 30, background: "rgba(139,92,246,0.15)", color: "#8B5CF6", fontSize: 11, fontWeight: 900, letterSpacing: 1, border: "1px solid rgba(139,92,246,0.2)" }}>
             +{mission.reward_xp} XP
           </div>
-          <div style={{ color: "rgba(255,255,255,0.2)" }}><Shield size={16} /></div>
+          <div style={{ color: "rgba(255,255,255,0.2)" }}><Shield size={18} /></div>
         </div>
 
         {!accepted ? (
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleAccept}
-            style={{ padding: "10px 20px", borderRadius: 12, border: "none", background: "white", color: "black", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+            style={{ padding: "12px 24px", borderRadius: 14, border: "none", background: "white", color: "black", fontWeight: 900, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 10px 20px rgba(0,0,0,0.2)" }}
           >
             Engage Mission <Sparkles size={14} />
-          </button>
+          </motion.button>
         ) : (
           <motion.a 
             href={mission.module_link}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            style={{ padding: "10px 20px", borderRadius: 12, border: "none", background: "#F43F5E", color: "white", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}
+            whileHover={{ scale: 1.05, y: -2 }}
+            style={{ padding: "12px 24px", borderRadius: 14, border: "none", background: "#F43F5E", color: "white", fontWeight: 900, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, textDecoration: "none", boxShadow: "0 10px 20px rgba(244,63,94,0.3)" }}
           >
-            Go to Module <ArrowRight size={14} />
+            Open Sequence <ArrowRight size={14} />
           </motion.a>
         )}
       </div>
