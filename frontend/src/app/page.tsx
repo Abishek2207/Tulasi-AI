@@ -39,14 +39,11 @@ const Zap = ({ size, color }: { size: number; color: string }) => (
   </svg>
 );
 
-const ecosystemTech = [
-  { name: "Next.js", icon: Layout, color: "#FFF" },
-  { name: "Python", icon: Code, color: "#3776AB" },
-  { name: "PostgreSQL", icon: HardDrive, color: "#336791" },
-  { name: "FastAPI", icon: Zap, color: "#05998B" },
-  { name: "Gemini AI", icon: Sparkles, color: "#8E75FF" },
-  { name: "TypeScript", icon: Cpu, color: "#3178C6" },
-  { name: "Tailwind", icon: Layout, color: "#06B6D4" },
+const intelligencePillars = [
+  { title: "ADAPTIVE SYNTHESIS", desc: "Complex career data parsed into actionable intuition.", icon: BrainCircuit, color: "#8B5CF6" },
+  { title: "COGNITIVE MAPPING", desc: "Dynamic roadmaps that restructure in real-time.", icon: Map, color: "#06B6D4" },
+  { title: "SIMULATION FIDELITY", desc: "Sub-millisecond feedback on MAANG-grade sims.", icon: Target, color: "#F43F5E" },
+  { title: "GLOBAL NEXUS", desc: "Direct pipelines to frontier tech opportunities.", icon: Sparkles, color: "#10B981" },
 ];
 
 // ── Shared Branding Component ────────────────────────────────────
@@ -299,17 +296,46 @@ function Hero() {
   );
 }
 
-// ── Ecosystem Section ─────────────────────────────────────────────
-function EcosystemSection() {
+// ── Intelligence Pillars (Replaces Ecosystem) ───────────────────
+function IntelligencePillars() {
   return (
-    <div style={{ padding: "40px 0", background: "rgba(0,0,0,0.4)", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)", overflow: "hidden" }}>
-      <div className="marquee">
-        {[...ecosystemTech, ...ecosystemTech].map((tech, i) => (
-          <div key={tech.name + i} style={{ display: "flex", alignItems: "center", gap: 14, margin: "0 40px", opacity: 0.5, transition: "opacity 0.3s" }} 
-            onMouseEnter={e => e.currentTarget.style.opacity = "1"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "0.5"}>
-            <tech.icon size={22} color={tech.color} />
-            <span style={{ color: "white", fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>{tech.name}</span>
+    <div style={{ padding: "60px 0", background: "rgba(0,0,0,0.6)", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)", position: "relative", overflow: "hidden" }}>
+      <div className="bg-grid" style={{ position: "absolute", inset: 0, opacity: 0.03 }} />
+      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", justifyContent: "space-around", alignItems: "center", gap: 32, flexWrap: "wrap", padding: "0 20px" }}>
+        {intelligencePillars.map((p, i) => (
+          <motion.div key={p.title} 
+            initial={{ opacity: 0, y: 20 }} 
+            whileInView={{ opacity: 1, y: 0 }} 
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.1 }}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", maxWidth: 220 }}>
+            <div style={{ width: 50, height: 50, borderRadius: 16, background: `${p.color}10`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, border: `1px solid ${p.color}30` }}>
+              <p.icon size={24} color={p.color} />
+            </div>
+            <h4 style={{ fontSize: 13, fontWeight: 900, color: "white", letterSpacing: 1.5, marginBottom: 8 }}>{p.title}</h4>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5, fontWeight: 500 }}>{p.desc}</p>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Floating Impact Metrics ──────────────────────────────────────
+function ImpactMetrics() {
+  const metrics = [
+    { label: "CAREERS ACCELERATED", value: "12,400+", color: "#8B5CF6" },
+    { label: "AVG SALARY INCREASE", value: "84%", color: "#10B981" },
+    { label: "MAANG PLACEMENTS", value: "2,100+", color: "#06B6D4" },
+    { label: "NEURAL PRECISION", value: "99.8%", color: "#F43F5E" },
+  ];
+  return (
+    <div style={{ maxWidth: 1100, margin: "-40px auto 40px", position: "relative", zIndex: 30, padding: "0 20px" }}>
+      <div className="glass-card-premium" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 1, background: "rgba(255,255,255,0.05)", padding: 1, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+        {metrics.map(m => (
+          <div key={m.label} style={{ background: "rgba(9,9,11,0.8)", padding: "24px 32px", textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: m.color, fontFamily: "var(--font-outfit)", marginBottom: 4 }}>{m.value}</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--text-muted)", letterSpacing: 1.5 }}>{m.label}</div>
           </div>
         ))}
       </div>
@@ -377,22 +403,30 @@ function BentoFeatures() {
 // ── Role Selector ────────────────────────────────────────────────
 function RoleSelector() {
   const roles = [
-    { name: "Software Engineer", desc: "MAANG-level prep system.", icon: Code2, color: "#06B6D4" },
-    { name: "Product Design", desc: "High-fidelity feedback loops.", icon: Layout, color: "#10B981" },
-    { name: "ML Architect", desc: "Data-driven career paths.", icon: BrainCircuit, color: "#8B5CF6" },
+    { name: "Software Engineer", desc: "Architecting high-scale systems and DS&A mastery.", icon: Code2, color: "#06B6D4" },
+    { name: "Product Design", desc: "UX/UI strategy with high-fidelity simulation feedback.", icon: Layout, color: "#10B981" },
+    { name: "ML Architect", desc: "Navigating the frontier of generative & predictive AI.", icon: BrainCircuit, color: "#8B5CF6" },
   ];
   return (
-    <div style={{ padding: "60px 20px", background: "rgba(255,255,255,0.01)", borderTop: "1px solid rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", justifyContent: "center", gap: "clamp(20px, 4vw, 40px)", flexWrap: "wrap" }}>
-        {roles.map(r => (
-          <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <r.icon size={24} color={r.color} />
-            <div>
-              <div style={{ fontSize: "clamp(13px, 1.5vw, 16px)", fontWeight: 800 }}>{r.name}</div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>{r.desc}</div>
-            </div>
-          </div>
-        ))}
+    <div style={{ padding: "80px 20px", background: "rgba(255,255,255,0.02)", position: "relative", overflow: "hidden" }}>
+      <div className="bg-dot" style={{ position: "absolute", inset: 0, opacity: 0.1 }} />
+      <div style={{ maxWidth: 1200, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 1 }}>
+        <div style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 3, marginBottom: 20, textTransform: "uppercase" }}>Specialized Intelligence</div>
+        <div style={{ display: "flex", justifyContent: "center", gap: "clamp(24px, 5vw, 60px)", flexWrap: "wrap" }}>
+          {roles.map(r => (
+            <motion.div key={r.name} 
+              whileHover={{ y: -8 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, maxWidth: 280, padding: "32px", borderRadius: 28, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ width: 64, height: 64, borderRadius: 20, background: `${r.color}15`, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${r.color}30` }}>
+                <r.icon size={32} color={r.color} />
+              </div>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: "white", marginBottom: 6 }}>{r.name}</div>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500, lineHeight: 1.5 }}>{r.desc}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -597,25 +631,49 @@ function ReviewsSection() {
 // ── CTA Section ──────────────────────────────────────────────────
 function CTASection() {
   return (
-    <section style={{ padding: "100px 20px" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto", position: "relative" }}>
-        <div className="neural-pulse" style={{ position: "absolute", inset: -50, background: "radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%)", zIndex: 0 }} />
-        <div className="glass-card" style={{ padding: "clamp(48px, 8vw, 96px)", textAlign: "center", background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.0) 100%)", borderRadius: 48, border: "1px solid rgba(255,255,255,0.1)", position: "relative", zIndex: 1, overflow: "hidden" }}>
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
-            <h2 style={{ fontSize: "clamp(32px, 6vw, 64px)", fontWeight: 900, marginBottom: 24, letterSpacing: "-0.03em" }}>Ready to transform your <span className="gradient-text">Trajectory?</span></h2>
-            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(16px, 2vw, 20px)", maxWidth: 600, margin: "0 auto 48px", lineHeight: 1.6 }}>
-              Join the elite ecosystem of engineers building the future. Your session is ready for initialization.
+    <section style={{ padding: "120px 20px", position: "relative" }}>
+       {/* Background Decoration */}
+      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "100%", height: "100%", zIndex: 0, pointerEvents: "none" }}>
+        <div className="bg-grid" style={{ position: "absolute", inset: 0, opacity: 0.1 }} />
+        <div style={{ position: "absolute", top: "20%", left: "10%", width: 300, height: 300, background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "20%", right: "10%", width: 300, height: 300, background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)" }} />
+      </div>
+
+      <div style={{ maxWidth: 1080, margin: "0 auto", position: "relative" }}>
+        <div className="neural-pulse" style={{ position: "absolute", inset: -100, background: "radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)", zIndex: 0 }} />
+        <div className="glass-card-premium" style={{ 
+          padding: "clamp(48px, 10vw, 100px)", 
+          textAlign: "center", 
+          background: "linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)", 
+          borderRadius: 56, 
+          border: "1px solid rgba(255,255,255,0.1)", 
+          position: "relative", 
+          zIndex: 1, 
+          overflow: "hidden",
+          boxShadow: "0 40px 100px rgba(0,0,0,0.6)"
+        }}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
+            <div style={{ fontSize: 12, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 4, marginBottom: 24, textTransform: "uppercase" }}>A New Standard</div>
+            <h2 style={{ fontSize: "clamp(36px, 7vw, 72px)", fontWeight: 900, marginBottom: 28, letterSpacing: "-0.04em", lineHeight: 1.1 }}>Ready to transform your <span className="gradient-text">Trajectory?</span></h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(18px, 2.5vw, 22px)", maxWidth: 700, margin: "0 auto 56px", lineHeight: 1.6, fontWeight: 500 }}>
+              Join the 12,000+ elite engineers already operating at the frontier. Your personalized career engine is ready for initialization.
             </p>
-            <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap" }}>
               <Link href="/auth" style={{ textDecoration: "none" }}>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-primary" style={{ padding: "20px 48px", borderRadius: 20, fontSize: 17, fontWeight: 900 }}>GET LIFETIME ACCESS</motion.button>
+                <motion.button whileHover={{ scale: 1.05, y: -4 }} whileTap={{ scale: 0.95 }} className="btn-primary" 
+                  style={{ padding: "22px 56px", borderRadius: 22, fontSize: 18, fontWeight: 900, boxShadow: "0 25px 50px rgba(139,92,246,0.3)" }}>
+                  GET LIFETIME ACCESS
+                </motion.button>
               </Link>
               <Link href="/contact" style={{ textDecoration: "none" }}>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-ghost" style={{ padding: "20px 40px", borderRadius: 20, fontSize: 17, fontWeight: 900, border: "1px solid rgba(255,255,255,0.1)" }}>Talk to an Expert</motion.button>
+                <motion.button whileHover={{ scale: 1.05, y: -4 }} whileTap={{ scale: 0.95 }} className="btn-ghost" 
+                  style={{ padding: "22px 48px", borderRadius: 22, fontSize: 18, fontWeight: 900, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.03)" }}>
+                  Talk to an Expert
+                </motion.button>
               </Link>
             </div>
           </motion.div>
-          <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none" }} />
+          <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.1, pointerEvents: "none" }} />
         </div>
       </div>
     </section>
@@ -701,7 +759,8 @@ export default function LandingPage() {
       <div style={{ position: "fixed", inset: 0, opacity: 0.05, pointerEvents: "none", zIndex: 100, background: "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyAQMAAAAk8RryAAAABlBMVEUAAAD///+l2Z/dAAAAAXRSTlMAQObYZgAAAAxJREFUCNdjYBgF6AAAAyAAAbe7v7sAAAAASUVORK5CYII=')" }} />
       <Navbar />
       <Hero />
-      <EcosystemSection />
+      <IntelligencePillars />
+      <ImpactMetrics />
       <RoleSelector />
       <BentoFeatures />
       <ReviewsSection />

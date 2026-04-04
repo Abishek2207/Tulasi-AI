@@ -484,6 +484,19 @@ def debug_ai_env():
     return {"ai_env_vars": keys, "any_key_set": any(keys.values())}
 
 
+# ── Diagnostic Schema Endpoint ─────────────────────────────────────
+@app.get("/api/diag/schema")
+def check_schema(db: Session = Depends(get_session)):
+    """Diagnostic: Check for missing columns in production."""
+    from sqlalchemy import inspect
+    try:
+        inspector = inspect(db.bind)
+        columns = [c["name"] for c in inspector.get_columns("user")]
+        return {"user_columns": columns}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 # /health is already registered above with full detail (lines 212-234)
 
 
