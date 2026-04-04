@@ -129,7 +129,7 @@ def get_daily_mission(
     Differentiates between students (foundations) and professionals (architecture/scale).
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai
     import json
     
     intelligence = json.loads(current_user.user_intelligence_profile or "{}")
@@ -158,9 +158,11 @@ def get_daily_mission(
     """
 
     try:
-        genai.configure(api_key=settings.effective_gemini_key)
-        model = genai.GenerativeModel("gemini-1.5-flash") # Using flash for speed
-        response = model.generate_content(prompt)
+        client = genai.Client(api_key=settings.effective_gemini_key)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt
+        )
         text = response.text.strip()
         
         if "```json" in text: text = text.split("```json")[1].split("```")[0].strip()
@@ -212,7 +214,7 @@ def get_strategic_plan(
     Generates a Year-Wise Strategic Blueprint.
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai
     import json
 
     intelligence = json.loads(current_user.user_intelligence_profile or "{}")
@@ -237,9 +239,11 @@ def get_strategic_plan(
     }}
     """
     try:
-        genai.configure(api_key=settings.effective_gemini_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
+        client = genai.Client(api_key=settings.effective_gemini_key)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt
+        )
         text = response.text.strip()
         if "```json" in text: text = text.split("```json")[1].split("```")[0].strip()
         return json.loads(text)
@@ -257,7 +261,7 @@ def get_daily_routine(
     Optimizes for the user's specific role, technical gaps, and intensity level.
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai
     import json
     
     intelligence = json.loads(current_user.user_intelligence_profile or "{}")
@@ -278,9 +282,11 @@ def get_daily_routine(
     ]
     """
     try:
-        genai.configure(api_key=settings.effective_gemini_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
+        client = genai.Client(api_key=settings.effective_gemini_key)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt
+        )
         text = response.text.strip()
         if "```json" in text: text = text.split("```json")[1].split("```")[0].strip()
         schedule = json.loads(text)

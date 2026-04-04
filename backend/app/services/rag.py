@@ -1,7 +1,8 @@
 import os
 import json
 import numpy as np
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from typing import List, Dict, Any
 
 from app.core.config import settings
@@ -31,8 +32,9 @@ class RAGEvaluator:
             return
 
         # Initialize generative API just for embeddings if needed
+        client = None
         if settings.effective_gemini_key:
-            genai.configure(api_key=settings.effective_gemini_key)
+            client = genai.Client(api_key=settings.effective_gemini_key)
 
         print(f"🔄 Embedding {len(self._dataset)} items for RAG...")
         
@@ -42,13 +44,13 @@ class RAGEvaluator:
         ]
         
         try:
-            # batch embed
-            result = genai.embed_content(
-                model="models/text-embedding-004",
-                content=texts_to_embed,
-            )
-            self._embeddings = np.array(result['embedding'])
-            print("✅ Pre-computed embeddings stored in memory.")
+            if client:
+                result = client.models.embed_content(
+                    model="text-embedding-004",
+                    contents=texts_to_embed,
+                )
+                self._embeddings = np.array([e.values for e in result.embeddings])
+                print("✅ Pre-computed embeddings stored in memory.")
         except Exception as e:
             print(f"❌ Failed to generate embeddings: {e}")
 
@@ -58,10 +60,12 @@ class RAGEvaluator:
             return []
 
         try:
-            query_emb = genai.embed_content(
-                model="models/text-embedding-004",
-                content=user_answer_context
-            )['embedding']
+            client = genai.Client(api_key=settings.effective_gemini_key)
+            result = client.models.embed_content(
+                model="text-embedding-004",
+                contents=user_answer_context
+            )
+            query_emb = result.embeddings[0].values
             
             query_emb = np.array(query_emb)
             
