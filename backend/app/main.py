@@ -208,6 +208,11 @@ async def lifespan(app: FastAPI):
                         {"name": "Hami",          "role": None,               "review": "Really, It's amazing to use this website\U0001f44c!!!",                                                                                                                                  "rating": 5},
                         {"name": "Abhimanyu S S", "role": "Student@PEC",      "review": "Excellent platform for Students\U0001f525\U0001f525",                                                                                                                                   "rating": 5},
                     ]
+                    # --- Cleanup old duplicates without emojis from production ---
+                    conn.execute(text("DELETE FROM review WHERE name = 'Hami' AND review NOT LIKE '%👌%'"))
+                    conn.execute(text("DELETE FROM review WHERE name = 'Abhimanyu S S' AND review NOT LIKE '%🔥%'"))
+                    conn.execute(text("DELETE FROM review WHERE name = 'Yogeshwaran' AND review NOT LIKE '%❤️🔥%'"))
+
                     for r in REAL_REVIEWS:
                         existing = conn.execute(text("SELECT id FROM review WHERE name = :n AND review = :rev"), {"n": r["name"], "rev": r["review"]}).first()
                         if not existing:
