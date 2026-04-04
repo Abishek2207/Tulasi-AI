@@ -40,7 +40,7 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    is_admin = req.email == settings.ADMIN_EMAIL
+    is_admin = req.email.lower() == settings.ADMIN_EMAIL.lower()
     user = User(
         email=req.email,
         hashed_password=get_password_hash(req.password),
@@ -146,7 +146,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_session
     # Streak and last activity are now handled centrally by log_activity_internal below.
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
-    if user.email == settings.ADMIN_EMAIL and user.role != "admin":
+    if user.email.lower() == settings.ADMIN_EMAIL.lower() and user.role != "admin":
         user.role = "admin"
         db.add(user)
         db.commit()
@@ -252,7 +252,7 @@ def oauth_login(request: Request, req: OAuthLoginRequest, db: Session = Depends(
 
     if not user:
         # Auto-register the oauth user
-        is_admin = req.email == settings.ADMIN_EMAIL
+        is_admin = req.email.lower() == settings.ADMIN_EMAIL.lower()
         user = User(
             email=req.email,
             hashed_password=None,  # No password for OAuth users
@@ -289,7 +289,7 @@ def oauth_login(request: Request, req: OAuthLoginRequest, db: Session = Depends(
     # Streak and last activity are now handled centrally by log_activity_internal below.
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
-    if user.email == settings.ADMIN_EMAIL and user.role != "admin":
+    if user.email.lower() == settings.ADMIN_EMAIL.lower() and user.role != "admin":
         user.role = "admin"
         db.add(user)
         db.commit()
