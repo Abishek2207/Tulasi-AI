@@ -1,8 +1,7 @@
 import os
 import json
 import numpy as np
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 from typing import List, Dict, Any
 
 from app.core.config import settings
@@ -32,9 +31,8 @@ class RAGEvaluator:
             return
 
         # Initialize generative API just for embeddings if needed
-        client = None
         if settings.effective_gemini_key:
-            client = genai.Client(api_key=settings.effective_gemini_key)
+            genai.configure(api_key=settings.effective_gemini_key)
 
         print(f"🔄 Embedding {len(self._dataset)} items for RAG...")
         
@@ -44,12 +42,13 @@ class RAGEvaluator:
         ]
         
         try:
-            if client:
-                result = client.models.embed_content(
-                    model="gemini-embedding-001",
-                    contents=texts_to_embed,
+            if settings.effective_gemini_key:
+                result = genai.embed_content(
+                    model="models/gemini-embedding-001",
+                    content=texts_to_embed,
+                    task_type="retrieval_document"
                 )
-                self._embeddings = np.array([e.values for e in result.embeddings])
+                self._embeddings = np.array(result['embedding'])
                 print("✅ Pre-computed embeddings stored in memory.")
         except Exception as e:
             print(f"❌ Failed to generate embeddings: {e}")
@@ -60,12 +59,13 @@ class RAGEvaluator:
             return []
 
         try:
-            client = genai.Client(api_key=settings.effective_gemini_key)
-            result = client.models.embed_content(
-                model="gemini-embedding-001",
-                contents=user_answer_context
+            genai.configure(api_key=settings.effective_gemini_key)
+            result = genai.embed_content(
+                model="models/gemini-embedding-001",
+                content=user_answer_context,
+                task_type="retrieval_query"
             )
-            query_emb = result.embeddings[0].values
+            query_emb = result['embedding']
             
             query_emb = np.array(query_emb)
             

@@ -829,13 +829,11 @@ Reply with ONLY valid JSON, no markdown."""
 
     try:
         from app.core.config import settings
-        from google import genai
+        import google.generativeai as genai
 
-        client = genai.Client(api_key=settings.effective_gemini_key or settings.GEMINI_API_KEY)
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
-            contents=prompt
-        )
+        genai.configure(api_key=settings.effective_gemini_key or settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+        response = model.generate_content(prompt)
         text = response.text.strip()
         # Clean markdown if any
         if text.startswith("```"):

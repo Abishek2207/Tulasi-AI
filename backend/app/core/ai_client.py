@@ -1,9 +1,4 @@
-import os
-import time
-import json
-import httpx
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 from typing import List, Dict, Optional, Generator, Union
 from app.core.config import settings
 
@@ -124,14 +119,15 @@ class HybridAIClient:
         if not gemini_key:
             raise AIClientError("Gemini API key is missing.")
 
-        client = genai.Client(api_key=gemini_key)
-
-        config = None
-        if system_instruction:
-            config = types.GenerateContentConfig(system_instruction=system_instruction)
+        # Reverted to legacy SDK configuration
+        genai.configure(api_key=gemini_key)
+        model = genai.GenerativeModel(
+            model_name=model_name,
+            system_instruction=system_instruction
+        )
 
         if stream:
-            response_stream = client.models.generate_content_stream(model=model_name, contents=contents, config=config)
+            response_stream = model.generate_content(contents, stream=True)
 
             def gen():
                 for chunk in response_stream:
@@ -140,7 +136,7 @@ class HybridAIClient:
 
             return gen()
         else:
-            response = client.models.generate_content(model=model_name, contents=contents, config=config)
+            response = model.generate_content(contents, stream=False)
             if response and hasattr(response, "text") and response.text:
                 return response.text
             return "No response generated."

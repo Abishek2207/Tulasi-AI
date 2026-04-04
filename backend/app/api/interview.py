@@ -73,7 +73,7 @@ class _RAGEvaluator:
         if self._ready:
             return
         import os, numpy as np
-        from google import genai
+        import google.generativeai as genai
 
         dataset_path = os.path.join(
             os.path.dirname(__file__), "..", "..", "data", "rag_interview.json"
@@ -90,14 +90,15 @@ class _RAGEvaluator:
             self._ready = True
             return
 
-        client = genai.Client(api_key=settings.effective_gemini_key)
+        import google.generativeai as genai
+        genai.configure(api_key=settings.effective_gemini_key)
         texts = [
             f"Question: {item.get('question', '')}\nIdeal Answer: {item.get('ideal_answer', '')}"
             for item in self._dataset
         ]
         try:
-            result = client.models.embed_content(model="gemini-embedding-001", contents=texts)
-            self._embeddings = np.array([e.values for e in result.embeddings])
+            result = genai.embed_content(model="models/gemini-embedding-001", content=texts, task_type="retrieval_document")
+            self._embeddings = np.array(result['embedding'])
             print(f"✅ [RAG] Pre-embedded {len(self._dataset)} QA pairs.")
         except Exception as e:
             print(f"❌ [RAG] Embedding failed: {e}")
@@ -109,12 +110,12 @@ class _RAGEvaluator:
             return []
         try:
             import numpy as np
-            from google import genai
-            client = genai.Client(api_key=settings.effective_gemini_key) if settings.effective_gemini_key else None
+            import google.generativeai as genai
             
-            if client:
-                res = client.models.embed_content(model="gemini-embedding-001", contents=query)
-                q_emb = np.array(res.embeddings[0].values)
+            if settings.effective_gemini_key:
+                genai.configure(api_key=settings.effective_gemini_key)
+                res = genai.embed_content(model="models/gemini-embedding-001", content=query, task_type="retrieval_query")
+                q_emb = np.array(res['embedding'])
             else:
                 return []
             norms = np.linalg.norm(self._embeddings, axis=1) * np.linalg.norm(q_emb)
