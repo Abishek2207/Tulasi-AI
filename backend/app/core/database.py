@@ -38,6 +38,20 @@ def get_session():
         with Session(engine) as session:
             yield session
     except Exception as e:
-        print(f"DB session error: {e}")
+        # If it's already an HTTPException (like a 401 or 400 from downstream), let it propagate.
+        # This prevents masking 401 Unauthorized with a 503 Backend Error.
         from fastapi import HTTPException
-        raise HTTPException(status_code=503, detail="Database connection error.")
+        from sqlalchemy.exc import SQLAlchemyError
+        
+        if isinstance(e, HTTPException):
+            raise e
+            
+        # Log the real error for internal visibility
+        print(f"📡 Backend Error Context: {type(e).__name__} - {e}")
+        
+        # If it's a known DB error, return 503
+        if isinstance(e, SQLAlchemyError):
+            raise HTTPException(status_code=503, detail="Database connection error.")
+            
+        # Otherwise, let it propagate so our global handlers in main.py can deal with it properly (e.g. 400 for validation)
+        raise e
