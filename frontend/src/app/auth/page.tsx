@@ -49,7 +49,10 @@ export default function AuthPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: "https://tulasiai.vercel.app/auth/callback" },
+        options: { 
+          redirectTo: "https://tulasiai.vercel.app/auth/callback",
+          queryParams: { prompt: "select_account" }
+        },
       });
       if (error) {
         toast.error("Google sign-in failed: " + error.message);
