@@ -346,6 +346,26 @@ export const intelligenceApi = {
       method: "POST",
       body: JSON.stringify({ problem_id, user_query }),
     }),
+
+  // Intelligence V2
+  getDailyPlan: () => request<{ greeting: string; focus_theme: string; tasks: any[]; daily_quote: string; xp_potential: number; streak_note: string | null }>("/api/intel/daily-plan"),
+  getNextTask: () => request<{ next_task: { action: string; href: string; reason: string; xp: number; icon: string }; current_xp: number; current_streak: number }>("/api/intel/next-task"),
+  getCareerGPS: (year: string, role: string, skills?: string) =>
+    request<any>("/api/intel/career-gps", {
+      method: "POST",
+      body: JSON.stringify({ year, target_role: role, current_skills: skills }),
+    }),
+  getSalaryIntel: (role: string, location: string, yoe: number) =>
+    request<any>("/api/intel/salary-intel", {
+      method: "POST",
+      body: JSON.stringify({ role, location, yoe }),
+    }),
+  askMentor: (question: string, mode: string = "career") =>
+    request<{ response: string; mode: string; mentor_name: string }>("/api/intel/ask-mentor", {
+      method: "POST",
+      body: JSON.stringify({ question, mode }),
+    }),
+  getProfile: () => request<{ profile: any; patterns: any; user: any }>("/api/intel/profile"),
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
