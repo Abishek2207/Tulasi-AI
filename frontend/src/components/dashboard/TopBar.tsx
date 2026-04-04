@@ -159,6 +159,16 @@ export default function TopBar() {
           </button>
         </div>
 
+        {/* Neural Sync Indicator */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: 20 }}>
+          <div style={{ position: "relative", width: 8, height: 8 }}>
+            <motion.div animate={{ scale: [1, 1.8, 1], opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 2 }} 
+              style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#10B981" }} />
+            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
+          </div>
+          <div style={{ fontSize: 9, fontWeight: 900, color: "var(--text-secondary)", letterSpacing: 1.5, opacity: 0.6 }}>NEURAL SYNC: ONLINE</div>
+        </div>
+
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
           <UpgradeModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
 

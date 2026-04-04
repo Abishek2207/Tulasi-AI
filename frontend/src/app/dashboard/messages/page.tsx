@@ -8,8 +8,9 @@ import { encryptMessage, decryptMessage } from "@/lib/crypto";
 import { 
   Search, Send, Phone, Video, Info, MoreVertical, 
   Hash, User as UserIcon, ShieldCheck, Zap, Sparkles,
-  ArrowLeft, Plus, Image as ImageIcon, Smile, Mic
+  ArrowLeft, Plus, Image as ImageIcon, Smile, Mic, BrainCircuit
 } from "lucide-react";
+import { intelligenceApi } from "@/lib/api";
 
 interface User {
   id: number;
@@ -35,13 +36,24 @@ export default function MessagesPage() {
   const [activeTab, setActiveTab] = useState<"dm" | "community">("dm");
   const [users, setUsers] = useState<User[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
-  const [activeUser, setActiveUser] = useState<User | null>(null);
+  const [activeUser, setActiveUser] = useState<User | any | null>(null); // Can be User or the Virtual Mentor
   const [activeGroup, setActiveGroup] = useState<any | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Virtual AGI Mentor Contact
+  const AGI_MENTOR = {
+    id: -1, // Virtual ID
+    name: "AGI Mentor",
+    email: "neural-strategist@tulasi.ai",
+    is_mentor: true,
+    is_online: true,
+    avatar_icon: <BrainCircuit size={24} color="#8B5CF6" />
+  };
 
   const getSharedCode = (id1: number, id2: number) => {
     const ids = [id1, id2].sort((a, b) => a - b);
@@ -64,7 +76,7 @@ export default function MessagesPage() {
         if (data.type === "new_message") {
           const newMsg = data.message;
           const currentUserId = (session?.user as any)?.id;
-          if (activeUser && (newMsg.sender_id === activeUser.id || newMsg.receiver_id === activeUser.id)) {
+          if (activeUser && !activeUser.is_mentor && (newMsg.sender_id === activeUser.id || newMsg.receiver_id === activeUser.id)) {
             let content = newMsg.content;
             if (content.includes(":")) {
                const sharedCode = getSharedCode(currentUserId, activeUser.id);
@@ -92,7 +104,19 @@ export default function MessagesPage() {
   }, [session, activeUser, activeGroup]);
 
   useEffect(() => {
-    if (activeUser && activeTab === "dm") fetchMessages(activeUser.id);
+    if (activeUser && activeTab === "dm" && !activeUser.is_mentor) {
+      fetchMessages(activeUser.id);
+    } else if (activeUser?.is_mentor) {
+      // Load initial mentor greeting if messages empty
+      if (messages.length === 0) {
+        setMessages([{
+          id: Date.now(),
+          sender_id: -1,
+          content: "Initialization complete. I am Tulasi's Neural Strategist. Ask me anything about your career trajectory, interview preparation, or technical roadmaps.",
+          created_at: new Date().toISOString()
+        }]);
+      }
+    }
   }, [activeUser, activeTab]);
 
   useEffect(() => {
@@ -108,7 +132,7 @@ export default function MessagesPage() {
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users);
-        if (data.users.length > 0 && !activeUser && activeTab === "dm") setActiveUser(data.users[0]);
+        if (!activeUser && activeTab === "dm") setActiveUser(AGI_MENTOR);
       }
     } catch (err) { console.error("Directory fetch failed:", err); }
     setLoading(false);
@@ -173,7 +197,19 @@ export default function MessagesPage() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     const plaintext = input.trim(); setInput("");
 
-    if (activeTab === "dm" && activeUser) {
+    if (activeTab === "dm" && activeUser?.is_mentor) {
+      // HANDLE AGI MENTOR
+      const userMsg: Message = { id: Date.now(), sender_id: (session?.user as any)?.id, content: plaintext, created_at: new Date().toISOString() };
+      setMessages(prev => [...prev, userMsg]);
+      setIsTyping(true);
+      try {
+        const data = await intelligenceApi.askMentor(plaintext, "career");
+        const mentorMsg: Message = { id: Date.now() + 1, sender_id: -1, content: data.response, created_at: new Date().toISOString() };
+        setMessages(prev => [...prev, mentorMsg]);
+      } catch (err) { console.error("Mentor failed:", err); }
+      finally { setIsTyping(false); }
+
+    } else if (activeTab === "dm" && activeUser) {
       const currentUserId = (session?.user as any)?.id;
       const sharedCode = getSharedCode(currentUserId, activeUser.id);
       try {
@@ -194,6 +230,8 @@ export default function MessagesPage() {
       } catch (err) { console.error("Group Message failed:", err); }
     }
   };
+
+  const filteredUsers = users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div style={{ height: "calc(100vh - 120px)", display: "flex", gap: 0, background: "rgba(0,0,0,0.2)", borderRadius: 32, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(20px)" }}>
@@ -222,12 +260,12 @@ export default function MessagesPage() {
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => { setActiveTab("dm"); if (users.length) setActiveUser(users[0]); }}
+            <button onClick={() => { setActiveTab("dm"); setMessages([]); setActiveGroup(null); setActiveUser(AGI_MENTOR); }}
               style={{ flex: 1, padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, cursor: "pointer", border: "none",
                 background: activeTab === "dm" ? "white" : "rgba(255,255,255,0.03)",
                 color: activeTab === "dm" ? "black" : "var(--text-secondary)", transition: "all 0.2s"
               }}>Direct</button>
-            <button onClick={() => { setActiveTab("community"); fetchGroups(); }}
+            <button onClick={() => { setActiveTab("community"); setMessages([]); setActiveUser(null); fetchGroups(); }}
               style={{ flex: 1, padding: "10px", borderRadius: 10, fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, cursor: "pointer", border: "none",
                 background: activeTab === "community" ? "white" : "rgba(255,255,255,0.03)",
                 color: activeTab === "community" ? "black" : "var(--text-secondary)", transition: "all 0.2s"
@@ -238,27 +276,54 @@ export default function MessagesPage() {
         {/* User/Group List */}
         <div style={{ flex: 1, overflowY: "auto", padding: "12px" }} className="custom-scrollbar">
           {activeTab === "dm" ? (
-             users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
-               <motion.div key={u.id} onClick={() => setActiveUser(u)} 
-                 whileHover={{ background: "rgba(255,255,255,0.04)" }}
+             <>
+               {/* Fixed AGI MENTOR Contact */}
+               <motion.div onClick={() => { if(activeUser?.id !== -1) { setActiveUser(AGI_MENTOR); setMessages([]); } }}
+                 whileHover={{ background: "rgba(139,92,246,0.08)" }}
                  style={{ 
                    padding: "16px", borderRadius: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", marginBottom: 4, transition: "0.2s",
-                   background: activeUser?.id === u.id ? "rgba(255,255,255,0.06)" : "transparent",
-                   border: activeUser?.id === u.id ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent"
+                   background: activeUser?.is_mentor ? "rgba(139,92,246,0.12)" : "transparent",
+                   border: activeUser?.is_mentor ? "1px solid rgba(139,92,246,0.2)" : "1px solid transparent"
                  }}>
                  <div style={{ position: "relative" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 24, background: "linear-gradient(45deg, #8B5CF6, #06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white", fontSize: 18 }}>{u.name.charAt(0).toUpperCase()}</div>
-                    {u.is_online && <div style={{ position: "absolute", bottom: 2, right: 2, width: 12, height: 12, borderRadius: 6, background: "#10B981", border: "2px solid #08080A" }} />}
+                    <div style={{ width: 48, height: 48, borderRadius: 24, background: "rgba(139,92,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8B5CF6", boxShadow: "0 0 15px rgba(139,92,246,0.2)" }}>
+                      <BrainCircuit size={28} />
+                    </div>
+                    <div style={{ position: "absolute", bottom: 2, right: 2, width: 12, height: 12, borderRadius: 6, background: "#8B5CF6", border: "2px solid #08080A", boxShadow: "0 0 8px #8B5CF6" }} />
                  </div>
                  <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <span style={{ fontWeight: 800, fontSize: 14, color: "white" }}>{u.name}</span>
-                      <span style={{ fontSize: 10, color: "var(--text-muted)" }}>12m</span>
+                      <span style={{ fontWeight: 900, fontSize: 14, color: "#A78BFA" }}>AGI MENTOR</span>
+                      <span style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 900 }}>AI ACTIVE</span>
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: 180 }}>Initializing career optimization sequence...</div>
+                    <div style={{ fontSize: 12, color: "rgba(167,139,250,0.6)", fontWeight: 700 }}>Neural Strategist Core Online.</div>
                  </div>
                </motion.div>
-             ))
+
+               <div style={{ padding: "12px 16px 8px", fontSize: 10, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Connections</div>
+
+               {filteredUsers.map(u => (
+                 <motion.div key={u.id} onClick={() => { if(activeUser?.id !== u.id) { setActiveUser(u); setMessages([]); } }} 
+                   whileHover={{ background: "rgba(255,255,255,0.04)" }}
+                   style={{ 
+                     padding: "16px", borderRadius: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", marginBottom: 4, transition: "0.2s",
+                     background: activeUser?.id === u.id ? "rgba(255,255,255,0.06)" : "transparent",
+                     border: activeUser?.id === u.id ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent"
+                   }}>
+                   <div style={{ position: "relative" }}>
+                      <div style={{ width: 48, height: 48, borderRadius: 24, background: "linear-gradient(45deg, #1F2937, #111827)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white", fontSize: 18, border: "1px solid rgba(255,255,255,0.1)" }}>{u.name.charAt(0).toUpperCase()}</div>
+                      {u.is_online && <div style={{ position: "absolute", bottom: 2, right: 2, width: 12, height: 12, borderRadius: 6, background: "#10B981", border: "2px solid #08080A" }} />}
+                   </div>
+                   <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <span style={{ fontWeight: 800, fontSize: 14, color: "white" }}>{u.name}</span>
+                        <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{u.is_online ? "now" : "off"}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: 180 }}>Orbit encrypted communication...</div>
+                   </div>
+                 </motion.div>
+               ))}
+             </>
           ) : (
             groups.map(g => (
               <motion.div key={g.id} onClick={() => { setActiveGroup(g); fetchGroupMessages(g.id); }}
@@ -288,14 +353,14 @@ export default function MessagesPage() {
             {/* Chat Header */}
             <div style={{ padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.01)" }}>
                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: activeUser ? 22 : 12, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white", fontSize: 18, border: "1px solid rgba(255,255,255,0.1)" }}>
-                    {activeUser ? activeUser.name.charAt(0).toUpperCase() : "#"}
+                  <div style={{ width: 44, height: 44, borderRadius: activeUser?.id === -1 ? 12 : 22, background: activeUser?.id === -1 ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: activeUser?.id === -1 ? "#8B5CF6" : "white", fontSize: 18, border: "1px solid rgba(255,255,255,0.1)" }}>
+                    {activeUser?.id === -1 ? <BrainCircuit size={24} /> : activeUser ? activeUser.name.charAt(0).toUpperCase() : "#"}
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 17, fontWeight: 900 }}>{activeUser?.name || activeGroup?.name}</h3>
+                    <h3 style={{ fontSize: 17, fontWeight: 900, color: activeUser?.id === -1 ? "#A78BFA" : "white" }}>{activeUser?.name || activeGroup?.name}</h3>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: 3, background: "#10B981" }} />
-                      <span style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>{activeUser ? "Private Encryption" : "Global Channel"}</span>
+                      <div style={{ width: 6, height: 6, borderRadius: 3, background: activeUser?.id === -1 ? "#8B5CF6" : "#10B981" }} />
+                      <span style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>{activeUser?.id === -1 ? "Neural Sync Active" : activeUser ? "Private Encryption" : "Global Channel"}</span>
                     </div>
                   </div>
                </div>
@@ -310,25 +375,30 @@ export default function MessagesPage() {
             <div style={{ flex: 1, overflowY: "auto", padding: "32px" }} className="custom-scrollbar">
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {messages.length === 0 ? (
-                  <div style={{ margin: "100px auto", textAlign: "center", maxWidth: 300 }}>
-                    <div style={{ width: 64, height: 64, borderRadius: 32, background: "rgba(139,92,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", color: "#8B5CF6" }}><ShieldCheck size={32} /></div>
-                    <h4 style={{ fontWeight: 800, marginBottom: 8 }}>Encrypted Transmission</h4>
-                    <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>Your messages are end-to-end encrypted. Not even Tulasi AI can read them.</p>
+                  <div style={{ margin: "100px auto", textAlign: "center", maxWidth: 320 }}>
+                    <div style={{ width: 64, height: 64, borderRadius: 32, background: "rgba(139,92,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", color: "#8B5CF6" }}>
+                      {activeUser?.id === -1 ? <Sparkles size={32} /> : <ShieldCheck size={32} />}
+                    </div>
+                    <h4 style={{ fontWeight: 800, marginBottom: 8 }}>{activeUser?.id === -1 ? "AI Mentorship Initialized" : "Encrypted Transmission"}</h4>
+                    <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
+                      {activeUser?.id === -1 ? "Consult the Neural Strategist for direct career advice and technical roadmaps." : "Your messages are end-to-end encrypted. Not even Tulasi AI can read them."}
+                    </p>
                   </div>
                 ) : (
                   messages.map((msg, i) => {
-                    const isMe = (msg.sender_id === (session?.user as any)?.id) || (msg.user_id === (session?.user as any)?.id);
+                    const isMe = (msg.sender_id === (session?.user as any)?.id);
+                    const isMentor = msg.sender_id === -1;
                     const showName = !activeUser && !isMe;
                     return (
                       <motion.div key={msg.id} initial={{ opacity: 0, scale: 0.95, y: 5 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-                        style={{ alignSelf: isMe ? "flex-end" : "flex-start", maxWidth: "70%", display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
+                        style={{ alignSelf: isMe ? "flex-end" : "flex-start", maxWidth: isMentor ? "85%" : "70%", display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
                         {showName && <div style={{ fontSize: 10, fontWeight: 900, color: "var(--brand-primary)", marginBottom: 4, marginLeft: 12, textTransform: "uppercase" }}>{msg.user_name}</div>}
                         <div style={{
-                          padding: "12px 18px", borderRadius: isMe ? "22px 22px 4px 22px" : "22px 22px 22px 4px",
-                          background: isMe ? "linear-gradient(135deg, #8B5CF6, #7C3AED)" : "rgba(255,255,255,0.06)",
-                          color: "white", fontSize: 14, fontWeight: 500, lineHeight: 1.5,
-                          boxShadow: isMe ? "0 10px 20px rgba(139,92,246,0.2)" : "none",
-                          border: isMe ? "none" : "1px solid rgba(255,255,255,0.05)"
+                          padding: "12px 18px", borderRadius: isMe ? "22px 22px 4px 22px" : (isMentor ? "4px 22px 22px 22px" : "22px 22px 22px 4px"),
+                          background: isMe ? "linear-gradient(135deg, #8B5CF6, #7C3AED)" : (isMentor ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.06)"),
+                          color: "white", fontSize: 14, fontWeight: 500, lineHeight: 1.6,
+                          boxShadow: isMe ? "0 10px 20px rgba(139,92,246,0.2)" : (isMentor ? "inset 0 0 10px rgba(139,92,246,0.1)" : "none"),
+                          border: isMe ? "none" : (isMentor ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(255,255,255,0.05)")
                         }}>
                           {msg.content}
                         </div>
@@ -336,6 +406,13 @@ export default function MessagesPage() {
                       </motion.div>
                     );
                   })
+                )}
+                {isTyping && (
+                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "12px 20px", background: "rgba(139,92,246,0.05)", borderRadius: "20px", width: "fit-content", display: "flex", gap: 4 }}>
+                      <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#8B5CF6" }} />
+                      <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#8B5CF6", animationDelay: "0.2s" }} />
+                      <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#8B5CF6", animationDelay: "0.4s" }} />
+                   </motion.div>
                 )}
                 <div ref={messagesEndRef} />
               </div>
@@ -350,7 +427,7 @@ export default function MessagesPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Ask for mentorship or message colleagues..."
+                  placeholder={activeUser?.is_mentor ? "Ask your AGI Mentor anything..." : "Message colleagues..."}
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   style={{ flex: 1, background: "none", border: "none", outline: "none", color: "white", fontSize: 14, padding: "8px 0" }}
@@ -360,8 +437,8 @@ export default function MessagesPage() {
                    <Mic size={20} style={{ cursor: "pointer" }} />
                 </div>
                 <button type="submit" disabled={!input.trim()}
-                  style={{ width: 44, height: 44, borderRadius: 22, background: input.trim() ? "white" : "rgba(255,255,255,0.05)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s", cursor: input.trim() ? "pointer" : "default" }}>
-                  <Send size={18} color={input.trim() ? "black" : "rgba(255,255,255,0.3)"} />
+                  style={{ width: 44, height: 44, borderRadius: 22, background: input.trim() ? (activeUser?.is_mentor ? "#8B5CF6" : "white") : "rgba(255,255,255,0.05)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s", cursor: input.trim() ? "pointer" : "default" }}>
+                  <Send size={18} color={input.trim() ? (activeUser?.is_mentor ? "white" : "black") : "rgba(255,255,255,0.3)"} />
                 </button>
               </form>
             </div>
@@ -373,7 +450,7 @@ export default function MessagesPage() {
                <Sparkles size={48} color="rgba(139,92,246,0.3)" />
              </motion.div>
              <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 12 }}>Neural Messaging Hub</h2>
-             <p style={{ color: "var(--text-secondary)", maxWidth: 360, lineHeight: 1.6, fontSize: 15 }}>Select a colleague or enter Orbit Hub to initialize career-critical transmissions.</p>
+             <p style={{ color: "var(--text-secondary)", maxWidth: 360, lineHeight: 1.6, fontSize: 15 }}>Select a colleague or consult with your AGI Mentor to initialize career-critical transmissions.</p>
           </div>
         )}
       </div>
@@ -383,6 +460,11 @@ export default function MessagesPage() {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         .icon-btn:hover { background: rgba(255,255,255,0.1) !important; color: white; }
+        .typing-dot { animation: typing 1.4s infinite ease-in-out; }
+        @keyframes typing {
+          0%, 100% { opacity: 0.2; transform: translateY(0); }
+          50% { opacity: 1; transform: translateY(-4px); }
+        }
       `}</style>
     </div>
   );
