@@ -127,11 +127,19 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
 
 
 @router.post("/login")
-@limiter.limit("5/minute")
+@limiter.limit("10/minute")
 def login(request: Request, req: LoginRequest, db: Session = Depends(get_session)):
+    if not req.email or not req.password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+        
     query = select(User).where(User.email == req.email)
-    result = db.exec(query)
-    user = result.first()
+    try:
+        result = db.exec(query)
+        user = result.first()
+    except Exception as e:
+        print(f"Login DB error: {e}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
