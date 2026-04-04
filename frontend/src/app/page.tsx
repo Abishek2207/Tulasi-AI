@@ -202,17 +202,43 @@ function Hero() {
           <div className="bg-grid" style={{ position: "absolute", inset: 0, opacity: 0.1 }} />
           <div className="bg-dot" style={{ position: "absolute", inset: 0, opacity: 0.15, transform: "scale(1.5)" }} />
           
+          {/* Advanced Neural Background Nodes */}
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: -1 }}>
+             {[...Array(20)].map((_, i) => (
+               <motion.div 
+                 key={i}
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: [0.1, 0.3, 0.1], scale: [1, 1.2, 1], x: Math.random() * 20 - 10, y: Math.random() * 20 - 10 }}
+                 transition={{ duration: 4 + Math.random() * 4, repeat: Infinity, ease: "linear", delay: Math.random() * 5 }}
+                 style={{ 
+                   position: "absolute", 
+                   top: `${Math.random() * 60}%`, 
+                   left: `${Math.random() * 100}%`,
+                   width: 2, height: 2, 
+                   background: "white", 
+                   borderRadius: "50%",
+                   boxShadow: "0 0 10px white"
+                 }} 
+               />
+             ))}
+          </div>
+
           {/* Technical Glows */}
           <div className="neural-pulse"
-            style={{ position: "absolute", top: "-10%", left: "10%", width: "50%", height: "50%", background: "radial-gradient(circle, rgba(138,92,246,0.12) 0%, transparent 70%)" }} />
+            style={{ position: "absolute", top: "-10%", left: "10%", width: "50%", height: "50%", background: "radial-gradient(circle, rgba(138,92,246,0.15) 0%, transparent 70%)" }} />
           <div className="neural-pulse"
-            style={{ position: "absolute", bottom: "0%", right: "5%", width: "45%", height: "45%", background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)", animationDelay: "2s" }} />
+            style={{ position: "absolute", bottom: "0%", right: "5%", width: "45%", height: "45%", background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)", animationDelay: "2s" }} />
         </div>
 
         {/* Floating Title */}
-        <motion.div style={{ y, opacity, position: "absolute", zIndex: 10, textAlign: "center", width: "100%", top: isMobile ? "12%" : "18%" }}>
+        <motion.div style={{ y, opacity, position: "absolute", zIndex: 10, textAlign: "center", width: "100%", top: isMobile ? "12%" : "15%" }}>
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 16 }}>
+            <span style={{ fontSize: 10, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 5, textTransform: "uppercase", background: "rgba(255,255,255,0.03)", padding: "6px 16px", borderRadius: 30, border: "1px solid rgba(255,255,255,0.1)" }}>
+              SYSTEM READY // 0.0ms LATENCY
+            </span>
+          </motion.div>
           <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
-            className="hero-title">
+            className="hero-title" style={{ fontSize: "clamp(48px, 9vw, 110px)", lineHeight: 0.9, letterSpacing: "-0.04em" }}>
             {["Architect", "Your", "Trajectory."].map((w, i) => (
               <motion.span key={i} initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 100, damping: 12, delay: 0.2 + i * 0.1 }}
                 style={{ display: isMobile ? "block" : "inline-block", marginRight: isMobile ? 0 : "0.2em" }} className={i === 2 ? "gradient-text" : ""}>{w}
@@ -221,9 +247,9 @@ function Hero() {
           </motion.h1>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
-            style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", padding: "0 20px" }}>
-            {["Neural-Engineered", "Proprietary RAG", "MAANG Simulation"].map((tag, i) => (
-              <span key={tag} style={{ fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", padding: "6px 12px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 30 }}>
+            style={{ marginTop: 32, display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap", padding: "0 20px" }}>
+            {["NEURAL INTELLIGENCE", "PROPRIETARY RAG", "QUANTUM ANALYSIS"].map((tag, i) => (
+              <span key={tag} style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2, color: "var(--text-muted)", padding: "8px 16px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, background: "rgba(255,255,255,0.02)" }}>
                 {tag}
               </span>
             ))}
@@ -248,10 +274,37 @@ function Hero() {
              zIndex: 20,
              transformStyle: "preserve-3d",
              boxShadow: "0 -24px 120px rgba(0,0,0,0.95), inset 0 1px 2px rgba(255,255,255,0.1)",
-             textAlign: "center"
+             textAlign: "center",
+             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"
            }}
         >
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} style={{ marginBottom: 28 }}>
+          {/* Advanced Apple-style floating status units */}
+          {!isMobile && (
+            <>
+              <motion.div 
+                animate={{ y: [0, -15, 0], x: [0, 5, 0] }} 
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} 
+                style={{ position: "absolute", left: -110, top: "15%", padding: "16px 24px", borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(24px)", zIndex: 30, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
+                <div style={{ fontSize: 9, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 3, marginBottom: 4 }}>CORE_LOAD</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "white", fontFamily: "var(--font-outfit)" }}>1.24%</div>
+              </motion.div>
+              <motion.div 
+                animate={{ y: [0, 15, 0], x: [0, -5, 0] }} 
+                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }} 
+                style={{ position: "absolute", right: -120, bottom: "25%", padding: "16px 24px", borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(24px)", zIndex: 30, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
+                <div style={{ fontSize: 9, fontWeight: 900, color: "#10B981", letterSpacing: 3, marginBottom: 4 }}>SYNAPS_SYNC</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "white", fontFamily: "var(--font-outfit)" }}>ACTIVE</div>
+              </motion.div>
+              <motion.div 
+                animate={{ scale: [1, 1.05, 1] }} 
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} 
+                style={{ position: "absolute", left: "10%", bottom: -40, padding: "10px 20px", borderRadius: 12, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", backdropFilter: "blur(10px)", zIndex: 30 }}>
+                <div style={{ fontSize: 8, fontWeight: 900, color: "#A78BFA", letterSpacing: 2 }}>RAG_LATENCY: 0.8ms</div>
+              </motion.div>
+            </>
+          )}
+
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} style={{ marginBottom: 28, position: "relative" }}>
             <span className="animate-shimmer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 30, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#FFF", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2.5 }}>
               <Zap size={14} color="#0A84FF" /> PLATINUM PRODUCTION ENV v2.1
             </span>
@@ -742,7 +795,7 @@ function Footer() {
             <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 800, letterSpacing: 0.5 }}>ALL SYSTEMS OPERATIONAL</span>
           </div>
           <span style={{ color: "var(--text-muted)", fontSize: 14, fontWeight: 600, textAlign: "center" }}>
-            Built with Precision by Abishek R • © 2026 Tulasi AI Labs. Absolute Privacy Guaranteed.
+            Developed by Tulasi AI Research & Engineering • © 2026 Tulasi AI Labs.
           </span>
           <div style={{ display: "flex", gap: 32 }}>
              <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Privacy</Link>
