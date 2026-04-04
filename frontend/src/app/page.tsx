@@ -321,21 +321,24 @@ function IntelligencePillars() {
   );
 }
 
-// ── Floating Impact Metrics ──────────────────────────────────────
-function ImpactMetrics() {
-  const metrics = [
-    { label: "CAREERS ACCELERATED", value: "12,400+", color: "#8B5CF6" },
-    { label: "AVG SALARY INCREASE", value: "84%", color: "#10B981" },
-    { label: "MAANG PLACEMENTS", value: "2,100+", color: "#06B6D4" },
-    { label: "NEURAL PRECISION", value: "99.8%", color: "#F43F5E" },
+// ── Neural Engine Process (Qualative Replacement for Metrics) ───
+function NeuralEngineProcess() {
+  const steps = [
+    { label: "EXTRACTION", desc: "Parsing complex career data into actionable intuition.", icon: Cpu, color: "#8B5CF6" },
+    { label: "STRATEGY", desc: "Generating dynamic roadmaps tailored to your trajectory.", icon: Target, color: "#06B6D4" },
+    { label: "EXECUTION", desc: "Simulated high-fidelity interviews and skill mastery.", icon: Code, color: "#F43F5E" },
+    { label: "ACQUISITION", desc: "Connecting verified talent directly to global offers.", icon: Award, color: "#10B981" },
   ];
   return (
     <div style={{ maxWidth: 1100, margin: "-40px auto 40px", position: "relative", zIndex: 30, padding: "0 20px" }}>
       <div className="glass-card-premium" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 1, background: "rgba(255,255,255,0.05)", padding: 1, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
-        {metrics.map(m => (
-          <div key={m.label} style={{ background: "rgba(9,9,11,0.8)", padding: "24px 32px", textAlign: "center" }}>
-            <div style={{ fontSize: 28, fontWeight: 900, color: m.color, fontFamily: "var(--font-outfit)", marginBottom: 4 }}>{m.value}</div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--text-muted)", letterSpacing: 1.5 }}>{m.label}</div>
+        {steps.map(s => (
+          <div key={s.label} style={{ background: "rgba(9,9,11,0.8)", padding: "32px", textAlign: "center" }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+              <s.icon size={24} color={s.color} />
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "white", letterSpacing: 1.5, marginBottom: 8 }}>{s.label}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5, fontWeight: 500 }}>{s.desc}</div>
           </div>
         ))}
       </div>
@@ -656,7 +659,7 @@ function CTASection() {
             <div style={{ fontSize: 12, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 4, marginBottom: 24, textTransform: "uppercase" }}>A New Standard</div>
             <h2 style={{ fontSize: "clamp(36px, 7vw, 72px)", fontWeight: 900, marginBottom: 28, letterSpacing: "-0.04em", lineHeight: 1.1 }}>Ready to transform your <span className="gradient-text">Trajectory?</span></h2>
             <p style={{ color: "var(--text-secondary)", fontSize: "clamp(18px, 2.5vw, 22px)", maxWidth: 700, margin: "0 auto 56px", lineHeight: 1.6, fontWeight: 500 }}>
-              Join the 12,000+ elite engineers already operating at the frontier. Your personalized career engine is ready for initialization.
+              Join the elite ecosystem of engineers operating at the frontier. Your personalized career engine is ready for initialization.
             </p>
             <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap" }}>
               <Link href="/auth" style={{ textDecoration: "none" }}>
@@ -760,7 +763,7 @@ export default function LandingPage() {
       <Navbar />
       <Hero />
       <IntelligencePillars />
-      <ImpactMetrics />
+      <NeuralEngineProcess />
       <RoleSelector />
       <BentoFeatures />
       <ReviewsSection />
