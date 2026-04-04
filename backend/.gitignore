@@ -1,5 +1,49 @@
-.env*
-data/
+# Environment
+.env
+.env.production
+.env.local
+
+# Python
 *.pyc
+*.pyo
 __pycache__/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Database files
 *.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Temp / debug scripts (one-off scripts should never be committed)
+tmp_test.py
+tmp/
+
+# Backups (too large for git, use external storage)
+database/backups/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (keep out of git, manage separately)
+data/
+
+# IDE
+.vscode/
+.idea/
+
+# Test outputs
+*.txt
+!requirements*.txt
+!valid*.pdf
