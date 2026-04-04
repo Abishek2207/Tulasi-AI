@@ -36,7 +36,8 @@ class HybridAIClient:
     OPENROUTER_FREE_MODELS = [
         "google/gemma-2-9b-it:free",
         "meta-llama/llama-3-8b-instruct:free",
-        "microsoft/phi-3-mini-128k-instruct:free",
+        "mistralai/mistral-7b-instruct:free",
+        "gryphe/mythomist-7b:free",
     ]
 
     def __init__(self):
