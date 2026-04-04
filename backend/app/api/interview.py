@@ -493,6 +493,21 @@ Return ONLY valid JSON, no markdown."""
         )
         db.commit()
 
+        # 📧 Send interview result notification
+        import threading
+        from app.services.email import email_service
+        threading.Thread(
+            target=email_service.send_interview_complete_email,
+            args=(
+                current_user.email,
+                current_user.name or "Engineer",
+                interview_session.role,
+                feedback.get("job_readiness_score", readiness["job_readiness_score"]),
+                feedback.get("grade", readiness["grade"]),
+            ),
+            daemon=True
+        ).start()
+
         completed_count = len(db.exec(
             select(ActivityLog).where(
                 ActivityLog.user_id == current_user.id,

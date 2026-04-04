@@ -154,6 +154,9 @@ def log_activity_internal(user: User, db: Session, action_type: str, title: str,
     )
     db.add(log_entry)
 
+    old_level = max(1, (user.xp or 0) // 500 + 1)
+    old_streak = user.streak or 0
+
     if xp > 0:
         # Update XP on user
         user.xp = (user.xp or 0) + xp
@@ -162,6 +165,39 @@ def log_activity_internal(user: User, db: Session, action_type: str, title: str,
 
     # Update streak for any activity
     _update_streak(user, db)
+
+    new_level = user.level or 1
+    new_streak = user.streak or 0
+
+    # ── 📧 Milestone Email Notifications (non-blocking) ─────────────────
+    import threading
+    from app.services.email import email_service
+
+    STREAK_MILESTONES = {3, 7, 14, 30, 50, 100}
+
+    # Streak milestone
+    if new_streak != old_streak and new_streak in STREAK_MILESTONES:
+        _email = user.email
+        _name = user.name or "Engineer"
+        _streak = new_streak
+        threading.Thread(
+            target=email_service.send_streak_milestone_email,
+            args=(_email, _name, _streak),
+            daemon=True
+        ).start()
+
+    # Level-up
+    if new_level > old_level:
+        _email = user.email
+        _name = user.name or "Engineer"
+        _xp = user.xp or 0
+        _lvl = new_level
+        threading.Thread(
+            target=email_service.send_xp_milestone_email,
+            args=(_email, _name, _xp, _lvl),
+            daemon=True
+        ).start()
+    # ────────────────────────────────────────────────────────────────────
 
     # Automatic Progress Update
     CATEGORY_MAPPING = {
