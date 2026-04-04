@@ -106,14 +106,19 @@ async def general_exception_handler(request: Request, exc: Exception):
     from fastapi.responses import PlainTextResponse
     import traceback
     tb = traceback.format_exc()
-    print(f"❌ CRITICAL ERROR on {request.method} {request.url}:\n{tb}")
+    error_msg = f"❌ CRITICAL ERROR on {request.method} {request.url}"
+    print(f"{error_msg}:\n{tb}")
     
+    # Check if it's an import error which often causes 503/500 on startup
+    if isinstance(exc, ImportError):
+        print("🚩 Detected ImportError — This usually indicates a missing dependency in requirements.txt")
+
     origin = request.headers.get("origin", "*")
     headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {"Access-Control-Allow-Origin": "http://localhost:3000"}
     
     # Returning plain text traceback with CORS headers to avoid silent browser blockers
     return PlainTextResponse(
-        content=f"--- CRITICAL BACKEND ERROR ---\n\n{tb}",
+        content=f"--- TULASI AI: CRITICAL BACKEND ERROR ---\n\n{tb}\n\nCheck Render logs for dependency or environment conflicts.",
         status_code=500,
         headers=headers
     )
