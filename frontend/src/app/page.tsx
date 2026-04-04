@@ -246,10 +246,10 @@ function Hero() {
             ))}
           </motion.h1>
 
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
-            style={{ marginTop: 32, display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap", padding: "0 20px" }}>
-            {["NEURAL INTELLIGENCE", "PROPRIETARY RAG", "QUANTUM ANALYSIS"].map((tag, i) => (
-              <span key={tag} style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2, color: "var(--text-muted)", padding: "8px 16px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, background: "rgba(255,255,255,0.02)" }}>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }}
+            style={{ marginTop: 28, display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap", padding: "0 20px" }}>
+            {["NEURAL CORE", "PROPRIETARY RAG", "QUANTUM ANALYSIS"].map((tag, i) => (
+              <span key={tag} style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2, color: "var(--text-muted)", padding: "8px 16px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, background: "rgba(255,255,255,0.02)" }}>
                 {tag}
               </span>
             ))}
@@ -278,33 +278,17 @@ function Hero() {
              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"
            }}
         >
-          {/* Advanced Apple-style floating status units */}
+          {/* Subtle Apple-style status updates */}
           {!isMobile && (
-            <>
-              <motion.div 
-                animate={{ y: [0, -15, 0], x: [0, 5, 0] }} 
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} 
-                style={{ position: "absolute", left: -110, top: "15%", padding: "16px 24px", borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(24px)", zIndex: 30, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
-                <div style={{ fontSize: 9, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 3, marginBottom: 4 }}>CORE_LOAD</div>
-                <div style={{ fontSize: 20, fontWeight: 900, color: "white", fontFamily: "var(--font-outfit)" }}>1.24%</div>
-              </motion.div>
-              <motion.div 
-                animate={{ y: [0, 15, 0], x: [0, -5, 0] }} 
-                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }} 
-                style={{ position: "absolute", right: -120, bottom: "25%", padding: "16px 24px", borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(24px)", zIndex: 30, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
-                <div style={{ fontSize: 9, fontWeight: 900, color: "#10B981", letterSpacing: 3, marginBottom: 4 }}>SYNAPS_SYNC</div>
-                <div style={{ fontSize: 20, fontWeight: 900, color: "white", fontFamily: "var(--font-outfit)" }}>ACTIVE</div>
-              </motion.div>
-              <motion.div 
-                animate={{ scale: [1, 1.05, 1] }} 
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} 
-                style={{ position: "absolute", left: "10%", bottom: -40, padding: "10px 20px", borderRadius: 12, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", backdropFilter: "blur(10px)", zIndex: 30 }}>
-                <div style={{ fontSize: 8, fontWeight: 900, color: "#A78BFA", letterSpacing: 2 }}>RAG_LATENCY: 0.8ms</div>
-              </motion.div>
-            </>
+            <motion.div 
+              animate={{ opacity: [0.4, 0.8, 0.4] }} 
+              transition={{ duration: 3, repeat: Infinity }} 
+              style={{ position: "absolute", left: -80, top: "10%", padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(20px)", zIndex: 30 }}>
+              <div style={{ fontSize: 8, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 2 }}>ENGINE_V3.1</div>
+            </motion.div>
           )}
 
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} style={{ marginBottom: 28, position: "relative" }}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} style={{ marginBottom: 28, position: "relative" }}>
             <span className="animate-shimmer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 30, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#FFF", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2.5 }}>
               <Zap size={14} color="#0A84FF" /> PLATINUM PRODUCTION ENV v2.1
             </span>
@@ -349,49 +333,24 @@ function Hero() {
   );
 }
 
-// ── Intelligence Pillars (Replaces Ecosystem) ───────────────────
-function IntelligencePillars() {
-  return (
-    <div style={{ padding: "60px 0", background: "rgba(0,0,0,0.6)", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)", position: "relative", overflow: "hidden" }}>
-      <div className="bg-grid" style={{ position: "absolute", inset: 0, opacity: 0.03 }} />
-      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", justifyContent: "space-around", alignItems: "center", gap: 32, flexWrap: "wrap", padding: "0 20px" }}>
-        {intelligencePillars.map((p, i) => (
-          <motion.div key={p.title} 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", maxWidth: 220 }}>
-            <div style={{ width: 50, height: 50, borderRadius: 16, background: `${p.color}10`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, border: `1px solid ${p.color}30` }}>
-              <p.icon size={24} color={p.color} />
-            </div>
-            <h4 style={{ fontSize: 13, fontWeight: 900, color: "white", letterSpacing: 1.5, marginBottom: 8 }}>{p.title}</h4>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5, fontWeight: 500 }}>{p.desc}</p>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Neural Engine Process (Qualative Replacement for Metrics) ───
-function NeuralEngineProcess() {
+// ── Neural Engine Core (Consolidated High-Fidelity) ───
+function NeuralEngineCore() {
   const steps = [
-    { label: "EXTRACTION", desc: "Parsing complex career data into actionable intuition.", icon: Cpu, color: "#8B5CF6" },
-    { label: "STRATEGY", desc: "Generating dynamic roadmaps tailored to your trajectory.", icon: Target, color: "#06B6D4" },
-    { label: "EXECUTION", desc: "Simulated high-fidelity interviews and skill mastery.", icon: Code, color: "#F43F5E" },
-    { label: "ACQUISITION", desc: "Connecting verified talent directly to global offers.", icon: Award, color: "#10B981" },
+    { label: "ADAPTIVE SYNTHESIS", desc: "Complex career data parsed into actionable intuition.", icon: Cpu, color: "#8B5CF6" },
+    { label: "COGNITIVE MAPPING", desc: "Dynamic roadmaps that restructure in real-time.", icon: Target, color: "#06B6D4" },
+    { label: "SIMULATION FIDELITY", desc: "Sub-millisecond feedback on MAANG-grade sims.", icon: Code, color: "#F43F5E" },
+    { label: "GLOBAL NEXUS", desc: "Direct pipelines to frontier tech opportunities.", icon: Award, color: "#10B981" },
   ];
   return (
-    <div style={{ maxWidth: 1100, margin: "-40px auto 40px", position: "relative", zIndex: 30, padding: "0 20px" }}>
-      <div className="glass-card-premium" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 1, background: "rgba(255,255,255,0.05)", padding: 1, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto 80px", position: "relative", zIndex: 30, padding: "0 24px" }}>
+      <div className="glass-card-premium" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 1, background: "rgba(255,255,255,0.04)", padding: 1, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" }}>
         {steps.map(s => (
-          <div key={s.label} style={{ background: "rgba(9,9,11,0.8)", padding: "32px", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-              <s.icon size={24} color={s.color} />
+          <div key={s.label} className="premium-glow" style={{ background: "rgba(9,9,11,0.85)", padding: "48px 32px", textAlign: "center" }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+              <s.icon size={28} color={s.color} />
             </div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: "white", letterSpacing: 1.5, marginBottom: 8 }}>{s.label}</div>
-            <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5, fontWeight: 500 }}>{s.desc}</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "white", letterSpacing: 2, marginBottom: 10 }}>{s.label}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6, fontWeight: 500 }}>{s.desc}</div>
           </div>
         ))}
       </div>
@@ -761,16 +720,28 @@ function Footer() {
             <div>
               <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Ecosystem</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {["Neural Roadmaps", "Interview Lab", "Project Nexus", "DS&A Arena", "Knowledge Base"].map(l => (
-                  <Link key={l} href="#" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 14, fontWeight: 600, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l}</Link>
+                {[
+                  { name: "Neural Roadmaps", href: "#roadmaps" },
+                  { name: "Interview Lab", href: "/auth" },
+                  { name: "Project Nexus", href: "/auth" },
+                  { name: "DS&A Arena", href: "/auth" },
+                  { name: "Knowledge Base", href: "/blog" }
+                ].map(l => (
+                  <Link key={l.name} href={l.href} style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 14, fontWeight: 600, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.name}</Link>
                 ))}
               </div>
             </div>
             <div>
               <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Resources</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {["Documentation", "API Status", "Changelog", "Community", "Support"].map(l => (
-                  <Link key={l} href="#" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 14, fontWeight: 600, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l}</Link>
+                {[
+                  { name: "Documentation", href: "/about" },
+                  { name: "API Status", href: "https://tulasi-ai-wgwl.onrender.com/api" },
+                  { name: "Changelog", href: "/blog" },
+                  { name: "Community", href: "https://instagram.com/_.abi22._" },
+                  { name: "Support", href: "/contact" }
+                ].map(l => (
+                  <Link key={l.name} href={l.href} style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 14, fontWeight: 600, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.name}</Link>
                 ))}
               </div>
             </div>
@@ -783,7 +754,7 @@ function Footer() {
               <p style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 16, textAlign: "left" }}>Receive occasional intelligence updates from our founder.</p>
               <div style={{ display: "flex", gap: 8 }}>
                 <input placeholder="Email" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "white", fontSize: 13, flex: 1, outline: "none" }} />
-                <button style={{ background: "white", border: "none", borderRadius: 10, padding: "0 14px", color: "black", fontWeight: 900, fontSize: 12 }}>JOIN</button>
+                <button style={{ background: "white", border: "none", borderRadius: 10, padding: "0 14px", color: "black", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>JOIN</button>
               </div>
             </div>
           </div>
@@ -792,15 +763,15 @@ function Footer() {
         <div style={{ paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
-            <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 800, letterSpacing: 0.5 }}>ALL SYSTEMS OPERATIONAL</span>
+            <span style={{ color: "var(--text-secondary)", fontSize: 12, fontWeight: 800, letterSpacing: 0.5 }}>TULASI ENGINE v3.1.2 — ALL SYSTEMS STABLE</span>
           </div>
           <span style={{ color: "var(--text-muted)", fontSize: 14, fontWeight: 600, textAlign: "center" }}>
-            Developed by Tulasi AI Research & Engineering • © 2026 Tulasi AI Labs.
+             Built with Precision by Abishek R • © 2026 Tulasi AI Labs. Zero-Knowledge Infrastructure Enabled.
           </span>
           <div style={{ display: "flex", gap: 32 }}>
-             <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Privacy</Link>
-             <Link href="/terms" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Terms</Link>
-             <Link href="/security" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Security</Link>
+             <Link href="/privacy" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 700, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>Privacy Policy</Link>
+             <Link href="/terms" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 700, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>Terms of Service</Link>
+             <Link href="/security" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13, fontWeight: 700, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>Security Architecture</Link>
           </div>
         </div>
       </div>
@@ -815,8 +786,7 @@ export default function LandingPage() {
       <div style={{ position: "fixed", inset: 0, opacity: 0.05, pointerEvents: "none", zIndex: 100, background: "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyAQMAAAAk8RryAAAABlBMVEUAAAD///+l2Z/dAAAAAXRSTlMAQObYZgAAAAxJREFUCNdjYBgF6AAAAyAAAbe7v7sAAAAASUVORK5CYII=')" }} />
       <Navbar />
       <Hero />
-      <IntelligencePillars />
-      <NeuralEngineProcess />
+      <NeuralEngineCore />
       <RoleSelector />
       <BentoFeatures />
       <ReviewsSection />

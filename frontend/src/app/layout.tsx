@@ -56,6 +56,10 @@ export const metadata: Metadata = {
     shortcut: "/images/logo-transparent.png",
     apple: "/images/logo.png",
   },
+  alternates: {
+    canonical: "https://tulasiai.vercel.app",
+  },
+  category: "technology",
 };
 
 export const viewport = {
@@ -70,26 +74,50 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              "name": "TulasiAI",
-              "alternateName": ["tulasiai", "tulasi ai", "Tulasi AI"],
-              "applicationCategory": "EducationalApplication",
-              "operatingSystem": "All",
-              "url": "https://tulasiai.vercel.app",
-              "image": "https://tulasiai.vercel.app/opengraph-image.png",
-              "description": "Personalized AI engineering missions and career intelligence mapped to your skills.",
-              "producer": {
-                "@type": "Person",
-                "name": "Abishek R"
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "TulasiAI",
+                "alternateName": ["tulasiai", "tulasi ai", "Tulasi AI"],
+                "applicationCategory": "EducationalApplication",
+                "operatingSystem": "All",
+                "url": "https://tulasiai.vercel.app",
+                "image": "https://tulasiai.vercel.app/opengraph-image.png",
+                "description": "Personalized AI engineering missions and career intelligence mapped to your skills.",
+                "producer": {
+                  "@type": "Person",
+                  "name": "Abishek R"
+                },
+                "offers": {
+                  "@type": "Offer",
+                  "price": "0",
+                  "priceCurrency": "USD"
+                }
               },
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD"
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "name": "Tulasi AI Labs",
+                "url": "https://tulasiai.vercel.app",
+                "logo": "https://tulasiai.vercel.app/images/logo.png",
+                "sameAs": [
+                  "https://instagram.com/_.abi22._",
+                  "https://github.com/Abishek2207"
+                ]
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "name": "TulasiAI",
+                "url": "https://tulasiai.vercel.app",
+                "potentialAction": {
+                  "@type": "SearchAction",
+                  "target": "https://tulasiai.vercel.app/search?q={search_term_string}",
+                  "query-input": "required name=search_term_string"
+                }
               }
-            })
+            ])
           }}
         />
       </head>
