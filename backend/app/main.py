@@ -265,7 +265,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Tulasi AI API",
     description="Production-grade AI learning platform backend",
-    version="3.0.2",
+    version="3.0.3",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     lifespan=lifespan,
@@ -405,7 +405,7 @@ def root():
 def api_root():
     return {
         "name": "Tulasi AI API",
-        "version": "3.0.2",
+        "version": "3.0.3",
         "status": "running",
         "docs": "/api/docs",
         "health": "/api/health"
