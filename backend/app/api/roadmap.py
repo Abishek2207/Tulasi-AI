@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional, List
 from functools import lru_cache
 
 from app.core.config import settings
@@ -12,9 +12,38 @@ from app.models.models import User, Roadmap, RoadmapStep, ActivityLog, UserProgr
 from sqlmodel import Session, select
 from app.api.roadmap_data import ROADMAPS
 from app.api.activity import log_activity_internal
-from app.core.ai_router import get_ai_response
+from app.core.ai_router import resilient_ai_response
 
 router = APIRouter()
+
+# ── 🗺️ High-Fidelity Roadmaps Fallback ──
+ROADMAP_FALLBACKS = {
+    "AI Engineer": {
+        "title": "Elite AI Engineer Roadmap",
+        "description": "Master the transition from traditional software into world-class AI systems and large language models.",
+        "estimated_months": 8,
+        "milestones": [
+            {"phase": "1", "title": "Math & Neural Foundations", "duration": "Month 1", "topics": ["Linear Algebra", "Calculus", "Probability", "Neural Networks"], "project_idea": "Build a neural network from scratch in NumPy", "resources": [{"name": "3Blue1Brown ML", "url": "https://youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi"}]},
+            {"phase": "2", "title": "Deep Learning Mastery", "duration": "Month 2-3", "topics": ["CNNs", "RNNs", "Transformers", "PyTorch/TensorFlow"], "project_idea": "Image Classifier with Transfer Learning", "resources": [{"name": "Fast.ai", "url": "https://course.fast.ai"}]},
+            {"phase": "3", "title": "LLM & GenAI Systems", "duration": "Month 4-5", "topics": ["Attention Mechanism", "Fine-tuning", "RAG", "Vector DBs"], "project_idea": "Build a custom RAG-based Chatbot", "resources": [{"name": "DeepLearning.AI GenAI", "url": "https://www.deeplearning.ai/"}]},
+            {"phase": "4", "title": "MLOps & Scale", "duration": "Month 6", "topics": ["Model Monitoring", "CI/CD for ML", "Inference Opt", "Docker"], "project_idea": "Deploy model using FastAPI and Docker", "resources": [{"name": "Made with ML", "url": "https://madewithml.com"}]},
+            {"phase": "5", "title": "FAANG-Level AI Prep", "duration": "Month 7-8", "topics": ["System Design for ML", "Research Papers", "Mock Interviews"], "project_idea": "End-to-end AI System Design document", "resources": [{"name": "Chip Huyen Blog", "url": "https://huyenchip.com/blog/"}]}
+        ]
+    },
+    "Software Engineer": {
+        "title": "Senior Software Architect Roadmap",
+        "description": "The definitive path from writing code to designing scalable, reliable distributed systems.",
+        "estimated_months": 6,
+        "milestones": [
+            {"phase": "1", "title": "Advanced DSA & Patterns", "duration": "Month 1", "topics": ["Complex Graphs", "DP", "Concurrency", "Design Patterns"], "project_idea": "High-performance data processor", "resources": [{"name": "NeetCode", "url": "https://neetcode.io"}]},
+            {"phase": "2", "title": "Backend Mastery", "duration": "Month 2", "topics": ["Advanced SQL", "Caching", "Messaging Queues", "gRPC"], "project_idea": "Distributed task queue", "resources": [{"name": "ByteByteGo", "url": "https://bytebytego.com"}]},
+            {"phase": "3", "title": "System Design (HLD)", "duration": "Month 3-4", "topics": ["Scalability", "Sharding", "Consensus (Raft/Paxos)", "Availability"], "project_idea": "Design a global URL shortener", "resources": [{"name": "Grokking System Design", "url": "https://designguru.io"}]},
+            {"phase": "4", "title": "Infrastructure & Observability", "duration": "Month 5", "topics": ["Kubernetes", "Prometheus", "Terraform", "CI/CD"], "project_idea": "Auto-scaling k8s cluster setup", "resources": [{"name": "Nana's K8s", "url": "https://youtube.com/@TechWorldwithNana"}]},
+            {"phase": "5", "title": "Leadership & Interview Prep", "duration": "Month 6", "topics": ["Architecture Review", "STAR Method", "SDLC Management"], "project_idea": "Full-scale technical design review", "resources": [{"name": "Exponent", "url": "https://tryexponent.com"}]}
+        ]
+    }
+}
+
 
 class RoadmapRequest(BaseModel):
     goal: str
@@ -68,15 +97,15 @@ Output strictly as a valid JSON object matching this exact schema:
 
 Return ONLY raw JSON, nothing else."""
 
+    # Universal Resilience: Never 500
+    fallback_data = ROADMAP_FALLBACKS.get(req.goal) or ROADMAP_FALLBACKS.get(current_user.target_role) or ROADMAP_FALLBACKS["Software Engineer"]
+    # Ensure title/desc are dynamic in fallback
+    fallback_data = fallback_data.copy()
+    fallback_data["title"] = f"Roadmap for {req.goal}"
+    
+    roadmap_data = resilient_ai_response(prompt, fallback=fallback_data)
+    
     try:
-        response_str = get_ai_response(prompt, force_model="complex_reasoning")
-        import re
-        match = re.search(r'\{.*\}', response_str, re.DOTALL)
-        if match:
-            response_str = match.group()
-        
-        roadmap_data = json.loads(response_str)
-        
         # Save to DB
         new_roadmap = Roadmap(
             user_id=current_user.id,
@@ -103,13 +132,12 @@ Return ONLY raw JSON, nothing else."""
             session.add(step)
         
         session.commit()
-        
         return {"roadmap": roadmap_data, "id": new_roadmap.id}
-    except json.JSONDecodeError:
-        raise HTTPException(500, "AI failed to generate valid JSON format.")
     except Exception as e:
         session.rollback()
-        raise HTTPException(500, f"Error generating roadmap: {str(e)}")
+        # Fallback to pure JSON return if DB fails (unlikely, but safe)
+        return {"roadmap": roadmap_data, "is_fallback": True, "error": str(e)}
+
 
 @router.get("/")
 def get_roadmaps(

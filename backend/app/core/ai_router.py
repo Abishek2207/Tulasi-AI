@@ -37,3 +37,39 @@ def get_ai_response(
         force_model=force_model
     )
     return str(response)
+
+def resilient_ai_response(
+    prompt: str,
+    fallback: any,
+    force_model: Optional[str] = "complex_reasoning",
+    is_json: bool = True
+):
+    """
+    Universal Safety Guard: Ensures an AI request NEVER returns 500.
+    1. Calls get_ai_response
+    2. If is_json=True, extracts and parses JSON
+    3. On any failure, returns the provided fallback
+    """
+    import json, re
+    try:
+        raw = get_ai_response(prompt, force_model=force_model)
+        
+        if is_json:
+            # Flexible JSON extraction
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if not match:
+                match = re.search(r'\[.*\]', raw, re.DOTALL)
+            
+            cleaned = (match.group() if match else raw).strip()
+            
+            # Simple cleanup for common LLM issues (markdown blocks)
+            if cleaned.startswith("```"):
+                cleaned = re.sub(r'```[a-z]*\n|```', '', cleaned).strip()
+                
+            return json.loads(cleaned)
+        
+        return raw
+    except Exception as e:
+        print(f"⚠️ [AI Safety Guard] Triggered for prompt. Error: {e}")
+        return fallback
+

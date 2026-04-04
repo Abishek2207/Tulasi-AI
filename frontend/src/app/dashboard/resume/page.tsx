@@ -12,6 +12,7 @@ import {
   Briefcase, GraduationCap, Layout, Languages, Cpu
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { AIResilienceWrapper } from "@/components/dashboard/AIResilienceWrapper";
 
 export interface ResumeResult {
   ats_score: number;
@@ -31,6 +32,7 @@ export default function ResumeBuilderPage() {
   const [mode, setMode] = useState("MAANG-Standard");
   const [documentType, setDocumentType] = useState("Resume");
   const [loading, setLoading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const [result, setResult] = useState<ResumeResult | null>(null);
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -59,19 +61,18 @@ export default function ResumeBuilderPage() {
     return () => clearTimeout(timer);
   }, [resumeText]);
 
-  const handleImprove = async () => {
+  const handleImprove = async (isRetry = false) => {
     if (!resumeText.trim() || !jobDescription.trim()) {
-      setError("Experience data and Job Description required for Neural Calibration.");
+      toast.error("Experience data and Job Description required for Neural Calibration.");
       return;
     }
     const cacheKey = `${resumeText.trim()}|${jobDescription.trim()}|${mode}|${documentType}`;
-    if (cacheRef.current.has(cacheKey)) {
+    if (!isRetry && cacheRef.current.has(cacheKey)) {
       setResult(cacheRef.current.get(cacheKey) || null);
       return;
     }
-    setLoading(true); setResult(null); setError("");
+    setLoading(true); if (!isRetry) setResult(null); setError(""); setRetrying(false);
     try {
-      // Upgraded Prompting for Resume Optimizer
       const data = await resumeApi.improve({ 
         resume_text: resumeText, 
         job_description: jobDescription,
@@ -82,6 +83,7 @@ export default function ResumeBuilderPage() {
       setResult(data);
       toast.success("Neural Calibration Complete.");
     } catch (err: any) {
+      setRetrying(true);
       setError(err.message || "Neural Handshake failed. Retrying sync...");
     } finally { setLoading(false); }
   };
@@ -94,7 +96,7 @@ export default function ResumeBuilderPage() {
   };
 
   const exportPDF = () => {
-    const element = document.getElementById("pdf-preview-container");
+    const element = document.getElementById("pdf-preview-container-live");
     if (!element) return;
 
     const opt = {
@@ -219,7 +221,7 @@ export default function ResumeBuilderPage() {
 
           <motion.button 
             whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-            onClick={handleImprove} disabled={loading}
+            onClick={() => handleImprove()} disabled={loading}
             className="btn-primary" 
             style={{ 
               width: "100%", padding: "20px", borderRadius: 20, fontSize: 17, fontWeight: 900,
@@ -236,137 +238,132 @@ export default function ResumeBuilderPage() {
 
         {/* Right Results */}
         <div style={{ flex: "1.5 1 650px", display: "flex", flexDirection: "column", gap: 24, minHeight: 900 }}>
-          {!result && !loading && (
-            <div className="glass-card" style={{ flex: 1, minHeight: 700, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 80 }}>
-              <motion.div animate={{ y: [0, -15, 0], scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 5 }}>
-                <Cpu size={80} style={{ color: "var(--brand-primary)", opacity: 0.15, marginBottom: 32 }} />
+          <AIResilienceWrapper
+            loading={loading}
+            retrying={retrying}
+            result={result}
+            onRetry={() => handleImprove(true)}
+            title="Neural Resume Engine"
+            subtitle="Optimizing for MAANG-calibrated ATS standards..."
+            color="#8B5CF6"
+            icon={<Cpu size={40} color="#8B5CF6" />}
+          >
+            {!result && !loading && !retrying && (
+              <div className="glass-card" style={{ flex: 1, minHeight: 700, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 80 }}>
+                <motion.div animate={{ y: [0, -15, 0], scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 5 }}>
+                  <Cpu size={80} style={{ color: "var(--brand-primary)", opacity: 0.15, marginBottom: 32 }} />
+                </motion.div>
+                <h3 style={{ fontSize: 24, fontWeight: 900, marginBottom: 16 }}>Optimization Hub</h3>
+                <p style={{ color: "var(--text-secondary)", maxWidth: 450, lineHeight: 1.8, fontSize: 16 }}>
+                  Synthesize your experience data streams to generate an elite, ATS-immune professional profile.
+                </p>
+              </div>
+            )}
+
+            {result && (
+              <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                {/* Score Matrix */}
+                <TiltCard intensity={3}>
+                  <div style={{ padding: 48, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div style={{ display: "flex", gap: 60, flexWrap: "wrap", alignItems: "center" }}>
+                      <div style={{ position: "relative", width: 170, height: 170, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="170" height="170" style={{ transform: "rotate(-90deg)" }}>
+                           <circle cx="85" cy="85" r="75" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="12" />
+                           <motion.circle cx="85" cy="85" r="75" fill="none" 
+                             stroke={getScoreColor(result.ats_score)} strokeWidth="14" strokeDasharray="471" 
+                             initial={{ strokeDashoffset: 471 }} animate={{ strokeDashoffset: 471 - (471 * result.ats_score) / 100 }} transition={{ duration: 2.5, ease: "easeOut" }}
+                             strokeLinecap="round"
+                           />
+                        </svg>
+                        <div style={{ position: "absolute", textAlign: "center" }}>
+                          <div style={{ fontSize: 52, fontWeight: 900, color: getScoreColor(result.ats_score), lineHeight: 1 }}>{result.ats_score}</div>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-secondary)", letterSpacing: 2 }}>NEURAL MATCH</div>
+                        </div>
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 300 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginBottom: 40 }}>
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                              <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1 }}>TONE ARCHITECTURE</span>
+                              <span style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-secondary)" }}>{result.readability_score}%</span>
+                            </div>
+                            <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 10 }}>
+                              <motion.div initial={{ width: 0 }} animate={{ width: `${result.readability_score}%` }} style={{ height: "100%", background: "var(--brand-secondary)", borderRadius: 10 }} />
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                              <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1 }}>KEYWORD DENSITY</span>
+                              <span style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-yellow)" }}>{result.keyword_match_percent}%</span>
+                            </div>
+                            <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 10 }}>
+                              <motion.div initial={{ width: 0 }} animate={{ width: `${result.keyword_match_percent}%` }} style={{ height: "100%", background: "var(--brand-yellow)", borderRadius: 10 }} />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                           {result.missing_keywords.slice(0, 8).map((k, i) => (
+                             <span key={i} style={{ 
+                               fontSize: 10, padding: "6px 14px", borderRadius: 8, background: "rgba(255,107,107,0.05)", 
+                               border: "1px solid rgba(255,107,107,0.2)", color: "#FF6B6B", fontWeight: 900, letterSpacing: 1 
+                             }}>
+                               +{k.toUpperCase()}
+                             </span>
+                           ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TiltCard>
+
+                {/* Actionable Feedback */}
+                <div className="glass-card" style={{ padding: 32 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+                    <Sparkles size={18} color="var(--brand-primary)" />
+                    <h3 style={{ fontSize: 13, fontWeight: 900, letterSpacing: 1.5 }}>NEURAL FEEDBACK & STRATEGIC GAPS</h3>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+                    {result.feedback.map((f, i) => (
+                      <div key={i} style={{ 
+                        padding: 20, borderRadius: 16, background: "rgba(255,255,255,0.02)", 
+                        border: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 14 
+                      }}>
+                        <div style={{ marginTop: 2 }}><CheckCircle2 size={16} color="var(--brand-secondary)" /></div>
+                        <span style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Narrative Panel */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                  <div className="glass-card" style={{ padding: 32, display: "flex", flexDirection: "column", minHeight: 700 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                      <h3 style={{ fontSize: 12, fontWeight: 900, display: "flex", alignItems: "center", gap: 10, letterSpacing: 1 }}>RAW NARRATIVE OUTPUT</h3>
+                      <motion.button whileHover={{ scale: 1.05 }} onClick={handleCopy} className="btn-ghost" style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 900, display: "flex", alignItems: "center", gap: 8 }}><Copy size={14} /> COPY MEMORY</motion.button>
+                    </div>
+                     <textarea 
+                      value={result.improved_resume} readOnly
+                      className="input-field" 
+                      style={{ flex: 1, width: "100%", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", padding: 24, background: "rgba(0,0,0,0.4)", borderRadius: 16, lineHeight: 1.8, resize: "none", border: "1px solid rgba(255,255,255,0.05)" }}
+                    />
+                  </div>
+
+                  <div className="glass-card" style={{ padding: 32, background: "white", color: "black", minHeight: 700, overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, borderBottom: "1px solid #eee", paddingBottom: 16 }}>
+                      <h3 style={{ fontSize: 12, fontWeight: 900, display: "flex", alignItems: "center", gap: 10, letterSpacing: 1, color: "#999" }}>PREVIEW ARCHITECTURE</h3>
+                      <motion.button whileHover={{ scale: 1.05 }} onClick={exportPDF} className="btn-primary" style={{ padding: "10px 20px", borderRadius: 12, fontSize: 12, fontWeight: 900, display: "flex", alignItems: "center", gap: 10 }}><Printer size={16} /> GENERATE PDF</motion.button>
+                    </div>
+                    <div id="pdf-preview-container-live" style={{ padding: "0 10px" }}>
+                      {renderResumeMarkdown(result.improved_resume)}
+                    </div>
+                  </div>
+                </div>
               </motion.div>
-              <h3 style={{ fontSize: 24, fontWeight: 900, marginBottom: 16 }}>Optimization Hub</h3>
-              <p style={{ color: "var(--text-secondary)", maxWidth: 450, lineHeight: 1.8, fontSize: 16 }}>
-                Synthesize your experience data streams to generate an elite, ATS-immune professional profile.
-              </p>
-            </div>
-          )}
-
-          {loading && (
-            <div className="glass-card" style={{ flex: 1, padding: 48, display: "flex", flexDirection: "column", gap: 40 }}>
-               <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-                 <div style={{ width: 140, height: 140, borderRadius: "50%", background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                   <motion.div animate={{ rotate: 360, scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ width: 50, height: 50, border: "4px solid transparent", borderTopColor: "var(--brand-primary)", borderRadius: "50%" }} />
-                 </div>
-                 <div style={{ flex: 1 }}>
-                   <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 2 }} style={{ height: 14, width: "80%", background: "rgba(255,255,255,0.05)", borderRadius: 10, marginBottom: 16 }} />
-                   <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 2, delay: 0.5 }} style={{ height: 10, width: "95%", background: "rgba(255,255,255,0.03)", borderRadius: 10, marginBottom: 16 }} />
-                   <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 2, delay: 1 }} style={{ height: 10, width: "50%", background: "rgba(255,255,255,0.03)", borderRadius: 10 }} />
-                 </div>
-               </div>
-               <div style={{ flex: 1, background: "rgba(255,255,255,0.01)", borderRadius: 24, border: "1px dashed rgba(255,255,255,0.05)" }} />
-            </div>
-          )}
-
-          {result && !loading && (
-            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {/* Score Matrix */}
-              <TiltCard intensity={3}>
-                <div style={{ padding: 48, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>
-                  <div style={{ display: "flex", gap: 60, flexWrap: "wrap", alignItems: "center" }}>
-                    <div style={{ position: "relative", width: 170, height: 170, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="170" height="170" style={{ transform: "rotate(-90deg)" }}>
-                         <circle cx="85" cy="85" r="75" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="12" />
-                         <motion.circle cx="85" cy="85" r="75" fill="none" 
-                           stroke={getScoreColor(result.ats_score)} strokeWidth="14" strokeDasharray="471" 
-                           initial={{ strokeDashoffset: 471 }} animate={{ strokeDashoffset: 471 - (471 * result.ats_score) / 100 }} transition={{ duration: 2.5, ease: "easeOut" }}
-                           strokeLinecap="round"
-                         />
-                      </svg>
-                      <div style={{ position: "absolute", textAlign: "center" }}>
-                        <div style={{ fontSize: 52, fontWeight: 900, color: getScoreColor(result.ats_score), lineHeight: 1 }}>{result.ats_score}</div>
-                        <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-secondary)", letterSpacing: 2 }}>NEURAL MATCH</div>
-                      </div>
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 300 }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginBottom: 40 }}>
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                            <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1 }}>TONE ARCHITECTURE</span>
-                            <span style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-secondary)" }}>{result.readability_score}%</span>
-                          </div>
-                          <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 10 }}>
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${result.readability_score}%` }} style={{ height: "100%", background: "var(--brand-secondary)", borderRadius: 10 }} />
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                            <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1 }}>KEYWORD DENSITY</span>
-                            <span style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-yellow)" }}>{result.keyword_match_percent}%</span>
-                          </div>
-                          <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 10 }}>
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${result.keyword_match_percent}%` }} style={{ height: "100%", background: "var(--brand-yellow)", borderRadius: 10 }} />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                         {result.missing_keywords.slice(0, 8).map((k, i) => (
-                           <span key={i} style={{ 
-                             fontSize: 10, padding: "6px 14px", borderRadius: 8, background: "rgba(255,107,107,0.05)", 
-                             border: "1px solid rgba(255,107,107,0.2)", color: "#FF6B6B", fontWeight: 900, letterSpacing: 1 
-                           }}>
-                             +{k.toUpperCase()}
-                           </span>
-                         ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TiltCard>
-
-              {/* Actionable Feedback */}
-              <div className="glass-card" style={{ padding: 32 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-                  <Sparkles size={18} color="var(--brand-primary)" />
-                  <h3 style={{ fontSize: 13, fontWeight: 900, letterSpacing: 1.5 }}>NEURAL FEEDBACK & STRATEGIC GAPS</h3>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-                  {result.feedback.map((f, i) => (
-                    <div key={i} style={{ 
-                      padding: 20, borderRadius: 16, background: "rgba(255,255,255,0.02)", 
-                      border: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 14 
-                    }}>
-                      <div style={{ marginTop: 2 }}><CheckCircle2 size={16} color="var(--brand-secondary)" /></div>
-                      <span style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6 }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Narrative Panel */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-                <div className="glass-card" style={{ padding: 32, display: "flex", flexDirection: "column", minHeight: 700 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                    <h3 style={{ fontSize: 12, fontWeight: 900, display: "flex", alignItems: "center", gap: 10, letterSpacing: 1 }}>RAW NARRATIVE OUTPUT</h3>
-                    <motion.button whileHover={{ scale: 1.05 }} onClick={handleCopy} className="btn-ghost" style={{ padding: "8px 16px", borderRadius: 10, fontSize: 11, fontWeight: 900, display: "flex", alignItems: "center", gap: 8 }}><Copy size={14} /> COPY MEMORY</motion.button>
-                  </div>
-                   <textarea 
-                    value={result.improved_resume} readOnly
-                    className="input-field" 
-                    style={{ flex: 1, width: "100%", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", padding: 24, background: "rgba(0,0,0,0.4)", borderRadius: 16, lineHeight: 1.8, resize: "none", border: "1px solid rgba(255,255,255,0.05)" }}
-                  />
-                </div>
-
-                <div className="glass-card" style={{ padding: 32, background: "white", color: "black", minHeight: 700, overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, borderBottom: "1px solid #eee", paddingBottom: 16 }}>
-                    <h3 style={{ fontSize: 12, fontWeight: 900, display: "flex", alignItems: "center", gap: 10, letterSpacing: 1, color: "#999" }}>PREVIEW ARCHITECTURE</h3>
-                    <motion.button whileHover={{ scale: 1.05 }} onClick={exportPDF} className="btn-primary" style={{ padding: "10px 20px", borderRadius: 12, fontSize: 12, fontWeight: 900, display: "flex", alignItems: "center", gap: 10 }}><Printer size={16} /> GENERATE PDF</motion.button>
-                  </div>
-                  <div id="pdf-preview-container-live" style={{ padding: "0 10px" }}>
-                    {renderResumeMarkdown(result.improved_resume)}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
+            )}
+          </AIResilienceWrapper>
         </div>
       </div>
     </div>

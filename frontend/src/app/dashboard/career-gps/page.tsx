@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import { Navigation, ChevronRight, Clock, Star, Zap, CheckCircle, ArrowRight, RefreshCw, Sparkles, Target, BookOpen, Building2 } from "lucide-react";
+import { AIResilienceWrapper } from "@/components/dashboard/AIResilienceWrapper";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:10000";
 const YEARS = [
@@ -50,32 +51,6 @@ function MilestoneTimeline({ milestones, color }: { milestones: any[], color: st
           )}
         </motion.div>
       ))}
-    </div>
-  );
-}
-
-function RetryCountdown({ seconds, onRetry }: { seconds: number; onRetry: () => void }) {
-  const [count, setCount] = useState(seconds);
-  useEffect(() => {
-    if (count <= 0) { onRetry(); return; }
-    const t = setTimeout(() => setCount(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [count]);
-  const pct = ((seconds - count) / seconds) * 100;
-  return (
-    <div style={{ textAlign: "center", padding: "40px 20px" }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-        style={{ display: "inline-block", marginBottom: 20 }}>
-        <RefreshCw size={32} color="#8B5CF6" />
-      </motion.div>
-      <div style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 8 }}>Neural Engine Warming Up...</div>
-      <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>Auto-retrying in <span style={{ color: "#8B5CF6", fontWeight: 900 }}>{count}s</span></div>
-      <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden", maxWidth: 200, margin: "0 auto 20px" }}>
-        <motion.div animate={{ width: `${pct}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#8B5CF6,#06B6D4)", borderRadius: 10 }} />
-      </div>
-      <button onClick={onRetry} style={{ padding: "10px 24px", borderRadius: 12, background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)", color: "#8B5CF6", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
-        Retry Now
-      </button>
     </div>
   );
 }
@@ -205,10 +180,19 @@ export default function CareerGPSPage() {
             </div>
           </motion.div>
 
-          {/* Results */}
+          {/* Results Area */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <AnimatePresence mode="wait">
-              {/* Empty state */}
+            <AIResilienceWrapper
+              loading={loading}
+              retrying={retrying}
+              result={result}
+              onRetry={() => handleGenerate(true)}
+              title="Career Trajectory Engine"
+              subtitle={`Analyzing ${year.replace("_", " ")} + ${role} + 2025 market data`}
+              color="#8B5CF6"
+              icon={<Navigation size={40} color="#8B5CF6" />}
+            >
+              {/* Empty state (only shown when no result and not loading) */}
               {!result && !loading && !retrying && (
                 <motion.div key="empty" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                   style={{ padding: 80, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.05)" }}>
@@ -228,37 +212,9 @@ export default function CareerGPSPage() {
                 </motion.div>
               )}
 
-              {/* Loading */}
-              {loading && (
-                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  style={{ padding: 80, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(139,92,246,0.1)" }}>
-                  <div style={{ position: "relative", width: 80, height: 80, margin: "0 auto 28px" }}>
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                      style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "3px solid transparent", borderTopColor: "#8B5CF6", borderRightColor: "#06B6D4" }} />
-                    <div style={{ position: "absolute", inset: 8, borderRadius: "50%", background: "rgba(139,92,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🧭</div>
-                  </div>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: "white", marginBottom: 8 }}>Calculating your career trajectory...</div>
-                  <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Analyzing {year.replace("_", " ")} + {role} + 2025 market data</div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 24 }}>
-                    {[0, 1, 2].map(i => (
-                      <motion.div key={i} animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.2 }}
-                        style={{ width: 8, height: 8, borderRadius: "50%", background: "#8B5CF6" }} />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Retry countdown */}
-              {retrying && !loading && (
-                <motion.div key="retry" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  style={{ background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <RetryCountdown seconds={5} onRetry={() => handleGenerate(true)} />
-                </motion.div>
-              )}
-
-              {/* Results */}
-              {result && !loading && (
-                <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              {/* Actual Results Content */}
+              {result && (
+                <motion.div key="result-content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                   {/* Path Selector */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
                     {result.paths?.map((path: any, i: number) => (
@@ -392,7 +348,7 @@ export default function CareerGPSPage() {
                   )}
                 </motion.div>
               )}
-            </AnimatePresence>
+            </AIResilienceWrapper>
           </div>
         </div>
       </div>

@@ -114,7 +114,9 @@ async def general_exception_handler(request: Request, exc: Exception):
         print("🚩 Detected ImportError — This usually indicates a missing dependency in requirements.txt")
 
     origin = request.headers.get("origin", "*")
-    headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {"Access-Control-Allow-Origin": "http://localhost:3000"}
+    # For error transparency, we allow the requesting origin if it looks like our app
+    is_valid_origin = origin in ALLOW_ORIGINS or ".vercel.app" in origin
+    headers = {"Access-Control-Allow-Origin": origin if is_valid_origin else "https://tulasiai.vercel.app", "Access-Control-Allow-Credentials": "true"}
     
     # Returning plain text traceback with CORS headers to avoid silent browser blockers
     return PlainTextResponse(

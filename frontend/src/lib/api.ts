@@ -133,8 +133,9 @@ export interface LiveUsers {
 //           2. Localhost:10000 (if in development)
 //           3. Production Render URL (Final Fallback)
 const LOCAL_DEV_URL = "http://127.0.0.1:10000";
+const PRODUCTION_URL = "https://tulasi-ai-wgwl.onrender.com";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || LOCAL_DEV_URL;
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || (isDev ? LOCAL_DEV_URL : PRODUCTION_URL);
 export const API = API_URL;
 
 /** Centralised debug logger — always prints in dev; silent in prod unless token missing */

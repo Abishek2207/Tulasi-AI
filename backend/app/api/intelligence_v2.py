@@ -12,7 +12,8 @@ from app.core.database import get_session
 from app.api.deps import get_current_user
 from app.models.models import User, ActivityLog, PersistentInterviewSession
 from app.core.rate_limit import limiter
-from app.core.ai_router import get_ai_response
+from app.core.ai_router import resilient_ai_response
+
 
 router = APIRouter()
 
@@ -226,16 +227,12 @@ Return ONLY valid JSON with this exact structure:
 Make it highly specific to {body.target_role}. Include real resources (LeetCode, Coursera, fast.ai, etc.).
 The 3 paths should genuinely differ in timeline and approach."""
 
-    # Always start with rich fallback — override only if AI succeeds
-    result = _make_gps_fallback(body.target_role, body.year)
-    try:
-        raw = get_ai_response(prompt)
-        match = re.search(r'\{.*\}', raw, re.DOTALL)
-        ai_result = json.loads(match.group() if match else raw)
-        if ai_result.get("paths") and len(ai_result["paths"]) >= 2:
-            result = ai_result
-    except Exception as e:
-        print(f"\u26a0\ufe0f [Career GPS] AI failed, using fallback: {e}")
+    # Always return resilient AI result with high-fidelity fallback
+    result = resilient_ai_response(
+        prompt, 
+        fallback=_make_gps_fallback(body.target_role, body.year)
+    )
+
 
     # Log activity (best-effort)
     try:
@@ -284,38 +281,31 @@ USER PROFILE:
 
 Generate a focused, achievable study plan for TODAY. Return ONLY valid JSON:
 {{
-  "greeting": "<personalized good morning/afternoon message using their name>",
-  "focus_theme": "<today's theme e.g. 'DSA Deep Dive' or 'System Design Day'>",
+  "greeting": "<personalized greeting>",
+  "focus_theme": "<theme>",
   "tasks": [
-    {{"id": 1, "task": "<specific task>", "duration_mins": <int>, "priority": "high|medium|low", "type": "coding|learning|practice|review", "link": "<optional relevant URL or null>"}},
-    {{"id": 2, ...}},
-    {{"id": 3, ...}},
-    {{"id": 4, ...}}
+    {{"id": 1, "task": "<task>", "duration_mins": 30, "priority": "high", "type": "coding", "link": null}}
   ],
-  "daily_quote": "<motivational quote by a tech leader or researcher>",
-  "xp_potential": <integer>,
-  "streak_note": "<motivational note about maintaining the streak>"
+  "daily_quote": "<quote>",
+  "xp_potential": 150,
+  "streak_note": "<note>"
 }}"""
 
-    try:
-        raw = get_ai_response(prompt)
-        match = re.search(r'\{.*\}', raw, re.DOTALL)
-        result = json.loads(match.group() if match else raw)
-        return result
-    except Exception:
-        return {
-            "greeting": f"Good day, {current_user.name or 'Champion'}! Ready to build something great?",
-            "focus_theme": "Consistent Progress",
-            "tasks": [
-                {"id": 1, "task": "Solve 2 LeetCode Easy problems", "duration_mins": 45, "priority": "high", "type": "coding", "link": "https://leetcode.com"},
-                {"id": 2, "task": "Review your system design notes", "duration_mins": 30, "priority": "medium", "type": "review", "link": None},
-                {"id": 3, "task": "Complete today's ORBIT DAILY challenge", "duration_mins": 20, "priority": "high", "type": "practice", "link": "/dashboard/daily-challenge"},
-                {"id": 4, "task": "Watch one AI/tech YouTube video", "duration_mins": 25, "priority": "low", "type": "learning", "link": "https://youtube.com"},
-            ],
-            "daily_quote": "\"The best way to predict the future is to invent it.\" — Alan Kay",
-            "xp_potential": 150,
-            "streak_note": f"You're on a {current_user.streak or 0}-day streak. Keep going!" if current_user.streak else None,
-        }
+    fallback = {
+        "greeting": f"Good day, {current_user.name or 'Champion'}! Ready to build something great?",
+        "focus_theme": "Consistent Progress",
+        "tasks": [
+            {"id": 1, "task": "Solve 2 LeetCode Easy problems", "duration_mins": 45, "priority": "high", "type": "coding", "link": "https://leetcode.com"},
+            {"id": 2, "task": "Review your system design notes", "duration_mins": 30, "priority": "medium", "type": "review", "link": None},
+            {"id": 3, "task": "Complete today's ORBIT DAILY challenge", "duration_mins": 20, "priority": "high", "type": "practice", "link": "/dashboard/daily-challenge"},
+            {"id": 4, "task": "Watch one AI/tech YouTube video", "duration_mins": 25, "priority": "low", "type": "learning", "link": "https://youtube.com"},
+        ],
+        "daily_quote": "\"The best way to predict the future is to invent it.\" — Alan Kay",
+        "xp_potential": 150,
+        "streak_note": f"You're on a {current_user.streak or 0}-day streak. Keep going!" if current_user.streak else None,
+    }
+    
+    return resilient_ai_response(prompt, fallback=fallback)
 
 
 # ── NEXT BEST TASK ─────────────────────────────────────────────────────────────
@@ -365,49 +355,25 @@ Provide a comprehensive salary intelligence report. Return ONLY valid JSON:
   "location": "{body.location}",
   "yoe": {body.yoe},
   "salary_range": {{
-    "min_lpa": <number>,
-    "median_lpa": <number>,
-    "max_lpa": <number>,
-    "currency": "INR",
-    "unit": "LPA"
+    "min_lpa": 8, "median_lpa": 12, "max_lpa": 25, "currency": "INR", "unit": "LPA"
   }},
-  "market_percentiles": {{
-    "p25": <number>,
-    "p50": <number>,
-    "p75": <number>,
-    "p90": <number>
-  }},
+  "market_percentiles": {{ "p25": 9, "p50": 12, "p75": 18, "p90": 25 }},
   "top_paying_companies": [
-    {{"company": "<name>", "range": "<e.g. 18-35 LPA>", "perks": "<equity/bonus note>"}},
-    {{"company": "<name>", "range": "<range>", "perks": "<perks>"}},
-    {{"company": "<name>", "range": "<range>", "perks": "<perks>"}},
-    {{"company": "<name>", "range": "<range>", "perks": "<perks>"}}
+    {{"company": "Google", "range": "30-50 LPA", "perks": "Equity"}}
   ],
   "negotiation_script": {{
-    "opening": "<what to say first in negotiation>",
-    "counter_offer": "<what to say when they make an offer>",
-    "close": "<closing statement to seal the deal>"
+    "opening": "Script", "counter_offer": "Script", "close": "Script"
   }},
-  "key_insights": ["<insight 1>", "<insight 2>", "<insight 3>"],
-  "skills_that_boost_salary": ["<skill 1>", "<skill 2>", "<skill 3>"],
-  "market_trend": "growing|stable|declining",
-  "trend_note": "<1 sentence on market trajectory for this role>"
-}}
+  "key_insights": ["Insight 1"],
+  "skills_that_boost_salary": ["Skill 1"],
+  "market_trend": "growing",
+  "trend_note": "Growing"
+}}"""
 
-Use realistic 2025 India market data. Focus on practical, actionable intelligence."""
-
-    # Always return fallback — override only if AI gives valid structured result
-    result = _make_salary_fallback(body.role, body.location, body.yoe)
-    try:
-        raw = get_ai_response(prompt)
-        match = re.search(r'\{.*\}', raw, re.DOTALL)
-        ai_result = json.loads(match.group() if match else raw)
-        if ai_result.get("salary_range") and ai_result.get("negotiation_script"):
-            result = ai_result
-    except Exception as e:
-        print(f"\u26a0\ufe0f [Salary Intel] AI failed, using fallback: {e}")
-
-    return result
+    return resilient_ai_response(
+        prompt, 
+        fallback=_make_salary_fallback(body.role, body.location, body.yoe)
+    )
 
 
 # ── AGI MENTOR ─────────────────────────────────────────────────────────────────
@@ -423,32 +389,22 @@ def ask_mentor(
 
     mode_prompts = {
         "career": f"You are a world-class career strategist and mentor. Give direct, specific, actionable career advice. The user is targeting: {current_user.target_role or 'Software Engineering'}.",
-        "technical": f"You are a Senior Engineer at Google/Meta. Give precise technical answers with code examples where relevant. Assume the user has basic programming knowledge.",
-        "interview": f"You are an expert interview coach. Give STAR-method answers, key techniques, and help the user prepare for {current_user.target_role or 'software engineering'} interviews.",
-        "motivation": f"You are a motivational mentor who combines empathy with technical wisdom. You know the user's journey (XP: {current_user.xp or 0}, Streak: {current_user.streak or 0} days). Inspire them.",
+        "technical": f"You are a Senior Engineer at Google/Meta. Give precise technical answers with code examples where relevant.",
+        "interview": f"You are an expert interview coach. Give STAR-method answers.",
+        "motivation": f"You are a motivational mentor.",
     }
 
     system_context = mode_prompts.get(body.mode, mode_prompts["career"])
+    prompt = f"{system_context}\n\nUser asks: {body.question}"
 
-    prompt = f"""{system_context}
+    fallback = {
+        "response": f"I'm momentarily recalibrating my neural pathways. Your question is important — please try again in 30 seconds.",
+        "mode": body.mode,
+        "mentor_name": "TULASI INTELLIGENCE",
+    }
+    
+    return resilient_ai_response(prompt, fallback=fallback, is_json=False)
 
-User ({current_user.name or 'Student'}) asks: {body.question}
-
-Provide a focused, premium response (200-400 words). Be direct, insightful, and specific. No generic platitudes."""
-
-    try:
-        response = get_ai_response(prompt)
-        return {
-            "response": response,
-            "mode": body.mode,
-            "mentor_name": "TULASI INTELLIGENCE",
-        }
-    except Exception:
-        return {
-            "response": f"I'm momentarily recalibrating my neural pathways. Your question is important — please try again in 30 seconds for a full response. Meanwhile, keep building!",
-            "mode": body.mode,
-            "mentor_name": "TULASI INTELLIGENCE",
-        }
 
 
 # ── USER INTELLIGENCE PROFILE ──────────────────────────────────────────────────
