@@ -55,18 +55,29 @@ def resilient_ai_response(
         raw = get_ai_response(prompt, force_model=force_model)
         
         if is_json:
-            # Flexible JSON extraction
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            # 1. Broad extraction of JSON-like structures
+            match = re.search(r'(\{.*\}|\[.*\])', raw, re.DOTALL)
+            
             if not match:
-                match = re.search(r'\[.*\]', raw, re.DOTALL)
+                # If no clear JSON markers, try to use the raw response if it looks like it could be JSON
+                cleaned = raw.strip()
+            else:
+                cleaned = match.group().strip()
             
-            cleaned = (match.group() if match else raw).strip()
-            
-            # Simple cleanup for common LLM issues (markdown blocks)
-            if cleaned.startswith("```"):
+            # 2. Markdown removal (common in LLM outputs)
+            if "```" in cleaned:
                 cleaned = re.sub(r'```[a-z]*\n|```', '', cleaned).strip()
+            
+            # 3. Final sanitization (newlines in strings, trailing commas)
+            # This is a bit aggressive but helps with poor formatting
+            # cleaned = re.sub(r',\s*\}', '}', cleaned)
+            # cleaned = re.sub(r',\s*\]', ']', cleaned)
                 
-            return json.loads(cleaned)
+            try:
+                return json.loads(cleaned)
+            except json.JSONDecodeError:
+                print(f"⚠️ [AI Safety Guard] JSON Decode failed. Raw: {raw[:100]}...")
+                return fallback
         
         return raw
     except Exception as e:

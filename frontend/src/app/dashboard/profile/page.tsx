@@ -83,7 +83,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await profileApi.update(formData, token);
+      await profileApi.update({ ...formData, avatar: avatarUrl || undefined }, token);
       // Refresh session
       await update(); 
       setSaveStatus("success");

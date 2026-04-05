@@ -6,7 +6,7 @@ import json
 from app.api.deps import get_current_user
 from app.core.database import get_session
 from app.models.models import User, PrepPlan
-from app.core.ai_router import get_ai_response
+from app.core.ai_router import resilient_ai_response
 
 router = APIRouter()
 
@@ -40,12 +40,16 @@ Output strictly as a valid JSON object matching this schema:
 Return ONLY raw JSON, nothing else."""
 
     try:
-        response_str = get_ai_response(prompt, force_model="complex_reasoning")
-        import re
-        match = re.search(r'\{.*\}', response_str, re.DOTALL)
-        if match:
-            response_str = match.group()
-        plan_data = json.loads(response_str)
+        fallback_plan = {
+            "title": f"Prep for {req.role}",
+            "weeks": [
+                {"week": 1, "focus": "Core Fundamentals", "tasks": ["Review core concepts", "Practice easy problems"]},
+                {"week": 2, "focus": "Advanced Topics", "tasks": ["Study system design", "Practice medium problems"]},
+                {"week": 3, "focus": "Mock Interviews", "tasks": ["Complete 3 mock interviews", "Review feedback"]},
+                {"week": 4, "focus": "Final Polish", "tasks": ["Behavioral prep", "Resume review"]}
+            ]
+        }
+        plan_data = resilient_ai_response(prompt, fallback=fallback_plan, force_model="complex_reasoning")
 
         new_plan = PrepPlan(
             user_id=current_user.id,

@@ -9,7 +9,7 @@ from app.api.activity import log_activity_internal
 from app.core.database import get_session
 from app.core.rate_limit import limiter
 from sqlmodel import Session, select
-from app.core.ai_router import get_ai_response
+from app.core.ai_router import get_ai_response, resilient_ai_response
 
 router = APIRouter()
 
@@ -47,14 +47,17 @@ Output the idea strictly as a valid JSON object with the following keys:
 
 Return ONLY the raw JSON object, no markdown, no backticks, no introduction."""
 
+    fallback = {
+        "name": "Neural Ledger",
+        "problem": "Traditional accounting is slow, manual, and prone to human error.",
+        "solution": "An AI-powered automated ledger that syncs with bank APIs and categorizes transactions in real-time.",
+        "market_opportunity": "SME sector in India and SE Asia is rapidly digitizing.",
+        "tech_stack": ["Next.js", "FastAPI", "PostgreSQL", "Tailwind CSS"],
+        "monetization": "SaaS Subscription (Tiered)"
+    }
+
     try:
-        response_text = get_ai_response(prompt, force_model="complex_reasoning")
-        import re
-        match = re.search(r'\{.*\}', response_text, re.DOTALL)
-        if match:
-            response_text = match.group()
-        
-        data = json.loads(response_text)
+        data = resilient_ai_response(prompt, fallback=fallback, force_model="complex_reasoning")
         
         # ── 💡 Log Activity ──────────────────────────────────────────
         log_activity_internal(current_user, db, "startup_saved", f"Generated idea: {data.get('name', 'New Startup')}")
@@ -63,8 +66,6 @@ Return ONLY the raw JSON object, no markdown, no backticks, no introduction."""
 
         return {"status": "success", "idea": data}
 
-    except json.JSONDecodeError:
-        raise HTTPException(500, "AI returned invalid format. Try again.")
     except Exception as e:
         raise HTTPException(500, f"Error generating startup idea: {str(e)}")
 

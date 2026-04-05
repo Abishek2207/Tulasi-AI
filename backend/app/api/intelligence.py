@@ -7,6 +7,7 @@ from app.core.database import get_session
 from app.api.deps import get_current_user
 from app.models.models import User, ActivityLog, SolvedProblem
 from app.core.rate_limit import limiter
+from app.core.ai_router import resilient_ai_response
 
 router = APIRouter()
 
@@ -160,23 +161,14 @@ def get_daily_mission(
     }}
     """
 
-    try:
-        genai.configure(api_key=settings.effective_gemini_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        
-        if "```json" in text: text = text.split("```json")[1].split("```")[0].strip()
-        elif "```" in text: text = text.split("```")[1].split("```")[0].strip()
+    fallback = {
+        "mission_title": "Neural Optimization",
+        "mission_description": "Bridge the gap in your current target role expertise by mastering one core design pattern.",
+        "reward_xp": 100,
+        "module_link": "/dashboard/chat"
+    }
 
-        return json.loads(text)
-    except Exception:
-        return {
-            "mission_title": "Neural Optimization",
-            "mission_description": "Bridge the gap in your current target role expertise by mastering one core design pattern.",
-            "reward_xp": 100,
-            "module_link": "/dashboard/chat"
-        }
+    return resilient_ai_response(prompt, fallback=fallback)
 
 
 @router.get("/next-best-action")
@@ -241,15 +233,18 @@ def get_strategic_plan(
        "immediate_pivot": "..."
     }}
     """
-    try:
-        genai.configure(api_key=settings.effective_gemini_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        if "```json" in text: text = text.split("```json")[1].split("```")[0].strip()
-        return json.loads(text)
-    except Exception:
-        return {"master_goal": "Awaiting Model Warmup...", "current_standing": "Analyzing profile...", "six_month_roadmap": [], "immediate_pivot": "Interact more with Chat."}
+    fallback = {
+        "master_goal": "Awaiting Model Warmup...", 
+        "current_standing": "Analyzing profile...", 
+        "six_month_roadmap": [
+            {"month": "1-2", "focus": "Core Fundamentals", "milestone": "Master programming concepts"},
+            {"month": "3-4", "focus": "Project Sprint", "milestone": "Build 2 portfolio apps"},
+            {"month": "5-6", "focus": "Interview Ready", "milestone": "Clear mock technical loops"}
+        ], 
+        "immediate_pivot": "Interact more with the AI Chat to sharpen your profile."
+    }
+    
+    return resilient_ai_response(prompt, fallback=fallback)
 
 
 @router.get("/daily-routine")
@@ -284,26 +279,18 @@ def get_daily_routine(
       {{"time": "09:00", "task": "Title", "topic": "Brief description", "intensity": "Focus|Chill|Deep Work"}}
     ]
     """
-    try:
-        genai.configure(api_key=settings.effective_gemini_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        if "```json" in text: text = text.split("```json")[1].split("```")[0].strip()
-        schedule = json.loads(text)
-        return {"routine": schedule, "generated_at": datetime.utcnow().isoformat()}
-    except Exception:
-        # High-Fidelity Fallback Routine
-        return {
-            "routine": [
-                {"time": "09:00", "task": "Neural Warmup", "topic": "Algorithm practice on LeetCode", "intensity": "Focus"},
-                {"time": "11:00", "task": "Core Mastery", "topic": "Diving into System Design patterns", "intensity": "Deep Work"},
-                {"time": "14:00", "task": "Project Sprint", "topic": "Building out your master portfolio", "intensity": "Deep Work"},
-                {"time": "17:00", "task": "AI Sync", "topic": "Reviewing latest AI Research Papers", "intensity": "Chill"},
-                {"time": "20:00", "task": "Reflection", "topic": "Logging daily wins and XP updates", "intensity": "Chill"}
-            ],
-            "is_fallback": True
-        }
+    fallback = {
+        "routine": [
+            {"time": "09:00", "task": "Neural Warmup", "topic": "Algorithm practice on LeetCode", "intensity": "Focus"},
+            {"time": "11:00", "task": "Core Mastery", "topic": "Diving into System Design patterns", "intensity": "Deep Work"},
+            {"time": "14:00", "task": "Project Sprint", "topic": "Building out your master portfolio", "intensity": "Deep Work"},
+            {"time": "17:00", "task": "AI Sync", "topic": "Reviewing latest AI Research Papers", "intensity": "Chill"},
+            {"time": "20:00", "task": "Reflection", "topic": "Logging daily wins and XP updates", "intensity": "Chill"}
+        ],
+        "is_fallback": True
+    }
+    
+    return resilient_ai_response(prompt, fallback=fallback)
 
 
 def _get_readiness_label(score: int) -> str:
