@@ -200,7 +200,7 @@ function RetryCountdownComponent({ seconds, onRetry, color }: { seconds: number;
       </motion.div>
       
       <div style={{ fontSize: 18, fontWeight: 900, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>
-        Intelligence Engine Warming Up...
+        Synchronizing Neural Intelligence...
       </div>
       <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 24 }}>
         Auto-retrying in <span style={{ color, fontWeight: 900 }}>{count}s</span>
