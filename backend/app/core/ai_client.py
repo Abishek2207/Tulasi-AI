@@ -306,32 +306,39 @@ class HybridAIClient:
         compat_messages = self._format_for_openai_compat(message, history, system_instruction=system_instruction)
         errors: List[str] = []
 
-        # ── 0. Handle force_model override ──
-        if force_model:
-            # Special case for 'complex_reasoning' -> try the best Gemini model available
-            if force_model == "complex_reasoning":
-                force_model = self.GEMINI_MODELS[0]
-
-            # Try to determine provider based on model name
-            try:
-                if any(m in force_model for m in ["gemini", "gemma"]) or force_model.startswith("models/"):
-                    print(f"🎯 [AI] Forcing model: {force_model} (Gemini/Google path)")
-                    res = self._call_gemini(gemini_contents, force_model, stream=stream, system_instruction=system_instruction)
-                    if res: return res
-                elif "/" in force_model: # Likely OpenRouter format provider/model
-                    print(f"🎯 [AI] Forcing model: {force_model} (OpenRouter path)")
-                    res = self._call_openrouter(compat_messages, model=force_model, stream=stream)
-                    if res: return res
-                elif "llama" in force_model.lower():
-                    print(f"🎯 [AI] Forcing model: {force_model} (Groq path)")
-                    res = self._call_groq(compat_messages, stream=stream)
-                    if res: return res
-            except Exception as fe:
-                print(f"⚠️ [AI] Force model '{force_model}' failed, falling back to chain: {fe}")
-                errors.append(f"ForceModel/{force_model}: {fe}")
-
         if stream:
             def master_gen():
+                # ── 0. Handle force_model override (stream) ──
+                if force_model:
+                    try:
+                        f_model = self.GEMINI_MODELS[0] if force_model == "complex_reasoning" else force_model
+                        if any(m in f_model for m in ["gemini", "gemma"]) or f_model.startswith("models/"):
+                            print(f"🎯 [AI] Forcing model: {f_model} (stream)")
+                            model_gen = self._call_gemini(gemini_contents, f_model, stream=True, system_instruction=system_instruction)
+                            yielded_any = False
+                            for chunk in model_gen:
+                                yielded_any = True
+                                yield chunk
+                            if yielded_any: return
+                        elif "/" in f_model:
+                            print(f"🎯 [AI] Forcing model: {f_model} (OpenRouter stream)")
+                            model_gen = self._call_openrouter(compat_messages, model=f_model, stream=True)
+                            yielded_any = False
+                            for chunk in model_gen:
+                                yielded_any = True
+                                yield chunk
+                            if yielded_any: return
+                        elif "llama" in f_model.lower():
+                            print(f"🎯 [AI] Forcing model: {f_model} (Groq stream)")
+                            model_gen = self._call_groq(compat_messages, stream=True)
+                            yielded_any = False
+                            for chunk in model_gen:
+                                yielded_any = True
+                                yield chunk
+                            if yielded_any: return
+                    except Exception as fe:
+                        print(f"⚠️ [AI] Force model '{f_model}' failed during stream, falling back to chain: {fe}")
+                        errors.append(f"ForceModel/{f_model}: {fe}")
                 # ── 1. Gemini models ──
                 for model_name in self.GEMINI_MODELS:
                     try:
@@ -400,6 +407,26 @@ class HybridAIClient:
 
         else:
             # ── Non-streaming path ──
+            # ── 0. Handle force_model override (non-stream) ──
+            if force_model:
+                try:
+                    f_model = self.GEMINI_MODELS[0] if force_model == "complex_reasoning" else force_model
+                    if any(m in f_model for m in ["gemini", "gemma"]) or f_model.startswith("models/"):
+                        print(f"🎯 [AI] Forcing model: {f_model} (Gemini/Google path)")
+                        res = self._call_gemini(gemini_contents, f_model, stream=False, system_instruction=system_instruction)
+                        if res and res != "No response generated.": return res
+                    elif "/" in f_model:
+                        print(f"🎯 [AI] Forcing model: {f_model} (OpenRouter path)")
+                        res = self._call_openrouter(compat_messages, model=f_model, stream=False)
+                        if res: return res
+                    elif "llama" in f_model.lower():
+                        print(f"🎯 [AI] Forcing model: {f_model} (Groq path)")
+                        res = self._call_groq(compat_messages, stream=False)
+                        if res: return res
+                except Exception as fe:
+                    print(f"⚠️ [AI] Force model '{f_model}' failed, falling back to chain: {fe}")
+                    errors.append(f"ForceModel/{f_model}: {fe}")
+
             # 1. Gemini
             for model_name in self.GEMINI_MODELS:
                 try:

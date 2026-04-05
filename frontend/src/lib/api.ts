@@ -603,7 +603,7 @@ export const activityApi = {
 // ─── Profile ─────────────────────────────────────────────────────────────────
 
 export const profileApi = {
-  update: (data: { name?: string; bio?: string; skills?: string }, token: string) =>
+  update: (data: { name?: string; bio?: string; skills?: string; avatar?: string }, token: string) =>
     request<{ message: string; user: User }>("/api/auth/profile", {
       method: "PATCH",
       body: JSON.stringify(data),

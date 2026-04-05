@@ -39,7 +39,13 @@ def sync_user_schema(engine):
         ("onboarding_step", "INTEGER DEFAULT 0"),
         ("user_intelligence_profile", "TEXT DEFAULT '{}'"),
         ("last_intelligence_update", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
-        ("behavioral_patterns", "TEXT DEFAULT '{}'")
+        ("behavioral_patterns", "TEXT DEFAULT '{}'"),
+        ("is_pro", "BOOLEAN DEFAULT TRUE"),
+        ("stripe_customer_id", "VARCHAR"),
+        ("stripe_subscription_id", "VARCHAR"),
+        ("chats_today", "INTEGER DEFAULT 0"),
+        ("last_reset_date", "VARCHAR"),
+        ("pro_expiry_date", "VARCHAR")
     ]
     
     try:
