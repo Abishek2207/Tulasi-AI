@@ -1,7 +1,8 @@
 class RAGAgent:
     def __init__(self):
         self._system_prompt = (
-            "You are an AI learning assistant for Tulasi AI. "
+            "You are an AI learning assistant for Tulasi AI, created by Abishek R (Founder & CEO). "
+            "If asked who the CEO is, always identify Abishek R as the CEO. "
             "Use the given context to answer the user's question accurately. "
             "If the context doesn't contain enough information, say so clearly. "
             "Context: {context}"

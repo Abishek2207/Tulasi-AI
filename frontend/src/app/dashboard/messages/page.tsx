@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { intelligenceApi, API_URL, messagesApi } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
+import toast from "react-hot-toast";
 
 interface User {
   id: number;
@@ -72,6 +73,10 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [chatRequestStatus, setChatRequestStatus] = useState<"none" | "pending" | "accepted" | "rejected" | "blocked">("none");
   const [isInitiator, setIsInitiator] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // ─── WebRTC / Call state ───────────────────────────────────────────────────
@@ -388,14 +393,12 @@ export default function MessagesPage() {
     if (activeUser && (activeTab === "dm" || activeTab === "requests") && !activeUser.is_mentor) {
       fetchMessages(activeUser.id);
       fetchChatStatus(activeUser.id);
-      
-      // Mark as seen when switching to a user chat
       messagesApi.markAsSeen(activeUser.id).catch(() => {});
     } else if (activeUser?.is_mentor && messages.length === 0) {
       setMessages([{
         id: Date.now(),
         sender_id: -1,
-        content: "Initialization complete. I am Tulasi's Neural Strategist. Ask me anything about your career trajectory, interview preparation, or technical roadmaps.",
+        content: "Neural Strategist calibrated. I am Tulasi AI's AGI Mentor. I'm here to architect your career trajectory, refine your technical roadmap, or simulate high-stakes interviews. What's our objective today?",
         created_at: new Date().toISOString()
       }]);
       setChatRequestStatus("accepted");
@@ -436,67 +439,69 @@ export default function MessagesPage() {
   };
 
   const fetchMessages = async (userId: number) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
-      const res = await fetch(`${API_URL}/api/messages/${userId}`, {
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const sharedCode = getSharedCode(currentUserId!, userId);
-        const decrypted = await Promise.all(data.messages.map(async (m: any) => {
-          if (m.content.includes(":")) {
+      const data = await messagesApi.getMessages(userId);
+      const sharedCode = getSharedCode(currentUserId!, userId);
+      const decrypted = await Promise.all(data.messages.map(async (m: any) => {
+        if (m.content.includes(":")) {
+          try {
             const text = await decryptMessage(m.content, sharedCode);
             return { ...m, content: text };
-          }
-          return m;
-        }));
-        setMessages(decrypted);
-      }
+          } catch (e) { return { ...m, content: "[Encrypted Message]" }; }
+        }
+        return m;
+      }));
+      setMessages(decrypted);
     } catch (err) { console.error("Message fetch failed:", err); }
   };
 
   const fetchChatStatus = async (userId: number) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
-      const res = await fetch(`${API_URL}/api/messages/requests/status/${userId}`, {
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setChatRequestStatus(data.status);
-        setIsInitiator(data.is_initiator);
-      }
+      const data = await messagesApi.getStatus(userId);
+      setChatRequestStatus(data.status as any);
+      setIsInitiator(data.is_initiator);
     } catch (err) { console.error("Status fetch failed:", err); }
   };
 
   const handleChatRequest = async (action: "accept" | "reject" | "block") => {
     if (!activeUser) return;
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
-      const res = await fetch(`${API_URL}/api/messages/requests/handle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ sender_id: activeUser.id, action })
-      });
-      if (res.ok) {
+      const data = await messagesApi.handleRequest(activeUser.id, action);
+      if (data.status === "success") {
         setChatRequestStatus(action === "accept" ? "accepted" : (action === "reject" ? "rejected" : "blocked"));
+        fetchDirectory(); // Refresh list
       }
     } catch (err) { console.error("Request handling failed:", err); }
   };
 
   const fetchGroupMessages = async (groupId: number) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
-      const res = await fetch(`${API_URL}/api/groups/${groupId}/messages`, {
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data.messages);
-      }
+      const data = await messagesApi.getGroupMessages(groupId);
+      setMessages(data.messages);
     } catch (err) { console.error("Group messages fetch failed:", err); }
   };
+  const handleSearch = async (val: string) => {
+    setSearchTerm(val);
+    if (val.length < 2) { setSearchResults([]); return; }
+    setIsSearching(true);
+    try {
+      const res = await messagesApi.searchUsers(val);
+      setSearchResults(res.users);
+    } catch (err) { console.error("Search failed:", err); }
+    finally { setIsSearching(false); }
+  };
+
+  const startFollow = async (userId: number) => {
+    try {
+      const res = await messagesApi.sendMessage(userId, "System: Transmitting follow request...", "text");
+      if (res.status === "success") {
+        setShowAddModal(false);
+        fetchDirectory();
+        toast.success("Follow request sent!");
+      }
+    } catch (err) { toast.error("Could not send request"); }
+  };
+
 
   const sendMessage = async (e?: React.FormEvent, mediaType?: string, mediaUrl?: string) => {
     if (e) e.preventDefault();
@@ -804,9 +809,13 @@ export default function MessagesPage() {
         <div style={{ padding: "24px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <h2 style={{ fontSize: 22, fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>Messages</h2>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-              <Plus size={18} />
-            </div>
+            <motion.div 
+              whileHover={{ scale: 1.1, background: "rgba(255,255,255,0.1)" }}
+              onClick={() => setShowAddModal(true)}
+              style={{ width: 36, height: 36, borderRadius: 12, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}
+            >
+              <Plus size={20} />
+            </motion.div>
           </div>
 
           <div style={{ position: "relative", marginBottom: 20 }}>
@@ -889,7 +898,7 @@ export default function MessagesPage() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <span style={{ fontWeight: 800, fontSize: 14, color: "white" }}>{u.name}</span>
+                      <span style={{ fontWeight: 800, fontSize: 14, color: "white" }}>{u.name || "Colleague"}</span>
                       <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
                         {u.is_online ? "Active" : u.last_seen ? formatDistanceToNow(new Date(u.last_seen), { addSuffix: true }) : "Offline"}
                       </span>
@@ -938,10 +947,10 @@ export default function MessagesPage() {
             <div style={{ padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.01)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <div style={{ width: 44, height: 44, borderRadius: activeUser?.id === -1 ? 12 : 22, background: activeUser?.id === -1 ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: activeUser?.id === -1 ? "#8B5CF6" : "white", fontSize: 18, border: "1px solid rgba(255,255,255,0.1)" }}>
-                  {activeUser?.id === -1 ? <BrainCircuit size={24} /> : activeUser ? activeUser.name.charAt(0).toUpperCase() : "#"}
+                  {activeUser?.id === -1 ? <BrainCircuit size={24} /> : activeUser ? (activeUser.name?.charAt(0) || "?").toUpperCase() : "#"}
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 17, fontWeight: 900, color: activeUser?.id === -1 ? "#A78BFA" : "white" }}>{activeUser?.name || activeGroup?.name}</h3>
+                  <h3 style={{ fontSize: 17, fontWeight: 900, color: activeUser?.id === -1 ? "#A78BFA" : "white" }}>{activeUser?.name || activeGroup?.name || "Private Transmission"}</h3>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ width: 6, height: 6, borderRadius: 3, background: activeUser?.id === -1 ? "#8B5CF6" : "#10B981" }} />
                     <span style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>
@@ -1169,9 +1178,9 @@ export default function MessagesPage() {
                   }}
                 >
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 16, fontWeight: 900, color: "white", marginBottom: 4 }}>Chat Request from {activeUser?.name}</div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: "white", marginBottom: 4 }}>Follow Request from {activeUser?.name || "New Colleague"}</div>
                     <div style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 500 }}>
-                      This is the first time this user is messaging you. Do you want to accept?
+                      This user wants to connect with you. Accept to start transmitting.
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 12 }}>
@@ -1179,24 +1188,20 @@ export default function MessagesPage() {
                       style={{ padding: "10px 24px", borderRadius: 12, background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#EF4444", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
                       Reject
                     </motion.button>
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleChatRequest("block")}
-                      style={{ padding: "10px 24px", borderRadius: 12, background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", color: "white", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
-                      Block
-                    </motion.button>
                     <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleChatRequest("accept")}
                       style={{ padding: "10px 28px", borderRadius: 12, background: "white", border: "none", color: "black", fontWeight: 900, fontSize: 13, cursor: "pointer" }}>
-                      Accept
+                      Accept & Follow Back
                     </motion.button>
                   </div>
                 </motion.div>
               )}
               {chatRequestStatus === "pending" && isInitiator && (
-                 <div style={{ position: "absolute", bottom: 100, left: 32, right: 32, textAlign: "center", pointerEvents: "none" }}>
-                    <span style={{ fontSize: 12, color: "var(--text-muted)", background: "rgba(0,0,0,0.4)", padding: "6px 16px", borderRadius: 20 }}>
-                      Waiting for {activeUser?.name} to accept your chat request...
-                    </span>
-                 </div>
-              )}
+                  <div style={{ position: "absolute", bottom: 100, left: 32, right: 32, textAlign: "center", pointerEvents: "none" }}>
+                     <span style={{ fontSize: 12, color: "var(--text-muted)", background: "rgba(0,0,0,0.6)", padding: "10px 20px", borderRadius: 20, backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                       Waiting for {activeUser?.name || "Colleague"} to accept your follow request...
+                     </span>
+                  </div>
+               )}
               {chatRequestStatus === "rejected" && (
                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20 }}>
                     <div style={{ textAlign: "center", padding: 32 }}>
@@ -1236,7 +1241,7 @@ export default function MessagesPage() {
               )}
               <form onSubmit={sendMessage} style={{ display: "flex", alignItems: "center", gap: 16, background: "rgba(255,255,255,0.04)", padding: "8px 12px 8px 20px", borderRadius: replyingTo ? "0 0 24px 24px" : 24, border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div style={{ display: "flex", gap: 14, color: "var(--text-muted)" }}>
-                  <Plus size={20} style={{ cursor: "pointer" }} />
+                  <Plus size={20} style={{ cursor: "pointer" }} onClick={() => setShowAddModal(true)} />
                   <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
                     <ImageIcon size={20} />
                     <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
@@ -1294,6 +1299,65 @@ export default function MessagesPage() {
           50% { opacity: 1; transform: translateY(-4px); }
         }
       `}</style>
+
+      {/* ══ ADD USER / DISCOVER MODAL ══ */}
+      <AnimatePresence>
+        {showAddModal && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddModal(false)}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(10px)" }} />
+            
+            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              style={{ width: "100%", maxWidth: 500, background: "#08080A", borderRadius: 24, padding: "32px", border: "1px solid rgba(255,255,255,0.1)", position: "relative", boxShadow: "0 25px 50px rgba(0,0,0,0.5)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                <h3 style={{ fontSize: 20, fontWeight: 900 }}>Discover Colleagues</h3>
+                <X size={24} style={{ cursor: "pointer", opacity: 0.5 }} onClick={() => setShowAddModal(false)} />
+              </div>
+
+              <div style={{ position: "relative", marginBottom: 24 }}>
+                <Search size={20} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                <input 
+                  autoFocus
+                  placeholder="Seach by name or email..." 
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  style={{ width: "100%", padding: "16px 16px 16px 52px", borderRadius: 16, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: 15 }}
+                />
+              </div>
+
+              <div style={{ maxHeight: 300, overflowY: "auto" }} className="custom-scrollbar">
+                {isSearching ? (
+                  <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>Searching neural network...</div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map(u => (
+                    <div key={u.id} style={{ padding: "12px", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, background: "rgba(255,255,255,0.02)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 20, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>{u.name?.charAt(0) || "?"}</div>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 700 }}>{u.name || "Anonymous User"}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{u.email}</div>
+                        </div>
+                      </div>
+                      <motion.button 
+                        whileHover={{ scale: 1.05, background: "white", color: "black" }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => startFollow(u.id)}
+                        style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+                      >
+                        Follow
+                      </motion.button>
+                    </div>
+                  ))
+                ) : searchTerm.length >= 2 ? (
+                  <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>No one found with that name.</div>
+                ) : (
+                  <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>Type at least 2 characters to search.</div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

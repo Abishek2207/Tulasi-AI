@@ -340,7 +340,7 @@ export default function CareerGPSPage() {
                         <motion.div
                           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                           style={{ padding: 24, background: "rgba(139,92,246,0.04)", borderRadius: 24, border: "1px solid rgba(139,92,246,0.2)" }}>
-                          <div style={{ fontSize: 11, fontWeight: 900, color: "#8B5CF6", marginBottom: 12, letterSpacing: 1 }}>💬 FROM ABISHEK R — FOUNDER, TULASIAI</div>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: "#8B5CF6", marginBottom: 12, letterSpacing: 1 }}>💬 FROM ABISHEK R — FOUNDER & CEO, TULASIAI</div>
                           <p style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>"{result.founder_note}"</p>
                         </motion.div>
                       )}

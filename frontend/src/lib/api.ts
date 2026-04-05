@@ -731,10 +731,13 @@ export const messagesApi = {
   
   // ── Extended dashboard methods ──
   mentorChat: async (content: string, media_type?: string, media_url?: string) =>
-    request<any>("/api/intelligence/chat", {
+    request<any>("/api/intel/ask-mentor", {
       method: "POST",
-      body: JSON.stringify({ content, media_type, media_url })
+      body: JSON.stringify({ question: content, mode: "career" })
     }),
+  searchUsers: (q: string) => request<{ users: any[] }>(`/api/messages/search?q=${encodeURIComponent(q)}`),
+  getGroupMessages: async (groupId: number, limit = 50) =>
+    request<any>(`/api/groups/${groupId}/messages?limit=${limit}`),
   sendGroupMessage: (groupId: number, content: string) =>
     request<any>(`/api/groups/${groupId}/messages`, {
       method: "POST",

@@ -35,4 +35,4 @@ Real-time, scalable messaging for the Tulasi AI student ecosystem.
 - **Seeding**: Use the "Seed Hackathons" and "Seed Reviews" buttons in the admin panel to populate production data.
 - **Health**: Monitor `https://tulasi-ai-wgwl.onrender.com/api/health` for uptime analytics.
 
-Copyright © 2026 Tulasi AI — Led by CEO Akshaya R.
+Copyright © 2026 Tulasi AI — Led by Founder & CEO Abishek R.
