@@ -229,6 +229,8 @@ export function MissionControl({ token }: { token: string }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 16,
           marginTop: "auto",
           position: "relative",
           zIndex: 1,
