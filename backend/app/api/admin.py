@@ -50,7 +50,12 @@ def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admi
 
     # Intelligence coverage
     # SQLite fallback: since length check on JSON string is hard in strict SQL, we pull users with profile
-    intel_coverage = db.exec(text("SELECT count(*) FROM user WHERE user_intelligence_profile IS NOT NULL AND length(user_intelligence_profile) > 10")).scalar() or 0
+    try:
+        # Quote "user" as it is a reserved keyword in PostgreSQL
+        intel_coverage = db.exec(text('SELECT count(*) FROM "user" WHERE user_intelligence_profile IS NOT NULL AND length(user_intelligence_profile) > 10')).scalar() or 0
+    except Exception as e:
+        print(f"⚠️  Intelligence Stats Sync Warning: {e}")
+        intel_coverage = 0
 
     return {
         "total_users": total,
@@ -277,7 +282,7 @@ def approve_review(review_id: int, db: Session = Depends(get_session), admin: Us
     """Approve a review so it gets shown publicly (Admin Only)."""
     from sqlalchemy import text
     try:
-        db.execute(text(f"UPDATE review SET is_approved = 1 WHERE id = {review_id}"))
+        db.execute(text(f'UPDATE "review" SET is_approved = 1 WHERE id = {review_id}'))
         db.commit()
         return {"message": "Review approved successfully"}
     except Exception as e:
@@ -289,12 +294,12 @@ def toggle_feature_review(review_id: int, db: Session = Depends(get_session), ad
     """Toggle featured status on a review (Admin Only)."""
     from sqlalchemy import text
     try:
-        res = db.execute(text(f"SELECT id, COALESCE(is_featured, 0) as is_featured FROM review WHERE id = {review_id}"))
+        res = db.execute(text(f'SELECT id, COALESCE(is_featured, 0) as is_featured FROM "review" WHERE id = {review_id}'))
         row = res.mappings().first()
         if not row:
             return {"error": "Review not found"}
         new_val = 0 if row["is_featured"] else 1
-        db.execute(text(f"UPDATE review SET is_featured = {new_val} WHERE id = {review_id}"))
+        db.execute(text(f'UPDATE "review" SET is_featured = {new_val} WHERE id = {review_id}'))
         db.commit()
         return {"message": "Featured status updated", "is_featured": bool(new_val)}
     except Exception as e:
