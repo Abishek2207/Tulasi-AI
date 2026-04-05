@@ -184,10 +184,17 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
 }
 
 export default function InternshipsPage() {
-  useSession();
+  const { data: session } = useSession();
   const [internships, setInternships] = useState<Internship[]>([]);
   const [loading, setLoading] = useState(true);
+  const [metaLoading, setMetaLoading] = useState(true);
   const [search, setSearch] = useState("");
+  
+  // Metadata state
+  const [domains, setDomains] = useState<string[]>(DOMAINS);
+  const [states, setStates] = useState<string[]>(INDIA_STATES);
+  const [districtsMap, setDistrictsMap] = useState<Record<string, string[]>>(INDIA_DISTRICTS);
+
   const [domain, setDomain] = useState("All");
   const [type, setType] = useState("All");
   const [mode, setMode] = useState("All");
@@ -195,10 +202,23 @@ export default function InternshipsPage() {
   const [city, setCity] = useState("All Cities");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Fetch Metadata
+  useEffect(() => {
+    const token = localStorage.getItem("token") || "";
+    Promise.all([
+      fetch(`${API_URL}/api/internships/domains`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API_URL}/api/internships/states`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json())
+    ]).then(([dData, sData]) => {
+      if (dData.domains) setDomains(["All", ...dData.domains]);
+      if (sData.states) setStates(sData.states);
+      if (sData.districts) setDistrictsMap(sData.districts);
+    }).catch(console.error).finally(() => setMetaLoading(false));
+  }, []);
+
   const availableCities = useMemo(() => {
     if (!state || state === "All India") return [];
-    return INDIA_DISTRICTS[state] || [];
-  }, [state]);
+    return ["All Cities", ...(districtsMap[state] || [])];
+  }, [state, districtsMap]);
 
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
@@ -311,7 +331,13 @@ export default function InternshipsPage() {
               <div style={{ marginBottom: 22 }}>
                 <div style={{ fontSize: 10, fontWeight: 800, color: "var(--text-muted)", letterSpacing: 1.5, marginBottom: 12 }}>DOMAIN</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {DOMAINS.map((d) => <FilterChip key={d} label={d} active={domain === d} onClick={() => setDomain(d)} />)}
+                  {metaLoading ? (
+                    [1,2,3,4,5,6].map(i => (
+                      <div key={i} style={{ width: 80, height: 28, borderRadius: 20, background: "rgba(255,255,255,0.03)", animation: "pulse 1.5s infinite" }} />
+                    ))
+                  ) : (
+                    domains.map((d) => <FilterChip key={d} label={d} active={domain === d} onClick={() => setDomain(d)} />)
+                  )}
                 </div>
               </div>
 
@@ -362,7 +388,7 @@ export default function InternshipsPage() {
                         onChange={(e) => { setState(e.target.value); setCity("All Cities"); }}
                         style={{ width: "100%", padding: "10px 36px 10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, fontWeight: 600, cursor: "pointer", appearance: "none" }}
                       >
-                        {INDIA_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        {states.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                       <ChevronDown size={14} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
                     </div>
@@ -388,9 +414,15 @@ export default function InternshipsPage() {
 
                 {/* Quick state chips */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-                  {INDIA_STATES.map((s) => (
-                    <FilterChip key={s} label={s} active={state === s} onClick={() => { setState(s); setCity("All Cities"); }} />
-                  ))}
+                  {metaLoading ? (
+                    [1,2,3,4].map(i => (
+                      <div key={i} style={{ width: 100, height: 28, borderRadius: 20, background: "rgba(255,255,255,0.03)", animation: "pulse 1.5s infinite" }} />
+                    ))
+                  ) : (
+                    states.map((s) => (
+                      <FilterChip key={s} label={s} active={state === s} onClick={() => { setState(s); setCity("All Cities"); }} />
+                    ))
+                  )}
                 </div>
               </div>
             </div>
