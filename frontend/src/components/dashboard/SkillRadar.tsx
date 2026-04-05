@@ -81,11 +81,11 @@ export function SkillRadar({ token }: SkillRadarProps) {
       <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <div style={{ padding: "10px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
           <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 800, textTransform: "uppercase", marginBottom: 2 }}>Top Dimension</div>
-          <div style={{ fontSize: 13, fontWeight: 900, color: "#8B5CF6" }}>{data.reduce((prev, current) => (prev.A > current.A) ? prev : current).subject}</div>
+          <div style={{ fontSize: 13, fontWeight: 900, color: "#8B5CF6" }}>{data.length > 0 ? data.reduce((prev, current) => (prev.A > current.A) ? prev : current).subject : "N/A"}</div>
         </div>
         <div style={{ padding: "10px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
           <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 800, textTransform: "uppercase", marginBottom: 2 }}>Symmetry Score</div>
-          <div style={{ fontSize: 13, fontWeight: 900, color: "#06B6D4" }}>{Math.round(data.reduce((acc, curr) => acc + curr.A, 0) / 6)}%</div>
+          <div style={{ fontSize: 13, fontWeight: 900, color: "#06B6D4" }}>{data.length > 0 ? Math.round(data.reduce((acc, curr) => acc + curr.A, 0) / Math.max(1, data.length)) : 0}%</div>
         </div>
       </div>
     </div>
