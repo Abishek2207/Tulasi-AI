@@ -22,41 +22,43 @@ router = APIRouter()
 
 @router.get("/stats")
 def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
-    from datetime import date, timedelta
+    from datetime import date
     from app.models.models import SolvedProblem, ChatMessage, ActivityLog
     from sqlalchemy import text
+    from sqlmodel import func
 
-    users = db.exec(select(User)).all()
-    total = len(users)
-    pro_users = [u for u in users if u.is_pro]
+    # Platform metrics using COUNT
+    total = db.exec(select(func.count(User.id))).one()
+    pro_users_count = db.exec(select(func.count(User.id)).where(User.is_pro == True)).one()
     
     # Growth metrics
     today_str = date.today().isoformat()
-    active_today = len([u for u in users if u.last_activity_date == today_str])
+    active_today = db.exec(select(func.count(User.id)).where(User.last_activity_date == today_str)).one()
     
     # Safety metrics
-    flagged_users = len([u for u in users if getattr(u, 'abuse_count', 0) > 0])
-    high_risk_users = len([u for u in users if getattr(u, 'abuse_count', 0) >= 3])
+    flagged_users = db.exec(select(func.count(User.id)).where(User.abuse_count > 0)).one()
+    high_risk_users = db.exec(select(func.count(User.id)).where(User.abuse_count >= 3)).one()
 
-    # Platform metrics
+    # DB Sizes
     total_reviews = db.exec(text("SELECT count(*) FROM review")).scalar() or 0
-    total_submissions = db.exec(select(SolvedProblem)).all()
-    total_chat_messages = db.exec(select(ChatMessage)).all()
+    total_submissions = db.exec(select(func.count(SolvedProblem.id))).one()
+    total_chat_messages = db.exec(select(func.count(ChatMessage.id))).one()
     
     # Intelligence coverage
-    intel_coverage = len([u for u in users if len(u.user_intelligence_profile or "{}") > 10])
+    # SQLite fallback: since length check on JSON string is hard in strict SQL, we pull users with profile
+    intel_coverage = db.exec(text("SELECT count(*) FROM user WHERE user_intelligence_profile IS NOT NULL AND length(user_intelligence_profile) > 10")).scalar() or 0
 
     return {
         "total_users": total,
-        "pro_users": len(pro_users),
+        "pro_users": pro_users_count,
         "active_today": active_today,
         "flagged_users": flagged_users,
         "high_risk_users": high_risk_users,
         "intelligence_coverage": intel_coverage,
         "total_reviews": total_reviews,
-        "total_submissions": len(total_submissions),
-        "total_chat_messages": len(total_chat_messages),
-        "conversion_rate": round((len(pro_users) / max(total, 1)) * 100, 1)
+        "total_submissions": total_submissions,
+        "total_chat_messages": total_chat_messages,
+        "conversion_rate": round((pro_users_count / max(total, 1)) * 100, 1)
     }
 
 
@@ -357,21 +359,20 @@ def get_leaderboard(db: Session = Depends(get_session), admin: User = Depends(ge
 def get_code_analytics(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
     """Code Practice analytics — submissions, acceptance rate, top solvers."""
     from app.models.models import SolvedProblem
-    from sqlalchemy import func
+    from sqlalchemy import func, text
 
     # Total solved records
-    all_solved = db.exec(select(SolvedProblem)).all()
-    total_submissions = len(all_solved)
+    total_submissions = db.exec(select(func.count(SolvedProblem.id))).one()
 
-    # Count per user
-    user_solve_counts: dict = {}
-    for s in all_solved:
-        user_solve_counts[s.user_id] = user_solve_counts.get(s.user_id, 0) + 1
-
-    # Top 10 solvers
-    top_solver_ids = sorted(user_solve_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    # Top 10 solvers query
+    # Get user_id and count grouped by user_id
+    res = db.exec(text("SELECT user_id, COUNT(id) as c FROM solvedproblem GROUP BY user_id ORDER BY c DESC LIMIT 10")).fetchall()
+    
     top_solvers = []
-    for uid, count in top_solver_ids:
+    unique_solvers = db.exec(text("SELECT count(DISTINCT user_id) FROM solvedproblem")).scalar() or 0
+    
+    for row in res:
+        uid, count = row[0], row[1]
         u = db.get(User, uid)
         if u:
             top_solvers.append({
@@ -383,10 +384,7 @@ def get_code_analytics(db: Session = Depends(get_session), admin: User = Depends
             })
 
     # Wrong answers from activity logs
-    wrong_answer_logs = db.exec(
-        select(ActivityLog).where(ActivityLog.action_type.contains("wrong"))
-    ).all()
-    wrong_answer_count = len(wrong_answer_logs)
+    wrong_answer_count = db.exec(select(func.count(ActivityLog.id)).where(ActivityLog.action_type.like("%wrong%"))).one()
 
     # Problems solved by difficulty (from activity log titles)
     total_problems_available = 130  # hardcoded from code.py PROBLEMS list
@@ -398,7 +396,7 @@ def get_code_analytics(db: Session = Depends(get_session), admin: User = Depends
         "acceptance_rate": round((total_submissions / max(total_submissions + wrong_answer_count, 1)) * 100, 1),
         "total_problems_available": total_problems_available,
         "top_solvers": top_solvers,
-        "unique_solvers": len(user_solve_counts),
+        "unique_solvers": unique_solvers,
     }
 
 
@@ -410,23 +408,21 @@ def get_code_analytics(db: Session = Depends(get_session), admin: User = Depends
 def get_chat_analytics(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
     """Chat analytics — total messages, active users, recent conversations."""
     from app.models.models import ChatMessage, ChatSession
+    from sqlmodel import func
 
-    all_messages = db.exec(select(ChatMessage)).all()
-    total_messages = len(all_messages)
+    total_messages = db.exec(select(func.count(ChatMessage.id))).one()
 
     # Active users in last 7 days
     cutoff_7d = datetime.utcnow() - timedelta(days=7)
-    recent_msgs = db.exec(
-        select(ChatMessage).where(ChatMessage.created_at >= cutoff_7d)
-    ).all()
-    active_users_7d = len(set(m.user_id for m in recent_msgs if m.user_id))
+    active_users_7d = db.exec(
+        select(func.count(func.distinct(ChatMessage.user_id))).where(ChatMessage.created_at >= cutoff_7d)
+    ).one()
 
     # Active users in last 24 hours
     cutoff_24h = datetime.utcnow() - timedelta(hours=24)
-    msgs_24h = db.exec(
-        select(ChatMessage).where(ChatMessage.created_at >= cutoff_24h)
-    ).all()
-    active_users_24h = len(set(m.user_id for m in msgs_24h if m.user_id))
+    active_users_24h = db.exec(
+        select(func.count(func.distinct(ChatMessage.user_id))).where(ChatMessage.created_at >= cutoff_24h)
+    ).one()
 
     # Last 10 sessions with user info + last message preview
     try:
@@ -455,8 +451,8 @@ def get_chat_analytics(db: Session = Depends(get_session), admin: User = Depends
         last_conversations = []
 
     # Message role breakdown (user vs ai)
-    user_msgs = len([m for m in all_messages if m.role == "user"])
-    ai_msgs = len([m for m in all_messages if m.role == "assistant"])
+    user_msgs = db.exec(select(func.count(ChatMessage.id)).where(ChatMessage.role == "user")).one()
+    ai_msgs = db.exec(select(func.count(ChatMessage.id)).where(ChatMessage.role == "assistant")).one()
 
     return {
         "total_messages": total_messages,
