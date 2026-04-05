@@ -198,42 +198,6 @@ def get_me(current_user: User = Depends(get_current_user)):
     }
 
 
-class ProfileUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    bio: Optional[str] = None
-    skills: Optional[str] = None  # comma-separated
-    avatar: Optional[str] = None  # Base64 encoded string
-
-@router.patch("/profile")
-def update_profile(
-    req: ProfileUpdateRequest,
-    db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
-):
-    if req.name is not None:
-        current_user.name = req.name.strip()
-    if req.bio is not None:
-        current_user.bio = req.bio.strip()
-    if req.skills is not None:
-        current_user.skills = req.skills.strip()
-    if req.avatar is not None:
-        current_user.avatar = req.avatar
-        
-    db.add(current_user)
-    db.commit()
-    db.refresh(current_user)
-    return {
-        "message": "Profile updated successfully",
-        "user": {
-            "id": current_user.id,
-            "name": current_user.name,
-            "bio": current_user.bio or "",
-            "skills": current_user.skills or "",
-            "avatar": current_user.avatar or "",
-            "email": current_user.email,
-        },
-    }
-
 
 class OAuthLoginRequest(BaseModel):
     email: str

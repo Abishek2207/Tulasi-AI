@@ -387,9 +387,9 @@ export const authApi = {
   me: (token: string) =>
     request<User & { invite_code: string }>("/api/auth/me", {}, token),
 
-  updateProfile: (data: { name?: string; bio?: string; skills?: string; avatar?: string }) =>
-    request<{ message: string; user: User }>("/api/auth/profile", {
-      method: "PATCH",
+  updateProfile: (data: { name?: string; bio?: string; skills?: string; avatar?: string; target_role?: string; interest_areas?: string }) =>
+    request<{ message: string; user: User }>("/api/users/profile", {
+      method: "PUT",
       body: JSON.stringify(data),
     }),
 };
@@ -603,11 +603,11 @@ export const activityApi = {
 // ─── Profile ─────────────────────────────────────────────────────────────────
 
 export const profileApi = {
-  update: (data: { name?: string; bio?: string; skills?: string; avatar?: string }, token: string) =>
-    request<{ message: string; user: User }>("/api/auth/profile", {
-      method: "PATCH",
+  update: (data: { name?: string; bio?: string; skills?: string; avatar?: string; target_role?: string; interest_areas?: string }) =>
+    request<{ message: string; user: User }>("/api/users/profile", {
+      method: "PUT",
       body: JSON.stringify(data),
-    }, token),
+    }),
 };
 
 // ─── Group Chat ───────────────────────────────────────────────────────────────

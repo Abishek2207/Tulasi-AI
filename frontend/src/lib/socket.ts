@@ -4,6 +4,7 @@ import { API_URL } from "@/lib/api";
 class SocketService {
   private socket: Socket | null = null;
   private token: string | null = null;
+  private deferredEvents: { event: string; callback: (...args: any[]) => void }[] = [];
 
   connect(token: string) {
     if (this.socket?.connected && this.token === token) return;
@@ -21,6 +22,10 @@ class SocketService {
 
     this.socket.on("connect", () => {
       console.log("✅ Socket.io Connected:", this.socket?.id);
+      this.deferredEvents.forEach(({ event, callback }) => {
+        this.socket?.on(event, callback);
+      });
+      this.deferredEvents = [];
     });
 
     this.socket.on("disconnect", (reason) => {
@@ -36,15 +41,23 @@ class SocketService {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
+      this.deferredEvents = [];
     }
   }
 
   on(event: string, callback: (...args: any[]) => void) {
-    this.socket?.on(event, callback);
+    if (this.socket) {
+      this.socket.on(event, callback);
+    } else {
+      this.deferredEvents.push({ event, callback });
+    }
   }
 
   off(event: string, callback?: (...args: any[]) => void) {
-    this.socket?.off(event, callback);
+    if (this.socket) {
+      this.socket.off(event, callback);
+    }
+    this.deferredEvents = this.deferredEvents.filter(e => e.event !== event);
   }
 
   emit(event: string, data: any) {

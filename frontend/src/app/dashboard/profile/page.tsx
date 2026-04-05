@@ -71,10 +71,19 @@ export default function ProfilePage() {
     try {
       setRemovingBg(true);
       const blob = await usersApi.removeBg(file, token);
-      const url = URL.createObjectURL(blob);
-      setAvatarUrl(url);
+      
+      // Convert Blob to Base64 for persistence
+      const readerProcess = new FileReader();
+      readerProcess.onloadend = () => {
+        setAvatarUrl(readerProcess.result as string);
+      };
+      readerProcess.readAsDataURL(blob);
     } catch (err) {
       console.error("BG Removal failed:", err);
+      // Fallback to original if processing fails
+      const readerOrig = new FileReader();
+      readerOrig.onloadend = () => setAvatarUrl(readerOrig.result as string);
+      readerOrig.readAsDataURL(file);
     } finally {
       setRemovingBg(false);
     }
@@ -83,7 +92,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await profileApi.update({ ...formData, avatar: avatarUrl || undefined }, token);
+      await profileApi.update({ ...formData, avatar: avatarUrl || undefined });
       // Refresh session
       await update(); 
       setSaveStatus("success");
@@ -289,7 +298,15 @@ export default function ProfilePage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 22, maxWidth: 560 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Display Name</label>
-              <input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 15, borderRadius: 12 }} />
+              <input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} placeholder="Your name" className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 15, borderRadius: 12 }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Profile Photo URL</label>
+              <div style={{ display: "flex", gap: 10 }}>
+                <input value={avatarUrl || ""} onChange={e => setAvatarUrl(e.target.value)} placeholder="https://example.com/photo.jpg" className="input-field" style={{ flex: 1, padding: "13px 16px", fontSize: 14, borderRadius: 12 }} />
+                <button onClick={() => setAvatarUrl(null)} style={{ padding: "0 15px", borderRadius: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#EF4444", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Clear</button>
+              </div>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>Paste a link or use the camera icon on your avatar above to upload.</p>
             </div>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Bio</label>
