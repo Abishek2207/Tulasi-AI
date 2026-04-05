@@ -279,13 +279,31 @@ def get_user_directory(current_user: User = Depends(get_current_user), db: Sessi
         # Real-time online check
         is_online = u.id in user_to_sid or (u.last_seen > five_mins_ago if u.last_seen else False)
         
-        # Get last message
-        last_msg = db.exec(select(DirectMessage).where(
-            or_(
-                and_(DirectMessage.sender_id == current_user.id, DirectMessage.receiver_id == u.id),
-                and_(DirectMessage.sender_id == u.id, DirectMessage.receiver_id == current_user.id)
-            )
-        ).order_by(DirectMessage.created_at.desc())).first()
+    # Optional: Optimise last messages fetch in bulk
+    # For simplicity and speed for <100 users, we fetch the max created_at per conversation partner
+    user_ids = [u.id for u in users]
+    
+    # Subquery to get the latest message for current_user per partner
+    # Note: This is an approximation for performance; in high scale we'd use a dedicated RecentConversation table.
+    last_messages_raw = db.exec(select(DirectMessage).where(
+        or_(DirectMessage.sender_id == current_user.id, DirectMessage.receiver_id == current_user.id)
+    ).order_by(DirectMessage.created_at.desc())).all()
+    
+    # Map messages to users in memory
+    last_msg_map = {}
+    for m in last_messages_raw:
+        other_id = m.receiver_id if m.sender_id == current_user.id else m.sender_id
+        if other_id not in last_msg_map:
+            last_msg_map[other_id] = m
+
+    user_list = []
+    for u in users:
+        req = request_map.get(u.id)
+        status = req.status if req else "none"
+        is_initiator = req.sender_id == current_user.id if req else False
+        is_online = u.id in user_to_sid or (u.last_seen > five_mins_ago if u.last_seen else False)
+        
+        last_msg = last_msg_map.get(u.id)
         
         user_list.append({
             "id": u.id, 

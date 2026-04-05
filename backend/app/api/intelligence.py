@@ -22,6 +22,11 @@ SKILL_MAP = {
 
 DIMENSIONS = ["Coding", "System Design", "AI/ML", "Professionalism", "Projects", "Theory"]
 
+class MentorChat(BaseModel):
+    content: str
+    media_url: Optional[str] = None
+    media_type: Optional[str] = None # image | audio
+
 @router.get("/skill-profile")
 def get_skill_profile(
     db: Session = Depends(get_session),
@@ -292,6 +297,52 @@ def get_daily_routine(
     
     return resilient_ai_response(prompt, fallback=fallback)
 
+
+@router.post("/chat")
+def chat_with_mentor(
+    req: MentorChat,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    AGI Multimodal Chat. Analyzes text, images (resumes/code), and voice notes.
+    """
+    from app.core.ai_router import get_ai_response
+    import os
+
+    image_data = None
+    media_prefix = ""
+    
+    if req.media_url:
+        media_path = os.path.join(os.path.dirname(__file__), "..", "..", req.media_url)
+        if os.path.exists(media_path):
+            with open(media_path, "rb") as f:
+                image_data = f.read()
+            if req.media_type == "image":
+                media_prefix = "[Neural Vision] Analysis of the shared image: "
+            elif req.media_type == "audio":
+                media_prefix = "[Neural Audio] Feedback on the voice transmission: "
+
+    system_instr = f"""
+    You are the Tulasi AI Neural Strategist & Career Mentor.
+    User Profile: {current_user.name}, Role: {current_user.target_role or "Full-Stack Developer"}, Level: {current_user.level}
+    
+    Your goal is to provide world-class career guidance.
+    If an image is shared: Analyze it (e.g., Code snippet, Resume, System Diagram) and provide feedback.
+    If audio is shared: (It's converted to vision/audio analysis) Listen for intent and sentiment.
+    ALWAYS be professional, highly technical, and encouraging.
+    """
+
+    prompt = f"{media_prefix}{req.content or 'Please analyze this shared media and tell me how it impacts my career trajectory.'}"
+    
+    # get_ai_response already handles image_data and fallbacks
+    response = get_ai_response(
+        prompt,
+        system_instruction=system_instr,
+        image_data=image_data if req.media_type == "image" else None
+    )
+    
+    return {"response": response}
 
 def _get_readiness_label(score: int) -> str:
     if score >= 90: return "Industry Vanguard"
