@@ -3,6 +3,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.o
 
 const nextConfig = {
   reactStrictMode: true,
+  output: "standalone",
   typescript: {
     ignoreBuildErrors: false,
   },

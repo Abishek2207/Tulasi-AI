@@ -2,7 +2,8 @@ import socketio
 import os
 from app.api.deps import get_user_from_token
 from app.core.database import engine
-from sqlmodel import Session
+from sqlmodel import Session, select
+from datetime import datetime, timezone
 
 sio = socketio.AsyncServer(
     async_mode='asgi',
@@ -48,6 +49,17 @@ async def connect(sid, environ, auth=None):
         # Join global community room
         await sio.enter_room(sid, 'community')
         
+        # Update last_seen and broadcast status
+        user.last_seen = datetime.now(timezone.utc)
+        db.add(user)
+        db.commit()
+        
+        await sio.emit('user_status_change', {
+            'user_id': user.id,
+            'is_online': True,
+            'last_seen': user.last_seen.isoformat()
+        }, room='community', skip_sid=sid)
+        
     finally:
         db.close()
 
@@ -58,6 +70,26 @@ async def disconnect(sid):
     if user_id and user_to_sid.get(user_id) == sid:
         del user_to_sid[user_id]
         print(f"❌ User {user_id} disconnected (sid: {sid})")
+        
+        # Broadcast offline status
+        now = datetime.now(timezone.utc)
+        await sio.emit('user_status_change', {
+            'user_id': user_id,
+            'is_online': False,
+            'last_seen': now.isoformat()
+        }, room='community')
+        
+        # Update last_seen in DB
+        db = Session(engine)
+        try:
+            from app.models.models import User as DBUser
+            user = db.get(DBUser, user_id)
+            if user:
+                user.last_seen = now
+                db.add(user)
+                db.commit()
+        finally:
+            db.close()
 
 @sio.event
 async def join_group(sid, data):
@@ -74,21 +106,26 @@ async def leave_group(sid, data):
         room_name = f"group_{group_id}"
         await sio.leave_room(sid, room_name)
 
-@sio.event
-async def typing(sid, data):
-    group_id = data.get('group_id')
+    receiver_id = data.get('receiver_id')
     is_typing = data.get('is_typing')
     session = await sio.get_session(sid)
     user_id = session.get('user_id')
     
-    if group_id and user_id:
-        # Get user info from DB or use a cached name (better to use session)
-        # For speed, we emit back the user_id and is_typing
-        await sio.emit('user_typing', {
-            'user_id': user_id,
-            'is_typing': is_typing,
-            'group_id': group_id
-        }, room=f"group_{group_id}", skip_sid=sid)
+    if user_id:
+        if group_id:
+            await sio.emit('user_typing', {
+                'user_id': user_id,
+                'is_typing': is_typing,
+                'group_id': group_id
+            }, room=f"group_{group_id}", skip_sid=sid)
+        elif receiver_id:
+            target_sid = user_to_sid.get(receiver_id)
+            if target_sid:
+                await sio.emit('user_typing', {
+                    'user_id': user_id,
+                    'is_typing': is_typing,
+                    'receiver_id': receiver_id
+                }, to=target_sid)
 
 # Helper to send direct message
 async def push_direct_message(receiver_id, message_data):

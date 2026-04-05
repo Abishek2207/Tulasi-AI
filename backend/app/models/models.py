@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Column, String
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class User(SQLModel, table=True):
@@ -113,7 +113,13 @@ class DirectMessage(SQLModel, table=True):
     sender_id: int = Field(foreign_key="user.id", index=True)
     receiver_id: int = Field(foreign_key="user.id", index=True)
     content: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    media_type: Optional[str] = Field(default=None) # image | audio | video
+    media_url: Optional[str] = Field(default=None)
+    reactions_json: str = Field(default="[]") # JSON string: [{user_id, emoji}]
+    reply_to_id: Optional[int] = Field(default=None, foreign_key="directmessage.id")
+    is_seen: bool = Field(default=False)
+    seen_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ChatRequest(SQLModel, table=True):
@@ -121,7 +127,7 @@ class ChatRequest(SQLModel, table=True):
     sender_id: int = Field(foreign_key="user.id", index=True)
     receiver_id: int = Field(foreign_key="user.id", index=True)
     status: str = "pending" # pending | accepted | rejected | blocked
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -350,7 +356,7 @@ class Internship(SQLModel, table=True):
     apply_link: str = ""
     deadline: Optional[str] = None
     is_active: bool = True
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ── Feature #6: Prep Plan ─────────────────────────────────────────────────────
@@ -361,14 +367,14 @@ class PrepPlan(SQLModel, table=True):
     duration: str                # 1-month | 3-month | 6-month
     plan_json: str = "[]"        # Serialised JSON of the week-by-week plan
     is_active: bool = True
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Announcement(SQLModel, table=True):
     id: Optional[str] = Field(default=None, primary_key=True)  # Using string ID (UUID or slug)
     message: str
     type: str = "info"  # info, warning, success, pink
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
     created_by: str = "admin"
     is_active: bool = True
@@ -380,7 +386,7 @@ class InviteCode(SQLModel, table=True):
     usage_count: int = 0
     usage_limit: int = 100
     grants_pro: bool = False
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
 
 
@@ -396,7 +402,7 @@ class DailyChallenge(SQLModel, table=True):
     tags: str = ""                                      # comma-separated e.g. "DSA,Arrays"
     hint: Optional[str] = None
     sample_answer: Optional[str] = None                 # Hidden until submission
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class DailyChallengeSubmission(SQLModel, table=True):
@@ -411,4 +417,4 @@ class DailyChallengeSubmission(SQLModel, table=True):
     improvements: str = "[]"                            # JSON list
     xp_awarded: int = 0
     completed: bool = False
-    submitted_at: datetime = Field(default_factory=datetime.utcnow)
+    submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
