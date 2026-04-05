@@ -14,7 +14,7 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 import { 
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
-  FileText, Award, BarChart3, MessageCircle, 
+  FileText, Award, BarChart3, MessageCircle, Briefcase,
   Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass, TrendingUp, Navigation, Flame
 } from "lucide-react";
 
@@ -49,6 +49,7 @@ const NAV_SECTIONS = [
     items: [
       { icon: Navigation,      name: "Career GPS",      href: "/dashboard/career-gps",     badge: "NEW" },
       { icon: TrendingUp,      name: "Salary Intel",    href: "/dashboard/salary-intel",   badge: "NEW" },
+      { icon: Briefcase,       name: "Internships",     href: "/dashboard/internships",    badge: "INDIA" },
       { icon: Lightbulb,       name: "Project Ideas",   href: "/dashboard/projects" },
       { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
       { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
