@@ -40,7 +40,15 @@ export function NeuralStrategist({ token }: { token: string }) {
     );
   }
 
-  if (!plan) return null;
+  if (!plan) return (
+    <div style={{ padding: "32px", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "var(--text-muted)" }}>
+      <div style={{ fontSize: 36 }}>🧠</div>
+      <div style={{ fontSize: 14, fontWeight: 700, textAlign: "center" }}>Neural Strategist</div>
+      <div style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: 220 }}>
+        Strategic plan will appear after your first AI chat session. Start chatting to unlock personalized insights.
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ padding: "32px", height: "100%", display: "flex", flexDirection: "column", background: "linear-gradient(180deg, rgba(139,92,246,0.05), transparent)" }}>
@@ -67,7 +75,7 @@ export function NeuralStrategist({ token }: { token: string }) {
 
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", gap: 12, marginBottom: 20, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
-          {plan.six_month_roadmap.map((m, i) => (
+          {plan.six_month_roadmap?.map((m, i) => (
             <button
               key={i}
               onClick={() => setActiveMonth(i)}
@@ -93,10 +101,10 @@ export function NeuralStrategist({ token }: { token: string }) {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <Target size={18} color="var(--brand-primary)" />
-              <div style={{ fontSize: 15, fontWeight: 800, color: "white" }}>{plan.six_month_roadmap[activeMonth].focus}</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "white" }}>{plan.six_month_roadmap?.[activeMonth]?.focus}</div>
             </div>
             <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
-              {plan.six_month_roadmap[activeMonth].milestone}
+              {plan.six_month_roadmap?.[activeMonth]?.milestone}
             </p>
           </motion.div>
         </AnimatePresence>
