@@ -56,6 +56,8 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [chatRequestStatus, setChatRequestStatus] = useState<"none" | "pending" | "accepted" | "rejected" | "blocked">("none");
+  const [isInitiator, setIsInitiator] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // ─── WebRTC / Call state ───────────────────────────────────────────────────
@@ -294,6 +296,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (activeUser && activeTab === "dm" && !activeUser.is_mentor) {
       fetchMessages(activeUser.id);
+      fetchChatStatus(activeUser.id);
     } else if (activeUser?.is_mentor && messages.length === 0) {
       setMessages([{
         id: Date.now(),
@@ -301,6 +304,9 @@ export default function MessagesPage() {
         content: "Initialization complete. I am Tulasi's Neural Strategist. Ask me anything about your career trajectory, interview preparation, or technical roadmaps.",
         created_at: new Date().toISOString()
       }]);
+      setChatRequestStatus("accepted");
+    } else {
+      setChatRequestStatus("none");
     }
   }, [activeUser, activeTab]);
 
@@ -362,6 +368,35 @@ export default function MessagesPage() {
     } catch (err) { console.error("Message fetch failed:", err); }
   };
 
+  const fetchChatStatus = async (userId: number) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+    try {
+      const res = await fetch(`${API_URL}/api/messages/requests/status/${userId}`, {
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setChatRequestStatus(data.status);
+        setIsInitiator(data.is_initiator);
+      }
+    } catch (err) { console.error("Status fetch failed:", err); }
+  };
+
+  const handleChatRequest = async (action: "accept" | "reject" | "block") => {
+    if (!activeUser) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+    try {
+      const res = await fetch(`${API_URL}/api/messages/requests/handle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ sender_id: activeUser.id, action })
+      });
+      if (res.ok) {
+        setChatRequestStatus(action === "accept" ? "accepted" : (action === "reject" ? "rejected" : "blocked"));
+      }
+    } catch (err) { console.error("Request handling failed:", err); }
+  };
+
   const fetchGroupMessages = async (groupId: number) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     try {
@@ -399,7 +434,11 @@ export default function MessagesPage() {
           method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ receiver_id: activeUser.id, content: `${iv}:${ciphertext}` })
         });
-        if (res.ok) { const data = await res.json(); setMessages(prev => [...prev, { ...data.message, content: plaintext }]); }
+        if (res.ok) { 
+          const data = await res.json(); 
+          setMessages(prev => [...prev, { ...data.message, content: plaintext }]);
+          if (data.request_status) setChatRequestStatus(data.request_status);
+        }
       } catch (err) { console.error("DM failed:", err); }
     } else if (activeTab === "community" && activeGroup) {
       try {
@@ -752,8 +791,69 @@ export default function MessagesPage() {
               </div>
             </div>
 
+            {/* Chat Request Overlay */}
+            <AnimatePresence>
+              {chatRequestStatus === "pending" && !isInitiator && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  style={{
+                    position: "absolute", bottom: 100, left: 32, right: 32,
+                    background: "rgba(15, 15, 25, 0.8)", backdropFilter: "blur(20px)",
+                    borderRadius: 24, padding: "24px 32px", border: "1px solid rgba(255,255,255,0.1)",
+                    zIndex: 10, boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 16
+                  }}
+                >
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: "white", marginBottom: 4 }}>Chat Request from {activeUser?.name}</div>
+                    <div style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 500 }}>
+                      This is the first time this user is messaging you. Do you want to accept?
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleChatRequest("reject")}
+                      style={{ padding: "10px 24px", borderRadius: 12, background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#EF4444", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
+                      Reject
+                    </motion.button>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleChatRequest("block")}
+                      style={{ padding: "10px 24px", borderRadius: 12, background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", color: "white", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
+                      Block
+                    </motion.button>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleChatRequest("accept")}
+                      style={{ padding: "10px 28px", borderRadius: 12, background: "white", border: "none", color: "black", fontWeight: 900, fontSize: 13, cursor: "pointer" }}>
+                      Accept
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+              {chatRequestStatus === "pending" && isInitiator && (
+                 <div style={{ position: "absolute", bottom: 100, left: 32, right: 32, textAlign: "center", pointerEvents: "none" }}>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)", background: "rgba(0,0,0,0.4)", padding: "6px 16px", borderRadius: 20 }}>
+                      Waiting for {activeUser?.name} to accept your chat request...
+                    </span>
+                 </div>
+              )}
+              {chatRequestStatus === "rejected" && (
+                 <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20 }}>
+                    <div style={{ textAlign: "center", padding: 32 }}>
+                       <X size={48} color="#EF4444" style={{ marginBottom: 16 }} />
+                       <div style={{ fontSize: 18, fontWeight: 900 }}>Conversation Rejected</div>
+                       <div style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 8 }}>You have turned down this chat request.</div>
+                       <button onClick={() => handleChatRequest("accept")} style={{ marginTop: 24, padding: "10px 20px", borderRadius: 12, background: "white", color: "black", fontWeight: 800, border: "none", cursor: "pointer" }}>Change Mind & Accept</button>
+                    </div>
+                 </div>
+              )}
+            </AnimatePresence>
+
+            {/* Input Overlay for Blocks/Pending */}
+            {chatRequestStatus !== "accepted" && !isInitiator && (
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 5, pointerEvents: "none" }} />
+            )}
+
             {/* Input */}
-            <div style={{ padding: "24px 32px", borderTop: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.01)" }}>
+            <div style={{ padding: "24px 32px", borderTop: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.01)", opacity: (chatRequestStatus === "accepted" || isInitiator) ? 1 : 0.5, pointerEvents: (chatRequestStatus === "accepted" || isInitiator) ? "auto" : "none" }}>
               <form onSubmit={sendMessage} style={{ display: "flex", alignItems: "center", gap: 16, background: "rgba(255,255,255,0.04)", padding: "8px 12px 8px 20px", borderRadius: 24, border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div style={{ display: "flex", gap: 14, color: "var(--text-muted)" }}>
                   <Plus size={20} style={{ cursor: "pointer" }} />

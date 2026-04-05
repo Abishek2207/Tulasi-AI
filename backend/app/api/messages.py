@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import json
 import asyncio
 
-from app.models.models import User, DirectMessage
+from app.models.models import User, DirectMessage, ChatRequest
 from app.api.deps import get_current_user, get_user_from_token
 from app.api.activity import log_activity_internal
 from app.core.database import get_session
@@ -33,8 +33,32 @@ class MessageSend(BaseModel):
     receiver_id: int
     content: str
 
+class RequestHandle(BaseModel):
+    sender_id: int
+    action: str # accept | reject | block
+
 @router.post("")
 async def send_message(req: MessageSend, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+    # ── 🚨 Blocked Check ──────────────────────────────────────────
+    block_check = db.exec(select(ChatRequest).where(
+        and_(ChatRequest.sender_id == current_user.id, ChatRequest.receiver_id == req.receiver_id, ChatRequest.status == "blocked")
+    )).first()
+    if block_check: raise HTTPException(403, "You are blocked by this user")
+    
+    # Check if a chat request exists
+    request = db.exec(select(ChatRequest).where(
+        or_(
+            and_(ChatRequest.sender_id == current_user.id, ChatRequest.receiver_id == req.receiver_id),
+            and_(ChatRequest.sender_id == req.receiver_id, ChatRequest.receiver_id == current_user.id)
+        )
+    )).first()
+    
+    if not request:
+        # First time message: create a pending request
+        request = ChatRequest(sender_id=current_user.id, receiver_id=req.receiver_id, status="pending")
+        db.add(request)
+        db.commit()
+
     msg = DirectMessage(sender_id=current_user.id, receiver_id=req.receiver_id, content=req.content)
     db.add(msg)
     db.commit()
@@ -58,7 +82,40 @@ async def send_message(req: MessageSend, current_user: User = Depends(get_curren
     
     await push_direct_message(req.receiver_id, {"type": "new_message", "message": msg_dict})
     
-    return {"status": "success", "message": msg}
+    return {"status": "success", "message": msg, "request_status": request.status}
+
+
+@router.get("/requests/status/{other_user_id}")
+def get_request_status(other_user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+    request = db.exec(select(ChatRequest).where(
+        or_(
+            and_(ChatRequest.sender_id == current_user.id, ChatRequest.receiver_id == other_user_id),
+            and_(ChatRequest.sender_id == other_user_id, ChatRequest.receiver_id == current_user.id)
+        )
+    )).first()
+    
+    return {
+        "status": request.status if request else "none",
+        "is_initiator": request.sender_id == current_user.id if request else False
+    }
+
+
+@router.post("/requests/handle")
+def handle_request(req: RequestHandle, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+    request = db.exec(select(ChatRequest).where(
+        and_(ChatRequest.sender_id == req.sender_id, ChatRequest.receiver_id == current_user.id)
+    )).first()
+    
+    if not request:
+        # Create one if missing (e.g. blocking someone before they message)
+        request = ChatRequest(sender_id=req.sender_id, receiver_id=current_user.id)
+        
+    request.status = req.action
+    request.updated_at = datetime.utcnow()
+    db.add(request)
+    db.commit()
+    
+    return {"status": "success", "new_status": req.action}
 
 @router.websocket("/ws/{token}")
 async def websocket_endpoint(websocket: WebSocket, token: str, db: Session = Depends(get_session)):

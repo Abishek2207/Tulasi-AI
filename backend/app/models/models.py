@@ -116,6 +116,15 @@ class DirectMessage(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class ChatRequest(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    sender_id: int = Field(foreign_key="user.id", index=True)
+    receiver_id: int = Field(foreign_key="user.id", index=True)
+    status: str = "pending" # pending | accepted | rejected | blocked
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class ActivityLog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)

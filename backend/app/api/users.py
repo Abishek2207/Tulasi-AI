@@ -12,6 +12,18 @@ except ImportError:
 from fastapi import File, UploadFile
 from fastapi.responses import StreamingResponse
 
+from pydantic import BaseModel
+from typing import Optional
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    skills: Optional[str] = None
+    avatar: Optional[str] = None
+    department: Optional[str] = None
+    target_role: Optional[str] = None
+    interest_areas: Optional[str] = None
+
 router = APIRouter()
 
 
@@ -21,11 +33,43 @@ def get_my_profile(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "email": current_user.email,
         "name": current_user.name,
+        "bio": current_user.bio,
+        "skills": current_user.skills,
+        "avatar": current_user.avatar,
         "role": current_user.role,
-        "is_pro": True,
+        "is_pro": current_user.is_pro,
         "xp": current_user.xp,
         "level": current_user.level,
+        "department": current_user.department,
+        "target_role": current_user.target_role,
+        "interest_areas": current_user.interest_areas,
     }
+
+
+@router.put("/profile")
+def update_profile(
+    data: ProfileUpdate,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    if data.name is not None: current_user.name = data.name
+    if data.bio is not None: current_user.bio = data.bio
+    if data.skills is not None: current_user.skills = data.skills
+    if data.avatar is not None: current_user.avatar = data.avatar
+    if data.department is not None: current_user.department = data.department
+    if data.target_role is not None: current_user.target_role = data.target_role
+    if data.interest_areas is not None: current_user.interest_areas = data.interest_areas
+    
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    return {"status": "success", "user": {
+        "id": current_user.id,
+        "name": current_user.name,
+        "avatar": current_user.avatar,
+        "email": current_user.email
+    }}
 
 
 @router.get("/")
