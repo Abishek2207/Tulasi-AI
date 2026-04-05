@@ -39,11 +39,15 @@ def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admi
     flagged_users = db.exec(select(func.count(User.id)).where(User.abuse_count > 0)).one()
     high_risk_users = db.exec(select(func.count(User.id)).where(User.abuse_count >= 3)).one()
 
-    # DB Sizes
+    # DB sizes
     total_reviews = db.exec(text("SELECT count(*) FROM review")).scalar() or 0
     total_submissions = db.exec(select(func.count(SolvedProblem.id))).one()
     total_chat_messages = db.exec(select(func.count(ChatMessage.id))).one()
     
+    # Internship count (dynamic from static seed in internships.py)
+    from app.api.internships import INTERNSHIP_SEED_DATA
+    total_internships = len(INTERNSHIP_SEED_DATA)
+
     # Intelligence coverage
     # SQLite fallback: since length check on JSON string is hard in strict SQL, we pull users with profile
     intel_coverage = db.exec(text("SELECT count(*) FROM user WHERE user_intelligence_profile IS NOT NULL AND length(user_intelligence_profile) > 10")).scalar() or 0
@@ -58,6 +62,7 @@ def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admi
         "total_reviews": total_reviews,
         "total_submissions": total_submissions,
         "total_chat_messages": total_chat_messages,
+        "total_internships": total_internships,
         "conversion_rate": round((pro_users_count / max(total, 1)) * 100, 1)
     }
 

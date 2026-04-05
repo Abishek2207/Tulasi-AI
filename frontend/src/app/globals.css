@@ -250,6 +250,13 @@ select:focus {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
 .animate-border-glow { animation: borderGlow 2s infinite alternate ease-in-out; }
 .animate-wave {
   animation: wave 1.4s ease-in-out infinite;
@@ -691,6 +698,13 @@ select option {
 @keyframes skeletonShimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+.skeleton-premium {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 2s infinite ease-in-out;
+  border-radius: 12px;
 }
 
 /* Number counter tick */

@@ -16,7 +16,7 @@ import { API_URL, adminApi, Stats, AdminUser, Review, Activity, LeaderboardEntry
   RetentionData, HeatmapData, LiveUsers,
 } from "@/lib/api";
 
-type Tab = "overview" | "metrics" | "users" | "reviews" | "activity" | "leaderboard" | "code" | "chat" | "hackathons" | "revenue" | "health" | "tools";
+type Tab = "overview" | "metrics" | "users" | "reviews" | "activity" | "leaderboard" | "code" | "chat" | "hackathons" | "revenue" | "health" | "tools" | "internships";
 
 const fmt = (d?: string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 const fmtDT = (d?: string | null) => d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -38,8 +38,9 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "code",        label: "Code",           icon: "💻" },
   { id: "chat",        label: "Chat",           icon: "💬" },
   { id: "hackathons",  label: "Hackathons",     icon: "🚀" },
-  { id: "health",      label: "System Health",  icon: "🩺" },
   { id: "tools",       label: "Admin Tools",    icon: "🛠️" },
+  { id: "internships", label: "Internships",    icon: "💼" },
+  { id: "health",      label: "System Health",  icon: "🩺" },
 ];
 
 const rankColor = (r: number) => r === 1 ? "#FFD700" : r === 2 ? "#C0C0C0" : r === 3 ? "#CD7F32" : r <= 10 ? "#8B5CF6" : "var(--text-muted)";
@@ -129,6 +130,7 @@ export default function AdminPage() {
   const [retention, setRetention] = useState<RetentionData | null>(null);
   const [heatmap, setHeatmap] = useState<HeatmapData | null>(null);
   const [liveUsers, setLiveUsers] = useState<LiveUsers | null>(null);
+  const [internships, setInternships] = useState<any[]>([]);
 
   // Founder's Protocol
   const [protocolQuery, setProtocolQuery] = useState("");
@@ -277,7 +279,15 @@ export default function AdminPage() {
     try { const d = await adminApi.getAnnouncements(); setAnnouncements(d.announcements); } catch {}
   }, []);
 
-  useEffect(() => { if (tab === "tools") { loadAnnouncements(); adminApi.inviteCodeStats().then(setInviteStats).catch(() => {}); } }, [tab, loadAnnouncements]);
+  useEffect(() => { 
+    if (tab === "tools") { 
+      loadAnnouncements(); 
+      adminApi.inviteCodeStats().then(setInviteStats).catch(() => {}); 
+    }
+    if (tab === "internships") {
+      fetch(`${API_URL}/api/internships`).then(r => r.json()).then(d => setInternships(d.internships || [])).catch(() => {});
+    }
+  }, [tab, loadAnnouncements]);
 
   const createAnnouncement = async () => {
     if (!annMessage.trim()) return toast.error("Enter a message");
@@ -407,6 +417,7 @@ export default function AdminPage() {
                 <KPI label="Pending Reviews"    value={analytics?.pending_reviews ?? 0}          icon="⏳" color="#F43F5E" />
                 <KPI label="Submissions"        value={stats?.total_submissions ?? 0}            icon="💻" color="#06B6D4" />
                 <KPI label="AI Chats"           value={stats?.total_chat_messages ?? 0}          icon="💬" color="#A78BFA" />
+                <KPI label="Internships"        value={(stats as any)?.total_internships ?? 0}   icon="💼" color="#10B981" />
                 <KPI label="Retention (7D)"     value={`${analytics?.retention_rate ?? 0}%`}     icon="🔄" color="#3B82F6" />
                 <KPI label="Pro Users"          value={stats?.pro_users ?? 0}                    icon="👑" color="#FFD700" />
               </div>
@@ -1117,6 +1128,56 @@ export default function AdminPage() {
                   Loading system health...
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {/* ── INTERNSHIPS ── */}
+          {tab === "internships" && (
+            <motion.div key="internships" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                <div>
+                  <h1 style={{ fontSize: 26, fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 4 }}>Internship Inventory</h1>
+                  <p style={{ color: "var(--text-muted)", fontSize: 13 }}>{internships.length} listings active across India</p>
+                </div>
+              </div>
+
+              <div className="glass-card" style={{ overflow: "hidden", padding: 0 }}>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                        {["Role / Company", "Domain", "Location", "Type", "Mode", "Date Added"].map(h => <th key={h} style={TH}>{h}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {internships.length === 0 ? (
+                        <tr><td colSpan={6} style={{ padding: 48, textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>No internships found.</td></tr>
+                      ) : internships.map((inst, i) => (
+                        <TR key={i} delay={i * 0.01}>
+                          <td style={TD}>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{inst.role}</div>
+                            <div style={{ fontSize: 11, color: "var(--brand-primary)" }}>{inst.company}</div>
+                          </td>
+                          <td style={TD}>
+                             <span className="badge badge-purple" style={{ fontSize: 10 }}>{inst.domain}</span>
+                          </td>
+                          <td style={TD}>
+                            <div style={{ fontSize: 12 }}>{inst.state}</div>
+                            <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{inst.location}</div>
+                          </td>
+                          <td style={TD}>
+                            <span className={`badge ${inst.type === 'Paid' ? 'badge-green' : 'badge-blue'}`}>{inst.type}</span>
+                          </td>
+                          <td style={TD}>
+                             <span className="badge badge-yellow" style={{ fontSize: 10 }}>{inst.mode}</span>
+                          </td>
+                          <td style={{ ...TD, color: "var(--text-muted)", fontSize: 11 }}>{inst.posted_date || "Recent"}</td>
+                        </TR>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </motion.div>
           )}
 
