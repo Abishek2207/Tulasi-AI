@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, Outfit, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
@@ -20,7 +21,7 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tulasiai.vercel.app"),
+  metadataBase: new URL("https://www.tulasiai.in"),
   title: {
     default: "TulasiAI | Personalized Career Intelligence Engine",
     template: "%s | TulasiAI",
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
     description: "The autonomous career engine: Neural skill mapping, AI mock interviews, and personalized missions.",
     type: "website",
     siteName: "TulasiAI",
-    url: "https://tulasiai.vercel.app",
+    url: "https://www.tulasiai.in",
     images: [{
       url: "/opengraph-image.png",
       width: 1200,
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
     apple: "/images/logo.png",
   },
   alternates: {
-    canonical: "https://tulasiai.vercel.app",
+    canonical: "https://www.tulasiai.in",
   },
   category: "technology",
 };
@@ -82,8 +83,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 "alternateName": ["tulasiai", "tulasi ai", "Tulasi AI"],
                 "applicationCategory": "EducationalApplication",
                 "operatingSystem": "All",
-                "url": "https://tulasiai.vercel.app",
-                "image": "https://tulasiai.vercel.app/opengraph-image.png",
+                "url": "https://www.tulasiai.in",
+                "image": "https://www.tulasiai.in/opengraph-image.png",
                 "description": "Personalized AI engineering missions and career intelligence mapped to your skills.",
                 "producer": {
                   "@type": "Person",
@@ -99,8 +100,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "name": "Tulasi AI Labs",
-                "url": "https://tulasiai.vercel.app",
-                "logo": "https://tulasiai.vercel.app/images/logo.png",
+                "url": "https://www.tulasiai.in",
+                "logo": "https://www.tulasiai.in/images/logo.png",
                 "sameAs": [
                   "https://instagram.com/_.abi22._",
                   "https://github.com/Abishek2207"
@@ -110,10 +111,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 "name": "TulasiAI",
-                "url": "https://tulasiai.vercel.app",
+                "url": "https://www.tulasiai.in",
                 "potentialAction": {
                   "@type": "SearchAction",
-                  "target": "https://tulasiai.vercel.app/search?q={search_term_string}",
+                  "target": "https://www.tulasiai.in/search?q={search_term_string}",
                   "query-input": "required name=search_term_string"
                 }
               }
@@ -148,17 +149,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               },
             }}
           />
-          {children}
-          <DebugPanel />
-          <XPNotificationSystem />
-          <OnboardingTour />
-          <CommandPalette />
-          <KeepAlive />
-          <PWAInstallPrompt />
-          <ServiceWorkerRegistrar />
-          <BackendWarmup />
-          <Analytics />
-          <SpeedInsights />
+          <Suspense fallback={null}>
+            {children}
+            <DebugPanel />
+            <XPNotificationSystem />
+            <OnboardingTour />
+            <CommandPalette />
+            <KeepAlive />
+            <PWAInstallPrompt />
+            <ServiceWorkerRegistrar />
+            <BackendWarmup />
+            <Analytics />
+            <SpeedInsights />
+          </Suspense>
         </Providers>
       </body>
     </html>

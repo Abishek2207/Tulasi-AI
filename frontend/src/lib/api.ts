@@ -699,6 +699,49 @@ export const reviewsApi = {
     }),
 };
 
+export const messagesApi = {
+  getDirectory: () => request<{ users: any[] }>("/api/messages/users/directory"),
+  getMessages: (userId: number) => request<{ messages: any[] }>(`/api/messages/${userId}`),
+  markAsSeen: (senderId: number) => request<{ status: string; count: number }>(`/api/messages/seen/${senderId}`, { method: "PATCH" }),
+  getStatus: (userId: number) => request<{ status: string; is_initiator: boolean }>(`/api/messages/requests/status/${userId}`),
+  handleRequest: (sender_id: number, action: string) => request<{ status: string; new_status: string }>("/api/messages/requests/handle", {
+    method: "POST",
+    body: JSON.stringify({ sender_id, action }),
+  }),
+  sendMessage: (receiver_id: number, content: string, media_type?: string, media_url?: string, reply_to_id?: number) => 
+    request<{ status: string; message: any; request_status: string }>("/api/messages", {
+      method: "POST",
+      body: JSON.stringify({ receiver_id, content, media_type, media_url, reply_to_id }),
+    }),
+  deleteMessage: (message_id: number) => request<{ status: string; message_id: number }>(`/api/messages/${message_id}`, {
+    method: "DELETE",
+  }),
+  uploadMedia: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<{ status: string; media_url: string; media_type: string }>("/api/messages/upload", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  toggleReaction: (messageId: number, emoji: string) => 
+    request<{ status: string; reactions: any[] }>(`/api/messages/${messageId}/react?emoji=${encodeURIComponent(emoji)}`, {
+      method: "PATCH",
+    }),
+  
+  // ── Extended dashboard methods ──
+  mentorChat: async (content: string, media_type?: string, media_url?: string) =>
+    request<any>("/api/intelligence/chat", {
+      method: "POST",
+      body: JSON.stringify({ content, media_type, media_url })
+    }),
+  sendGroupMessage: (groupId: number, content: string) =>
+    request<any>(`/api/groups/${groupId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content })
+    }),
+};
+
 export const usersApi = {
   removeBg: async (file: File, token: string) => {
     const formData = new FormData();
