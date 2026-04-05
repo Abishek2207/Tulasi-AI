@@ -101,3 +101,25 @@ async def push_direct_message(receiver_id, message_data):
 # Helper to broadcast group message
 async def broadcast_group_message(group_id, message_data):
     await sio.emit('new_group_message', message_data, room=f"group_{group_id}")
+
+@sio.event
+async def webrtc_signal(sid, data):
+    # Data should contain target_user_id and signaling payload
+    target_user_id = data.get('target_user_id')
+    signal_type = data.get('type') # call_request, call_accept, call_reject, call_end, offer, answer, ice_candidate
+    payload = data.get('payload', {})
+    
+    session = await sio.get_session(sid)
+    caller_id = session.get('user_id')
+    
+    if target_user_id and caller_id:
+        # Resolve target sid
+        target_sid = user_to_sid.get(target_user_id)
+        if target_sid:
+            # Forward the signal to target user
+            await sio.emit('webrtc_signal', {
+                'sender_id': caller_id,
+                'type': signal_type,
+                'payload': payload
+            }, to=target_sid)
+

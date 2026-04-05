@@ -51,6 +51,14 @@ class SocketService {
     this.socket?.emit(event, data);
   }
 
+  sendSignal(targetUserId: number, type: string, payload: object = {}) {
+    this.socket?.emit("webrtc_signal", {
+      target_user_id: targetUserId,
+      type,
+      payload,
+    });
+  }
+
   get isConnected() {
     return this.socket?.connected || false;
   }
