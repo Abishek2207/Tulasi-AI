@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.gzip import GZipMiddleware
 import uvicorn
 import time
 
@@ -138,6 +139,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Performance Optimizations ──────────────────────────────────────
+# Compress large JSON responses (Hackathons, Reviews, Feed)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 # ── Request Logger (helps debugging) ───────────────────────────────

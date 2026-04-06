@@ -199,7 +199,7 @@ export default function AdminPage() {
     try {
       const d = await adminApi.aiProfile(userId);
       setAiModal({ open: true, data: d, loading: false });
-    } catch { setAiModal({ open: false, data: null, loading: false }); toast.error("AI Profile failed"); }
+    } catch (e: any) { setAiModal({ open: false, data: null, loading: false }); toast.error(e.message || "AI Profile failed"); }
   };
 
   const runBulkAction = async (action: string) => {
@@ -210,7 +210,7 @@ export default function AdminPage() {
       toast.success(d.message);
       setSelectedUsers(new Set());
       await load();
-    } catch { toast.error("Bulk action failed"); }
+    } catch (e: any) { toast.error(e.message || "Bulk action failed"); }
     finally { setBulkLoading(false); }
   };
 

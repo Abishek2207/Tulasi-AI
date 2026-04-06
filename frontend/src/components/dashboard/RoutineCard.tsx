@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { intelligenceApi } from "@/lib/api";
 import { Clock, CheckCircle2, Zap, Sparkles, WifiOff } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 // Static fallback tasks — shown when AI is down
 const FALLBACK_TASKS = [
@@ -50,43 +51,21 @@ export function RoutineCard() {
     fetchPlan();
   }, []);
 
-  if (loading) {
+  if (loading && !data) {
     return (
-      <div
-        className="glass-card"
-        style={{
-          padding: 24,
-          height: 440,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          background: "rgba(139,92,246,0.03)",
-        }}
-      >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          style={{
-            width: 32,
-            height: 32,
-            border: "3px solid rgba(139,92,246,0.2)",
-            borderTopColor: "#8B5CF6",
-            borderRadius: "50%",
-            marginBottom: 16,
-          }}
-        />
-        <div
-          style={{
-            fontSize: 13,
-            color: "#A78BFA",
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: 1,
-          }}
-        >
-          Synthesizing Intelligence...
+      <div className="glass-card-premium" style={{ padding: "32px", height: "100%", display: "flex", flexDirection: "column", gap: 20, borderRadius: 32 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          <Skeleton width={44} height={44} borderRadius={14} />
+          <Skeleton width={80} height={20} borderRadius={30} />
         </div>
+        <Skeleton width="60%" height={20} style={{ marginBottom: 4 }} />
+        <Skeleton width="40%" height={12} style={{ marginBottom: 20 }} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} height={64} borderRadius={18} />
+          ))}
+        </div>
+        <Skeleton height={60} borderRadius={16} style={{ marginTop: 20 }} />
       </div>
     );
   }

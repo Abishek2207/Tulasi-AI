@@ -41,19 +41,23 @@ async def follow_user(user_id: int, current_user: User = Depends(get_current_use
     db.refresh(new_follow)
     
     # Emit socket event for follow request
-    from app.core.socket_server import sio, user_to_sid
-    sid = user_to_sid.get(user_id)
-    if sid:
-        if status == "pending":
-            await sio.emit("follow_request", {
-                "follower_id": current_user.id,
-                "follower_username": current_user.username
-            }, to=sid)
-        else:
-            await sio.emit("follow_accepted", {
-                "follower_id": current_user.id,
-                "follower_username": current_user.username
-            }, to=sid)
+    try:
+        from app.core.socket_server import sio, user_to_sid
+        sid = user_to_sid.get(user_id)
+        if sid:
+            if status == "pending":
+                await sio.emit("follow_request", {
+                    "follower_id": current_user.id,
+                    "follower_username": current_user.username
+                }, to=sid)
+            else:
+                await sio.emit("follow_accepted", {
+                    "follower_id": current_user.id,
+                    "follower_username": current_user.username
+                }, to=sid)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Socket emit failed in follow_user: {e}")
             
     return {"status": "success", "follow_status": status}
 
@@ -75,13 +79,17 @@ async def accept_follow(user_id: int, current_user: User = Depends(get_current_u
     db.commit()
     
     # Emit socket event for accept
-    from app.core.socket_server import sio, user_to_sid
-    sid = user_to_sid.get(user_id)
-    if sid:
-        await sio.emit("follow_accepted", {
-            "following_id": current_user.id,
-            "following_username": current_user.username
-        }, to=sid)
+    try:
+        from app.core.socket_server import sio, user_to_sid
+        sid = user_to_sid.get(user_id)
+        if sid:
+            await sio.emit("follow_accepted", {
+                "following_id": current_user.id,
+                "following_username": current_user.username
+            }, to=sid)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Socket emit failed in accept_follow: {e}")
         
     return {"status": "success", "follow_status": "accepted"}
 

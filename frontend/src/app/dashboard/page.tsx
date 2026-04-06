@@ -9,7 +9,8 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import confetti from "canvas-confetti";
-import { activityApi, authApi, API } from "@/lib/api";
+import { activityApi, authApi, API, getCached } from "@/lib/api";
+import { Skeleton, BentoSkeleton } from "@/components/ui/Skeleton";
 import {
   MessageSquare, Code, Target, Map, FileText,
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award,
@@ -147,44 +148,56 @@ export default function DashboardPage() {
     hackathons_joined: localStats.hackathons_joined || 0,
     invite_code: localStats.invite_code || "TULASI25"
   };
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
-  const [feed, setFeed] = useState<any[]>([]);
-  const [dailyPlan, setDailyPlan] = useState<any[]>([]);
+  // ─── Optimistic State Initialization via Cache ─────────────────────
+  const [leaderboard, setLeaderboard] = useState<any[]>(() => getCached<any[]>("leaderboard") || []);
+  const [feed, setFeed] = useState<any[]>(() => getCached<any[]>("public_feed") || []);
+  const [dailyPlan, setDailyPlan] = useState<any[]>(() => getCached<any[]>("next-action") || []);
   const [userType, setUserType] = useState<string>("student");
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
-  const [matchedInternships, setMatchedInternships] = useState<any[]>([]);
+  const [matchedInternships, setMatchedInternships] = useState<any[]>(() => getCached<any[]>("internships/matches") || []);
+  const [isLoading, setIsLoading] = useState(true);
   const isFounder = session?.user?.email?.toLowerCase() === "abishekramamoorthy22@gmail.com";
 
   const loadData = async () => {
-    try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-      const [statsData, lbData, meData, feedData, planData, matchData] = await Promise.all([
-        activityApi.getStats(token).catch(() => null),
-        activityApi.getLeaderboard(token).catch(() => null),
-        authApi.me(token).catch(() => ({})),
-        activityApi.getPublicFeed().catch(() => null),
-        fetch(`${API}/api/next-action`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null),
-        fetch(`${API}/api/internships/matches`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null)
-      ]);
-      if (statsData) {
-        setLocalStats({
-          problems_solved: (statsData as any).problems_solved || 0,
-          videos_watched: (statsData as any).videos_watched || 0,
-          hackathons_joined: (statsData as any).hackathons_joined || 0,
-          invite_code: (meData as any)?.invite_code || "TULASI25"
-        });
-      }
-      if (lbData?.leaderboard) setLeaderboard(lbData.leaderboard.slice(0, 5));
-      if (feedData?.feed) setFeed(feedData.feed);
-      if (planData?.actions) setDailyPlan(planData.actions.slice(0, 3)); 
-      if (matchData?.matches) setMatchedInternships(matchData.matches);
-      
-      const me = meData as any;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+    if (!token) return;
+
+    // 1. Fetch Auth & Stats (Critical for Identity)
+    authApi.me(token).then((me: any) => {
       if (me?.user_type) setUserType(me.user_type);
       if (me?.is_onboarded === false) setNeedsOnboarding(true);
+      if (me?.invite_code) setLocalStats(prev => ({ ...prev, invite_code: me.invite_code }));
+    }).catch(() => null);
 
-      // Removed auto-confetti to reduce main thread load and "fake" flair
-    } catch (e) { /* silent */ }
+    activityApi.getStats(token).then((s: any) => {
+      if (s) setLocalStats(prev => ({
+        ...prev,
+        problems_solved: s.problems_solved || 0,
+        videos_watched: s.videos_watched || 0,
+        hackathons_joined: s.hackathons_joined || 0,
+      }));
+    }).catch(() => null);
+
+    // 2. Fetch Social & Feed (Parallel but Decoupled)
+    activityApi.getLeaderboard(token).then(lb => {
+      if (lb?.leaderboard) setLeaderboard(lb.leaderboard.slice(0, 5));
+    }).catch(() => null);
+
+    activityApi.getPublicFeed().then(f => {
+      if (f?.feed) setFeed(f.feed);
+    }).catch(() => null);
+
+    // 3. AI Insights & Internships (Decoupled)
+    fetch(`${API}/api/next-action`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { if (d?.actions) setDailyPlan(d.actions.slice(0, 3)); })
+      .catch(() => null);
+
+    fetch(`${API}/api/internships/matches`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(m => { if (m?.matches) setMatchedInternships(m.matches); })
+      .catch(() => null)
+      .finally(() => setIsLoading(false));
   };
 
   useEffect(() => { loadData(); }, [session]);

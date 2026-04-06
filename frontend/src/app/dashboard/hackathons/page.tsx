@@ -105,8 +105,8 @@ export default function HackathonsDiscoveryPage() {
         toast.success("Added to bookmarks!");
       }
       setHackathons(prev => prev.map(h => h.id === id ? { ...h, bookmarked: !h.bookmarked } : h));
-    } catch (e) {
-      toast.error("Action failed");
+    } catch (e: any) {
+      toast.error(e.message || "Action failed");
     } finally {
       setBookmarking(prev => { const s = new Set(prev); s.delete(id); return s; });
     }
@@ -118,8 +118,8 @@ export default function HackathonsDiscoveryPage() {
       await hackathonApi.apply(id, token);
       setHackathons(prev => prev.map(h => h.id === id ? { ...h, applied: true, application_status: "Applied" } : h));
       toast.success("Application tracked!");
-    } catch (e) {
-      toast.error("Application tracking failed");
+    } catch (e: any) {
+      toast.error(e.message || "Application tracking failed");
     } finally {
       setApplying(prev => { const s = new Set(prev); s.delete(id); return s; });
     }

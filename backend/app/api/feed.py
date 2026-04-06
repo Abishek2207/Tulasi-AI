@@ -60,13 +60,12 @@ async def create_idea(idea_in: IdeaCreate, db: Session = Depends(get_session), c
         created_at=new_idea.created_at
     )
     
-    # Broadcast to feed room immediately via Socket.io
-    import asyncio
-    asyncio.create_task(sio.emit("new_idea", resp.dict(), room="feed"))
-    
     # Trigger AI Mentor hook
-    from app.api.mentor import trigger_mentor_insight
-    asyncio.create_task(trigger_mentor_insight(current_user.id, "idea", f"Posted idea: {new_idea.content[:50]}..."))
+    try:
+        from app.api.mentor import trigger_mentor_insight
+        asyncio.create_task(trigger_mentor_insight(current_user.id, "idea", f"Posted idea: {new_idea.content[:50]}..."))
+    except Exception as e:
+        logger.error(f"Mentor insight trigger failed: {e}")
     
     return resp
 
@@ -76,6 +75,7 @@ async def get_feed(
     db: Session = Depends(get_session), 
     current_user: User = Depends(get_current_user)
 ):
+    # 1. Build the base query for IDs based on tab
     if tab == "personal" or tab == "network":
         # Get ideas from users I follow (accepted state)
         following_ids_stmt = select(UserFollow.following_id).where(
@@ -83,29 +83,38 @@ async def get_feed(
             UserFollow.status == "accepted"
         )
         following_ids = db.exec(following_ids_stmt).all()
-        
         # Also include my own ideas
         following_ids.append(current_user.id)
         
-        statement = select(Idea).where(Idea.user_id.in_(following_ids)).order_by(Idea.created_at.desc()).limit(50)
+        id_statement = select(Idea.id).where(Idea.user_id.in_(following_ids)).order_by(Idea.created_at.desc()).limit(50)
     else:
-        statement = select(Idea).order_by(Idea.created_at.desc()).limit(50)
-        
-    ideas = db.exec(statement).all()
+        id_statement = select(Idea.id).order_by(Idea.created_at.desc()).limit(50)
     
-    # Get following map for current user to quickly check status
+    target_ids = db.exec(id_statement).all()
+    if not target_ids:
+        return []
+
+    # 2. Join with User to avoid N+1 overhead for the selected IDs
+    ideas_with_users = db.exec(
+        select(Idea, User)
+        .join(User, Idea.user_id == User.id)
+        .where(Idea.id.in_(target_ids))
+        .order_by(Idea.created_at.desc())
+    ).all()
+    
+    # 3. Get following map for current user to quickly check status
     follows = db.exec(select(UserFollow).where(UserFollow.follower_id == current_user.id)).all()
     follow_map = {f.following_id: f.status for f in follows}
     
+    # 4. Get likes for these ideas in one go
+    my_likes = db.exec(
+        select(IdeaLike.idea_id)
+        .where(IdeaLike.idea_id.in_(target_ids), IdeaLike.user_id == current_user.id)
+    ).all()
+    liked_set = set(my_likes)
+
     results = []
-    for idea in ideas:
-        creator = db.get(User, idea.user_id)
-        if not creator: continue
-            
-        liked = db.exec(select(IdeaLike).where(
-            IdeaLike.idea_id == idea.id, IdeaLike.user_id == current_user.id
-        )).first() is not None
-        
+    for idea, creator in ideas_with_users:
         results.append(IdeaResponse(
             id=idea.id,
             user_id=creator.id,
@@ -116,7 +125,7 @@ async def get_feed(
             tags=idea.tags or "",
             likes_count=idea.likes_count or 0,
             comments_count=idea.comments_count or 0,
-            is_liked_by_me=liked,
+            is_liked_by_me=idea.id in liked_set,
             is_following_creator=follow_map.get(creator.id) == "accepted",
             created_at=idea.created_at
         ))
@@ -146,10 +155,13 @@ async def toggle_like(idea_id: int, db: Session = Depends(get_session), current_
     db.commit()
     
     # Broadcast update to feed room
-    import asyncio
-    asyncio.create_task(sio.emit("idea_like_update", {
-        "idea_id": idea_id,
-        "likes_count": idea.likes_count
-    }, room="feed"))
+    try:
+        import asyncio
+        asyncio.create_task(sio.emit("idea_like_update", {
+            "idea_id": idea_id,
+            "likes_count": idea.likes_count
+        }, room="feed"))
+    except Exception as e:
+        logger.error(f"Socket emit failed: {e}")
     
     return {"status": action, "likes_count": idea.likes_count}

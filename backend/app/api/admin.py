@@ -13,6 +13,10 @@ class ProtocolRequest(BaseModel):
     topic: str
     depth: Optional[str] = "Deep"
 
+class BulkActionRequest(BaseModel):
+    user_ids: List[int]
+    action: str
+
 router = APIRouter()
 
 
@@ -94,6 +98,45 @@ def get_login_activity(db: Session = Depends(get_session), admin: User = Depends
 # ─────────────────────────────────────────────────────────────────────
 # USERS (Full list)
 # ─────────────────────────────────────────────────────────────────────
+
+@router.post("/users/bulk-action")
+def bulk_action(data: BulkActionRequest, db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
+    """Apply an action to multiple users at once (Admin Only)."""
+    if not data.user_ids:
+        raise HTTPException(status_code=400, detail="No users selected")
+    
+    users = db.exec(select(User).where(User.id.in_(data.user_ids))).all()
+    affected = 0
+    skipped = 0
+    
+    for u in users:
+        # Don't allow an admin to disable themselves via bulk
+        if u.id == admin.id and data.action == "disable":
+            skipped += 1
+            continue
+            
+        if data.action == "grant_pro":
+            u.is_pro = True
+        elif data.action == "revoke_pro":
+            u.is_pro = False
+        elif data.action == "enable":
+            u.is_active = True
+        elif data.action == "disable":
+            u.is_active = False
+        else:
+            skipped += 1
+            continue
+            
+        db.add(u)
+        affected += 1
+        
+    db.commit()
+    return {
+        "message": f"Successfully applied {data.action} to {affected} users ({skipped} skipped).",
+        "affected": affected,
+        "skipped": skipped
+    }
+
 
 @router.get("/users")
 def get_all_users(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):

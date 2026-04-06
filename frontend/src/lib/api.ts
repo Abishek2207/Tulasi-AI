@@ -161,7 +161,34 @@ export function websocketUrl(path: string): string {
   return `${protocol}//${host}${path}`;
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ── Simple In-Memory / LocalStorage Cache ───────────────────────────
+const API_CACHE: Record<string, { data: any; expiry: number }> = {};
+const CACHE_TTL = 300_000; // 5 minutes
+
+export function getCached<T>(key: string): T | null {
+  const item = API_CACHE[key];
+  if (item && Date.now() < item.expiry) return item.data as T;
+  
+  // Try localStorage for cross-session speed
+  if (isBrowser) {
+    const stored = localStorage.getItem(`tulasi_cache_${key}`);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Date.now() < parsed.expiry) return parsed.data as T;
+      } catch (e) {}
+    }
+  }
+  return null;
+}
+
+export function setCached(key: string, data: any, ttl = CACHE_TTL) {
+  const expiry = Date.now() + ttl;
+  API_CACHE[key] = { data, expiry };
+  if (isBrowser && typeof data === "object") {
+    localStorage.setItem(`tulasi_cache_${key}`, JSON.stringify({ data, expiry }));
+  }
+}
 
 const FETCH_TIMEOUT_MS = 60_000; // 60s timeout for AI endpoints
 
@@ -252,15 +279,28 @@ async function request<T>(
     const data = await res.json();
     
     // XP toast — cinematographic
-    if (data && typeof data === "object" && typeof data.xp_earned === "number" && data.xp_earned > 0) {
+    if (data && typeof data === "object" && (data as any).xp_earned > 0) {
       import("@/components/XPNotification").then(mod => {
-        mod.showXPGain(data.xp_earned, data.xp_reason || "Learning Milestone");
+        mod.showXPGain((data as any).xp_earned, (data as any).xp_reason || "Learning Milestone");
       });
+    }
+
+    // Cache GET requests
+    if (options.method === "GET" || !options.method) {
+      setCached(path, data);
     }
     
     return data;
   } catch (err: unknown) {
     const error = err as Error;
+    
+    // Check if we have a stale cache version to show as fallback
+    const stale = getCached<T>(path);
+    if (stale && (options.method === "GET" || !options.method)) {
+      console.warn(`[API] Network failed, using stale cache for ${path}`);
+      return stale;
+    }
+
     const msg = error.message || "Network Error";
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED") || msg.includes("ECONNREFUSED")) {
       const isLocal = API_URL.includes("localhost") || API_URL.includes("127.0.0.1");
