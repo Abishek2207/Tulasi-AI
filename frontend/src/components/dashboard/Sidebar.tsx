@@ -60,6 +60,7 @@ const NAV_SECTIONS = [
     label: "Community",
     items: [
       { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
+      { icon: Lightbulb,       name: "Idea Feed",       href: "/dashboard/feed",           badge: "LIVE" },
       { icon: Mail,            name: "Messages",        href: "/dashboard/messages" },
       { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
     ]

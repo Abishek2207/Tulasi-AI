@@ -46,8 +46,9 @@ async def connect(sid, environ, auth=None):
         await sio.save_session(sid, {'user_id': user.id})
         print(f"✅ User {user.id} ({user.email}) connected via Socket.io (sid: {sid})")
         
-        # Join global community room
+        # Join global community and feed rooms
         await sio.enter_room(sid, 'community')
+        await sio.enter_room(sid, 'feed')
         
         # Update last_seen and broadcast status
         user.last_seen = datetime.now(timezone.utc)
