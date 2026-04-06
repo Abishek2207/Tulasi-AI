@@ -28,7 +28,7 @@ If you want to use your Local Backend (`http://127.0.0.1:10000`), simply add thi
 ```env
 NEXT_PUBLIC_LOCAL_BACKEND="http://127.0.0.1:10000"
 ```
-To reconnect back to the live Production Cloud API (`https://tulasi-ai-wgwl.onrender.com`), simply delete that line.
+To reconnect back to the live Production Cloud API (`https://tulasi-ai-hycl.onrender.com`), simply delete that line.
 
 ## 🛠 Manual Setup Instructions
 

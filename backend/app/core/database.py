@@ -77,6 +77,10 @@ def init_db():
         print("⚠️  Skipping DB init: No engine available.")
         return
 
+    import time
+    from sqlalchemy import text
+    from sqlalchemy.exc import OperationalError, SQLAlchemyError
+
     # IMPORT ALL MODELS here so metadata knows about them for create_all
     from app.models.models import (
         User, Hackathon, StudyRoom, Review, UserFeedback, UserMemoryChunk, 
@@ -89,16 +93,40 @@ def init_db():
         DailyChallengeSubmission, MentorInsight
     )
     
-    try:
-        # 1. Create tables if they don't exist
-        SQLModel.metadata.create_all(engine)
-        
-        # 2. Sync existing tables with new columns (Safe Migration Layer)
-        sync_user_schema(engine)
-        
-    except Exception as e:
-        print(f"⚠️  Database Init/Sync Warning: {e}")
-        return
+    max_retries = 3
+    retry_delay = 15
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            print(f"🔄 Database Init: Attempt {attempt}/{max_retries}...")
+            
+            # 1. Confirm connectivity
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            print("✅ Database connection established.")
+
+            # 2. Create tables if they don't exist (Validates users, sessions, etc.)
+            SQLModel.metadata.create_all(engine)
+            print("✅ Required tables validated/created.")
+            
+            # 3. Sync existing tables with new columns (Safe Migration Layer)
+            sync_user_schema(engine)
+            
+            # Success, exit the retry loop
+            print("🚀 Database is fully ready for incoming requests.")
+            break
+            
+        except (OperationalError, SQLAlchemyError) as e:
+            print(f"⚠️  Database connection/creation failed: {e}")
+            if attempt < max_retries:
+                print(f"⏳ Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("❌ Final Database Init Failure - Backend may reject logins.")
+                return
+        except Exception as e:
+            print(f"⚠️  Unexpected Database Init Warning: {e}")
+            break
 
 def get_session():
     if engine is None:

@@ -20,8 +20,8 @@ In Settings -> Environment Variables, ensure these are set:
 
 | Key | Value | Required |
 |-----|-------|----------|
-| `NEXT_PUBLIC_API_URL` | `https://tulasi-ai-wgwl.onrender.com` | Yes |
-| `NEXT_PUBLIC_BACKEND_URL` | `https://tulasi-ai-wgwl.onrender.com` | Yes |
+| `NEXT_PUBLIC_API_URL` | `https://tulasi-ai-hycl.onrender.com` | Yes |
+| `NEXT_PUBLIC_BACKEND_URL` | `https://tulasi-ai-hycl.onrender.com` | Yes |
 | `NEXTAUTH_URL` | `https://tulasiai.vercel.app` | Yes |
 | `NEXTAUTH_SECRET` | *(Any long random string)* | Yes |
 | `GOOGLE_CLIENT_ID` | `6607689850...` | Optional (For Google Auth) |

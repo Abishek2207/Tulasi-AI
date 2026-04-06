@@ -22,7 +22,9 @@ ALLOW_ORIGINS = [
     "http://127.0.0.1:3001",
     "https://tulasiai.vercel.app",
     "https://tulasi-ai.vercel.app",
-    "https://tulasi-ai-wgwl.onrender.com",
+    "https://tulasi-ai-hycl.onrender.com",
+    "https://tulasiai.in",
+    "https://www.tulasiai.in",
 ]
 
 # ── Track startup time ─────────────────────────────────────────────
