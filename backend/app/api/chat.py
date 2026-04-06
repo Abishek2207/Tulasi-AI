@@ -194,7 +194,9 @@ def chat(
     response_text = ""
     try:
         from app.services.ai_agents.reasoning import reasoning_engine
-        reasoning_res = reasoning_engine.process_query(req.message, user, history, db)
+        reasoning_res = reasoning_engine.process_query(
+            req.message, user, history, db, system_instruction=system_instruction
+        )
         response_text = reasoning_res.get("response", "")
     except Exception as e:
         print(f"❌ Chat Error: {e}")
@@ -319,7 +321,7 @@ def chat_stream(
         try:
             from app.services.ai_agents.reasoning import reasoning_engine
             stream_gen = reasoning_engine.process_query(
-                req.message, user, history, db, stream=True
+                req.message, user, history, db, stream=True, system_instruction=system_instruction
             )
 
             for token in stream_gen:
