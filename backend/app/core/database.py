@@ -46,8 +46,16 @@ def sync_user_schema(engine):
         ("chats_today", "INTEGER DEFAULT 0"),
         ("last_reset_date", "VARCHAR"),
         ("pro_expiry_date", "VARCHAR"),
-        ("username", "VARCHAR UNIQUE"), # Identity System
-        ("invite_code", "VARCHAR"),     # Referral System
+        ("username", "VARCHAR UNIQUE"), 
+        ("invite_code", "VARCHAR"),
+        ("provider", "VARCHAR DEFAULT 'email'"),
+        ("referred_by", "VARCHAR"),
+        ("streak", "INTEGER DEFAULT 0"),
+        ("longest_streak", "INTEGER DEFAULT 0"),
+        ("xp", "INTEGER DEFAULT 0"),
+        ("level", "INTEGER DEFAULT 1"),
+        ("last_activity_date", "VARCHAR"),
+        ("last_seen", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
     
     try:
@@ -56,10 +64,8 @@ def sync_user_schema(engine):
                 if col_name not in existing_columns:
                     print(f"  - Syncing User Schema: Adding column '{col_name}'...")
                     if "sqlite" in str(engine.url):
-                        # SQLite doesn't support IF NOT EXISTS in ALTER TABLE
-                        query = f'ALTER TABLE "user" ADD COLUMN {col_name} {col_def};'
+                        query = f'ALTER TABLE "user" ADD COLUMN {col_name} {col_def.replace("IF NOT EXISTS ", "")};'
                     else:
-                        # PostgreSQL (Render) supports it
                         query = f'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS {col_name} {col_def};'
                     conn.execute(text(query))
             print("✅ User schema synchronized (Auto-Migration)")
@@ -71,7 +77,15 @@ def init_db():
         print("⚠️  Skipping DB init: No engine available.")
         return
 
-    from app.models.models import Hackathon, StudyRoom, Review, UserFeedback, UserMemoryChunk, GroupMessage, SavedResume, HackathonBookmark, HackathonApplication
+    # IMPORT ALL MODELS here so metadata knows about them for create_all
+    from app.models.models import (
+        User, Hackathon, StudyRoom, Review, UserFeedback, UserMemoryChunk, 
+        GroupMessage, SavedResume, HackathonBookmark, HackathonApplication,
+        DirectMessage, ChatRequest, UserFollow, Idea, IdeaLike, 
+        ActivityLog, UserProgress, SolvedProblem, Roadmap, RoadmapStep, 
+        UserBadge, Reward, StudyRoomMessage, SavedStartupIdea, Group, GroupMember
+    )
+    
     try:
         # 1. Create tables if they don't exist
         SQLModel.metadata.create_all(engine)
@@ -80,7 +94,6 @@ def init_db():
         sync_user_schema(engine)
         
     except Exception as e:
-        # If it's a known error like already existing column, we skip
         print(f"⚠️  Database Init/Sync Warning: {e}")
         return
 
