@@ -45,7 +45,9 @@ def sync_user_schema(engine):
         ("stripe_subscription_id", "VARCHAR"),
         ("chats_today", "INTEGER DEFAULT 0"),
         ("last_reset_date", "VARCHAR"),
-        ("pro_expiry_date", "VARCHAR")
+        ("pro_expiry_date", "VARCHAR"),
+        ("username", "VARCHAR UNIQUE"), # Identity System
+        ("invite_code", "VARCHAR"),     # Referral System
     ]
     
     try:
