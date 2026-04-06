@@ -56,6 +56,7 @@ def sync_user_schema(engine):
         ("level", "INTEGER DEFAULT 1"),
         ("last_activity_date", "VARCHAR"),
         ("last_seen", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("is_private", "BOOLEAN DEFAULT FALSE"),
     ]
     
     try:
