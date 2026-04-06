@@ -136,6 +136,24 @@ def handle_request(req: RequestHandle, current_user: User = Depends(get_current_
     request.status = req.action
     request.updated_at = datetime.now(timezone.utc)
     db.add(request)
+    
+    # Mirror behavior for UserFollow
+    if req.action == "accepted":
+        from app.models.models import UserFollow
+        from sqlalchemy import or_, and_
+        existing_follow = db.exec(select(UserFollow).where(
+            or_(
+                and_(UserFollow.follower_id == req.sender_id, UserFollow.following_id == current_user.id),
+                and_(UserFollow.follower_id == current_user.id, UserFollow.following_id == req.sender_id)
+            )
+        )).first()
+        if existing_follow:
+            existing_follow.status = "accepted"
+            db.add(existing_follow)
+        else:
+            new_f1 = UserFollow(follower_id=req.sender_id, following_id=current_user.id, status="accepted")
+            db.add(new_f1)
+            
     db.commit()
     
     return {"status": "success", "new_status": req.action}

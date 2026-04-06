@@ -418,3 +418,47 @@ class DailyChallengeSubmission(SQLModel, table=True):
     xp_awarded: int = 0
     completed: bool = False
     submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+# ── Feature: Social Logic & Feed ──────────────────────────────────────────────
+class UserFollow(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    follower_id: int = Field(foreign_key="user.id", index=True)
+    following_id: int = Field(foreign_key="user.id", index=True)
+    status: str = "pending" # pending | accepted
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class Idea(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    content: str
+    tags: str = "" # comma-separated
+    likes_count: int = 0
+    comments_count: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class IdeaLike(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    idea_id: int = Field(foreign_key="idea.id", index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class IdeaComment(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    idea_id: int = Field(foreign_key="idea.id", index=True)
+    content: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+# ── Feature: AI Mentor Insights ────────────────────────────────────────────────
+class MentorInsight(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    context_type: str = "general" # e.g. "idea_post", "follow", "chat"
+    insight_text: str
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

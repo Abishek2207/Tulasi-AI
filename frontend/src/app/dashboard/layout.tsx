@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BackgroundBeams } from "@/components/ui/BackgroundBeams";
 import { DebugPanel } from "@/components/DebugPanel";
 import { XPNotificationSystem } from "@/components/XPNotification";
+import { AIManagerInsightOverlay } from "@/components/AIManagerInsightOverlay";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { OnboardingModal } from "@/components/OnboardingModal";
@@ -179,6 +180,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <XPNotificationSystem />
       <OnboardingModal />
       <DebugPanel />
+      <AIManagerInsightOverlay />
     </div>
   );
 }
