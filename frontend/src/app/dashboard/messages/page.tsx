@@ -500,14 +500,23 @@ export default function MessagesPage() {
   };
   const handleSearch = async (val: string) => {
     setSearchTerm(val);
-    if (val.length < 2) { setSearchResults([]); return; }
+    if (val.trim().length > 0 && val.trim().length < 2) { 
+        setSearchResults([]); 
+        return; 
+    }
     setIsSearching(true);
     try {
-      const res = await messagesApi.searchUsers(val);
+      const res = await messagesApi.searchUsers(val.trim());
       setSearchResults(res.users);
     } catch (err) { console.error("Search failed:", err); }
     finally { setIsSearching(false); }
   };
+
+  useEffect(() => {
+    if (showAddModal && searchTerm === "") {
+      handleSearch("");
+    }
+  }, [showAddModal]);
 
   const startFollow = async (userId: number) => {
     try {
@@ -1405,10 +1414,10 @@ export default function MessagesPage() {
                       )}
                     </div>
                   ))
-                ) : searchTerm.length >= 2 ? (
-                  <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>No one found with that name.</div>
-                ) : (
+                ) : searchTerm.trim().length > 0 && searchTerm.trim().length < 2 ? (
                   <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>Type at least 2 characters to search.</div>
+                ) : (
+                  <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>No one found with that name.</div>
                 )}
               </div>
             </motion.div>

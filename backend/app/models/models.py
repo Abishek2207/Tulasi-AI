@@ -26,6 +26,7 @@ class User(SQLModel, table=True):
     last_seen: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
     is_pro: bool = True
+    is_private: bool = False
     stripe_customer_id: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
     chats_today: int = 0
