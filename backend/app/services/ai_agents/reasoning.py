@@ -34,9 +34,14 @@ class ReasoningEngine:
         ### BEHAVIORAL PATTERNS:
         {behavioral_patterns}
 
+        ### SYSTEM/TOOL INSTRUCTION & CONTEXT (CRITICAL):
+        {system_instruction}
+
         USER QUERY: "{query}"
 
         ---
+        EXTREMELY IMPORTANT RULE: You must ONLY answer the specific question asked. Do not hallucinate, go off-topic, or provide an overly long generic response. If the user asks a simple question, give a direct, simple answer. Strictly adhere to the System Instruction provided above.
+
         IMPORTANT: Your output MUST follow this exact format:
         THOUGHT: [Your internal reasoning process, hidden from the user but helpful for accuracy]
         RESPONSE: [The high-fidelity, beautifully formatted Markdown response the user actually sees]
@@ -49,6 +54,7 @@ class ReasoningEngine:
         history: List[Dict],
         db: Session,
         stream: bool = False,
+        system_instruction: str = ""
     ) -> Union[Dict, Generator]:
         """
         Processes a query through the reasoning chain. Supports both blocking and streaming.
@@ -74,6 +80,7 @@ class ReasoningEngine:
             intelligence_profile=json.dumps(intelligence, indent=2),
             behavioral_patterns=json.dumps(behavior, indent=2),
             query=query,
+            system_instruction=system_instruction
         )
 
         if stream:
