@@ -157,7 +157,7 @@ async def log_requests(request: Request, call_next):
 
 
 # ── Routers (Lazy-Loaded to speed up cold starts) ────────────────────────
-from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, social, feed, mentor, follow
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, feed, mentor, follow
 
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
@@ -180,9 +180,9 @@ app.include_router(users.router,        prefix="/api/users",        tags=["Users
 app.include_router(follow.router,       prefix="/api/follow",       tags=["Follow System"])
 
 # Social, Feed and Mentor integration
-app.include_router(social.router,       prefix="/api/social",       tags=["Social Graph"])
 app.include_router(feed.router,         prefix="/api/feed",         tags=["Idea Feed"])
 app.include_router(mentor.router,       prefix="/api/mentor",       tags=["AI Mentor"])
+
 
 # Super Intelligence Layer (V2 Overwrite)
 from app.api import intelligence_v2

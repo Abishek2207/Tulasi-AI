@@ -765,6 +765,7 @@ export const usersApi = {
     method: "POST",
     body: JSON.stringify({ username }),
   }),
+  search: (q: string) => request<{ users: any[] }>(`/api/users/search?q=${encodeURIComponent(q)}`),
 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────

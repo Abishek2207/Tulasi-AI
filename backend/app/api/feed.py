@@ -8,8 +8,8 @@ import json
 
 from app.core.database import get_session
 from app.api.deps import get_current_user
-from app.models.models import User, Idea, IdeaLike, IdeaComment
-from app.websockets.manager import manager
+from app.models.models import User, Idea, IdeaLike, IdeaComment, UserFollow
+from app.core.socket_server import sio
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +23,14 @@ class IdeaResponse(BaseModel):
     id: int
     user_id: int
     user_name: str
+    user_username: Optional[str] = None
     user_avatar: Optional[str] = None
     content: str
     tags: str
     likes_count: int
     comments_count: int
     is_liked_by_me: bool
+    is_following_creator: bool = False
     created_at: datetime
 
 @router.post("/idea", response_model=IdeaResponse)
@@ -43,25 +45,24 @@ async def create_idea(idea_in: IdeaCreate, db: Session = Depends(get_session), c
     db.commit()
     db.refresh(new_idea)
     
-    # Broadcast to feed room immediately
     resp = IdeaResponse(
         id=new_idea.id,
         user_id=current_user.id,
         user_name=current_user.name,
+        user_username=current_user.username,
         user_avatar=current_user.avatar,
         content=new_idea.content,
         tags=new_idea.tags,
         likes_count=0,
         comments_count=0,
         is_liked_by_me=False,
+        is_following_creator=False,
         created_at=new_idea.created_at
     )
     
+    # Broadcast to feed room immediately via Socket.io
     import asyncio
-    asyncio.create_task(manager.broadcast({
-        "type": "new_idea",
-        "idea": resp.dict()
-    }, room_id="feed"))
+    asyncio.create_task(sio.emit("new_idea", resp.dict(), room="feed"))
     
     # Trigger AI Mentor hook
     from app.api.mentor import trigger_mentor_insight
@@ -70,9 +71,31 @@ async def create_idea(idea_in: IdeaCreate, db: Session = Depends(get_session), c
     return resp
 
 @router.get("", response_model=List[IdeaResponse])
-async def get_feed(db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-    statement = select(Idea).order_by(Idea.created_at.desc()).limit(50)
+async def get_feed(
+    tab: str = "global", 
+    db: Session = Depends(get_session), 
+    current_user: User = Depends(get_current_user)
+):
+    if tab == "personal":
+        # Get ideas from users I follow (accepted state)
+        following_ids_stmt = select(UserFollow.following_id).where(
+            UserFollow.follower_id == current_user.id,
+            UserFollow.status == "accepted"
+        )
+        following_ids = db.exec(following_ids_stmt).all()
+        
+        # Also include my own ideas
+        following_ids.append(current_user.id)
+        
+        statement = select(Idea).where(Idea.user_id.in_(following_ids)).order_by(Idea.created_at.desc()).limit(50)
+    else:
+        statement = select(Idea).order_by(Idea.created_at.desc()).limit(50)
+        
     ideas = db.exec(statement).all()
+    
+    # Get following map for current user to quickly check status
+    follows = db.exec(select(UserFollow).where(UserFollow.follower_id == current_user.id)).all()
+    follow_map = {f.following_id: f.status for f in follows}
     
     results = []
     for idea in ideas:
@@ -87,12 +110,14 @@ async def get_feed(db: Session = Depends(get_session), current_user: User = Depe
             id=idea.id,
             user_id=creator.id,
             user_name=creator.name,
+            user_username=creator.username,
             user_avatar=creator.avatar,
             content=idea.content,
             tags=idea.tags,
             likes_count=idea.likes_count,
             comments_count=idea.comments_count,
             is_liked_by_me=liked,
+            is_following_creator=follow_map.get(creator.id) == "accepted",
             created_at=idea.created_at
         ))
     return results
@@ -120,11 +145,11 @@ async def toggle_like(idea_id: int, db: Session = Depends(get_session), current_
     db.add(idea)
     db.commit()
     
+    # Broadcast update to feed room
     import asyncio
-    asyncio.create_task(manager.broadcast({
-        "type": "idea_like_update",
+    asyncio.create_task(sio.emit("idea_like_update", {
         "idea_id": idea_id,
         "likes_count": idea.likes_count
-    }, room_id="feed"))
+    }, room="feed"))
     
     return {"status": action, "likes_count": idea.likes_count}
