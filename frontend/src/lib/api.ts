@@ -731,11 +731,11 @@ export const messagesApi = {
   
   // ── Extended dashboard methods ──
   mentorChat: async (content: string, media_type?: string, media_url?: string) =>
-    request<any>("/api/intel/ask-mentor", {
+    request<any>("/api/intel/chat", {
       method: "POST",
-      body: JSON.stringify({ question: content, mode: "career" })
+      body: JSON.stringify({ message: content, media: media_url })
     }),
-  searchUsers: (q: string) => request<{ users: any[] }>(`/api/messages/search?q=${encodeURIComponent(q)}`),
+  searchUsers: (q: string) => request<{ users: any[] }>(`/api/users/search?q=${encodeURIComponent(q)}`),
   getGroupMessages: async (groupId: number, limit = 50) =>
     request<any>(`/api/groups/${groupId}/messages?limit=${limit}`),
   sendGroupMessage: (groupId: number, content: string) =>
@@ -743,6 +743,10 @@ export const messagesApi = {
       method: "POST",
       body: JSON.stringify({ content })
     }),
+  // Follow logic
+  followUser: (userId: number) => request<{ status: string; follow_status: string }>(`/api/follow/${userId}`, { method: "POST" }),
+  acceptFollow: (userId: number) => request<{ status: string; follow_status: string }>(`/api/follow/${userId}/accept`, { method: "PATCH" }),
+  unfollowUser: (userId: number) => request<{ status: string }>(`/api/follow/${userId}`, { method: "DELETE" }),
 };
 
 export const usersApi = {
@@ -756,7 +760,11 @@ export const usersApi = {
     });
     if (!res.ok) throw new Error("Background removal failed");
     return res.blob();
-  }
+  },
+  setUsername: (username: string) => request<{ status: string; username: string }>("/api/users/set-username", {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  }),
 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -764,6 +772,7 @@ export const usersApi = {
 export interface User {
   id: number;
   email: string;
+  username?: string;
   name: string;
   role: "student" | "admin";
   avatar?: string;

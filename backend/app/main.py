@@ -157,7 +157,7 @@ async def log_requests(request: Request, call_next):
 
 
 # ── Routers (Lazy-Loaded to speed up cold starts) ────────────────────────
-from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, social, feed, mentor
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, social, feed, mentor, follow
 
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
@@ -177,6 +177,7 @@ app.include_router(stripe.router,       prefix="/api/stripe",       tags=["Monet
 app.include_router(payment.router,      prefix="/api/payment",      tags=["Payment"])
 app.include_router(reviews.router,      prefix="/api/reviews",      tags=["Reviews"])
 app.include_router(users.router,        prefix="/api/users",        tags=["Users"])
+app.include_router(follow.router,       prefix="/api/follow",       tags=["Follow System"])
 
 # Social, Feed and Mentor integration
 app.include_router(social.router,       prefix="/api/social",       tags=["Social Graph"])

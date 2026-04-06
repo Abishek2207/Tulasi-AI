@@ -106,8 +106,11 @@ async def leave_group(sid, data):
         room_name = f"group_{group_id}"
         await sio.leave_room(sid, room_name)
 
+@sio.event
+async def typing(sid, data):
     receiver_id = data.get('receiver_id')
-    is_typing = data.get('is_typing')
+    is_typing = data.get('is_typing', True)
+    group_id = data.get('group_id')
     session = await sio.get_session(sid)
     user_id = session.get('user_id')
     

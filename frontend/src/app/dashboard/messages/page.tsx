@@ -11,7 +11,7 @@ import {
   ArrowLeft, Plus, Image as ImageIcon, Smile, Mic, BrainCircuit,
   PhoneOff, PhoneCall, VideoOff, MicOff, PhoneMissed, X, Reply, ArrowRight
 } from "lucide-react";
-import { intelligenceApi, API_URL, messagesApi } from "@/lib/api";
+import { intelligenceApi, API_URL, messagesApi, usersApi } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
 
@@ -19,6 +19,7 @@ interface User {
   id: number;
   name: string;
   email: string;
+  username?: string;
   avatar?: string;
   is_online?: boolean;
   last_seen?: string;
@@ -199,6 +200,16 @@ export default function MessagesPage() {
         }
       };
 
+      const handleFollowRequest = (data: { follower_id: number; follower_username: string }) => {
+        toast(`@${data.follower_username} sent you a follow request! 📩`, { icon: "🔔" });
+        fetchDirectory(); // Refresh to show in Requests tab
+      };
+
+      const handleFollowAccepted = (data: { following_id: number; following_username: string }) => {
+        toast.success(`@${data.following_username} accepted your follow request!`);
+        fetchDirectory();
+      };
+
       socketService.on("new_direct_message", handleNewDM);
       socketService.on("new_group_message", handleNewGroupMsg);
       socketService.on("message_seen", handleMessageSeen);
@@ -206,6 +217,8 @@ export default function MessagesPage() {
       socketService.on("user_typing", handleUserTyping);
       socketService.on("user_status_change", handleUserStatusChange);
       socketService.on("webrtc_signal", handleWebRTCSignal);
+      socketService.on("follow_request", handleFollowRequest);
+      socketService.on("follow_accepted", handleFollowAccepted);
       socketService.on("message_reaction", (data: { message_id: number; reactions: any[] }) => {
         setMessages(prev => prev.map(m => m.id === data.message_id ? { ...m, reactions: data.reactions } : m));
       });
@@ -218,6 +231,8 @@ export default function MessagesPage() {
         socketService.off("user_typing", handleUserTyping);
         socketService.off("user_status_change", handleUserStatusChange);
         socketService.off("webrtc_signal", handleWebRTCSignal);
+        socketService.off("follow_request", handleFollowRequest);
+        socketService.off("follow_accepted", handleFollowAccepted);
       };
     }
   }, [session, activeUser, activeGroup, currentUserId]);
@@ -466,11 +481,14 @@ export default function MessagesPage() {
   const handleChatRequest = async (action: "accept" | "reject" | "block") => {
     if (!activeUser) return;
     try {
-      const data = await messagesApi.handleRequest(activeUser.id, action);
-      if (data.status === "success") {
-        setChatRequestStatus(action === "accept" ? "accepted" : (action === "reject" ? "rejected" : "blocked"));
-        fetchDirectory(); // Refresh list
+      if (action === "accept") {
+        await messagesApi.acceptFollow(activeUser.id);
+        setChatRequestStatus("accepted");
+      } else {
+        await messagesApi.unfollowUser(activeUser.id);
+        setChatRequestStatus(action === "reject" ? "rejected" : "blocked");
       }
+      fetchDirectory(); // Refresh list
     } catch (err) { console.error("Request handling failed:", err); }
   };
 
@@ -493,13 +511,13 @@ export default function MessagesPage() {
 
   const startFollow = async (userId: number) => {
     try {
-      const res = await messagesApi.sendMessage(userId, "System: Transmitting follow request...", "text");
+      const res = await messagesApi.followUser(userId);
       if (res.status === "success") {
         setShowAddModal(false);
         fetchDirectory();
         toast.success("Follow request sent!");
       }
-    } catch (err) { toast.error("Could not send request"); }
+    } catch (err: any) { toast.error(err.message || "Could not send request"); }
   };
 
 
@@ -662,7 +680,10 @@ export default function MessagesPage() {
     } catch (err) { console.error("Reaction failed:", err); }
   };
 
-  const filteredUsers = users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredUsers = users.filter(u => {
+    const q = searchQuery.toLowerCase();
+    return u.name.toLowerCase().includes(q) || (u.username && u.username.toLowerCase().includes(q));
+  });
   const canCall = activeUser && !activeUser.is_mentor && activeTab === "dm";
 
   // ─── JSX ───────────────────────────────────────────────────────────────────
@@ -896,15 +917,20 @@ export default function MessagesPage() {
                       <div style={{ position: "absolute", bottom: 2, right: 2, width: 10, height: 10, borderRadius: 5, background: "rgba(255,255,255,0.2)", border: "2px solid #08080A" }} />
                     )}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <span style={{ fontWeight: 800, fontSize: 14, color: "white" }}>{u.name || "Colleague"}</span>
-                      <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+                      <span style={{ fontWeight: 800, fontSize: 14, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{u.name || "Colleague"}</span>
+                      <span style={{ fontSize: 10, color: "var(--text-muted)", flexShrink: 0 }}>
                         {u.is_online ? "Active" : u.last_seen ? formatDistanceToNow(new Date(u.last_seen), { addSuffix: true }) : "Offline"}
                       </span>
                     </div>
+                    {u.username && <div style={{ fontSize: 11, color: "rgba(139,92,246,0.7)", fontWeight: 700, marginBottom: 2 }}>@{u.username}</div>}
                     <div style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: 180 }}>
-                      {u.request_status === "pending" ? "Wants to message you" : (
+                      {u.request_status === "pending" && !u.is_initiator ? (
+                        <span style={{ color: "#F59E0B", fontWeight: 700 }}>📩 Sent you a follow request</span>
+                      ) : u.request_status === "pending" && u.is_initiator ? (
+                        <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>⏳ Request pending...</span>
+                      ) : (
                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                           <LastMessagePreview user={u} />
                         </div>
@@ -949,9 +975,10 @@ export default function MessagesPage() {
                 <div style={{ width: 44, height: 44, borderRadius: activeUser?.id === -1 ? 12 : 22, background: activeUser?.id === -1 ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: activeUser?.id === -1 ? "#8B5CF6" : "white", fontSize: 18, border: "1px solid rgba(255,255,255,0.1)" }}>
                   {activeUser?.id === -1 ? <BrainCircuit size={24} /> : activeUser ? (activeUser.name?.charAt(0) || "?").toUpperCase() : "#"}
                 </div>
-                <div>
-                  <h3 style={{ fontSize: 17, fontWeight: 900, color: activeUser?.id === -1 ? "#A78BFA" : "white" }}>{activeUser?.name || activeGroup?.name || "Private Transmission"}</h3>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: 17, fontWeight: 900, color: activeUser?.id === -1 ? "#A78BFA" : "white", margin: 0 }}>{activeUser?.name || activeGroup?.name || "Private Transmission"}</h3>
+                  {activeUser?.username && <div style={{ fontSize: 11, color: "rgba(139,92,246,0.7)", fontWeight: 700 }}>@{activeUser.username}</div>}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                     <div style={{ width: 6, height: 6, borderRadius: 3, background: activeUser?.id === -1 ? "#8B5CF6" : "#10B981" }} />
                     <span style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>
                       {activeUser?.id === -1 ? "Neural Sync Active" : activeUser ? "Private Encryption · E2E" : "Global Channel"}
@@ -1318,7 +1345,7 @@ export default function MessagesPage() {
                 <Search size={20} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
                 <input 
                   autoFocus
-                  placeholder="Seach by name or email..." 
+                  placeholder="Search by username..." 
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
                   style={{ width: "100%", padding: "16px 16px 16px 52px", borderRadius: 16, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: 15 }}
@@ -1335,17 +1362,33 @@ export default function MessagesPage() {
                         <div style={{ width: 40, height: 40, borderRadius: 20, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>{u.name?.charAt(0) || "?"}</div>
                         <div>
                           <div style={{ fontSize: 14, fontWeight: 700 }}>{u.name || "Anonymous User"}</div>
-                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{u.email}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>@{u.username}</div>
                         </div>
                       </div>
-                      <motion.button 
-                        whileHover={{ scale: 1.05, background: "white", color: "black" }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => startFollow(u.id)}
-                        style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: 12, fontWeight: 800, cursor: "pointer" }}
-                      >
-                        Follow
-                      </motion.button>
+                      {u.request_status === "accepted" ? (
+                        <motion.button 
+                          disabled
+                          style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "#10B981", fontSize: 12, fontWeight: 800 }}
+                        >
+                          Following
+                        </motion.button>
+                      ) : u.request_status === "pending" ? (
+                        <motion.button 
+                          disabled
+                          style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", color: "#A78BFA", fontSize: 12, fontWeight: 800 }}
+                        >
+                          Requested
+                        </motion.button>
+                      ) : (
+                        <motion.button 
+                          whileHover={{ scale: 1.05, background: "white", color: "black" }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => startFollow(u.id)}
+                          style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+                        >
+                          Follow
+                        </motion.button>
+                      )}
                     </div>
                   ))
                 ) : searchTerm.length >= 2 ? (

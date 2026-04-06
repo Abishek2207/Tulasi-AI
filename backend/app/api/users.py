@@ -12,8 +12,12 @@ except ImportError:
 from fastapi import File, UploadFile
 from fastapi.responses import StreamingResponse
 
-from pydantic import BaseModel
+import re
+from pydantic import BaseModel, constr
 from typing import Optional
+
+class SetUsernameRequest(BaseModel):
+    username: str
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
@@ -31,6 +35,7 @@ router = APIRouter()
 def get_my_profile(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
+        "username": current_user.username,
         "email": current_user.email,
         "name": current_user.name,
         "bio": current_user.bio,
@@ -66,10 +71,68 @@ def update_profile(
     
     return {"status": "success", "user": {
         "id": current_user.id,
+        "username": current_user.username,
         "name": current_user.name,
         "avatar": current_user.avatar,
         "email": current_user.email
     }}
+
+
+@router.post("/set-username")
+def set_username(
+    data: SetUsernameRequest,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.username:
+        raise HTTPException(status_code=400, detail="Username already set")
+        
+    username = data.username.lower()
+    if not re.match(r"^[a-z0-9_]{3,20}$", username):
+        raise HTTPException(status_code=400, detail="Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores")
+        
+    existing = db.exec(select(User).where(User.username == username)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username is already taken")
+        
+    current_user.username = username
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return {"status": "success", "username": current_user.username}
+
+
+@router.get("/search")
+def search_users(q: str, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    """Search for users by username."""
+    if not q or len(q) < 2:
+        return {"users": []}
+    
+    # Needs wildcard for partial match
+    statement = select(User).where(
+        (User.id != current_user.id) &
+        (User.username.ilike(f"%{q}%"))
+    ).limit(50)
+    users = db.exec(statement).all()
+    
+    # Map following logic
+    from app.models.models import UserFollow
+    follows = db.exec(select(UserFollow).where(UserFollow.follower_id == current_user.id)).all()
+    follow_map = {f.following_id: f for f in follows}
+    
+    results = []
+    for u in users:
+        f = follow_map.get(u.id)
+        results.append({
+            "id": u.id,
+            "username": u.username,
+            "name": u.name,
+            "avatar": u.avatar,
+            "is_following": f.status == "accepted" if f else False,
+            "request_status": f.status if f else "none"
+        })
+        
+    return {"users": results}
 
 
 @router.get("/")

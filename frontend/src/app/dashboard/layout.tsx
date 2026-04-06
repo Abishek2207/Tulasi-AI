@@ -18,6 +18,8 @@ import { TulasiLogo } from "@/components/TulasiLogo";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { PageTransition } from "@/components/PageTransition";
+import { UsernameModal } from "@/components/UsernameModal";
+
 /** Safe hook — avoids SSR crash and only fires on real resize events. */
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -181,6 +183,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <OnboardingModal />
       <DebugPanel />
       <AIManagerInsightOverlay />
+      
+      {user && !user.username && (
+        <UsernameModal
+          isOpen={true}
+          onSuccess={(newUsername) => {
+            // Patch the stored user object so the modal disappears without full page reload
+            const stored = localStorage.getItem("user");
+            if (stored) {
+              try {
+                const parsed = JSON.parse(stored);
+                parsed.username = newUsername;
+                localStorage.setItem("user", JSON.stringify(parsed));
+              } catch {}
+            }
+            // Fire the auth-change event so useSession re-reads localStorage
+            window.dispatchEvent(new Event("tulasi-auth-change"));
+          }}
+        />
+      )}
     </div>
   );
 }
