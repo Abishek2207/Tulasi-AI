@@ -50,7 +50,7 @@ export default function AuthPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { 
-          redirectTo: "https://tulasiai.vercel.app/auth/callback",
+          redirectTo: `${appUrl}/auth/callback`,
           queryParams: { prompt: "select_account" }
         },
       });
@@ -70,7 +70,7 @@ export default function AuthPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "github",
-        options: { redirectTo: "https://tulasiai.vercel.app/auth/callback" },
+        options: { redirectTo: `${appUrl}/auth/callback` },
       });
       if (error) {
         toast.error("GitHub sign-in failed: " + error.message);
