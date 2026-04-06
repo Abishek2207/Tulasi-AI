@@ -147,8 +147,8 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     duration = round((time.time() - start) * 1000, 2)
 
-    if duration > 500:
-        print(f"⚠️ [SLOW DB/API Action] {request.method} {request.url.path} took {duration}ms")
+    # if duration > 500:
+    #     print(f"⚠️ [SLOW DB/API Action] {request.method} {request.url.path} took {duration}ms")
 
     print(
         f"[Backend Request] 📡 {request.method} {request.url.path} "
