@@ -418,29 +418,27 @@ def rag_chat(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    """Strict RAG-based AI Chat for TulasiAI."""
-    # 1. Embed Query (Simulated via RAG agent retrieval if implemented, or direct retrieval)
-    # Using the resilient AI router with a context injection template
-    
-    # Normally we'd call a ChromaDB or Pinecone instance here:
-    # context = vector_store.similarity_search(body.message)
-    context = "TulasiAI is an AI-powered student platform offering internships, hackathons, and a platinum messaging engine."
-    
-    # 2. Inject context
+    """AGI Mentor chat — personalized AI responses for the messages page."""
     system_prompt = (
-        "You are TulasiAI Support embedded in the chat system. "
-        "Strictly answer the user's question using ONLY the provided context.\n"
-        f"CONTEXT: {context}"
+        f"You are TulasiAI's AGI Mentor — a world-class Neural Career Strategist. "
+        f"The user is {current_user.name or 'an engineering student'}, "
+        f"targeting: {current_user.target_role or 'Software Engineering'}. "
+        f"XP: {current_user.xp or 0}, Streak: {current_user.streak or 0} days. "
+        f"Give direct, specific, actionable guidance. Be concise and motivating."
     )
     
-    full_prompt = f"{system_prompt}\n\nUser Message: {body.message}"
+    full_prompt = f"{system_prompt}\n\nUser: {body.message}"
     
-    # 3. Generate Answer
-    return resilient_ai_response(
+    raw = resilient_ai_response(
         full_prompt,
-        fallback={"response": "I am currently unable to retrieve the documents required to answer this. Please try again."},
+        fallback="I'm momentarily recalibrating my neural pathways. Your question is important — please try again in 30 seconds.",
         is_json=False
     )
+    
+    # Always return {response: string} so frontend can do data?.response
+    if isinstance(raw, dict):
+        return {"response": raw.get("response", str(raw)), "mode": "mentor"}
+    return {"response": str(raw), "mode": "mentor"}
 # ── USER INTELLIGENCE PROFILE ──────────────────────────────────────────────────
 @router.get("/profile")
 def get_intelligence_profile(
