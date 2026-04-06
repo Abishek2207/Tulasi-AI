@@ -7,6 +7,7 @@ from app.core.database import get_session
 from app.models.models import Hackathon, HackathonBookmark
 from app.api.deps import get_current_user, get_admin_user
 from app.models.models import User
+from app.core.cache import hackathon_cache
 
 router = APIRouter()
 
@@ -54,37 +55,46 @@ def get_hackathons(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    from sqlalchemy import func
     from app.models.models import HackathonApplication
-    statement = select(Hackathon).where(Hackathon.is_active == True)
-
-    if tag and tag.lower() not in ("all", ""):
-        statement = statement.where(Hackathon.tags.contains(tag.lower()))
-    if status and status.lower() not in ("all", ""):
-        statement = statement.where(Hackathon.status == status)
-    if difficulty and difficulty.lower() not in ("all", ""):
-        statement = statement.where(Hackathon.difficulty == difficulty)
-    if mode and mode.lower() not in ("all", ""):
-        statement = statement.where(Hackathon.event_mode == mode)
-    if q:
-        statement = statement.where(
-            (Hackathon.name.contains(q)) | (Hackathon.organizer.contains(q)) | (Hackathon.description.contains(q))
-        )
-
-    # Get total count before slicing
-    all_results = session.exec(statement).all()
-    total_count = len(all_results)
+    cache_key = f"hackathons_raw_{tag}_{status}_{difficulty}_{mode}_{q}_{limit}_{offset}"
     
-    # Apply pagination and sorting (newest/deadline first)
-    statement = statement.order_by(Hackathon.id.desc()).offset(offset).limit(limit)
-    results = session.exec(statement).all()
+    # 1. Check cache for raw results
+    cached_data = hackathon_cache.get(cache_key)
+    if cached_data:
+        results, total_count = cached_data
+    else:
+        statement = select(Hackathon).where(Hackathon.is_active == True)
+        if tag and tag.lower() not in ("all", ""):
+            statement = statement.where(Hackathon.tags.contains(tag.lower()))
+        if status and status.lower() not in ("all", ""):
+            statement = statement.where(Hackathon.status == status)
+        if difficulty and difficulty.lower() not in ("all", ""):
+            statement = statement.where(Hackathon.difficulty == difficulty)
+        if mode and mode.lower() not in ("all", ""):
+            statement = statement.where(Hackathon.event_mode == mode)
+        if q:
+            statement = statement.where(
+                (Hackathon.name.contains(q)) | (Hackathon.organizer.contains(q)) | (Hackathon.description.contains(q))
+            )
 
-    # Get user's bookmarks
+        # Get total count efficiently using a separate count query
+        count_statement = select(func.count()).select_from(statement.subquery())
+        total_count = session.exec(count_statement).one()
+        
+        # Apply pagination and sorting directly to the database query
+        statement = statement.order_by(Hackathon.id.desc()).offset(offset).limit(limit)
+        results = session.exec(statement).all()
+        
+        # Store in cache
+        hackathon_cache.set(cache_key, (results, total_count))
+
+    # 2. Add user-specific context (Bookmarks & Apps) in-memory
     bookmarks = session.exec(
         select(HackathonBookmark).where(HackathonBookmark.user_id == current_user.id)
     ).all()
     bookmarked_ids = {b.hackathon_id for b in bookmarks}
 
-    # Get user's applications
     apps = session.exec(
         select(HackathonApplication).where(HackathonApplication.user_id == current_user.id)
     ).all()

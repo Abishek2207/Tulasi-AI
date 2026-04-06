@@ -148,8 +148,8 @@ export default function FeedPage() {
         setSearchResults(prev => prev.map(u => u.id === userId ? { ...u, request_status: res.follow_status } : u));
         toast.success(res.follow_status === "accepted" ? "Following!" : "Request sent!");
       }
-    } catch (e) {
-      toast.error("Action failed");
+    } catch (e: any) {
+      toast.error(e.message || "Action failed");
     }
   };
 

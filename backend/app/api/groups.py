@@ -148,21 +148,38 @@ def list_my_groups(
         select(GroupMember).where(GroupMember.user_id == current_user.id)
     ).all()
 
+    # IF NEW USER: Auto-join them to the "Global Community" group
+    if not memberships:
+        global_group = db.exec(select(Group).where(Group.name == "Global Community")).first()
+        if global_group:
+            new_member = GroupMember(
+                group_id=global_group.id,
+                user_id=current_user.id,
+                user_name=current_user.name or current_user.username or current_user.email.split("@")[0],
+            )
+            db.add(new_member)
+            db.commit()
+            # Re-fetch memberships to include the newly added one
+            memberships = db.exec(
+                select(GroupMember).where(GroupMember.user_id == current_user.id)
+            ).all()
+
     result = []
     for m in memberships:
         group = db.get(Group, m.group_id)
         if not group:
             continue
-        member_count = len(
-            db.exec(select(GroupMember).where(GroupMember.group_id == group.id)).all()
-        )
+        member_count = db.exec(
+            select(func.count(GroupMember.id)).where(GroupMember.group_id == group.id)
+        ).one()
+        
         result.append({
             "id": group.id,
             "name": group.name,
             "description": group.description,
             "join_code": group.join_code,
             "created_by": group.created_by,
-            "created_at": group.created_at.isoformat(),
+            "created_at": group.created_at.isoformat() if hasattr(group.created_at, "isoformat") else str(group.created_at),
             "member_count": member_count,
         })
 

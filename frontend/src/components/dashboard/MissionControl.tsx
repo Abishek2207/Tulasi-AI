@@ -6,6 +6,7 @@ import { Rocket, Target, Sparkles, ArrowRight, BrainCircuit, Zap, AlertCircle } 
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { intelligenceApi } from "@/lib/api";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 const STATIC_MISSIONS = [
   {
@@ -70,33 +71,22 @@ export function MissionControl({ token }: { token: string }) {
     });
   };
 
-  if (loading) {
+  if (loading && !data) {
     return (
-      <div
-        style={{
-          height: 440,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--text-muted)",
-          fontSize: 13,
-          fontWeight: 700,
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          style={{
-            width: 28,
-            height: 28,
-            border: "3px solid rgba(139,92,246,0.2)",
-            borderTopColor: "#8B5CF6",
-            borderRadius: "50%",
-          }}
-        />
-        SYNCHRONIZING CAREER TRAJECTORY...
+      <div className="glass-card-premium" style={{ padding: "32px", height: "100%", display: "flex", flexDirection: "column", gap: 20, borderRadius: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
+          <Skeleton width={56} height={56} borderRadius={18} />
+          <div style={{ flex: 1 }}>
+            <Skeleton width="40%" height={12} style={{ marginBottom: 6 }} />
+            <Skeleton width="30%" height={10} />
+          </div>
+        </div>
+        <Skeleton width="90%" height={32} style={{ marginBottom: 12 }} />
+        <Skeleton width="100%" height={80} borderRadius={20} />
+        <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between" }}>
+          <Skeleton width={80} height={32} borderRadius={30} />
+          <Skeleton width={160} height={48} borderRadius={16} />
+        </div>
       </div>
     );
   }

@@ -63,11 +63,12 @@ def _update_streak(user: User, db: Session):
     # Normalize last activity to a date object
     last_date = None
     if last:
-        if hasattr(last, "isoformat"): # It's a date or datetime object
+        if isinstance(last, (date, datetime)):
             last_date = last if isinstance(last, date) else last.date()
-        else: # Likely a string
+        else:
             try:
-                last_date = date.fromisoformat(str(last))
+                # Handle ISO strings from SQLite/JSON
+                last_date = datetime.fromisoformat(str(last).replace("Z", "+00:00")).date()
             except (ValueError, TypeError):
                 last_date = None
 
@@ -375,9 +376,10 @@ def get_analytics(
             continue
         try:
             if isinstance(log.created_at, str):
-                from datetime import datetime
                 # Handle possible SQLite string dates gracefully
                 dt = datetime.fromisoformat(log.created_at.replace("Z", "+00:00"))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
                 day = dt.strftime("%Y-%m-%d")
             else:
                 day = log.created_at.strftime("%Y-%m-%d")

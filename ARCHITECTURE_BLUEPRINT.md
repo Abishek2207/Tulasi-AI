@@ -70,6 +70,13 @@ Built using **SQLModel** (SQLAlchemy + Pydantic) for PostgreSQL connectivity.
 * **Hackathons**: `/hackathons?tag=web3` (GET)
 * **Roadmaps**: `/roadmaps/{career_path}` (GET timeline)
 * **Interview**: `/interview/start` (POST), `/interview/evaluate` (POST)
+* **Intelligence (V2)**: `/intel/career-gps` (POST), `/intel/daily-plan` (GET)
+
+### 4b. Neural Seeding Layer (Automated)
+TulasiAI features an "Autonomous Bootstrapper" that ensures the platform is never empty:
+- **Essential Seeding:** On startup, the system automatically seeds the `Global Community` group, 20+ real-world Hackathons, and curated Professional Reviews.
+- **Auto-Join Social:** New users are automatically federated into the `Global Community` upon their first dashboard visit.
+- **Background Handlers:** Database intensive seeding is offloaded to a `lifespan` background task to ensure <1s port binding.
 
 ## 5. LangChain RAG Implementation
 

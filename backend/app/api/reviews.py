@@ -14,6 +14,7 @@ from app.core.database import get_session
 from app.api.deps import get_current_user
 from app.models.models import Review, User
 from app.api.activity import log_activity_internal
+from app.core.cache import review_cache
 
 router = APIRouter()
 
@@ -70,6 +71,11 @@ def _parse_dt(val) -> datetime:
 @router.get("", response_model=List[ReviewOut])
 def get_reviews(session: Session = Depends(get_session)):
     """Return the latest approved reviews for public display."""
+    # 1. Check Cache
+    cached_reviews = review_cache.get("public_reviews")
+    if cached_reviews:
+        return cached_reviews
+
     try:
         reviews_raw = session.exec(
             select(Review)
@@ -78,7 +84,7 @@ def get_reviews(session: Session = Depends(get_session)):
             .limit(50)
         ).all()
 
-        return [
+        result = [
             ReviewOut(
                 id=r.id,
                 name=r.name,
@@ -91,6 +97,10 @@ def get_reviews(session: Session = Depends(get_session)):
             )
             for r in reviews_raw
         ]
+        
+        # 2. Set Cache
+        review_cache.set("public_reviews", result)
+        return result
     except Exception as e:
         print(f"❌ [Reviews] GET failed: {e}")
         return []
