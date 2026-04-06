@@ -7,12 +7,15 @@ import { ShieldCheck, UserCircle, Loader2 } from "lucide-react";
 
 export function UsernameModal({ 
   isOpen, 
-  onSuccess 
+  onSuccess,
+  currentUsername
 }: { 
   isOpen: boolean; 
   onSuccess: (username: string) => void;
+  currentUsername?: string;
 }) {
-  const [username, setUsername] = useState("");
+  const isUpdate = !!currentUsername;
+  const [username, setUsername] = useState(currentUsername || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -94,9 +97,9 @@ export function UsernameModal({
               }}>
                 <ShieldCheck size={32} color="#8B5CF6" />
               </div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px 0" }}>Claim Your Username</h2>
+              <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px 0" }}>{isUpdate ? "Update Username" : "Claim Your Username"}</h2>
               <p style={{ color: "var(--text-muted)", fontSize: 14, margin: 0 }}>
-                TulasiAI is going social. Choose a unique username to connect with peers and mentors.
+                {isUpdate ? `Current: @${currentUsername}. Enter a new unique username below.` : "TulasiAI is going social. Choose a unique username to connect with peers and mentors."}
               </p>
             </div>
 
@@ -153,7 +156,7 @@ export function UsernameModal({
                   transition: "all 0.2s"
                 }}
               >
-                {loading ? <Loader2 size={20} className="animate-spin" /> : "Secure Username"}
+                {loading ? <Loader2 size={20} className="animate-spin" /> : isUpdate ? "Update Username" : "Secure Username"}
               </motion.button>
             </form>
           </motion.div>

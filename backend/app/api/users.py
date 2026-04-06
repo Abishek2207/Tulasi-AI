@@ -84,17 +84,16 @@ def set_username(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.username and current_user.username.strip():
-        raise HTTPException(status_code=400, detail="Username already set")
-        
-    username = data.username.lower()
+    username = data.username.lower().strip()
+    
     if not re.match(r"^[a-z0-9_]{3,20}$", username):
-        raise HTTPException(status_code=400, detail="Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores")
-        
+        raise HTTPException(status_code=400, detail="Username must be 3-20 characters (lowercase letters, numbers, underscores only)")
+    
+    # Check if taken by ANOTHER user (not self)
     existing = db.exec(select(User).where(User.username == username)).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Username is already taken")
-        
+    if existing and existing.id != current_user.id:
+        raise HTTPException(status_code=400, detail="Username is already taken. Try another!")
+    
     current_user.username = username
     db.add(current_user)
     db.commit()
