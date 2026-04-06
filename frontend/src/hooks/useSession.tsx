@@ -12,6 +12,7 @@ export interface SessionUser {
   id: string | number;
   email: string;
   name: string;
+  username?: string;
   role: string;
   is_pro: boolean;
   xp: number;

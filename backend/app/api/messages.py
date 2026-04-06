@@ -52,6 +52,17 @@ async def send_message(req: MessageSend, current_user: User = Depends(get_curren
     )).first()
     if block_check: raise HTTPException(403, "You are blocked by this user")
     
+    from app.models.models import UserFollow
+    # Check if they follow each other (accepted)
+    follow_sender_to_rec = db.exec(select(UserFollow).where(
+        UserFollow.follower_id == current_user.id, UserFollow.following_id == req.receiver_id, UserFollow.status == "accepted"
+    )).first()
+    follow_rec_to_sender = db.exec(select(UserFollow).where(
+        UserFollow.follower_id == req.receiver_id, UserFollow.following_id == current_user.id, UserFollow.status == "accepted"
+    )).first()
+    
+    mutual_follow = follow_sender_to_rec and follow_rec_to_sender
+    
     # Check if a chat request exists
     request = db.exec(select(ChatRequest).where(
         or_(
@@ -59,7 +70,18 @@ async def send_message(req: MessageSend, current_user: User = Depends(get_curren
             and_(ChatRequest.sender_id == req.receiver_id, ChatRequest.receiver_id == current_user.id)
         )
     )).first()
-    
+
+    if not mutual_follow and (not request or request.status != "accepted"):
+        # Not mutually following and request not accepted.
+        # Allow ONLY ONE message (the first one) to go to requests.
+        msg_count = db.exec(select(DirectMessage).where(
+            DirectMessage.sender_id == current_user.id,
+            DirectMessage.receiver_id == req.receiver_id
+        )).all()
+        # If there are already messages and no accepted follow/request, BLOCK.
+        if len(msg_count) > 0:
+            raise HTTPException(403, "You can only send one message request until they accept, or you must follow each other.")
+            
     if not request:
         # First time message: create a pending request
         request = ChatRequest(sender_id=current_user.id, receiver_id=req.receiver_id, status="pending")
@@ -110,17 +132,27 @@ async def send_message(req: MessageSend, current_user: User = Depends(get_curren
 
 @router.get("/requests/status/{other_user_id}")
 def get_request_status(other_user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
-    request = db.exec(select(ChatRequest).where(
-        or_(
-            and_(ChatRequest.sender_id == current_user.id, ChatRequest.receiver_id == other_user_id),
-            and_(ChatRequest.sender_id == other_user_id, ChatRequest.receiver_id == current_user.id)
-        )
+    from app.models.models import UserFollow
+    # Check if current_user sent a follow request to other_user
+    sent = db.exec(select(UserFollow).where(
+        UserFollow.follower_id == current_user.id,
+        UserFollow.following_id == other_user_id
     )).first()
-    
-    return {
-        "status": request.status if request else "none",
-        "is_initiator": request.sender_id == current_user.id if request else False
-    }
+
+    # Check if other_user sent a follow request to current_user
+    received = db.exec(select(UserFollow).where(
+        UserFollow.follower_id == other_user_id,
+        UserFollow.following_id == current_user.id
+    )).first()
+
+    if sent and received and sent.status == "accepted" and received.status == "accepted":
+        return {"status": "accepted", "is_initiator": True}
+    if sent:
+        return {"status": sent.status, "is_initiator": True}
+    if received:
+        return {"status": received.status, "is_initiator": False}
+
+    return {"status": "none", "is_initiator": False}
 
 
 @router.post("/requests/handle")
@@ -276,14 +308,15 @@ def get_user_directory(current_user: User = Depends(get_current_user), db: Sessi
     statement = select(User).where(User.id != current_user.id).limit(100)
     users = db.exec(statement).all()
     
+    from app.models.models import UserFollow
     # Get request statuses for all these users
-    requests = db.exec(select(ChatRequest).where(
-        or_(ChatRequest.sender_id == current_user.id, ChatRequest.receiver_id == current_user.id)
+    requests = db.exec(select(UserFollow).where(
+        or_(UserFollow.follower_id == current_user.id, UserFollow.following_id == current_user.id)
     )).all()
     
     request_map = {}
     for r in requests:
-        other_id = r.receiver_id if r.sender_id == current_user.id else r.sender_id
+        other_id = r.following_id if r.follower_id == current_user.id else r.follower_id
         request_map[other_id] = r
     
     five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
@@ -292,7 +325,7 @@ def get_user_directory(current_user: User = Depends(get_current_user), db: Sessi
     for u in users:
         req = request_map.get(u.id)
         status = req.status if req else "none"
-        is_initiator = req.sender_id == current_user.id if req else False
+        is_initiator = req.follower_id == current_user.id if req else False
         
         # Real-time online check
         is_online = u.id in user_to_sid or (u.last_seen > five_mins_ago if u.last_seen else False)
@@ -318,15 +351,16 @@ def get_user_directory(current_user: User = Depends(get_current_user), db: Sessi
     for u in users:
         req = request_map.get(u.id)
         status = req.status if req else "none"
-        is_initiator = req.sender_id == current_user.id if req else False
+        is_initiator = req.follower_id == current_user.id if req else False
         is_online = u.id in user_to_sid or (u.last_seen > five_mins_ago if u.last_seen else False)
         
         last_msg = last_msg_map.get(u.id)
         
         user_list.append({
-            "id": u.id, 
-            "name": u.name or u.email.split("@")[0], 
-            "email": u.email, 
+            "id": u.id,
+            "name": u.name or u.email.split("@")[0],
+            "username": u.username,
+            "email": u.email,
             "avatar": u.avatar,
             "role": u.role,
             "last_seen": u.last_seen.isoformat() if u.last_seen else None,
@@ -340,7 +374,7 @@ def get_user_directory(current_user: User = Depends(get_current_user), db: Sessi
                 "sender_id": last_msg.sender_id if last_msg else None
             } if last_msg else None
         })
-        
+
     return {"users": user_list}
 
 @router.get("/search")
