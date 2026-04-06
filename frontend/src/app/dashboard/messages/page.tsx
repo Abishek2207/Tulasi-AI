@@ -927,7 +927,21 @@ export default function MessagesPage() {
                     {u.username && <div style={{ fontSize: 11, color: "rgba(139,92,246,0.7)", fontWeight: 700, marginBottom: 2 }}>@{u.username}</div>}
                     <div style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: 180 }}>
                       {u.request_status === "pending" && !u.is_initiator ? (
-                        <span style={{ color: "#F59E0B", fontWeight: 700 }}>📩 Sent you a follow request</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                          <span style={{ color: "#F59E0B", fontWeight: 700, fontSize: 11 }}>📩 New Request</span>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setActiveUser(u); handleChatRequest("reject"); }}
+                              style={{ flex: 1, padding: "6px", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#EF4444", fontSize: 10, fontWeight: 800, cursor: "pointer" }}>
+                              Reject
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setActiveUser(u); handleChatRequest("accept"); }}
+                              style={{ flex: 1, padding: "6px", borderRadius: 8, background: "white", border: "none", color: "black", fontSize: 10, fontWeight: 900, cursor: "pointer" }}>
+                              Accept
+                            </button>
+                          </div>
+                        </div>
                       ) : u.request_status === "pending" && u.is_initiator ? (
                         <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>⏳ Request pending...</span>
                       ) : (
