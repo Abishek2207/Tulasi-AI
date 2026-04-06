@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-wgwl.onrender.com";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-hycl.onrender.com";
 
 const nextConfig = {
   reactStrictMode: true,

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tulasi-ai-wgwl.onrender.com';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tulasi-ai-hycl.onrender.com';
     const parsedUrl = backendUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
     
     const response = await fetch(`${parsedUrl}/api/health`, {
