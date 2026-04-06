@@ -84,7 +84,7 @@ def set_username(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.username:
+    if current_user.username and current_user.username.strip():
         raise HTTPException(status_code=400, detail="Username already set")
         
     username = data.username.lower()
@@ -104,15 +104,17 @@ def set_username(
 
 @router.get("/search")
 def search_users(q: str, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-    """Search for users by username."""
-    if not q or len(q) < 2:
-        return {"users": []}
-    
-    # Needs wildcard for partial match
-    statement = select(User).where(
-        (User.id != current_user.id) &
-        (User.username.ilike(f"%{q}%"))
-    ).limit(50)
+    """Search for users by username or name."""
+    if not q or len(q.strip()) < 1:
+        # Return full user list when search empty
+        statement = select(User).where(User.id != current_user.id).limit(50)
+    else:
+        # Case-insensitive search, partial matching
+        statement = select(User).where(
+            (User.id != current_user.id) &
+            ((User.username.ilike(f"%{q}%")) | (User.name.ilike(f"%{q}%")))
+        ).limit(50)
+        
     users = db.exec(statement).all()
     
     # Map following logic

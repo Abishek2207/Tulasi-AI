@@ -28,10 +28,12 @@ async def follow_user(user_id: int, current_user: User = Depends(get_current_use
     if existing:
         return {"status": "success", "follow_status": existing.status}
         
+    status = "pending" if target.is_private else "accepted"
+        
     new_follow = UserFollow(
         follower_id=current_user.id,
         following_id=user_id,
-        status="pending",
+        status=status,
         created_at=datetime.now(timezone.utc)
     )
     db.add(new_follow)
@@ -42,12 +44,18 @@ async def follow_user(user_id: int, current_user: User = Depends(get_current_use
     from app.core.socket_server import sio, user_to_sid
     sid = user_to_sid.get(user_id)
     if sid:
-        await sio.emit("follow_request", {
-            "follower_id": current_user.id,
-            "follower_username": current_user.username
-        }, to=sid)
-        
-    return {"status": "success", "follow_status": "pending"}
+        if status == "pending":
+            await sio.emit("follow_request", {
+                "follower_id": current_user.id,
+                "follower_username": current_user.username
+            }, to=sid)
+        else:
+            await sio.emit("follow_accepted", {
+                "follower_id": current_user.id,
+                "follower_username": current_user.username
+            }, to=sid)
+            
+    return {"status": "success", "follow_status": status}
 
 
 @router.patch("/{user_id}/accept")
