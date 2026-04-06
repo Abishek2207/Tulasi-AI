@@ -198,6 +198,9 @@ def get_me(current_user: User = Depends(get_current_user)):
         "pro_expiry_date": "Unlimited Lifetime Access",
         "user_type": getattr(current_user, "user_type", "student") or "student",
         "is_onboarded": getattr(current_user, "is_onboarded", False) or False,
+        "department": current_user.department,
+        "target_role": current_user.target_role,
+        "interest_areas": current_user.interest_areas,
     }
 
 
