@@ -26,7 +26,7 @@ class IdeaResponse(BaseModel):
     user_username: Optional[str] = None
     user_avatar: Optional[str] = None
     content: str
-    tags: str
+    tags: Optional[str] = ""
     likes_count: int
     comments_count: int
     is_liked_by_me: bool
@@ -37,7 +37,7 @@ class IdeaResponse(BaseModel):
 async def create_idea(idea_in: IdeaCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
     new_idea = Idea(
         user_id=current_user.id,
-        content=idea_in.content,
+        content=idea_in.content or "",
         tags=idea_in.tags or "",
         created_at=datetime.now(timezone.utc)
     )
@@ -48,11 +48,11 @@ async def create_idea(idea_in: IdeaCreate, db: Session = Depends(get_session), c
     resp = IdeaResponse(
         id=new_idea.id,
         user_id=current_user.id,
-        user_name=current_user.name,
+        user_name=current_user.name or "User",
         user_username=current_user.username,
         user_avatar=current_user.avatar,
-        content=new_idea.content,
-        tags=new_idea.tags,
+        content=new_idea.content or "",
+        tags=new_idea.tags or "",
         likes_count=0,
         comments_count=0,
         is_liked_by_me=False,
@@ -76,7 +76,7 @@ async def get_feed(
     db: Session = Depends(get_session), 
     current_user: User = Depends(get_current_user)
 ):
-    if tab == "personal":
+    if tab == "personal" or tab == "network":
         # Get ideas from users I follow (accepted state)
         following_ids_stmt = select(UserFollow.following_id).where(
             UserFollow.follower_id == current_user.id,
@@ -109,13 +109,13 @@ async def get_feed(
         results.append(IdeaResponse(
             id=idea.id,
             user_id=creator.id,
-            user_name=creator.name,
+            user_name=creator.name or "User",
             user_username=creator.username,
             user_avatar=creator.avatar,
-            content=idea.content,
-            tags=idea.tags,
-            likes_count=idea.likes_count,
-            comments_count=idea.comments_count,
+            content=idea.content or "",
+            tags=idea.tags or "",
+            likes_count=idea.likes_count or 0,
+            comments_count=idea.comments_count or 0,
             is_liked_by_me=liked,
             is_following_creator=follow_map.get(creator.id) == "accepted",
             created_at=idea.created_at

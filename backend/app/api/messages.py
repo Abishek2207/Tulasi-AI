@@ -302,7 +302,7 @@ def get_conversation(other_user_id: int, current_user: User = Depends(get_curren
 
 @router.get("/users/directory")
 def get_user_directory(current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     from app.core.socket_server import user_to_sid
     
     statement = select(User).where(User.id != current_user.id).limit(100)
@@ -319,20 +319,8 @@ def get_user_directory(current_user: User = Depends(get_current_user), db: Sessi
         other_id = r.following_id if r.follower_id == current_user.id else r.follower_id
         request_map[other_id] = r
     
-    five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
-    
-    user_list = []
-    for u in users:
-        req = request_map.get(u.id)
-        status = req.status if req else "none"
-        is_initiator = req.follower_id == current_user.id if req else False
-        
-        # Real-time online check
-        is_online = u.id in user_to_sid or (u.last_seen > five_mins_ago if u.last_seen else False)
-        
-    # Optional: Optimise last messages fetch in bulk
-    # For simplicity and speed for <100 users, we fetch the max created_at per conversation partner
-    user_ids = [u.id for u in users]
+    five_mins_ago_aware = datetime.now(timezone.utc) - timedelta(minutes=5)
+    five_mins_ago_naive = datetime.utcnow() - timedelta(minutes=5)
     
     # Subquery to get the latest message for current_user per partner
     # Note: This is an approximation for performance; in high scale we'd use a dedicated RecentConversation table.
@@ -352,8 +340,16 @@ def get_user_directory(current_user: User = Depends(get_current_user), db: Sessi
         req = request_map.get(u.id)
         status = req.status if req else "none"
         is_initiator = req.follower_id == current_user.id if req else False
-        is_online = u.id in user_to_sid or (u.last_seen > five_mins_ago if u.last_seen else False)
         
+        is_online = False
+        if u.id in user_to_sid:
+            is_online = True
+        elif u.last_seen:
+            if u.last_seen.tzinfo is not None:
+                is_online = u.last_seen > five_mins_ago_aware
+            else:
+                is_online = u.last_seen > five_mins_ago_naive
+                
         last_msg = last_msg_map.get(u.id)
         
         user_list.append({
