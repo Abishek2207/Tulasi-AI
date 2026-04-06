@@ -81,9 +81,12 @@ def init_db():
     from app.models.models import (
         User, Hackathon, StudyRoom, Review, UserFeedback, UserMemoryChunk, 
         GroupMessage, SavedResume, HackathonBookmark, HackathonApplication,
-        DirectMessage, ChatRequest, UserFollow, Idea, IdeaLike, 
+        DirectMessage, ChatRequest, UserFollow, Idea, IdeaLike, IdeaComment,
         ActivityLog, UserProgress, SolvedProblem, Roadmap, RoadmapStep, 
-        UserBadge, Reward, StudyRoomMessage, SavedStartupIdea, Group, GroupMember
+        UserBadge, Reward, StudyRoomMessage, SavedStartupIdea, Group, GroupMember,
+        ChatMessage, ChatSession, Certificate, PersistentInterviewSession,
+        Internship, PrepPlan, Announcement, InviteCode, DailyChallenge,
+        DailyChallengeSubmission, MentorInsight
     )
     
     try:

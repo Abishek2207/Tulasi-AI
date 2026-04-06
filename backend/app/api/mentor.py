@@ -37,8 +37,9 @@ async def trigger_mentor_insight(user_id: int, context_type: str, action_desc: s
         insight_text = await generate_mentor_insight(user_id, context_type, action_desc)
         
         # Save to DB
-        from app.core.database import SessionLocal
-        with SessionLocal() as db:
+        from app.core.database import engine
+        from sqlmodel import Session
+        with Session(engine) as db:
             insight = MentorInsight(
                 user_id=user_id,
                 context_type=context_type,
