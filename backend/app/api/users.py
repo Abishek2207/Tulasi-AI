@@ -173,6 +173,62 @@ def get_referral_stats(
     }
 
 
+@router.post("/avatar/upload")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Upload a profile avatar image.
+    Saves to data/avatars/<user_id>.<ext> and updates the user's avatar field.
+    Returns the public URL usable in the frontend.
+    """
+    ALLOWED_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"}
+    MAX_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
+
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Only JPG, PNG, WebP and GIF images are allowed.")
+
+    contents = await file.read()
+    if len(contents) > MAX_SIZE_BYTES:
+        raise HTTPException(status_code=400, detail="Image must be under 5 MB.")
+
+    # Resize using Pillow if available (keeps file small)
+    if Image is not None:
+        try:
+            img = Image.open(io.BytesIO(contents)).convert("RGBA")
+            img.thumbnail((512, 512), Image.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            contents = buf.getvalue()
+            ext = "png"
+        except Exception:
+            ext = (file.filename or "avatar.jpg").rsplit(".", 1)[-1].lower()
+    else:
+        ext = (file.filename or "avatar.jpg").rsplit(".", 1)[-1].lower()
+
+    # Save to disk
+    avatars_dir = os.path.join("data", "avatars")
+    os.makedirs(avatars_dir, exist_ok=True)
+    filename = f"{current_user.id}.{ext}"
+    filepath = os.path.join(avatars_dir, filename)
+    with open(filepath, "wb") as f:
+        f.write(contents)
+
+    # Build the public URL — served by FastAPI's StaticFiles mount at /data
+    base_url = os.getenv("API_BASE_URL", "https://tulasi-ai-hycl.onrender.com")
+    avatar_url = f"{base_url}/data/avatars/{filename}"
+
+    # Persist to DB immediately
+    current_user.avatar = avatar_url
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+
+    return {"status": "success", "avatar_url": avatar_url}
+
+
 @router.post("/avatar/remove-bg")
 async def remove_avatar_bg(
     file: UploadFile = File(...),
