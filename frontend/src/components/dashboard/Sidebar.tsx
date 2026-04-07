@@ -254,12 +254,13 @@ export default function Sidebar() {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{
               width: 40, height: 40, borderRadius: 14,
-              background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
+              background: currentUser.avatar ? `url(${currentUser.avatar}) center/cover no-repeat` : "linear-gradient(135deg, #8B5CF6, #06B6D4)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontWeight: 900, fontSize: 15, color: "white", flexShrink: 0,
               boxShadow: "0 8px 16px rgba(139,92,246,0.4)",
+              overflow: "hidden"
             }}>
-              {(currentUser.name || currentUser.email || "U")[0].toUpperCase()}
+              {!currentUser.avatar && (currentUser.name || currentUser.email || "U")[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.3px" }}>
