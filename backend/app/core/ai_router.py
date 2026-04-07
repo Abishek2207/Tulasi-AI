@@ -42,13 +42,15 @@ def resilient_ai_response(
     prompt: str,
     fallback: any,
     force_model: Optional[str] = "complex_reasoning",
-    is_json: bool = True
+    is_json: bool = True,
+    return_str: bool = False
 ):
     """
     Universal Safety Guard: Ensures an AI request NEVER returns 500.
     1. Calls get_ai_response
-    2. If is_json=True, extracts and parses JSON using a multi-stage approach
-    3. On any failure, returns the provided fallback
+    2. If is_json=True, extracts and cleans JSON
+    3. If return_str=True, returns the cleaned JSON string
+    4. Otherwise, returns the parsed object
     """
     import json, re
     try:
@@ -73,6 +75,9 @@ def resilient_ai_response(
             cleaned = re.sub(r',\s*\}', '}', cleaned)
             cleaned = re.sub(r',\s*\]', ']', cleaned)
             
+            if return_str:
+                return cleaned
+
             # 3. Defensive Parsing
             try:
                 return json.loads(cleaned)
