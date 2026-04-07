@@ -40,6 +40,7 @@ interface SessionData {
 export function useSession() {
   const [data, setData] = useState<SessionData | null>(null);
   const [status, setStatus] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
+  const [isRehydrating, setIsRehydrating] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -165,7 +166,9 @@ export function useSession() {
       }
     }
 
-    init();
+    init().finally(() => {
+      if (mounted) setIsRehydrating(false);
+    });
 
     // ── Supabase auth state listener (OAuth only — NEVER overrides local JWT) ──
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -217,7 +220,7 @@ export function useSession() {
     window.dispatchEvent(new Event("tulasi-auth-change"));
   };
 
-  return { data, status, update };
+  return { data, status, update, isRehydrating };
 }
 
 export async function signOut({ callbackUrl }: { callbackUrl?: string } = {}) {
