@@ -312,6 +312,34 @@ async function request<T>(
   }
 }
 
+/**
+ * Safely extract and parse JSON from a potentially messy string (markdown blocks, chatty AI).
+ */
+export function extractAndParseJson<T>(raw: string, fallback: T): T {
+  try {
+    let cleaned = raw.trim();
+    
+    // 1. Try to find an array or object structure [ or { ... ] or }
+    const match = cleaned.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+    if (match) {
+      cleaned = match[0];
+    }
+
+    // 2. Remove common markdown backticks
+    if (cleaned.includes("```")) {
+      cleaned = cleaned.replace(/```[a-z]*\s*|\s*```/gi, "").trim();
+    }
+
+    // 3. Clean up trailing commas before closing braces/brackets
+    cleaned = cleaned.replace(/,\s*([\}\]])/g, "$1");
+
+    return JSON.parse(cleaned) as T;
+  } catch (e) {
+    console.warn("[AI Resilience] Global parse failed. Using fallback.", e);
+    return fallback;
+  }
+}
+
 // ─── Admin ───────────────────────────────────────────────────────────────────
 export const adminApi = {
   stats: () => request<Stats>("/api/admin/stats"),

@@ -47,7 +47,7 @@ def resilient_ai_response(
     """
     Universal Safety Guard: Ensures an AI request NEVER returns 500.
     1. Calls get_ai_response
-    2. If is_json=True, extracts and parses JSON
+    2. If is_json=True, extracts and parses JSON using a multi-stage approach
     3. On any failure, returns the provided fallback
     """
     import json, re
@@ -55,27 +55,37 @@ def resilient_ai_response(
         raw = get_ai_response(prompt, force_model=force_model)
         
         if is_json:
-            # 1. Broad extraction of JSON-like structures
-            match = re.search(r'(\{.*\}|\[.*\])', raw, re.DOTALL)
-            
-            if not match:
-                # If no clear JSON markers, try to use the raw response if it looks like it could be JSON
-                cleaned = raw.strip()
+            # 1. More aggressive JSON extraction logic
+            # First, try to find Markdown blocks: ```json ... ```
+            json_blocks = re.findall(r'```(?:json)?\s*([\s\S]*?)\s*```', raw)
+            if json_blocks:
+                cleaned = json_blocks[0].strip()
             else:
-                cleaned = match.group().strip()
+                # If no markdown blocks, find the first '{' or '[' and the last '}' or ']'
+                start_match = re.search(r'[\[\{]', raw)
+                end_match = re.search(r'[\]\}](?=[^\]\}]*$)', raw)
+                if start_match and end_match:
+                    cleaned = raw[start_match.start():end_match.end()]
+                else:
+                    cleaned = raw.strip()
             
-            # 2. Markdown removal (common in LLM outputs)
-            if "```" in cleaned:
-                cleaned = re.sub(r'```[a-z]*\n|```', '', cleaned).strip()
+            # 2. Sanitize common LLM formatting artifacts (trailing commas)
+            cleaned = re.sub(r',\s*\}', '}', cleaned)
+            cleaned = re.sub(r',\s*\]', ']', cleaned)
             
-            # 3. Final sanitization (newlines in strings, trailing commas)
-            # This is a bit aggressive but helps with poor formatting
-            # cleaned = re.sub(r',\s*\}', '}', cleaned)
-            # cleaned = re.sub(r',\s*\]', ']', cleaned)
-                
+            # 3. Defensive Parsing
             try:
                 return json.loads(cleaned)
             except json.JSONDecodeError:
+                # One last attempt: find the actual start of the object if there was leading garbage
+                try:
+                    start_idx = cleaned.find('{')
+                    if start_idx == -1: start_idx = cleaned.find('[')
+                    if start_idx != -1:
+                        return json.loads(cleaned[start_idx:])
+                except:
+                    pass
+                
                 print(f"⚠️ [AI Safety Guard] JSON Decode failed. Raw: {raw[:100]}...")
                 return fallback
         
