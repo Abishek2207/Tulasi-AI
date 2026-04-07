@@ -214,6 +214,12 @@ app.include_router(signaling.router, prefix="/api/voice/signal", tags=["WebRTC S
 from app.core.socket_server import socket_app
 app.mount("/socket.io", socket_app)
 
+# ── Static Media Files (Allows Media Uploads to Load) ───────────────
+from fastapi.staticfiles import StaticFiles
+os.makedirs("data/chat_media", exist_ok=True)
+app.mount("/data", StaticFiles(directory="data"), name="data")
+
+
 
 # ── Root Endpoint ──────────────────────────────────────────────────
 @app.get("/")

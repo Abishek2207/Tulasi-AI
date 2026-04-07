@@ -62,10 +62,19 @@ async def create_idea(idea_in: IdeaCreate, db: Session = Depends(get_session), c
     
     # Trigger AI Mentor hook
     try:
+        import asyncio
         from app.api.mentor import trigger_mentor_insight
         asyncio.create_task(trigger_mentor_insight(current_user.id, "idea", f"Posted idea: {new_idea.content[:50]}..."))
     except Exception as e:
         logger.error(f"Mentor insight trigger failed: {e}")
+        
+    # Broadcast to realtime feed
+    try:
+        import asyncio
+        import json
+        asyncio.create_task(sio.emit("new_idea", json.loads(resp.model_dump_json()), room="feed"))
+    except Exception as e:
+        logger.error(f"Realtime Feed Broadcast failed: {e}")
     
     return resp
 
