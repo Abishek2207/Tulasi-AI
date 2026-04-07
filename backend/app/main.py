@@ -21,7 +21,7 @@ ALLOW_ORIGINS = [
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://tulasiai.vercel.app",
+    "https://tulasiai.in",
     "https://tulasi-ai.vercel.app",
     "https://tulasi-ai-hycl.onrender.com",
     "https://tulasiai.in",
@@ -119,7 +119,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     origin = request.headers.get("origin", "*")
     # For error transparency, we allow the requesting origin if it looks like our app
     is_valid_origin = origin in ALLOW_ORIGINS or ".vercel.app" in origin
-    headers = {"Access-Control-Allow-Origin": origin if is_valid_origin else "https://tulasiai.vercel.app", "Access-Control-Allow-Credentials": "true"}
+    headers = {"Access-Control-Allow-Origin": origin if is_valid_origin else "https://tulasiai.in", "Access-Control-Allow-Credentials": "true"}
     
     # Returning plain text traceback with CORS headers to avoid silent browser blockers
     return PlainTextResponse(

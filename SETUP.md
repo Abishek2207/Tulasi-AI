@@ -66,7 +66,7 @@ Because Vercel Hobby accounts strictly prohibit automated cron jobs running more
 1. Go to [Cron-job.org](https://cron-job.org/) and create a free account.
 2. Click **Create Cronjob**.
 3. Set the **Title** to `Tulasi AI Keep-Alive`.
-4. Set the **URL** to: `https://tulasiai.vercel.app/api/cron/keep-alive`
+4. Set the **URL** to: `https://tulasiai.in/api/cron/keep-alive`
 5. Set the **Execution schedule** to every **5 minutes**.
 6. Save and enable it. 
 

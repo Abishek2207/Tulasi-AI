@@ -71,10 +71,10 @@ export default function PlatformGuidesPage() {
         </p>
       </div>
 
-      <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+      <div className="mobile-stack" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
         
         {/* Left Nav */}
-        <div style={{ width: 250, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ width: "100%", maxWidth: 250, display: "flex", flexDirection: "column", gap: 12 }}>
           {GUIDES.map(guide => (
             <button
               key={guide.id}

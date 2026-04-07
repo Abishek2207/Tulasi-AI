@@ -22,7 +22,7 @@ router = APIRouter()
 @router.post("/create-checkout-session")
 def create_checkout_session(request: Request, user: User = Depends(get_current_user), db: Session = Depends(get_session)):
     try:
-        frontend_url = os.getenv("FRONTEND_URL", "https://tulasiai.vercel.app")
+        frontend_url = os.getenv("FRONTEND_URL", "https://tulasiai.in")
         # Define the Pro Plan price ID or use an inline price data object
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],

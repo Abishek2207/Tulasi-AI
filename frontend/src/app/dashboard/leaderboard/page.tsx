@@ -54,7 +54,7 @@ export default function LeaderboardPage() {
     });
 
     const shareText = `🚀 I just reached Rank #${userContext.rank} on Tulasi AI with ${userContext.xp.toLocaleString()} XP! 🔥 Join the elite circle of learners at Tulasi AI. @TulasiAI #TulasiAI #LearningGoal`;
-    const shareUrl = "https://tulasiai.vercel.app";
+    const shareUrl = "https://tulasiai.in";
 
     if (navigator.share) {
       try {

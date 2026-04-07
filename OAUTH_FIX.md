@@ -1,6 +1,6 @@
 # Resolving Google OAuth Error 400 & Deployment Configuration
 
-Your frontend is officially hosted at: **https://tulasiai.vercel.app**
+Your frontend is officially hosted at: **https://tulasiai.in**
 
 To connect everything securely and fix all lingering issues, you **MUST** do the following two things outside of the code editor:
 
@@ -12,7 +12,7 @@ The error `redirect_uri_mismatch` happens because Google only allows logins from
 4. **DELETE** all old Vercel URLs.
 5. **ADD** exactly this URL:
    ```text
-   https://tulasiai.vercel.app/api/auth/callback/google
+   https://tulasiai.in/api/auth/callback/google
    ```
 6. Click **Save**.
 
@@ -25,11 +25,11 @@ Vercel does **NOT** read your local `.env.local` file. You must manually add the
 | Key | Value |
 | :--- | :--- |
 | `NEXT_PUBLIC_API_URL` | `https://tulasi-ai-wgwl.onrender.com` |
-| `NEXTAUTH_URL` | `https://tulasiai.vercel.app` |
+| `NEXTAUTH_URL` | `https://tulasiai.in` |
 | `NEXTAUTH_SECRET` | `9fKxP2vQ7Zt8Lw3NmR5uY1aBcDeFgHiJkLmNoPqRsTu=` |
 | `GOOGLE_ID` | *(Copy from your local .env.local)* |
 | `GOOGLE_SECRET` | *(Copy from your local .env.local)* |
 
 4. After saving these variables in Vercel, you **MUST TRIGGER A NEW DEPLOYMENT** (Click Deployments > Redeploy).
 
-Once you do these two steps, the entire application will seamlessly connect to `https://tulasiai.vercel.app` without any API or Login failures!
+Once you do these two steps, the entire application will seamlessly connect to `https://tulasiai.in` without any API or Login failures!
