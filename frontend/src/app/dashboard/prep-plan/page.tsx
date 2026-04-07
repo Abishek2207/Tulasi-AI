@@ -34,21 +34,25 @@ export default function PrepPlanPage() {
 
   const handleGenerate = async () => {
     setLoading(true);
-    const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${API_URL}/api/prep-plan/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ role, duration_months: duration }),
-      });
-      if (res.ok) {
-        toast.success("Prep plan generated!");
-        fetchPlans();
-      } else {
-        toast.error("Failed to generate plan");
+      const { chatApi, extractAndParseJson } = await import("@/lib/api");
+      
+      const message = `Generate a highly-curated, week-by-week preparation plan for a ${role} over a ${duration} month period.
+      Include specific tasks, resources, and goals for each week in the required JSON structure.`;
+
+      const response = await chatApi.send(message, undefined, "prep_plan");
+      
+      const data = extractAndParseJson<any>(response.response, { title: "New Plan", weeks: [] });
+      
+      if (!data || !data.weeks) {
+        throw new Error("Invalid prep plan structure received.");
       }
-    } catch (e) {
-      toast.error("Error generating plan");
+
+      toast.success("Neural Blueprint Synthesized.");
+      fetchPlans(); // The backend 'prep_plan' tool ID should handle the DB save
+    } catch (e: any) {
+      console.error("[PrepPlan] Generation failed:", e);
+      toast.error(e.message || "Error generating plan");
     } finally {
       setLoading(false);
     }

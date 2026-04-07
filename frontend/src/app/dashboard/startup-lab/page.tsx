@@ -86,10 +86,32 @@ export default function StartupLabPage() {
     setPitchDeck(null);
 
     try {
-      const data = await startupApi.generate(domain, audience, token);
-      setIdea(data.idea as unknown as DisplayStartupIdea);
+      const { chatApi, extractAndParseJson } = await import("@/lib/api");
+      
+      const message = `Generate a startup idea in the domain of ${domain} for an audience of ${audience}.
+      Provide a detailed idea including name, problem, solution, market opportunity, tech stack, and monetization strategy in the required JSON structure.`;
+
+      const response = await chatApi.send(message, undefined, "startup_lab");
+      
+      const data = extractAndParseJson<any>(response.response, { 
+        name: "Idea Generating...", 
+        problem: "", 
+        solution: "", 
+        market_opportunity: "", 
+        tech_stack: [], 
+        monetization: "" 
+      });
+      
+      // Handle cases where the AI might return the idea directly or wrapped in 'idea'
+      const ideaContent = data.idea || data;
+      if (!ideaContent || !ideaContent.name) {
+        throw new Error("Invalid startup idea structure received.");
+      }
+
+      setIdea(ideaContent as DisplayStartupIdea);
       setSaved(false);
     } catch (err: any) {
+      console.error("[StartupLab] Generation failed:", err);
       setError(err.message || "Failed to reach the AI servers.");
     }
     setLoading(false);

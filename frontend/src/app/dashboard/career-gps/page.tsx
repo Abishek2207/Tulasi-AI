@@ -68,20 +68,26 @@ export default function CareerGPSPage() {
 
   const handleGenerate = async (isRetry = false) => {
     setLoading(true); setError(""); if (!isRetry) setResult(null); setRetrying(false);
-    const token = getToken();
     try {
-      const res = await fetch(`${API}/api/intel/career-gps`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ year, target_role: role, current_skills: skills }),
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.detail || d.error || "GPS generation failed");
-      setResult(d);
-      const recommended = d.paths?.findIndex((p: any) => p.id === d.recommendation);
+      const { chatApi, extractAndParseJson } = await import("@/lib/api");
+      
+      const message = `Generate a Career GPS for a ${year.replace("_", " ")} student targeting the role of ${role}. ${skills ? `My skills: ${skills}` : ""}.
+      Please provide exactly 3 paths (fast_track, balanced, conservative) in the required JSON structure.`;
+
+      const response = await chatApi.send(message, undefined, "career_gps");
+      
+      const data = extractAndParseJson<any>(response.response, { paths: [] });
+      
+      if (!data || !data.paths || data.paths.length === 0) {
+        throw new Error("Invalid data structure received from AI.");
+      }
+
+      setResult(data);
+      const recommended = data.paths?.findIndex((p: any) => p.id === data.recommendation);
       setSelectedPath(recommended >= 0 ? recommended : 0);
     } catch (e: any) {
-      setError(e.message || "Career GPS failed. Retrying...");
+      console.error("[CareerGPS] Generation failed:", e);
+      setError(e.message || "Career GPS generation failed. Please try again.");
       setRetrying(true);
     }
     setLoading(false);
