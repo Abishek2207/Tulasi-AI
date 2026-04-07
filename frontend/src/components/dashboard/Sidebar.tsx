@@ -117,13 +117,6 @@ export default function Sidebar() {
       {/* Premium Ambient Background */}
       <div className="bg-dot" style={{ position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none" }} />
       <div className="neural-pulse" style={{ position: "absolute", top: "20%", left: "-20%", width: "100%", height: "40%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)", pointerEvents: "none" }} />
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div 
-          onClick={() => dispatch(toggleSidebar())}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: -1 }} 
-        />
-      )}
       {/* Logo */}
       <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <motion.div whileHover={{ scale: 1.02 }} style={{ display: "flex", alignItems: "center", gap: 10 }}>

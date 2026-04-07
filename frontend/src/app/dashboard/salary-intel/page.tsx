@@ -130,10 +130,10 @@ export default function SalaryIntelPage() {
           </p>
         </motion.div>
 
-        <div style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div className="mobile-stack" style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
           {/* Input Panel */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
-            style={{ width: 300, flexShrink: 0, minWidth: 260 }}>
+            style={{ width: "100%", maxWidth: 300, flexShrink: 0 }}>
             <div style={{ padding: 28, position: "sticky", top: 20, background: "rgba(255,255,255,0.02)", borderRadius: 28, border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(20px)" }}>
               <div style={{ fontSize: 10, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1.5, marginBottom: 24, textTransform: "uppercase" }}>Configure Query</div>
 
@@ -244,7 +244,7 @@ export default function SalaryIntelPage() {
                       </div>
 
                       {/* Big Numbers */}
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginBottom: 32 }}>
                         {[
                           { label: "Minimum", val: result.salary_range?.min_lpa, color: "#F43F5E", icon: "📉" },
                           { label: "Median", val: result.salary_range?.median_lpa, color: "#10B981", icon: "📊" },
@@ -348,7 +348,7 @@ export default function SalaryIntelPage() {
                   )}
 
                   {/* Insights + Skills Grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
                     {result.key_insights?.length > 0 && (
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                         style={{ padding: 24, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>

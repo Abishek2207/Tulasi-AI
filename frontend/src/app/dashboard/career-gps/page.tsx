@@ -129,10 +129,10 @@ export default function CareerGPSPage() {
           </p>
         </motion.div>
 
-        <div style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div className="mobile-stack" style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
           {/* Config Panel */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
-            style={{ width: 300, flexShrink: 0, minWidth: 260 }}>
+            style={{ width: "100%", maxWidth: 300, flexShrink: 0 }}>
             <div style={{ padding: 28, position: "sticky", top: 20, display: "flex", flexDirection: "column", gap: 24, background: "rgba(255,255,255,0.02)", borderRadius: 28, border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(20px)" }}>
               {/* Year selector */}
               <div>
@@ -222,7 +222,7 @@ export default function CareerGPSPage() {
               {result && (
                 <motion.div key="result-content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                   {/* Path Selector */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12, marginBottom: 24 }}>
                     {result.paths?.map((path: any, i: number) => (
                       <motion.div key={i}
                         whileHover={{ scale: 1.03, y: -4 }}
@@ -283,7 +283,7 @@ export default function CareerGPSPage() {
                         </div>
 
                         {/* Stats */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 24 }}>
                           {[
                             { icon: <Clock size={14} />, label: "Timeline", val: `${activePath.timeline_months} months` },
                             { icon: <Target size={14} />, label: "Top Skills", val: activePath.key_skills?.slice(0, 2).join(", ") || "—" },

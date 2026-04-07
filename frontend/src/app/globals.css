@@ -359,6 +359,44 @@ select:focus {
   border-radius: 18px 18px 4px 18px;
   box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);
 }
+
+/* ── MOBILE RESPONSIVENESS UTILITIES ── */
+.mobile-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+@media (max-width: 768px) {
+  .card-padding {
+    padding: 16px !important;
+  }
+  .mobile-hide {
+    display: none !important;
+  }
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-center-text {
+    text-align: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .card-padding {
+    padding: 40px 48px !important;
+  }
+}
+
+.glass-panel {
+  background: rgba(13, 13, 20, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+}
+
 .chat-bubble-ai {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
