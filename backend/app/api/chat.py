@@ -194,16 +194,21 @@ def chat(
     response_text = ""
     
     # 1. Check if we should bypass ReasoningEngine for structured tasks
-    structured_tools = ["flashcards", "roadmap_gen", "json_mode"]
+    structured_tools = [
+        "flashcards", "roadmap_gen", "career_gps", 
+        "salary_intel", "startup_lab", "interview_prep",
+        "project_architect", "prep_plan", "json_mode"
+    ]
     use_direct = tool in structured_tools or "JSON" in req.message or "[ARRAY]" in req.message
 
     if use_direct:
         try:
             from app.core.ai_router import resilient_ai_response
             # Use resilient_ai_response for tools that expect JSON
+            _fallback = "[]" if tool in ["flashcards", "roadmap_gen"] else "{}"
             response_text = resilient_ai_response(
                 req.message, 
-                fallback="[]" if tool == "flashcards" else "Error generating response.",
+                fallback=_fallback,
                 force_model="fast_flash", # Use faster model for simple tool generation
                 is_json=True,
                 return_str=True

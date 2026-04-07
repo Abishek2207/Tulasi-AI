@@ -46,10 +46,12 @@ Generate a high-fidelity 'Neural Blueprint' with these EXACT sections:
 Use Markdown for structure but keep it extremely professional and dense with engineering value. No conversational filler.`;
 
     try {
-      const res = await chatApi.send(prompt);
+      const { chatApi } = await import("@/lib/api");
+      const res = await chatApi.send(prompt, undefined, "project_architect");
       setGeneratedIdea(res.response);
       toast.success("Neural Blueprint Synthesized.");
     } catch (err: any) {
+      console.error("[ProjectIdeas] Handshake failed:", err);
       toast.error("Handshake failed. Retrying Neural Sync...");
     } finally {
       setLoading(false);

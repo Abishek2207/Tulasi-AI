@@ -61,17 +61,28 @@ export default function SalaryIntelPage() {
     setLoading(true);
     if (!isRetry) setResult(null);
     setRetrying(false);
-    const token = getToken();
     try {
-      const res = await fetch(`${API}/api/intel/salary-intel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ role, location, yoe }),
+      const { chatApi, extractAndParseJson } = await import("@/lib/api");
+      
+      const message = `Analyze the salary for the role of ${role} in ${location} for someone with ${yoe} years of experience.
+      Please provide a detailed salary report in the required JSON structure including market percentiles and top paying companies.`;
+
+      const response = await chatApi.send(message, undefined, "salary_intel");
+      
+      const data = extractAndParseJson<any>(response.response, { 
+        salary_range: { min_lpa: 0, median_lpa: 0, max_lpa: 0, currency: "INR", unit: "LPA" },
+        market_percentiles: { p25: 0, p50: 0, p75: 0, p90: 0 },
+        top_paying_companies: [],
+        skills_that_boost_salary: []
       });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.detail || d.error || "Analysis failed");
-      setResult(d);
+      
+      if (!data || !data.salary_range) {
+        throw new Error("Invalid salary data structure received.");
+      }
+
+      setResult(data);
     } catch (e: any) {
+      console.error("[SalaryIntel] Analysis failed:", e);
       setRetrying(true);
     }
     setLoading(false);
