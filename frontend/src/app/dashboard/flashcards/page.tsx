@@ -46,15 +46,22 @@ Format strictly as a JSON array of objects with "front" and "back" keys. Example
 [{"front": "Question?", "back": "Answer"}]
 Return ONLY the JSON array, no markdown backticks, no explanatory text.`;
 
-      const res = await chatApi.send(prompt);
+      const res = await chatApi.send(prompt, undefined, "flashcards");
+      // Use resilient parsing
+      let parsedData = extractAndParseJson<any>(res.response, []);
       
-      const parsedData = extractAndParseJson<any[]>(res.response, []);
-      
+      // If AI wrapped the array in an object like { "flashcards": [...] }
+      if (parsedData && !Array.isArray(parsedData) && typeof parsedData === 'object') {
+        const potentialArray = Object.values(parsedData).find(val => Array.isArray(val));
+        if (potentialArray) parsedData = potentialArray;
+      }
+
       if (Array.isArray(parsedData) && parsedData.length > 0) {
         setCards(parsedData);
         toast.success("AI Flashcards Generated!");
       } else {
-        throw new Error("Invalid data structure");
+        console.error("[Flashcards] Generation failed. Raw AI output:", res.response);
+        throw new Error("Invalid structure: AI did not return a valid list of cards. Check console for details.");
       }
     } catch (err: any) {
       console.error("Generation error:", err);
