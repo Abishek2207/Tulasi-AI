@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,7 @@ import { authApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import toast from "react-hot-toast";
-
+import { useBackendWake } from "@/hooks/useBackendWake";
 
 // Password Strength Utility
 function getPasswordStrength(pwd: string) {
@@ -42,6 +42,12 @@ export default function AuthPage() {
     : (process.env.NEXT_PUBLIC_APP_URL || "https://tulasiai.in");
   
   const router = useRouter();
+  const { isOnline, isChecking, wakeNow } = useBackendWake();
+
+  // Wake the backend on mount
+  useEffect(() => {
+    wakeNow();
+  }, [wakeNow]);
 
   const handleGoogleLogin = async () => {
     if (oAuthLoading) return;
@@ -95,6 +101,7 @@ export default function AuthPage() {
         console.log("[Auth] Login successful. Saving token.");
         if (data.access_token) {
           localStorage.setItem("token", data.access_token);
+          document.cookie = `token=${data.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user));
@@ -116,6 +123,7 @@ export default function AuthPage() {
         console.log("[Auth] Registration successful. Saving token.");
         if (data.access_token) {
           localStorage.setItem("token", data.access_token);
+          document.cookie = `token=${data.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user));
@@ -154,6 +162,14 @@ export default function AuthPage() {
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 18, lineHeight: 1.6 }}>
             Join thousand of students building their careers with Tulasi AI Pro. Access advanced roadmaps, mock interviews, and personalized feedback.
           </p>
+          
+          {/* Neural Link Status Indicator */}
+          <div style={{ marginTop: 40, display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 20, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: isChecking ? "#FBBF24" : (isOnline ? "#10B981" : "#EF4444"), boxShadow: `0 0 10px ${isChecking ? "#FBBF24" : (isOnline ? "#10B981" : "#EF4444")}`, animation: isChecking ? "spin 1s linear infinite" : "none" }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", letterSpacing: 0.5 }}>
+              {isChecking ? "Establishing Neural Link..." : (isOnline ? "Neural Engine Active" : "Initializing Deep Sleep Wake")}
+            </span>
+          </div>
         </div>
 
         {/* Abstract Background Elements */}

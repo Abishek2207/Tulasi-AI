@@ -6,7 +6,7 @@ from typing import Optional
 import uuid
 from datetime import date
 
-from app.core.database import get_session
+from app.core.database import get_session, engine
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.config import settings
 from app.models.models import User
@@ -16,6 +16,13 @@ from app.core.rate_limit import limiter
 from app.services.email import email_service
 
 router = APIRouter()
+
+def background_log_login(user_id: int, action_type: str, title: str):
+    with Session(engine) as db:
+        user = db.exec(select(User).where(User.id == user_id)).first()
+        if user:
+            log_activity_internal(user, db, action_type, title)
+            db.commit()
 
 class RegisterRequest(BaseModel):
     email: str
@@ -129,7 +136,7 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
 
 @router.post("/login")
 @limiter.limit("30/minute")
-def login(request: Request, req: LoginRequest, db: Session = Depends(get_session)):
+def login(request: Request, req: LoginRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
     if not req.email or not req.password:
         raise HTTPException(status_code=400, detail="Email and password are required")
         
@@ -147,18 +154,19 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_session
     # Streak and last activity are now handled centrally by log_activity_internal below.
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
+    needs_commit = False
     if user.email.lower() == settings.ADMIN_EMAIL.lower() and user.role != "admin":
         user.role = "admin"
         db.add(user)
+        needs_commit = True
+        
+    if needs_commit:
         db.commit()
         db.refresh(user)
 
-    # ── 🔓 Log Activity ───────────────────────────────────────────
-    log_activity_internal(user, db, "user_login", f"Logged in to platform")
-    db.commit()
+    # ── 🔓 Log Activity In Background ──────────────────────────────
+    background_tasks.add_task(background_log_login, user.id, "user_login", "Logged in to platform")
     # ─────────────────────────────────────────────────────────────
-    # ─────────────────────────────────────────────────────────────────
-    # ─────────────────────────────────────────────────────────────────
 
     token = create_access_token({"sub": user.email})
     return {
@@ -214,7 +222,7 @@ class OAuthLoginRequest(BaseModel):
 
 @router.post("/google-oauth")
 @limiter.limit("30/minute")
-def oauth_login(request: Request, req: OAuthLoginRequest, db: Session = Depends(get_session)):
+def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
     """Auto-register or login OAuth users (Google/GitHub) and return a JWT token."""
     query = select(User).where(User.email == req.email)
     result = db.exec(query)
@@ -259,18 +267,19 @@ def oauth_login(request: Request, req: OAuthLoginRequest, db: Session = Depends(
     # Streak and last activity are now handled centrally by log_activity_internal below.
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
+    needs_commit = False
     if user.email.lower() == settings.ADMIN_EMAIL.lower() and user.role != "admin":
         user.role = "admin"
         db.add(user)
+        needs_commit = True
+        
+    if needs_commit:
         db.commit()
         db.refresh(user)
 
-    # ── 🔓 Log Activity ───────────────────────────────────────────
-    log_activity_internal(user, db, "user_login", f"Logged in via {req.provider.capitalize()}")
-    db.commit()
+    # ── 🔓 Log Activity In Background ──────────────────────────────
+    background_tasks.add_task(background_log_login, user.id, "user_login", f"Logged in via {req.provider.capitalize()}")
     # ─────────────────────────────────────────────────────────────
-    # ─────────────────────────────────────────────────────────────────
-    # ─────────────────────────────────────────────────────────────────
 
     token = create_access_token({"sub": user.email})
     return {
