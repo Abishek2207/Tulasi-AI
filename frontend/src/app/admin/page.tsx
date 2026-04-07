@@ -401,7 +401,8 @@ export default function AdminPage() {
       </motion.div>
 
       {/* ── MAIN ── */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "40px 48px", position: "relative", zIndex: 10 }}>
+      <div style={{ flex: 1, minWidth: 0, height: "100vh", overflowY: "auto", position: "relative", zIndex: 10 }}>
+        <div className="card-padding" style={{ position: "relative" }}>
         <AnimatePresence mode="wait">
 
           {/* ── OVERVIEW ── */}
@@ -410,7 +411,7 @@ export default function AdminPage() {
               <h1 style={{ fontSize: 26, fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 4 }}>Platform Overview</h1>
               <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 32 }}>Live metrics — auto-refreshes every 30s</p>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 16, marginBottom: 36 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 16, marginBottom: 36 }}>
                 <KPI label="Total Users"        value={stats?.total_users ?? 0}                  icon="👥" color="#8B5CF6" />
                 <KPI label="Active 24h"         value={stats?.active_24h ?? 0}                   icon="⚡" color="#10B981" sub={`${stats?.active_today ?? 0} today`} />
                 <KPI label="Total Reviews"      value={analytics?.total_reviews ?? 0}            icon="⭐" color="#F59E0B" />
@@ -422,7 +423,7 @@ export default function AdminPage() {
                 <KPI label="Pro Users"          value={stats?.pro_users ?? 0}                    icon="👑" color="#FFD700" />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 24 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 24, marginBottom: 24 }}>
                 {[
                   { title: "📈 User Growth (14 Days)", chart: "area" },
                   { title: "⚡ Platform Pulse (14 Days)", chart: "bar" },
@@ -1507,7 +1508,7 @@ export default function AdminPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
+      </div>
     </div>
   );
 }

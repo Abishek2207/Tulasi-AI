@@ -531,7 +531,7 @@ export default function InterviewPage() {
               />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 24 }}>
+            <div className="mobile-stack" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
               {/* LEFT: Question + Answer */}
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 {/* Question box */}

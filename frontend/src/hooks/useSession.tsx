@@ -8,6 +8,10 @@ import { API_URL } from "@/lib/api";
 // Global tracker to ensure one sync per session per user across all instances of the hook
 const syncTracker = new Set<string>();
 
+const FOUNDER_EMAIL = "abishekramamoorthy22@gmail.com";
+const isFounderEmail = (email?: string | null) => 
+  email?.trim().toLowerCase() === FOUNDER_EMAIL;
+
 export interface SessionUser {
   id: string | number;
   email: string;
@@ -58,7 +62,7 @@ export function useSession() {
           return false;
         }
         let userProfile = { ...JSON.parse(userStr), accessToken: token };
-        if (userProfile.email && userProfile.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
+        if (isFounderEmail(userProfile.email)) {
           userProfile.role = "admin";
         }
         if (mounted) {
@@ -93,13 +97,13 @@ export function useSession() {
           console.error("[Auth] Failed to exchange Supabase token:", err);
         }
       }
+      
       // Graceful fallback: user is valid via Supabase
-      const isAdmin = email.toLowerCase() === "abishekramamoorthy22@gmail.com";
       return {
         id: email,
         email,
         name: fullName || email.split("@")[0],
-        role: isAdmin ? "admin" : "student",
+        role: isFounderEmail(email) ? "admin" : "student",
         is_pro: true,
         xp: 0,
         level: 1,
@@ -107,6 +111,7 @@ export function useSession() {
         accessToken: supabaseToken,
       };
     }
+    
 
     async function syncUserToSupabase(session: any) {
       if (!session?.user?.id || syncTracker.has(session.user.id)) return;

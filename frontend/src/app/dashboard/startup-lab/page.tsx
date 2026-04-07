@@ -174,7 +174,7 @@ export default function StartupLabPage() {
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginBottom: 48 }}>
+      <div className="mobile-stack" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 32, marginBottom: 48 }}>
         {/* Domain Selection */}
         <TiltCard intensity={5}>
           <div className="glass-card" style={{ padding: 32, height: "100%", background: "rgba(255,255,255,0.02)" }}>
@@ -265,7 +265,7 @@ export default function StartupLabPage() {
                 </div>
 
                 <div style={{ padding: 48, display: "flex", flexDirection: "column", gap: 40 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 32 }}>
                     <div>
                       <h3 style={{ fontSize: 12, fontWeight: 900, color: "#F97316", letterSpacing: 2, marginBottom: 16 }}>THE PROBLEM</h3>
                       <p style={{ fontSize: 16, lineHeight: 1.6, color: "rgba(255,255,255,0.85)" }}>{idea.problem}</p>
@@ -276,12 +276,12 @@ export default function StartupLabPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, padding: 32, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 32, padding: 32, background: "rgba(255,255,255,0.02)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.05)" }}>
                     <div>
                        <h3 style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 12 }}>MARKET DEPTH</h3>
                        <p style={{ fontSize: 14, color: "var(--text-primary)", fontWeight: 600 }}>{idea.market_opportunity}</p>
                     </div>
-                    <div style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", paddingLeft: 32 }}>
+                    <div style={{ paddingLeft: 0 }}>
                        <h3 style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 1, marginBottom: 12 }}>REVENUE MODEL</h3>
                        <p style={{ fontSize: 14, color: "var(--text-primary)", fontWeight: 600 }}>{idea.monetization}</p>
                     </div>

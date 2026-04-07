@@ -159,7 +159,7 @@ export default function ProfilePage() {
         <div style={{ position: "absolute", top: -60, right: -60, width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", bottom: -60, left: -40, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 32, position: "relative", zIndex: 1 }}>
+        <div className="mobile-stack" style={{ display: "flex", alignItems: "center", gap: 32, position: "relative", zIndex: 1 }}>
           {/* Animated Avatar Ring */}
           <div style={{ position: "relative", flexShrink: 0 }}>
             <motion.div
@@ -210,7 +210,7 @@ export default function ProfilePage() {
             }} />
           </div>
 
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, textAlign: "inherit" }} className="mobile-center-text">
             <div style={{ fontSize: 11, fontWeight: 900, color: "var(--brand-primary)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
               Orbit Profile
             </div>
