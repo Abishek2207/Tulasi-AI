@@ -11,7 +11,6 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
 import { motion, AnimatePresence } from "framer-motion";
 import { BackgroundBeams } from "@/components/ui/BackgroundBeams";
-import { DebugPanel } from "@/components/DebugPanel";
 import { XPNotificationSystem } from "@/components/XPNotification";
 import { AIManagerInsightOverlay } from "@/components/AIManagerInsightOverlay";
 import { TulasiLogo } from "@/components/TulasiLogo";
@@ -181,7 +180,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <XPNotificationSystem />
       <OnboardingModal />
-      <DebugPanel />
       <AIManagerInsightOverlay />
       
       {user && !user.username && (
