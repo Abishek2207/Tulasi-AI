@@ -72,6 +72,15 @@ export default function ProfilePage() {
       setRemovingBg(true);
       const { avatar_url } = await usersApi.uploadAvatar(file, token);
       setAvatarUrl(avatar_url);
+      
+      // Sync localStorage so other components (TopBar/Sidebar) update immediately
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const u = JSON.parse(stored);
+        u.avatar = avatar_url;
+        localStorage.setItem("user", JSON.stringify(u));
+      }
+
       // Immediately persist so the session reflects the new photo
       await profileApi.update({ avatar: avatar_url });
       await update();
@@ -87,8 +96,23 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await profileApi.update({ ...formData, avatar: avatarUrl || undefined });
-      // Refresh session
+      const res = await profileApi.update({ ...formData, avatar: avatarUrl || undefined });
+      
+      // Update localStorage with merged data so session reflects changes
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const u = JSON.parse(stored);
+        const updated = { 
+          ...u, 
+          name: formData.name, 
+          bio: formData.bio, 
+          skills: formData.skills,
+          avatar: avatarUrl || u.avatar 
+        };
+        localStorage.setItem("user", JSON.stringify(updated));
+      }
+
+      // Refresh session hook
       await update(); 
       setSaveStatus("success");
     } catch { setSaveStatus("error"); }
