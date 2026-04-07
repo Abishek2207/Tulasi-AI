@@ -231,6 +231,7 @@ export function useSession() {
 export async function signOut({ callbackUrl }: { callbackUrl?: string } = {}) {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
   await supabase.auth.signOut();
   window.location.href = callbackUrl || "/auth";
 }
