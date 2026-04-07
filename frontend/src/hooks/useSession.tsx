@@ -126,12 +126,16 @@ export function useSession() {
     async function init() {
       // CRITICAL: If we have a valid local JWT, skip Supabase entirely
       const hasLocalSession = loadFromLocalStorage();
-      if (hasLocalSession) return;
+      if (hasLocalSession) {
+        console.log("[Auth] Local session detected and valid. Skipping OAuth sync.");
+        return;
+      }
 
       // No local JWT → check Supabase OAuth session
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
+          console.log("[Auth] Supabase session found. Exchanging for JWT...");
           await syncUserToSupabase(session);
           const provider = session.user.app_metadata?.provider || "google";
           const userName = session.user.user_metadata?.full_name
@@ -143,18 +147,18 @@ export function useSession() {
             setStatus("authenticated");
           }
         } else {
-          // Only mark unauthenticated if there's genuinely no local token either
-          if (mounted && !localStorage.getItem("token")) {
+          // Double check one last time before marking as unauthenticated
+          const finalCheck = localStorage.getItem("token");
+          if (!finalCheck && mounted) {
+            console.log("[Auth] No local or OAuth session found.");
             setStatus("unauthenticated");
           } else if (mounted) {
-            // Double-check localStorage (race-safe)
-            const stillHasToken = loadFromLocalStorage();
-            if (!stillHasToken && mounted) setStatus("unauthenticated");
+            loadFromLocalStorage();
           }
         }
-      } catch {
+      } catch (err) {
+        console.error("[Auth] Initialization error:", err);
         if (mounted) {
-          // Backend/Supabase down — try localStorage one more time before giving up
           const fallback = loadFromLocalStorage();
           if (!fallback) setStatus("unauthenticated");
         }
@@ -165,8 +169,12 @@ export function useSession() {
 
     // ── Supabase auth state listener (OAuth only — NEVER overrides local JWT) ──
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // If user has a local FastAPI JWT, Supabase events have no authority
-      if (localStorage.getItem("token")) return;
+      // CRITICAL: If user has a local FastAPI JWT, Supabase events have no authority.
+      // We check this at the very start to avoid any state clearing.
+      if (typeof window !== "undefined" && localStorage.getItem("token")) {
+        // If we are already authenticated locally, ignore Supabase SIGNED_OUT or INITIAL_SESSION
+        return;
+      }
 
       if (session?.user) {
         if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
@@ -182,16 +190,18 @@ export function useSession() {
           setStatus("authenticated");
         }
       } else if (event === "SIGNED_OUT") {
-        if (mounted) {
+        // ONLY clear if there's no local token (which we checked above, but double check for safety)
+        if (mounted && !localStorage.getItem("token")) {
+          console.log("[Auth] Supabase signed out and no local token. Resetting session.");
           setData(null);
           setStatus("unauthenticated");
         }
       }
-      // INITIAL_SESSION with null = no OAuth session, ignore if no local JWT handled above
     });
 
     // ── Listen for custom email/password login events ─────────────────────────
     const handleAuthChange = () => {
+      console.log("[Auth] Auth change event detected. Reloading session...");
       loadFromLocalStorage();
     };
     window.addEventListener("tulasi-auth-change", handleAuthChange);

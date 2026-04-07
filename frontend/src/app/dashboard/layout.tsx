@@ -48,9 +48,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const hasLocalToken = mounted && !!localStorage.getItem("token");
 
   useEffect(() => {
-    if (status === "unauthenticated" && !hasLocalToken) router.push("/auth");
-    if (status === "authenticated" && user?.role === "admin") router.push("/admin");
-  }, [status, user, router, hasLocalToken]);
+    if (!mounted) return;
+    
+    // ── Protection Logic ──
+    if (status === "unauthenticated") {
+      // Direct localStorage check to be 100% sure we don't have a fresh token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.log("[Dashboard] Unauthenticated and no local token. Redirecting...");
+        router.push("/auth");
+      }
+    }
+    
+    if (status === "authenticated" && user?.role === "admin") {
+      router.push("/admin");
+    }
+  }, [status, user, router, mounted]);
 
   // Sync Stats to Redux
   useEffect(() => {
