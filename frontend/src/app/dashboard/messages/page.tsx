@@ -915,7 +915,16 @@ export default function MessagesPage() {
                   whileHover={{ background: "rgba(255,255,255,0.04)" }}
                   style={{ padding: "16px", borderRadius: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", marginBottom: 4, background: activeUser?.id === u.id ? "rgba(255,255,255,0.06)" : "transparent", border: activeUser?.id === u.id ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent" }}>
                   <div style={{ position: "relative" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 24, background: "linear-gradient(45deg, #1F2937, #111827)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "white", fontSize: 18, border: "1px solid rgba(255,255,255,0.1)" }}>{u.name.charAt(0).toUpperCase()}</div>
+                    <div style={{ 
+                      width: 48, height: 48, borderRadius: 24, 
+                      background: u.avatar ? `url(${u.avatar}) center/cover no-repeat` : "linear-gradient(45deg, #1F2937, #111827)", 
+                      display: "flex", alignItems: "center", justifyContent: "center", 
+                      fontWeight: 900, color: "white", fontSize: 18, 
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      overflow: "hidden"
+                    }}>
+                      {!u.avatar && u.name.charAt(0).toUpperCase()}
+                    </div>
                     {u.is_online ? (
                       <motion.div 
                         animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}
@@ -995,8 +1004,15 @@ export default function MessagesPage() {
             {/* Chat Header */}
             <div style={{ padding: "20px 32px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.01)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: activeUser?.id === -1 ? 12 : 22, background: activeUser?.id === -1 ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: activeUser?.id === -1 ? "#8B5CF6" : "white", fontSize: 18, border: "1px solid rgba(255,255,255,0.1)" }}>
-                  {activeUser?.id === -1 ? <BrainCircuit size={24} /> : activeUser ? (activeUser.name?.charAt(0) || "?").toUpperCase() : "#"}
+                <div style={{ 
+                  width: 44, height: 44, borderRadius: activeUser?.id === -1 ? 12 : 22, 
+                  background: activeUser?.id === -1 ? "rgba(139,92,246,0.1)" : activeUser?.avatar ? `url(${activeUser.avatar}) center/cover no-repeat` : "rgba(255,255,255,0.05)", 
+                  display: "flex", alignItems: "center", justifyContent: "center", 
+                  fontWeight: 900, color: activeUser?.id === -1 ? "#8B5CF6" : "white", fontSize: 18, 
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  overflow: "hidden"
+                }}>
+                  {activeUser?.id === -1 ? <BrainCircuit size={24} /> : !activeUser?.avatar ? (activeUser?.name?.charAt(0) || "?").toUpperCase() : ""}
                 </div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ fontSize: 17, fontWeight: 900, color: activeUser?.id === -1 ? "#A78BFA" : "white", margin: 0 }}>{activeUser?.name || activeGroup?.name || "Private Transmission"}</h3>
@@ -1382,7 +1398,15 @@ export default function MessagesPage() {
                   searchResults.map(u => (
                     <div key={u.id} style={{ padding: "12px", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, background: "rgba(255,255,255,0.02)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 20, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>{u.name?.charAt(0) || "?"}</div>
+                        <div style={{ 
+                          width: 40, height: 40, borderRadius: 20, 
+                          background: u.avatar ? `url(${u.avatar}) center/cover no-repeat` : "rgba(255,255,255,0.1)", 
+                          display: "flex", alignItems: "center", justifyContent: "center", 
+                          fontWeight: 800,
+                          overflow: "hidden"
+                        }}>
+                          {!u.avatar && (u.name?.charAt(0) || "?")}
+                        </div>
                         <div>
                           <div style={{ fontSize: 14, fontWeight: 700 }}>{u.name || "Anonymous User"}</div>
                           <div style={{ fontSize: 11, color: "var(--text-muted)" }}>@{u.username}</div>
