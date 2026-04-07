@@ -5,7 +5,7 @@ import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 
 const PRICING_PLANS = [
   {
-    name: "Platinum Pro",
+    name: "Pro",
     price: "$0",
     desc: "Community Edition — Unlimited access for everyone.",
     features: [
