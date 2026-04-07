@@ -473,6 +473,10 @@ class HybridAIClient:
                         err = str(e)
                         print(f"⚠️ [AI] Gemini {model_name} failed: {err}")
                         errors.append(f"Gemini/{model_name}: {err}")
+                        if "API key" in err or "400" in err or "429" in err or "quota" in err.lower():
+                            print("⏭️ [AI] Skipping remaining Gemini models due to Auth/Quota error.")
+                            break
+
 
                 # ── 2. OpenRouter fallback chain ──
                 or_models = [self.openrouter_model] + [m for m in self.OPENROUTER_FREE_MODELS if m != self.openrouter_model]
@@ -491,6 +495,10 @@ class HybridAIClient:
                         err = str(e)
                         print(f"❌ [AI] OpenRouter {or_model} failed: {err}")
                         errors.append(f"OpenRouter/{or_model}: {err}")
+                        if "401" in err or "403" in err or "429" in err or "quota" in err.lower() or "credits" in err.lower():
+                            print("⏭️ [AI] Skipping remaining OpenRouter models due to Auth/Quota error.")
+                            break
+
 
                 # ── 3. Groq ──
                 try:
@@ -551,6 +559,9 @@ class HybridAIClient:
                     err = str(e)
                     print(f"⚠️ [AI] Gemini {model_name} failed: {err}")
                     errors.append(f"Gemini/{model_name}: {err}")
+                    if "API key" in err or "400" in err or "429" in err or self._is_quota_error(err):
+                        print("⏭️ [AI] Skipping remaining Gemini models due to Auth/Quota error.")
+                        break
 
             # 2. OpenRouter
             or_models = [self.openrouter_model] + [m for m in self.OPENROUTER_FREE_MODELS if m != self.openrouter_model]
@@ -564,6 +575,9 @@ class HybridAIClient:
                     err = str(e)
                     print(f"❌ [AI] OpenRouter {or_model} failed: {err}")
                     errors.append(f"OpenRouter/{or_model}: {err}")
+                    if "401" in err or "403" in err or "429" in err or self._is_quota_error(err) or "credits" in err.lower():
+                        print("⏭️ [AI] Skipping remaining OpenRouter models due to Auth/Quota error.")
+                        break
 
             # 3. Groq
             try:
