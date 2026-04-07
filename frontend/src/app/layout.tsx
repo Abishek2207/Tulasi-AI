@@ -9,7 +9,6 @@ import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
-import { DebugPanel } from "@/components/DebugPanel";
 import { XPNotificationSystem } from "@/components/XPNotification";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -151,7 +150,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
           <Suspense fallback={null}>
             {children}
-            <DebugPanel />
             <XPNotificationSystem />
             <OnboardingTour />
             <CommandPalette />
