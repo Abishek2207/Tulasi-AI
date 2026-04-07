@@ -48,25 +48,33 @@ Return ONLY the JSON array, no markdown backticks, no explanatory text.`;
 
       const res = await chatApi.send(prompt);
       
-      // Parse the JSON. The AI might add markdown backticks randomly.
-      let jsonString = res.response.trim();
-      if (jsonString.startsWith('```json')) {
-        jsonString = jsonString.replace(/^```json/, '').replace(/```$/, '').trim();
-      } else if (jsonString.startsWith('```')) {
-        jsonString = jsonString.replace(/^```/, '').replace(/```$/, '').trim();
+      // Resilient JSON Extraction
+      let raw = res.response.trim();
+      
+      // 1. Try to find an array-like structure [ ... ]
+      const match = raw.match(/\[[\s\S]*\]/);
+      let jsonString = match ? match[0] : raw;
+
+      // 2. Remove possible markdown backticks
+      if (jsonString.includes("```")) {
+        jsonString = jsonString.replace(/```[a-z]*\n|```/g, "").trim();
       }
 
-      const parsedData = JSON.parse(jsonString);
-      
-      if (Array.isArray(parsedData) && parsedData.length > 0) {
-        setCards(parsedData);
-        toast.success("Flashcards generated!");
-      } else {
-        throw new Error("Invalid format");
+      try {
+        const parsedData = JSON.parse(jsonString);
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
+          setCards(parsedData);
+          toast.success("AI Flashcards Generated!");
+        } else {
+          throw new Error("Empty array");
+        }
+      } catch (parseErr) {
+        console.error("JSON Parse Error:", parseErr, "Raw Content:", raw);
+        throw new Error("The AI returned an invalid data format. Please retry.");
       }
     } catch (err: any) {
-      console.warn("Backend failed or parsing failed. Falling back to Mock data.", err);
-      toast.success("Loaded Mock Interface (API Offline or Error)");
+      console.error("Generation error:", err);
+      toast.error(err.message || "Failed to sync with AI Neural Link.");
       setCards(MOCK_FLASHCARDS);
     } finally {
       setLoading(false);
