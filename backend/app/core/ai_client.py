@@ -146,7 +146,7 @@ class HybridAIClient:
         url = "https://openrouter.ai/api/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {openrouter_key}",
-            "HTTP-Referer": "https://tulasiai.vercel.app",
+            "HTTP-Referer": "https://tulasiai.in",
             "X-Title": "Tulasi AI",
             "Content-Type": "application/json",
         }

@@ -399,7 +399,7 @@ export default function DashboardPage() {
                   <button
                     onClick={() => {
                       const code = stats.invite_code || "TULASI25";
-                      const text = `Hey! I'm using Tulasi AI to engineer my career and bypass the ATS. Use my invite code ${code} to get 500 XP instantly! Sign up here: https://tulasiai.vercel.app`;
+                      const text = `Hey! I'm using Tulasi AI to engineer my career and bypass the ATS. Use my invite code ${code} to get 500 XP instantly! Sign up here: https://tulasiai.in`;
                       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
                       confetti({ particleCount: 150, spread: 80, origin: { y: 0.8 }, colors: ['#10B981', '#ffffff', '#34D399'] });
                     }}

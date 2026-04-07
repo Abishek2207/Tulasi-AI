@@ -39,7 +39,7 @@ export default function AuthPage() {
   // Use window.location.origin if in browser; fallback to env var; then production fallback.
   const appUrl = (typeof window !== "undefined" && window.location.origin && !window.location.origin.includes("localhost"))
     ? window.location.origin 
-    : (process.env.NEXT_PUBLIC_APP_URL || "https://tulasiai.vercel.app");
+    : (process.env.NEXT_PUBLIC_APP_URL || "https://tulasiai.in");
   
   const router = useRouter();
 

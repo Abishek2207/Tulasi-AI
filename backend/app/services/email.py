@@ -42,7 +42,7 @@ def _wrap_template(body_html: str) -> str:
             <td style="padding:24px 40px;background:#0a0f1a;border-top:1px solid #1f2937;text-align:center;">
               <p style="margin:0;color:#4b5563;font-size:12px;">
                 © 2026 Tulasi AI — Built by Abishek R &nbsp;·&nbsp;
-                <a href="https://tulasiai.vercel.app" style="color:#10b981;text-decoration:none;">Visit Platform</a>
+                <a href="https://tulasiai.in" style="color:#10b981;text-decoration:none;">Visit Platform</a>
               </p>
             </td>
           </tr>
@@ -110,7 +110,7 @@ class EmailService:
           <li style="margin:10px 0;color:#d1fae5;font-size:14px;">📈 &nbsp;<strong>XP & Streak System</strong> — Gamified daily progress tracking</li>
         </ul>
         <div style="text-align:center;margin:32px 0;">
-          <a href="https://tulasiai.vercel.app/dashboard"
+          <a href="https://tulasiai.in/dashboard"
              style="background:linear-gradient(135deg,#10b981,#06b6d4);color:#ffffff;padding:14px 32px;
                     text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;
                     display:inline-block;letter-spacing:0.3px;">
@@ -140,7 +140,7 @@ class EmailService:
           <p style="margin:4px 0 0;color:#6b7280;font-size:13px;">Don't break the chain — come back tomorrow</p>
         </div>
         <div style="text-align:center;margin:28px 0;">
-          <a href="https://tulasiai.vercel.app/dashboard"
+          <a href="https://tulasiai.in/dashboard"
              style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:#ffffff;padding:14px 32px;
                     text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;display:inline-block;">
             Continue Your Streak →
@@ -165,7 +165,7 @@ class EmailService:
           <p style="margin:4px 0 0;color:#7c3aed;font-size:14px;">{xp:,} XP Total</p>
         </div>
         <div style="text-align:center;margin:28px 0;">
-          <a href="https://tulasiai.vercel.app/dashboard"
+          <a href="https://tulasiai.in/dashboard"
              style="background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#ffffff;padding:14px 32px;
                     text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;display:inline-block;">
             View Your Progress →
@@ -194,7 +194,7 @@ class EmailService:
           to <strong style="color:#10b981;">Strong Hire</strong> territory.
         </p>
         <div style="text-align:center;margin:28px 0;">
-          <a href="https://tulasiai.vercel.app/dashboard/interview"
+          <a href="https://tulasiai.in/dashboard/interview"
              style="background:linear-gradient(135deg,#10b981,#06b6d4);color:#ffffff;padding:14px 32px;
                     text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;display:inline-block;">
             View Full Feedback →
@@ -219,7 +219,7 @@ class EmailService:
           <p style="margin:4px 0 0;color:#6b7280;font-size:13px;">Referral reward added to your account</p>
         </div>
         <div style="text-align:center;margin:28px 0;">
-          <a href="https://tulasiai.vercel.app/dashboard"
+          <a href="https://tulasiai.in/dashboard"
              style="background:linear-gradient(135deg,#10b981,#06b6d4);color:#ffffff;padding:14px 32px;
                     text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;display:inline-block;">
             Check Your XP →
