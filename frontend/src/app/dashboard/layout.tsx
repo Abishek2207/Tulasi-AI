@@ -32,7 +32,7 @@ function useIsDesktop() {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
+  const { data: session, status, isRehydrating } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -48,7 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const hasLocalToken = mounted && !!localStorage.getItem("token");
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isRehydrating) return;
     
     // ── Protection Logic ──
     if (status === "unauthenticated") {
@@ -103,7 +103,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Optimistic rendering: If we have a local token, don't show the full-screen sync message
   // to avoid artificial delays. The hooks/components will handle their own loading states.
-  if (status === "loading" && !hasLocalToken) return (
+  if ((status === "loading" || isRehydrating) && !hasLocalToken) return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
       <TulasiLogo size={72} glow showText={false} />
       <motion.div
