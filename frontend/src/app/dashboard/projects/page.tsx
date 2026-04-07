@@ -66,8 +66,10 @@ Use Markdown for structure but keep it extremely professional and dense with eng
   // Helper to parse sections with specific markers
   const getSectionContent = (sectionName: string) => {
     if (!generatedIdea) return "";
-    const sections = generatedIdea.split(/\[(SUMMARY|TECH_STACK|PRD|ROADMAP|SCALING)\]:/);
-    const index = sections.findIndex(s => s === sectionName);
+    // Resilient splitting: handle both [SECTION]: and [SECTION] (case-insensitive)
+    const sections = generatedIdea.split(/\[(SUMMARY|TECH_STACK|PRD|ROADMAP|SCALING)\]:?/i);
+    const index = sections.findIndex(s => s.toUpperCase() === sectionName.toUpperCase());
+    
     if (index !== -1 && sections[index + 1]) {
       return sections[index + 1].trim();
     }

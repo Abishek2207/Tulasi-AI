@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { chatApi } from "@/lib/api";
+import { chatApi, extractAndParseJson } from "@/lib/api";
 import { BrainCircuit, Sparkles, Wand2, TerminalSquare, RotateCw, ArrowLeft, ArrowRight } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import toast from "react-hot-toast";
@@ -48,29 +48,13 @@ Return ONLY the JSON array, no markdown backticks, no explanatory text.`;
 
       const res = await chatApi.send(prompt);
       
-      // Resilient JSON Extraction
-      let raw = res.response.trim();
+      const parsedData = extractAndParseJson<any[]>(res.response, []);
       
-      // 1. Try to find an array-like structure [ ... ]
-      const match = raw.match(/\[[\s\S]*\]/);
-      let jsonString = match ? match[0] : raw;
-
-      // 2. Remove possible markdown backticks
-      if (jsonString.includes("```")) {
-        jsonString = jsonString.replace(/```[a-z]*\n|```/g, "").trim();
-      }
-
-      try {
-        const parsedData = JSON.parse(jsonString);
-        if (Array.isArray(parsedData) && parsedData.length > 0) {
-          setCards(parsedData);
-          toast.success("AI Flashcards Generated!");
-        } else {
-          throw new Error("Empty array");
-        }
-      } catch (parseErr) {
-        console.error("JSON Parse Error:", parseErr, "Raw Content:", raw);
-        throw new Error("The AI returned an invalid data format. Please retry.");
+      if (Array.isArray(parsedData) && parsedData.length > 0) {
+        setCards(parsedData);
+        toast.success("AI Flashcards Generated!");
+      } else {
+        throw new Error("Invalid data structure");
       }
     } catch (err: any) {
       console.error("Generation error:", err);
