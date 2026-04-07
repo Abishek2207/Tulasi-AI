@@ -790,6 +790,20 @@ export const messagesApi = {
 };
 
 export const usersApi = {
+  uploadAvatar: async (file: File, token: string): Promise<{ status: string; avatar_url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_URL}/api/users/avatar/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Avatar upload failed");
+    }
+    return res.json();
+  },
   removeBg: async (file: File, token: string) => {
     const formData = new FormData();
     formData.append("file", file);
