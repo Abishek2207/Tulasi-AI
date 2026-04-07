@@ -143,9 +143,7 @@ export default function Sidebar() {
             }}>
               Tulasi<span style={{ color: "var(--brand-primary)" }}>AI</span>
             </div>
-            <div style={{ fontSize: 9, color: "var(--brand-primary)", fontWeight: 900, textTransform: "uppercase", letterSpacing: 1.5, textShadow: "0 0 10px rgba(168, 85, 247, 0.4)" }}>
-              Platinum Elite
-            </div>
+
           </div>
         </motion.div>
       </div>
@@ -268,7 +266,7 @@ export default function Sidebar() {
                 {currentUser.name || "Student"}
               </div>
               <div style={{ fontSize: 11, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>
-                 {isPro ? "✦ PLATINUM ELITE" : "FREE MEMBER"}
+                 {isPro ? "PLATINUM" : "FREE MEMBER"}
               </div>
             </div>
           </div>
