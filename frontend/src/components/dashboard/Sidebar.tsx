@@ -266,7 +266,7 @@ export default function Sidebar() {
                 {currentUser.name || "Student"}
               </div>
               <div style={{ fontSize: 11, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>
-                 {isPro ? "PLATINUM" : "FREE MEMBER"}
+                 {isPro ? "PRO" : "FREE MEMBER"}
               </div>
             </div>
           </div>
