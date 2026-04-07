@@ -190,16 +190,36 @@ def chat(
 
     system_instruction = f"{system_prompt}. {awareness}{context_str}"
 
-    # ── Generate AI Response via Reasoning Engine ─────────────────────────────
+    # ── Generate AI Response ──────────────────────────────────────────────────
     response_text = ""
-    try:
-        from app.services.ai_agents.reasoning import reasoning_engine
-        reasoning_res = reasoning_engine.process_query(
-            req.message, user, history, db, system_instruction=system_instruction
-        )
-        response_text = reasoning_res.get("response", "")
-    except Exception as e:
-        print(f"❌ Chat Error: {e}")
+    
+    # 1. Check if we should bypass ReasoningEngine for structured tasks
+    structured_tools = ["flashcards", "roadmap_gen", "json_mode"]
+    use_direct = tool in structured_tools or "JSON" in req.message or "[ARRAY]" in req.message
+
+    if use_direct:
+        try:
+            from app.core.ai_router import resilient_ai_response
+            # Use resilient_ai_response for tools that expect JSON
+            response_text = resilient_ai_response(
+                req.message, 
+                fallback="[]" if tool == "flashcards" else "Error generating response.",
+                force_model="fast_flash", # Use faster model for simple tool generation
+                is_json=False # We want the string response to parse in frontend
+            )
+        except Exception as e:
+            print(f"⚠️ Direct tool generation failed: {e}")
+
+    # 2. Use Reasoning Engine for general chat/career guidance
+    if not response_text:
+        try:
+            from app.services.ai_agents.reasoning import reasoning_engine
+            reasoning_res = reasoning_engine.process_query(
+                req.message, user, history, db, system_instruction=system_instruction
+            )
+            response_text = reasoning_res.get("response", "")
+        except Exception as e:
+            print(f"❌ Reasoning Error: {e}")
 
     # Final safety net — use direct AI if reasoning engine failed
     if not response_text or len(response_text) < 10:
@@ -317,7 +337,18 @@ def chat_stream(
     system_instruction = f"{system_prompt}. {awareness}"
 
     def generate():
-        full_response = ""
+        # 1. Simple tools bypass reasoning (prevents THOUGHT: in stream)
+        structured_tools = ["flashcards", "roadmap_gen", "json_mode"]
+        if tool in structured_tools:
+            try:
+                direct = get_ai_response(req.message, history=history, system_instruction=system_instruction, force_model="fast_flash")
+                full_response = direct
+                yield f"data: {json.dumps({'token': direct, 'session_id': session_id, 'done': False})}\n\n"
+                return # Stop after direct response
+            except Exception as direct_err:
+                print(f"⚠️ Direct stream fallback failed: {direct_err}")
+
+        # 2. Use reasoning for streaming
         try:
             from app.services.ai_agents.reasoning import reasoning_engine
             stream_gen = reasoning_engine.process_query(

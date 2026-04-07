@@ -316,26 +316,32 @@ async function request<T>(
  * Safely extract and parse JSON from a potentially messy string (markdown blocks, chatty AI).
  */
 export function extractAndParseJson<T>(raw: string, fallback: T): T {
+  if (!raw || typeof raw !== "string") return fallback;
+  
   try {
     let cleaned = raw.trim();
     
-    // 1. Try to find an array or object structure [ or { ... ] or }
-    const match = cleaned.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
-    if (match) {
-      cleaned = match[0];
+    // 1. Try to find the LARGEST array or object structure
+    // This handles: "Sure! [{\"a\":1}]" -> "[{\"a\":1}]"
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+    
+    if (arrayMatch && (!objectMatch || arrayMatch[0].length >= objectMatch[0].length)) {
+      cleaned = arrayMatch[0];
+    } else if (objectMatch) {
+      cleaned = objectMatch[0];
     }
 
-    // 2. Remove common markdown backticks
-    if (cleaned.includes("```")) {
-      cleaned = cleaned.replace(/```[a-z]*\s*|\s*```/gi, "").trim();
-    }
+    // 2. Remove markdown backticks if they are still there
+    cleaned = cleaned.replace(/```[a-z]*\s*|\s*```/gi, "").trim();
 
-    // 3. Clean up trailing commas before closing braces/brackets
+    // 3. Clean up trailing commas (common LLM error)
     cleaned = cleaned.replace(/,\s*([\}\]])/g, "$1");
 
     return JSON.parse(cleaned) as T;
   } catch (e) {
-    console.warn("[AI Resilience] Global parse failed. Using fallback.", e);
+    console.error("[AI Resilience] Global parse failed for raw input:", raw);
+    console.warn("[AI Resilience] Using fallback due to error:", e);
     return fallback;
   }
 }
