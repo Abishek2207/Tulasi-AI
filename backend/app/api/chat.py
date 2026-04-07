@@ -205,7 +205,8 @@ def chat(
                 req.message, 
                 fallback="[]" if tool == "flashcards" else "Error generating response.",
                 force_model="fast_flash", # Use faster model for simple tool generation
-                is_json=False # We want the string response to parse in frontend
+                is_json=True,
+                return_str=True
             )
         except Exception as e:
             print(f"⚠️ Direct tool generation failed: {e}")
