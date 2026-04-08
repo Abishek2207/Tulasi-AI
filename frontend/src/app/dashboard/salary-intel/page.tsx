@@ -55,6 +55,7 @@ export default function SalaryIntelPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [retrying, setRetrying] = useState(false);
+  const [error, setError] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
 
   const handleAnalyze = async (isRetry = false) => {
@@ -83,7 +84,8 @@ export default function SalaryIntelPage() {
       setResult(data);
     } catch (e: any) {
       console.error("[SalaryIntel] Analysis failed:", e);
-      setRetrying(true);
+      setError(e.message || "Salary analysis failed. Please try again.");
+      // Don't set retrying=true — prevents infinite auto-retry loop
     }
     setLoading(false);
   };
@@ -195,23 +197,38 @@ export default function SalaryIntelPage() {
               color="#10B981"
               icon={<TrendingUp size={40} color="#10B981" />}
             >
-              {/* Empty state (only shown when no result and not loading) */}
-              {!result && !loading && !retrying && (
+              {/* Empty state + error (only shown when no result and not loading) */}
+              {!result && !loading && (
                 <motion.div key="empty" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                   style={{ padding: 80, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.05)" }}>
-                  <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 3.5 }}
-                    style={{ fontSize: 72, marginBottom: 24, display: "inline-block" }}>💰</motion.div>
-                  <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 10, fontFamily: "var(--font-outfit)" }}>Know Your Worth</div>
-                  <div style={{ color: "var(--text-secondary)", maxWidth: 320, margin: "0 auto", lineHeight: 1.7, fontSize: 15 }}>
-                    Select your role and location to get real 2025 market salary data and your personalized negotiation playbook.
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 32, flexWrap: "wrap" }}>
-                    {["Salary Bands", "Negotiation Script", "Top Paying Cos"].map((tag, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)", fontWeight: 700 }}>
-                        <CheckCircle size={13} color="#10B981" /> {tag}
+                  {error ? (
+                    <>
+                      <div style={{ fontSize: 60, marginBottom: 20 }}>⚠️</div>
+                      <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 10, color: "#F43F5E", fontFamily: "var(--font-outfit)" }}>Analysis Failed</div>
+                      <div style={{ color: "var(--text-secondary)", maxWidth: 320, margin: "0 auto 24px", lineHeight: 1.7, fontSize: 14 }}>{error}</div>
+                      <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                        onClick={() => handleAnalyze(true)}
+                        style={{ padding: "14px 32px", borderRadius: 16, fontWeight: 900, fontSize: 14, background: "linear-gradient(135deg, #10B981, #06B6D4)", border: "none", color: "white", cursor: "pointer" }}>
+                        🔄 Retry Analysis
+                      </motion.button>
+                    </>
+                  ) : (
+                    <>
+                      <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 3.5 }}
+                        style={{ fontSize: 72, marginBottom: 24, display: "inline-block" }}>💰</motion.div>
+                      <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 10, fontFamily: "var(--font-outfit)" }}>Know Your Worth</div>
+                      <div style={{ color: "var(--text-secondary)", maxWidth: 320, margin: "0 auto", lineHeight: 1.7, fontSize: 15 }}>
+                        Select your role and location to get real 2025 market salary data and your personalized negotiation playbook.
                       </div>
-                    ))}
-                  </div>
+                      <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 32, flexWrap: "wrap" }}>
+                        {["Salary Bands", "Negotiation Script", "Top Paying Cos"].map((tag, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)", fontWeight: 700 }}>
+                            <CheckCircle size={13} color="#10B981" /> {tag}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
 
