@@ -83,8 +83,8 @@ export default function ResumeBuilderPage() {
       setResult(data);
       toast.success("Neural Calibration Complete.");
     } catch (err: any) {
-      setRetrying(true);
-      setError(err.message || "Neural Handshake failed. Retrying sync...");
+      setError(err.message || "Neural Handshake failed. Please try again.");
+      // Don't setRetrying(true) — prevents infinite auto-retry countdown loop
     } finally { setLoading(false); }
   };
 

@@ -183,7 +183,7 @@ export default function DailyChallengePage() {
       fetchAll(); // refresh leaderboard
     } catch (e: any) { 
       setError(e.message || "Submission failed. Try again.");
-      setRetrying(true);
+      // Don't setRetrying(true) — prevents infinite auto-retry countdown loop
     }
     setSubmitting(false);
   };
