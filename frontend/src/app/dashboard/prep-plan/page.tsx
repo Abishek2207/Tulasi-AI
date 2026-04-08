@@ -37,8 +37,22 @@ export default function PrepPlanPage() {
     try {
       const { chatApi, extractAndParseJson } = await import("@/lib/api");
       
-      const message = `Generate a highly-curated, week-by-week preparation plan for a ${role} over a ${duration} month period.
-      Include specific tasks, resources, and goals for each week in the required JSON structure.`;
+      const message = `You are an elite career strategist. Generate a highly-curated, week-by-week preparation plan for a ${role} over a ${duration} month period.
+
+Respond with ONLY a valid JSON object, no markdown, no explanation. Use this EXACT structure:
+{
+  "title": "${duration}-Month ${role} Preparation Blueprint",
+  "weeks": [
+    {
+      "week": 1,
+      "focus": "Core foundations/topic",
+      "tasks": ["Specific task 1", "Specific task 2", "Specific task 3"],
+      "resources": ["Official docs Link", "YouTube playlist Link"]
+    }
+  ]
+}
+
+Ensure you provide a week-by-week plan for all 4*${duration} weeks. Fill in real, professional technical tasks and resources. Return ONLY JSON.`;
 
       const response = await chatApi.send(message, undefined, "prep_plan");
       
