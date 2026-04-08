@@ -6,11 +6,8 @@ import { useSession } from "@/hooks/useSession";
 import { MapPin, Briefcase, Clock, Zap, TrendingUp, Copy, CheckCircle, RefreshCw, Building2, Shield, Sparkles, ArrowUpRight } from "lucide-react";
 import { AIResilienceWrapper } from "@/components/dashboard/AIResilienceWrapper";
 
-import { API } from "@/lib/api";
 const ROLES = ["Software Engineer", "AI Engineer", "ML Engineer", "Data Scientist", "Product Manager", "Frontend Developer", "Backend Developer", "DevOps Engineer", "Full Stack Developer", "AI Research Scientist", "Cybersecurity Engineer", "Cloud Architect"];
 const LOCATIONS = ["Bangalore", "Hyderabad", "Chennai", "Pune", "Mumbai", "Delhi NCR", "Remote (India)", "USA", "UK", "Singapore"];
-
-function getToken() { return typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""; }
 
 function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
   const [display, setDisplay] = useState(0);
@@ -60,13 +57,50 @@ export default function SalaryIntelPage() {
 
   const handleAnalyze = async (isRetry = false) => {
     setLoading(true);
+    setError("");
     if (!isRetry) setResult(null);
     setRetrying(false);
     try {
       const { chatApi, extractAndParseJson } = await import("@/lib/api");
       
-      const message = `Analyze the salary for the role of ${role} in ${location} for someone with ${yoe} years of experience.
-      Please provide a detailed salary report in the required JSON structure including market percentiles and top paying companies.`;
+      const expLabel = yoe === 0 ? "fresher (0 years)" : `${yoe} years`;
+      const message = `You are a salary intelligence AI. Analyze the market salary for a ${role} in ${location} with ${expLabel} of experience.
+
+Respond with ONLY a valid JSON object, no markdown, no explanation. Use this EXACT structure:
+{
+  "role": "${role}",
+  "location": "${location}",
+  "yoe": ${yoe},
+  "market_trend": "growing",
+  "trend_note": "one sentence about the market trend",
+  "salary_range": {
+    "min_lpa": 8,
+    "median_lpa": 15,
+    "max_lpa": 35,
+    "currency": "INR",
+    "unit": "LPA"
+  },
+  "market_percentiles": {
+    "p25": 8,
+    "p50": 15,
+    "p75": 22,
+    "p90": 30
+  },
+  "top_paying_companies": [
+    { "company": "Google", "range": "25-45 LPA", "perks": "ESOP + bonus" },
+    { "company": "Microsoft", "range": "20-40 LPA", "perks": "hybrid + health" },
+    { "company": "Amazon", "range": "18-38 LPA", "perks": "RSU + relocation" }
+  ],
+  "skills_that_boost_salary": ["Skill1", "Skill2", "Skill3", "Skill4"],
+  "key_insights": ["insight 1", "insight 2", "insight 3"],
+  "negotiation_script": {
+    "opening": "script for opening salary negotiation",
+    "counter_offer": "script for counter offer",
+    "close": "script for closing the negotiation"
+  }
+}
+
+Fill in real, accurate 2025 market data for ${role} in ${location} with ${expLabel} experience. Return ONLY JSON.`;
 
       const response = await chatApi.send(message, undefined, "salary_intel");
       
@@ -77,8 +111,8 @@ export default function SalaryIntelPage() {
         skills_that_boost_salary: []
       });
       
-      if (!data || !data.salary_range) {
-        throw new Error("Invalid salary data structure received.");
+      if (!data || !data.salary_range || !data.salary_range.median_lpa) {
+        throw new Error("AI returned an unexpected format. Please retry.");
       }
 
       setResult(data);
