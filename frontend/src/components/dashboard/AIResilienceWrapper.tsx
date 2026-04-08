@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, Zap, Sparkles, BrainCircuit, Cpu, AlertCircle } from "lucide-react";
 
@@ -177,15 +177,17 @@ export function AIResilienceWrapper({
 
 function RetryCountdownComponent({ seconds, onRetry, color }: { seconds: number; onRetry: () => void; color: string }) {
   const [count, setCount] = useState(seconds);
+  const onRetryRef = useRef(onRetry);
+  useEffect(() => { onRetryRef.current = onRetry; });
   
   useEffect(() => {
     if (count <= 0) {
-      onRetry();
+      onRetryRef.current();
       return;
     }
     const t = setTimeout(() => setCount(c => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [count, onRetry]);
+  }, [count]); // ← onRetry intentionally excluded via ref to prevent infinite loop
 
   const progress = ((seconds - count) / seconds) * 100;
 
