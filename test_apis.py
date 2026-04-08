@@ -1,18 +1,23 @@
 import sys
 import os
 import asyncio
+import warnings
+
+# Suppress the GenerativeAI deprecation warning globally
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Setup env
 sys.path.append(os.path.abspath("backend"))
 
-from backend.app.core.database import get_session
-from backend.app.api.feed import get_feed
-from backend.app.api.messages import get_user_directory
+from app.core.database import get_session, init_db
+from app.api.feed import get_feed
+from app.api.messages import get_user_directory
 
 async def main():
+    init_db()
     db = next(get_session())
     try:
-        from backend.app.models.models import User
+        from app.models.models import User
         from sqlmodel import select
         user = db.exec(select(User).limit(1)).first()
         if not user:

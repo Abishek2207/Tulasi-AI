@@ -2,6 +2,8 @@ import os
 import json
 import time
 import httpx
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
 import google.generativeai as genai
 from typing import List, Dict, Optional, Generator, Union
 from app.core.config import settings

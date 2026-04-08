@@ -60,8 +60,6 @@ export default function AuthCallbackPage() {
         console.log("[OAuth Callback] Token received. Saving to storage...");
         localStorage.setItem("token", result.access_token);
         localStorage.setItem("user", JSON.stringify(result.user));
-        document.cookie = `token=${result.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-        
         // Sync cookie for edge middleware compatibility
         document.cookie = `token=${result.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
 
