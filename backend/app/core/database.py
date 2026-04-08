@@ -38,7 +38,7 @@ def sync_user_schema(engine):
         ("interest_areas", "VARCHAR"),
         ("onboarding_step", "INTEGER DEFAULT 0"),
         ("user_intelligence_profile", "TEXT DEFAULT '{}'"),
-        ("last_intelligence_update", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("last_intelligence_update", "TIMESTAMP DEFAULT '2024-01-01 00:00:00'"),
         ("behavioral_patterns", "TEXT DEFAULT '{}'"),
         ("is_pro", "BOOLEAN DEFAULT TRUE"),
         ("stripe_customer_id", "VARCHAR"),
@@ -55,7 +55,7 @@ def sync_user_schema(engine):
         ("xp", "INTEGER DEFAULT 0"),
         ("level", "INTEGER DEFAULT 1"),
         ("last_activity_date", "VARCHAR"),
-        ("last_seen", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("last_seen", "TIMESTAMP DEFAULT '2024-01-01 00:00:00'"),
         ("is_private", "BOOLEAN DEFAULT FALSE"),
     ]
     
@@ -65,7 +65,9 @@ def sync_user_schema(engine):
                 if col_name not in existing_columns:
                     print(f"  - Syncing User Schema: Adding column '{col_name}'...")
                     if "sqlite" in str(engine.url):
-                        query = f'ALTER TABLE "user" ADD COLUMN {col_name} {col_def.replace("IF NOT EXISTS ", "")};'
+                        base_def = col_def.split(" DEFAULT ")[0] if " DEFAULT " in col_def else col_def
+                        safe_def = base_def.replace("IF NOT EXISTS ", "").replace(" UNIQUE", "")
+                        query = f'ALTER TABLE "user" ADD COLUMN {col_name} {safe_def};'
                     else:
                         query = f'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS {col_name} {col_def};'
                     conn.execute(text(query))
@@ -112,6 +114,26 @@ def init_db():
             
             # 3. Sync existing tables with new columns (Safe Migration Layer)
             sync_user_schema(engine)
+            
+            # Simple column migrations for other tables
+            migration_queries = [
+                'ALTER TABLE review ADD COLUMN email VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN event_mode VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN difficulty VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN team_size VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN start_date VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN end_date VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN registration_deadline VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN domains VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN currency VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN location VARCHAR;'
+            ]
+            for query in migration_queries:
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(text(query))
+                except Exception:
+                    pass
             
             # 4. Seed essential data (Groups, Hackathons, Reviews)
             seed_essential_data(engine)
