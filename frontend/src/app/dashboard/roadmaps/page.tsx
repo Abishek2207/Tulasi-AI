@@ -59,8 +59,8 @@ export default function RoadmapsPage() {
         }
       }
     } catch (err: unknown) {
-      setRetrying(true);
-      setError("Neural Link Synced partially. Reload to stabilize.");
+      setError("Neural Link failed. Click refresh to try again.");
+      // Don't setRetrying(true) — prevents infinite auto-retry countdown loop
     } finally {
       setLoading(false);
     }
