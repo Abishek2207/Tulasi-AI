@@ -88,8 +88,19 @@ export default function StartupLabPage() {
     try {
       const { chatApi, extractAndParseJson } = await import("@/lib/api");
       
-      const message = `Generate a startup idea in the domain of ${domain} for an audience of ${audience}.
-      Provide a detailed idea including name, problem, solution, market opportunity, tech stack, and monetization strategy in the required JSON structure.`;
+      const message = `You are a startup incubator AI. Generate a high-fidelity startup idea in the domain of ${domain} for an audience of ${audience}.
+
+Respond with ONLY a valid JSON object, no markdown, no explanation. Use this EXACT structure:
+{
+  "name": "visionary startup name",
+  "problem": "detailed problem description",
+  "solution": "detailed solution description",
+  "market_opportunity": "TAM/SAM calculation and niche focus",
+  "tech_stack": ["Tech1", "Tech2", "Tech3"],
+  "monetization": "strategy for revenue"
+}
+
+Fill in all fields with real, specific content tailored for ${domain} targeting ${audience}. Return ONLY JSON.`;
 
       const response = await chatApi.send(message, undefined, "startup_lab");
       

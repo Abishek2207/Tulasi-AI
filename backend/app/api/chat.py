@@ -197,7 +197,7 @@ def chat(
     structured_tools = [
         "flashcards", "roadmap_gen", "career_gps", 
         "salary_intel", "startup_lab", "interview_prep",
-        "project_architect", "prep_plan", "json_mode"
+        "prep_plan", "json_mode"
     ]
     use_direct = tool in structured_tools or "JSON" in req.message or "[ARRAY]" in req.message
 

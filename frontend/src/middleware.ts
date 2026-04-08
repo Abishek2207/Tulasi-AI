@@ -7,16 +7,17 @@ export function middleware(request: NextRequest) {
   const hasSupabaseCookie = Array.from(request.cookies.getAll()).some(c => c.name.startsWith('sb-'));
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
+  const isHomePage = request.nextUrl.pathname === '/';
 
   // If no auth token found, redirect to /auth
   if (!token && !hasSupabaseCookie) {
-    if (!isAuthPage) {
+    if (!isAuthPage && !isHomePage) {
       const authUrl = new URL('/auth', request.url);
       return NextResponse.redirect(authUrl);
     }
   } else {
     // If logged in and trying to go to /auth or /, redirect to /dashboard
-    if (isAuthPage || request.nextUrl.pathname === '/') {
+    if (isAuthPage || isHomePage) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }

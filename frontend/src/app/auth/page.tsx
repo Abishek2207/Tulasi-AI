@@ -113,7 +113,11 @@ export default function AuthPage() {
         }
         // Token saved. UseSession will read it.
         window.dispatchEvent(new Event("tulasi-auth-change"));
-        router.push("/dashboard");
+        if (data.user?.role === "admin" || data.user?.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
       } catch (err: unknown) {
         const error = err as Error;
         const msg = error.message || "Invalid email or password.";
@@ -135,7 +139,11 @@ export default function AuthPage() {
         }
         // Token saved. UseSession will read it.
         window.dispatchEvent(new Event("tulasi-auth-change"));
-        router.push("/dashboard");
+        if (data.user?.role === "admin" || data.user?.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
       } catch (err: unknown) {
         const error = err as Error;
         const msg = error.message || "Registration failed.";

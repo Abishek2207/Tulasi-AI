@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.gzip import GZipMiddleware
 import uvicorn
@@ -50,7 +50,21 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             print(f"❌ Deferred Init Failed: {e}")
 
+    async def keep_awake():
+        import httpx
+        import asyncio
+        url = "https://tulasi-ai-hycl.onrender.com/api/ping"
+        while True:
+            await asyncio.sleep(600)  # Ping every 10 mins (Render sleeps after 15 mins)
+            try:
+                async with httpx.AsyncClient() as client:
+                    await client.get(url, timeout=10.0)
+                print(f"🔄 Keep-awake ping sent to {url}")
+            except Exception as e:
+                print(f"⚠️ Keep-awake ping failed: {e}")
+
     asyncio.create_task(run_migrations_in_background())
+    asyncio.create_task(keep_awake())
 
     print("✅ Tulasi AI v3.0 — Backend ready (Port Bound)!")
     yield
