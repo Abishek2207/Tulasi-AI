@@ -60,6 +60,10 @@ export default function AuthCallbackPage() {
         console.log("[OAuth Callback] Token received. Saving to storage...");
         localStorage.setItem("token", result.access_token);
         localStorage.setItem("user", JSON.stringify(result.user));
+        document.cookie = `token=${result.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        
+        // Sync cookie for edge middleware compatibility
+        document.cookie = `token=${result.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
 
         // Let the rest of the app know auth state might have updated
         window.dispatchEvent(new Event("tulasi-auth-change"));
@@ -67,9 +71,9 @@ export default function AuthCallbackPage() {
         // 5. Short delay to guarantee state persistence before routing
         setTimeout(() => {
           if (mounted) {
-            router.replace("/dashboard");
+            window.location.href = "/dashboard";
           }
-        }, 300);
+        }, 100);
 
       } catch (err: any) {
         console.error("[OAuth Callback] Fatal Error:", err);
