@@ -88,7 +88,7 @@ export default function CareerGPSPage() {
     } catch (e: any) {
       console.error("[CareerGPS] Generation failed:", e);
       setError(e.message || "Career GPS generation failed. Please try again.");
-      setRetrying(true);
+      // Don't set retrying=true — prevents infinite auto-retry loop
     }
     setLoading(false);
   };
@@ -198,23 +198,38 @@ export default function CareerGPSPage() {
               color="#8B5CF6"
               icon={<Navigation size={40} color="#8B5CF6" />}
             >
-              {/* Empty state (only shown when no result and not loading) */}
-              {!result && !loading && !retrying && (
+              {/* Empty state + error (only shown when no result and not loading) */}
+              {!result && !loading && (
                 <motion.div key="empty" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                   style={{ padding: 80, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.05)" }}>
-                  <motion.div animate={{ rotate: [0, 15, -15, 0], y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 5 }}
-                    style={{ fontSize: 72, marginBottom: 24, display: "inline-block" }}>🗺️</motion.div>
-                  <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 10, fontFamily: "var(--font-outfit)" }}>Your Career GPS</div>
-                  <div style={{ color: "var(--text-secondary)", lineHeight: 1.7, maxWidth: 340, margin: "0 auto", fontSize: 15 }}>
-                    Select your year and target role, then hit <strong style={{ color: "white" }}>Generate My GPS</strong> to receive 3 precision-engineered career paths.
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 32, flexWrap: "wrap" }}>
-                    {["3 Career Paths", "Monthly Milestones", "Company Targets"].map((tag, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)", fontWeight: 700 }}>
-                        <CheckCircle size={14} color="#10B981" /> {tag}
+                  {error ? (
+                    <>
+                      <motion.div style={{ fontSize: 60, marginBottom: 20 }}>⚠️</motion.div>
+                      <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 10, color: "#F43F5E", fontFamily: "var(--font-outfit)" }}>Generation Failed</div>
+                      <div style={{ color: "var(--text-secondary)", lineHeight: 1.7, maxWidth: 340, margin: "0 auto 24px", fontSize: 14 }}>{error}</div>
+                      <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                        onClick={() => handleGenerate(true)}
+                        style={{ padding: "14px 32px", borderRadius: 16, fontWeight: 900, fontSize: 14, background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", border: "none", color: "white", cursor: "pointer" }}>
+                        🔄 Retry Generation
+                      </motion.button>
+                    </>
+                  ) : (
+                    <>
+                      <motion.div animate={{ rotate: [0, 15, -15, 0], y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 5 }}
+                        style={{ fontSize: 72, marginBottom: 24, display: "inline-block" }}>🗺️</motion.div>
+                      <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 10, fontFamily: "var(--font-outfit)" }}>Your Career GPS</div>
+                      <div style={{ color: "var(--text-secondary)", lineHeight: 1.7, maxWidth: 340, margin: "0 auto", fontSize: 15 }}>
+                        Select your year and target role, then hit <strong style={{ color: "white" }}>Generate My GPS</strong> to receive 3 precision-engineered career paths.
                       </div>
-                    ))}
-                  </div>
+                      <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 32, flexWrap: "wrap" }}>
+                        {["3 Career Paths", "Monthly Milestones", "Company Targets"].map((tag, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)", fontWeight: 700 }}>
+                            <CheckCircle size={14} color="#10B981" /> {tag}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
 

@@ -160,10 +160,11 @@ export function AIResilienceWrapper({
         </motion.div>
       )}
 
-      {/* Success State: Render Children */}
-      {result && !loading && !retrying && (
+      {/* Children: Always render when not loading and not retrying */}
+      {/* (handles both empty state and result state from within the page) */}
+      {!loading && !retrying && (
         <motion.div
-          key="result"
+          key="content"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           style={{ width: "100%" }}

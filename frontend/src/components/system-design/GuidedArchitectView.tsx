@@ -10,11 +10,13 @@ import {
 
 function RetryCountdown({ seconds, onRetry, message = "Neural Sync in Progress..." }: { seconds: number; onRetry: () => void; message?: string }) {
   const [count, setCount] = useState(seconds);
+  const onRetryRef = useRef(onRetry);
+  useEffect(() => { onRetryRef.current = onRetry; });
   useEffect(() => {
-    if (count <= 0) { onRetry(); return; }
+    if (count <= 0) { onRetryRef.current(); return; }
     const t = setTimeout(() => setCount(c => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [count, onRetry]);
+  }, [count]); // ← onRetry excluded via ref; prevents infinite retry loop
   const pct = ((seconds - count) / seconds) * 100;
   return (
     <div style={{ padding: "14px 18px", borderRadius: 14, background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.2)", display: "flex", alignItems: "center", gap: 14, width: "fit-content" }}>
