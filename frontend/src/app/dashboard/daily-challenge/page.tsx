@@ -16,11 +16,13 @@ function getToken() {
 
 function RetryCountdown({ seconds, onRetry, message = "Neural Sync in Progress..." }: { seconds: number; onRetry: () => void; message?: string }) {
   const [count, setCount] = useState(seconds);
+  const onRetryRef = useRef(onRetry);
+  useEffect(() => { onRetryRef.current = onRetry; });
   useEffect(() => {
-    if (count <= 0) { onRetry(); return; }
+    if (count <= 0) { onRetryRef.current(); return; }
     const t = setTimeout(() => setCount(c => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [count, onRetry]);
+  }, [count]); // ← onRetry excluded via ref; prevents infinite retry loop
   const pct = ((seconds - count) / seconds) * 100;
   return (
     <div style={{ padding: "16px", borderRadius: 16, background: "rgba(249,115,22,0.05)", border: "1px solid rgba(249,115,22,0.2)", display: "flex", alignItems: "center", gap: 16, width: "fit-content", marginTop: 16 }}>
