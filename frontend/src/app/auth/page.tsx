@@ -49,6 +49,11 @@ export default function AuthPage() {
     wakeNow();
   }, [wakeNow]);
 
+  // Engine Optimization: Prefetch dashboard payload immediately for zero-latency post-login routing
+  useEffect(() => {
+    router.prefetch("/dashboard");
+  }, [router]);
+
   const handleGoogleLogin = async () => {
     if (oAuthLoading) return;
     setOAuthLoading("google");
