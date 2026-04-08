@@ -71,15 +71,69 @@ export default function CareerGPSPage() {
     try {
       const { chatApi, extractAndParseJson } = await import("@/lib/api");
       
-      const message = `Generate a Career GPS for a ${year.replace("_", " ")} student targeting the role of ${role}. ${skills ? `My skills: ${skills}` : ""}.
-      Please provide exactly 3 paths (fast_track, balanced, conservative) in the required JSON structure.`;
+      const message = `You are a career advisor AI. Generate a Career GPS JSON for a ${year.replace("_", " ")} student targeting the role of ${role}.${skills ? ` Their current skills: ${skills}.` : ""}
+
+Respond with ONLY a valid JSON object, no markdown, no explanation. Use this EXACT structure:
+{
+  "recommendation": "balanced",
+  "founder_note": "one motivational sentence",
+  "paths": [
+    {
+      "id": "fast_track",
+      "title": "Fast Track Path",
+      "tagline": "aggressive timeline",
+      "difficulty": "Aggressive",
+      "timeline_months": 6,
+      "job_readiness_pct": 85,
+      "key_skills": ["skill1", "skill2", "skill3"],
+      "companies": ["Google", "Meta", "Amazon"],
+      "milestones": [
+        { "month": 1, "goal": "goal description", "resources": ["resource1"] },
+        { "month": 3, "goal": "goal description", "resources": ["resource1"] },
+        { "month": 6, "goal": "goal description", "resources": ["resource1"] }
+      ]
+    },
+    {
+      "id": "balanced",
+      "title": "Balanced Path",
+      "tagline": "steady growth",
+      "difficulty": "Balanced",
+      "timeline_months": 9,
+      "job_readiness_pct": 78,
+      "key_skills": ["skill1", "skill2"],
+      "companies": ["Infosys", "Wipro", "TCS"],
+      "milestones": [
+        { "month": 2, "goal": "goal description", "resources": ["resource1"] },
+        { "month": 5, "goal": "goal description", "resources": ["resource1"] },
+        { "month": 9, "goal": "goal description", "resources": ["resource1"] }
+      ]
+    },
+    {
+      "id": "conservative",
+      "title": "Conservative Path",
+      "tagline": "solid foundation",
+      "difficulty": "Conservative",
+      "timeline_months": 12,
+      "job_readiness_pct": 70,
+      "key_skills": ["skill1", "skill2"],
+      "companies": ["Startup", "Mid-size"],
+      "milestones": [
+        { "month": 3, "goal": "goal description", "resources": ["resource1"] },
+        { "month": 8, "goal": "goal description", "resources": ["resource1"] },
+        { "month": 12, "goal": "goal description", "resources": ["resource1"] }
+      ]
+    }
+  ]
+}
+
+Fill in all fields with real, specific content tailored for a ${year.replace("_", " ")} ${role}. Return ONLY JSON.`;
 
       const response = await chatApi.send(message, undefined, "career_gps");
       
       const data = extractAndParseJson<any>(response.response, { paths: [] });
       
       if (!data || !data.paths || data.paths.length === 0) {
-        throw new Error("Invalid data structure received from AI.");
+        throw new Error("AI returned an unexpected format. Please retry.");
       }
 
       setResult(data);
