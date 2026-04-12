@@ -73,6 +73,11 @@ TOOL_PROMPTS = {
         "Focus on high-ROI skills, networking tactics, interview prep strategies, and project building that will maximize "
         "the user's chances of getting into heavily competitive roles like AI Engineer or AI Research Scientist at a top FAANG company."
     ),
+    "startup_lab": (
+        "You are a Startup Incubator AI. Your goal is to generate high-fidelity technical and business architectures. "
+        "When generating ideas, be specific about TAM/SAM, monetization, and 'steroid' tech stacks. "
+        "When asked for JSON, return ONLY valid JSON with no conversational text or markdown blocks."
+    ),
 }
 
 
@@ -103,8 +108,14 @@ def chat(
     db: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
+    from app.models.models import Profile # New local import
+    
     session_id = req.session_id or str(uuid.uuid4())
     tool = req.tool or "chat"
+
+    # Fetch User Profile for Mentor Identity
+    profile = db.query(Profile).filter(Profile.user_id == user.id).first()
+    mentor_identity = f" [Your Name: {profile.ai_mentor_name}]" if profile and profile.ai_mentor_name else ""
 
     # Fetch history
     statement = (
@@ -184,7 +195,8 @@ def chat(
         f"{founder_context}"
         f"USER DEMOGRAPHIC: [Type: {user.user_type}, Dept: {user.department or 'N/A'}, "
         f"Role Target: {user.target_role or 'Software Engineer'}, Interests: {user.interest_areas or 'General Tech'}, "
-        f"Level: {user.level}]. "
+        f"Level: {user.level}]."
+        f"{mentor_identity} "
         f"INTELLIGENCE PROFILE: {json.dumps(intelligence)}. "
         f"THINKING PROTOCOL: ALWAYS think deeply and internally before you respond."
     )
@@ -273,9 +285,15 @@ def chat_stream(
     db: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
+    from app.models.models import Profile # New local import
+    
     """Server-Sent Events streaming endpoint."""
     session_id = req.session_id or str(uuid.uuid4())
     tool = req.tool or "chat"
+
+    # Fetch User Profile for Mentor Identity
+    profile = db.query(Profile).filter(Profile.user_id == user.id).first()
+    mentor_identity = f" [Your Name: {profile.ai_mentor_name}]" if profile and profile.ai_mentor_name else ""
 
     # Fetch history
     statement = (
@@ -339,6 +357,7 @@ def chat_stream(
         f"Year: 2026. Founder: Abishek R. {founder_context}"
         f"USER: [Type: {user.user_type}, Dept: {user.department or 'N/A'}, "
         f"Target: {user.target_role or 'Software Engineer'}, Level: {user.level}]. "
+        f"{mentor_identity} "
         f"PROFILE: {json.dumps(intelligence)}{context_str}"
     )
     system_instruction = f"{system_prompt}. {awareness}"
