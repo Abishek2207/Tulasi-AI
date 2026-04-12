@@ -60,8 +60,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     }
     
-    if (status === "authenticated" && user?.role === "admin") {
-      router.push("/admin");
+    if (status === "authenticated") {
+      // ── Onboarding Gate: enforce on every login session ──
+      if (user && !user.is_onboarded) {
+        router.replace("/onboarding");
+        return;
+      }
+      if (user?.role === "admin") {
+        router.push("/admin");
+      }
     }
   }, [status, user, router, mounted]);
 
