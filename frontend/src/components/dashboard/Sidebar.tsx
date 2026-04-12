@@ -59,10 +59,11 @@ const NAV_SECTIONS = [
   {
     label: "Community",
     items: [
-      { icon: Globe,           name: "Orbit HUB",      href: "/dashboard/orbit",             badge: "LIVE" },
+      { icon: Globe,           name: "Orbit HUB",      href: "/dashboard/orbit",         badge: "LIVE" },
+      { icon: Users,           name: "Network",         href: "/dashboard/network",       badge: "NEW" },
       { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
-      { icon: Lightbulb,       name: "Idea Feed",       href: "/dashboard/feed",           badge: "COMING SOON" },
-      { icon: Mail,            name: "Messages",        href: "/dashboard/messages",       badge: "COMING SOON" },
+      { icon: Lightbulb,       name: "Idea Feed",       href: "/dashboard/feed" },
+      { icon: Mail,            name: "Messages",        href: "/dashboard/messages" },
       { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
     ]
   },

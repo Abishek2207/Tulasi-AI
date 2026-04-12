@@ -72,6 +72,8 @@ async def set_user_type(
     db: Session = Depends(get_db)
 ):
     current_user.user_type = user_type
+    # ── Critical Fix: persist onboarded flag to DB so it survives new sessions ──
+    current_user.is_onboarded = True
     
     # Auto-create profile if doesn't exist
     profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
