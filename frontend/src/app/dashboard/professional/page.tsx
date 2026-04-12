@@ -34,6 +34,7 @@ import { RoutineCard } from "@/components/dashboard/RoutineCard";
 import { AINameModal } from "@/components/dashboard/AINameModal";
 import { SkillTracker } from "@/components/dashboard/SkillTracker";
 import { RoadmapWidget } from "@/components/dashboard/RoadmapWidget";
+import { SalaryGrowthPanel } from "@/components/dashboard/SalaryGrowthPanel";
 
 const SkillRadar = dynamic(() => import("@/components/dashboard/SkillRadar").then(mod => mod.SkillRadar), { ssr: false });
 const ReadinessCard = dynamic(() => import("@/components/dashboard/ReadinessCard").then(mod => mod.ReadinessCard), { ssr: false });
@@ -285,6 +286,14 @@ export default function DashboardPage() {
             </div>
           </motion.div>
         </div>
+
+        {/* ── NEW: Salary Growth & Career Intelligence Panel ── */}
+        <motion.div variants={item} style={{ marginBottom: 32 }}>
+          <SalaryGrowthPanel
+            role={session?.user && (session.user as any)?.profile?.current_role}
+            experience={(session?.user as any)?.profile?.experience_years}
+          />
+        </motion.div>
 
         {/* ── Mobile: Quick Action Ribbon ── */}
         <div className="mobile-only" style={{ marginBottom: 40, overflowX: "auto", display: "flex", gap: 12, paddingBottom: 8, scrollbarWidth: "none" }}>

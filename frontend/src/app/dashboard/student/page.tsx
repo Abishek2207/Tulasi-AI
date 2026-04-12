@@ -34,6 +34,7 @@ import { RoutineCard } from "@/components/dashboard/RoutineCard";
 import { AINameModal } from "@/components/dashboard/AINameModal";
 import { SkillTracker } from "@/components/dashboard/SkillTracker";
 import { RoadmapWidget } from "@/components/dashboard/RoadmapWidget";
+import { PlacementScoreCard } from "@/components/dashboard/PlacementScoreCard";
 
 const SkillRadar = dynamic(() => import("@/components/dashboard/SkillRadar").then(mod => mod.SkillRadar), { ssr: false });
 const ReadinessCard = dynamic(() => import("@/components/dashboard/ReadinessCard").then(mod => mod.ReadinessCard), { ssr: false });
@@ -285,6 +286,11 @@ export default function DashboardPage() {
             </div>
           </motion.div>
         </div>
+
+        {/* ── NEW: Placement Readiness Score (AI-powered) ── */}
+        <motion.div variants={item} style={{ marginBottom: 32 }}>
+          <PlacementScoreCard />
+        </motion.div>
 
         {/* ── Mobile: Quick Action Ribbon ── */}
         <div className="mobile-only" style={{ marginBottom: 40, overflowX: "auto", display: "flex", gap: 12, paddingBottom: 8, scrollbarWidth: "none" }}>
