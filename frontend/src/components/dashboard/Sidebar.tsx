@@ -26,7 +26,7 @@ const NAV_SECTIONS = [
       { icon: MessageSquare,   name: "AI Chat",         href: "/dashboard/chat" },
       { icon: Flame,           name: "ORBIT DAILY",     href: "/dashboard/daily-challenge", badge: "NEW" },
       { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
-      { icon: Map,             name: "Career Roadmaps", href: "/dashboard/roadmaps" },
+      { icon: Map,             name: "Career Path",     href: "/dashboard/roadmaps" },
       { icon: Rocket,          name: "Startup Lab",     href: "/dashboard/startup-lab" },
     ]
   },
@@ -34,7 +34,7 @@ const NAV_SECTIONS = [
     label: "Learning",
     items: [
       { icon: BrainCircuit,    name: "Flashcards",      href: "/dashboard/flashcards" },
-      { icon: Code,            name: "Code Practice",   href: "/dashboard/code" },
+      { icon: Code,            name: "Code Arena",      href: "/dashboard/code" },
       { icon: Layers,          name: "System Design",   href: "/dashboard/system-design" },
       { icon: Compass,         name: "Preparation Plan", href: "/dashboard/prep-plan" },
       { icon: Users,           name: "Study Rooms",     href: "/dashboard/study-rooms" },

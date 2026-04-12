@@ -253,7 +253,21 @@ export default function NetworkPage() {
                 </div>
 
                 {user.id !== currentUserId && (
-                  <FollowButton userId={user.id} status={user.request_status} onUpdate={updateFollowStatus} />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => window.location.href = `/dashboard/messages?user=${user.id}`}
+                      style={{
+                        padding: "8px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)",
+                        background: "rgba(255,255,255,0.03)", color: "white",
+                        fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6
+                      }}
+                    >
+                      Message
+                    </motion.button>
+                    <FollowButton userId={user.id} status={user.request_status} onUpdate={updateFollowStatus} />
+                  </div>
                 )}
 
                 {user.id === currentUserId && (

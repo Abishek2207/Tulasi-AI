@@ -35,6 +35,7 @@ import { AINameModal } from "@/components/dashboard/AINameModal";
 import { SkillTracker } from "@/components/dashboard/SkillTracker";
 import { RoadmapWidget } from "@/components/dashboard/RoadmapWidget";
 import { PlacementScoreCard } from "@/components/dashboard/PlacementScoreCard";
+import { StreakCard } from "@/components/dashboard/StreakCard";
 
 const SkillRadar = dynamic(() => import("@/components/dashboard/SkillRadar").then(mod => mod.SkillRadar), { ssr: false });
 const ReadinessCard = dynamic(() => import("@/components/dashboard/ReadinessCard").then(mod => mod.ReadinessCard), { ssr: false });
@@ -236,9 +237,12 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        {/* Dynamic Gemini-Style Live Agent */}
-        <motion.div variants={item} style={{ marginBottom: 32 }}>
-          <LiveAgentPrompt userName={isFounder ? "Abishek R" : userName} />
+        {/* Dynamic Gemini-Style Live Agent + Streak Stats */}
+        <motion.div variants={item} style={{ marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 300 }}>
+            <LiveAgentPrompt userName={isFounder ? "Abishek R" : userName} />
+          </div>
+          <StreakCard />
         </motion.div>
 
         {/* ── Desktop: Bento Hub | Mobile: Vertical Stack ── */}
