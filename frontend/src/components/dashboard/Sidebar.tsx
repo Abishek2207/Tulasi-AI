@@ -47,6 +47,7 @@ const NAV_SECTIONS = [
   {
     label: "Tools",
     items: [
+      { icon: Map,             name: "AI Roadmap",      href: "/dashboard/ai-roadmap",    badge: "AI" },
       { icon: Navigation,      name: "Career GPS",      href: "/dashboard/career-gps",     badge: "NEW" },
       { icon: TrendingUp,      name: "Salary Intel",    href: "/dashboard/salary-intel",   badge: "NEW" },
       { icon: Briefcase,       name: "Internships",     href: "/dashboard/internships",    badge: "INDIA" },
