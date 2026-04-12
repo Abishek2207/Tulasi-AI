@@ -165,6 +165,19 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
             {msg.content}
           </ReactMarkdown>
         )}
+
+        {(msg as any).sources && (msg as any).sources.length > 0 && (
+          <div style={{ marginTop: 12, padding: "10px", background: "rgba(0,0,0,0.2)", borderRadius: 12, fontSize: 13, border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div style={{ fontWeight: 700, color: "var(--brand-primary)", marginBottom: 6 }}>Knowledge Context Used:</div>
+            <ul style={{ margin: 0, paddingLeft: 16 }}>
+              {(msg as any).sources.map((src: any, idx: number) => (
+                <li key={idx} style={{ color: "var(--text-muted)", marginBottom: 4 }}>
+                  [{src.type}] {src.content.substring(0, 120)}...
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -253,13 +266,24 @@ export default function ChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const res = await chatApi.send(text, sessionId || undefined, mode);
-      if (res.session_id && !sessionId) {
-        setSessionId(res.session_id);
-        localStorage.setItem("tulasi_chat_session", res.session_id);
-        fetchSessions();
+      let aiResponseContent = "...";
+      let aiSources = null;
+
+      if (mode === "personal_rag") {
+        const res = await chatApi.ragQuery(text);
+        aiResponseContent = res.answer || "No localized RAG response.";
+        aiSources = res.sources;
+      } else {
+        const res = await chatApi.send(text, sessionId || undefined, mode);
+        if (res.session_id && !sessionId) {
+          setSessionId(res.session_id);
+          localStorage.setItem("tulasi_chat_session", res.session_id);
+          fetchSessions();
+        }
+        aiResponseContent = res.response || "...";
       }
-      setMessages(prev => [...prev, { role: "assistant", content: res.response || "..." }]);
+
+      setMessages(prev => [...prev, { role: "assistant", content: aiResponseContent, sources: aiSources } as any]);
       
       // Prompt for review after 5 user messages
       const nextCount = msgCount + 1;
@@ -314,7 +338,8 @@ export default function ChatPage() {
             { id: "doubt", label: "Doubt Solver", icon: <HelpCircle size={14} /> },
             { id: "system_design", label: "System Design", icon: <Building2 size={14} /> },
             { id: "career_strategy", label: "Career Strategy", icon: <TrendingUp size={14} /> },
-            { id: "interview", label: "Mock Interview", icon: <BrainCircuit size={14} /> }
+            { id: "interview", label: "Mock Interview", icon: <BrainCircuit size={14} /> },
+            { id: "personal_rag", label: "Personalized RAG", icon: <BrainCircuit size={14} /> }
           ].map(m => (
             <button
               key={m.id}

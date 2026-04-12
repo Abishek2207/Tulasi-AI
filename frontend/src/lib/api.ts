@@ -192,7 +192,7 @@ export function setCached(key: string, data: any, ttl = CACHE_TTL) {
 
 const FETCH_TIMEOUT_MS = 60_000; // 60s timeout for AI endpoints
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 1, backoff = 500): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, backoff = 1000): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -505,6 +505,18 @@ export const chatApi = {
 
   sessions: () =>
     request<{ sessions: ChatSession[] }>("/api/chat/sessions"),
+
+  ragQuery: (query: string) =>
+    request<{ answer: string; sources: any[]; used_model: string }>("/api/rag/query", {
+      method: "POST",
+      body: JSON.stringify({ query }),
+    }),
+
+  indexRag: (documents: { type: string; content: string }[]) =>
+    request<{ status: string }>("/api/rag/index", {
+      method: "POST",
+      body: JSON.stringify({ documents }),
+    }),
 };
 
 
@@ -682,6 +694,13 @@ export const profileApi = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+  getExtended: (token: string) =>
+    request<{ current_role?: string; company?: string; experience_years?: number; skill_level?: string }>("/api/profile/me", {}, token),
+  updateExtended: (data: { current_role?: string; company?: string; experience_years?: number; skill_level?: string }, token: string) =>
+    request<any>("/api/profile/me", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token),
 };
 
 // ─── Group Chat ───────────────────────────────────────────────────────────────

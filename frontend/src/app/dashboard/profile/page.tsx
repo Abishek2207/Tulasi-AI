@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [formData, setFormData] = useState({ name: "", bio: "", skills: "" });
+  const [extendedData, setExtendedData] = useState({ current_role: "", company: "", experience_years: 0, skill_level: "" });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [removingBg, setRemovingBg] = useState(false);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -55,6 +56,18 @@ export default function ProfilePage() {
       certificateApi.list(token).then((res) => {
         setCertificates(res.certificates || []);
       }).catch(err => console.error(err));
+      
+      // Fetch extended profile data
+      profileApi.getExtended(token).then((res) => {
+         if (res) {
+            setExtendedData({
+               current_role: res.current_role || "",
+               company: res.company || "",
+               experience_years: res.experience_years || 0,
+               skill_level: res.skill_level || ""
+            });
+         }
+      }).catch(() => {});
     }
   }, [session]);
 
@@ -97,6 +110,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       const res = await profileApi.update({ ...formData, avatar: avatarUrl || undefined });
+      await profileApi.updateExtended({ ...extendedData, experience_years: Number(extendedData.experience_years) }, token);
       
       // Update localStorage with merged data so session reflects changes
       const stored = localStorage.getItem("user");
@@ -340,6 +354,35 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+               <div>
+                 <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Current Role</label>
+                 <input value={extendedData.current_role} onChange={e => setExtendedData(p => ({ ...p, current_role: e.target.value }))} placeholder="e.g. Software Engineer" className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12 }} />
+               </div>
+               <div>
+                 <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Company</label>
+                 <input value={extendedData.company} onChange={e => setExtendedData(p => ({ ...p, company: e.target.value }))} placeholder="e.g. Google" className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12 }} />
+               </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+               <div>
+                 <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Experience (Years)</label>
+                 <input type="number" value={extendedData.experience_years} onChange={e => setExtendedData(p => ({ ...p, experience_years: parseInt(e.target.value) || 0 }))} min={0} className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12 }} />
+               </div>
+               <div>
+                 <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Skill Level</label>
+                 <select value={extendedData.skill_level} onChange={e => setExtendedData(p => ({ ...p, skill_level: e.target.value }))} className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12 }}>
+                   <option value="">Select Level</option>
+                   <option value="Beginner">Beginner</option>
+                   <option value="Intermediate">Intermediate</option>
+                   <option value="Advanced">Advanced</option>
+                   <option value="Expert">Expert</option>
+                 </select>
+               </div>
+            </div>
+
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saving} className="btn-primary" style={{ padding: "14px 28px", borderRadius: 14, fontSize: 14, fontWeight: 800 }}>
                 {saving ? "Saving..." : "Save Changes"}

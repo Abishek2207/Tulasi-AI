@@ -47,7 +47,8 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    is_admin = req.email.lower() == settings.ADMIN_EMAIL.lower()
+    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
+    is_admin = req.email.lower() in admin_emails
     user = User(
         email=req.email,
         hashed_password=get_password_hash(req.password),
@@ -155,7 +156,8 @@ def login(request: Request, req: LoginRequest, background_tasks: BackgroundTasks
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
     needs_commit = False
-    if user.email.lower() == settings.ADMIN_EMAIL.lower() and user.role != "admin":
+    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
+    if user.email.lower() in admin_emails and user.role != "admin":
         user.role = "admin"
         db.add(user)
         needs_commit = True
@@ -230,7 +232,8 @@ def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: Back
 
     if not user:
         # Auto-register the oauth user
-        is_admin = req.email.lower() == settings.ADMIN_EMAIL.lower()
+        admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
+        is_admin = req.email.lower() in admin_emails
         user = User(
             email=req.email,
             hashed_password=None,  # No password for OAuth users
@@ -268,7 +271,8 @@ def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: Back
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
     needs_commit = False
-    if user.email.lower() == settings.ADMIN_EMAIL.lower() and user.role != "admin":
+    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
+    if user.email.lower() in admin_emails and user.role != "admin":
         user.role = "admin"
         db.add(user)
         needs_commit = True

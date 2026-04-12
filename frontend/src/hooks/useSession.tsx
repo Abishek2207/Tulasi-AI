@@ -8,9 +8,11 @@ import { API_URL } from "@/lib/api";
 // Global tracker to ensure one sync per session per user across all instances of the hook
 const syncTracker = new Set<string>();
 
-const FOUNDER_EMAIL = "abishekramamoorthy22@gmail.com";
-const isFounderEmail = (email?: string | null) => 
-  email?.trim().toLowerCase() === FOUNDER_EMAIL;
+const ADMIN_EMAILS = ["abishekramamoorthy22@gmail.com", "abishek2207@gmail.com"];
+const isFounderEmail = (email?: string | null) => {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.trim().toLowerCase());
+};
 
 export interface SessionUser {
   id: string | number;
