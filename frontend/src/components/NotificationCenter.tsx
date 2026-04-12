@@ -6,12 +6,13 @@ import { Bell, X, CheckCheck, Zap, Trophy, Flame, BrainCircuit, Target, Gift } f
 
 interface Notification {
   id: string;
-  type: "xp" | "streak" | "achievement" | "interview" | "system";
+  type: "xp" | "streak" | "achievement" | "interview" | "system" | "trending_skill" | "industry_update" | "daily_reminder" | "streak_alert" | string;
   title: string;
   message: string;
   time: string;
   read: boolean;
   icon?: string;
+  color?: string;
 }
 
 const STORAGE_KEY = "tulasi_notifications_v1";
@@ -30,6 +31,17 @@ const TYPE_COLORS: Record<string, string> = {
   achievement: "#FFD93D",
   interview: "#06B6D4",
   system: "#10B981",
+  trending_skill: "#8B5CF6",
+  industry_update: "#10B981",
+  daily_reminder: "#F97316",
+  streak_alert: "#F43F5E",
+};
+
+const TYPE_ICONS: Record<string, string> = {
+  trending_skill: "📈",
+  industry_update: "📢",
+  daily_reminder: "⏰",
+  streak_alert: "⚠️",
 };
 
 export function NotificationCenter() {
@@ -41,14 +53,20 @@ export function NotificationCenter() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("tulasi_token") : null;
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (token) {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/notifications`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000"}/api/notifications`, {
             headers: { "Authorization": `Bearer ${token}` }
           });
           if (res.ok) {
             const data = await res.json();
-            setNotifications(data.notifications || []);
+            const mapped = (data.notifications || []).map((n: any) => ({
+              ...n,
+              message: n.body || n.message,
+              time: n.timestamp ? new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : n.time,
+              icon: n.icon || TYPE_ICONS[n.type] || "🔔",
+            }));
+            setNotifications(mapped);
             return;
           }
         }

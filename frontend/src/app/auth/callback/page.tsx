@@ -69,7 +69,13 @@ export default function AuthCallbackPage() {
         // 5. Short delay to guarantee state persistence before routing
         setTimeout(() => {
           if (mounted) {
-            window.location.href = "/dashboard";
+            if (result.user?.role === "admin" || result.user?.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
+              window.location.href = "/admin";
+            } else if (!result.user?.is_onboarded) {
+              window.location.href = "/onboarding";
+            } else {
+              window.location.href = "/dashboard";
+            }
           }
         }, 100);
 

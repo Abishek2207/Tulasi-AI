@@ -2,7 +2,24 @@ from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Column, String
 from typing import Optional, List
 from datetime import datetime, timezone
+import enum
 
+class RoleEnum(str, enum.Enum):
+    ADMIN = "ADMIN"
+    USER = "USER"
+
+class AuthProviderEnum(str, enum.Enum):
+    LOCAL = "LOCAL"
+    GOOGLE = "GOOGLE"
+    GITHUB = "GITHUB"
+
+class UserTypeEnum(str, enum.Enum):
+    STUDENT = "STUDENT"
+    PROFESSIONAL = "PROFESSIONAL"
+
+class SenderEnum(str, enum.Enum):
+    USER = "USER"
+    AI = "AI"
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -51,6 +68,28 @@ class User(SQLModel, table=True):
     
     # Relationships
     resumes: List["SavedResume"] = Relationship(back_populates="user")
+    profile: Optional["Profile"] = Relationship(back_populates="user")
+
+class Profile(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    user_id: int = Field(foreign_key="user.id", unique=True, nullable=False)
+    current_role: Optional[str] = None
+    company: Optional[str] = None
+    experience_years: Optional[int] = 0
+    skill_level: Optional[str] = None
+    ai_mentor_name: Optional[str] = None
+    skills: Optional[str] = None # JSON string
+    learning_hours_per_day: Optional[int] = 2
+    
+    # ── Intelligent Onboarding Fields ──
+    student_year: Optional[str] = None
+    student_goal: Optional[str] = None
+    current_salary_range: Optional[str] = None
+    target_salary_goal: Optional[str] = None
+    
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    user: Optional["User"] = Relationship(back_populates="profile")
 
 
 

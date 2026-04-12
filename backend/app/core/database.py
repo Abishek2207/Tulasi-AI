@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, create_engine, Session, select
+Base = SQLModel
 from sqlalchemy.pool import QueuePool
 from app.core.config import settings
 
@@ -75,6 +76,40 @@ def sync_user_schema(engine):
     except Exception as e:
         print(f"⚠️  Manual schema sync failed: {e}")
 
+def sync_profile_schema(engine):
+    """Safely adds missing columns to the 'profile' table on startup."""
+    if engine is None:
+        return
+        
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    
+    if not inspector.has_table("profile"):
+        return
+        
+    existing_columns = [c['name'] for c in inspector.get_columns("profile")]
+    
+    new_columns = [
+        ("student_year", "VARCHAR"),
+        ("student_goal", "VARCHAR"),
+        ("current_salary_range", "VARCHAR"),
+        ("target_salary_goal", "VARCHAR")
+    ]
+    
+    try:
+        with engine.begin() as conn:
+            for col_name, col_def in new_columns:
+                if col_name not in existing_columns:
+                    print(f"  - Syncing Profile Schema: Adding column '{col_name}'...")
+                    if "sqlite" in str(engine.url):
+                        query = f'ALTER TABLE profile ADD COLUMN {col_name} {col_def};'
+                    else:
+                        query = f'ALTER TABLE profile ADD COLUMN IF NOT EXISTS {col_name} {col_def};'
+                    conn.execute(text(query))
+            print("✅ Profile schema synchronized (Auto-Migration)")
+    except Exception as e:
+        print(f"⚠️  Manual profile schema sync failed: {e}")
+
 def init_db():
     if engine is None:
         print("⚠️  Skipping DB init: No engine available.")
@@ -114,6 +149,7 @@ def init_db():
             
             # 3. Sync existing tables with new columns (Safe Migration Layer)
             sync_user_schema(engine)
+            sync_profile_schema(engine)
             
             # Simple column migrations for other tables
             migration_queries = [
@@ -188,7 +224,7 @@ def seed_essential_data(engine):
 
         # 3. Baseline Hackathons (if empty)
         if not db.exec(select(Hackathon)).first():
-            from app.api.admin import REAL_HACKATHONS
+            from app.core.constants import REAL_HACKATHONS
             print(f"🌱 Seeding: {len(REAL_HACKATHONS)} Global Hackathons...")
             for h_data in REAL_HACKATHONS:
                 h = Hackathon(
@@ -213,7 +249,7 @@ def seed_essential_data(engine):
 
         # 4. Professional Reviews (if empty)
         if not db.exec(select(Review)).first():
-            from app.api.admin import REAL_REVIEWS
+            from app.core.constants import REAL_REVIEWS
             print(f"🌱 Seeding: {len(REAL_REVIEWS)} Professional Reviews...")
             for r in REAL_REVIEWS:
                 new_review = Review(
@@ -275,3 +311,4 @@ def get_session():
             
         # Otherwise, let it propagate so our global handlers in main.py can deal with it properly (e.g. 400 for validation)
         raise e
+get_db = get_session

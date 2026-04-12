@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { API_URL } from "@/lib/api";
+import { PlatinumToast } from "@/components/PlatinumToast";
 
 export function ConnectionStatus() {
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
@@ -75,9 +76,16 @@ export function ConnectionStatus() {
 
       {!apiOnline && apiOnline !== null && (
         <div className="mt-1 text-[9px] text-white/30 italic">
-          Railway may be sleeping...
+          Cloud servers awakening...
         </div>
       )}
+
+      {/* Show the Platinum Toast if api mapping fails signifying a cold start */}
+      <PlatinumToast 
+        show={apiOnline === false} 
+        message="Awakening Neural Core..."
+        subtext="Establishing high-performance link with cloud servers. This takes ~30s on cold boot."
+      />
     </motion.div>
   );
 }

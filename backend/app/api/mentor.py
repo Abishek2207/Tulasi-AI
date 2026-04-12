@@ -50,17 +50,17 @@ async def trigger_mentor_insight(user_id: int, context_type: str, action_desc: s
             db.commit()
             db.refresh(insight)
             
-            # Fire to frontend instantly
-            import asyncio
-            asyncio.create_task(manager.broadcast({
-                "type": "mentor_insight",
-                "insight": {
+            # Fire to frontend instantly via modern Socket.io
+            from app.core.socket_server import sio, user_to_sid
+            sid = user_to_sid.get(user_id)
+            if sid:
+                import asyncio
+                asyncio.create_task(sio.emit('mentor_insight', {
                     "id": insight.id,
                     "context_type": insight.context_type,
                     "insight_text": insight.insight_text,
                     "created_at": insight.created_at.isoformat()
-                }
-            }, room_id=f"user_{user_id}"))
+                }, to=sid))
     except Exception as e:
         logger.error(f"Error generating mentor insight: {e}")
 

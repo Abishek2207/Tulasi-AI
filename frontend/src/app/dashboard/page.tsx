@@ -14,7 +14,7 @@ export default function DashboardRouter() {
     if (isLoaded) {
       if (!user) {
          router.replace("/auth");
-      } else if (!user.user_type) {
+      } else if (!user.is_onboarded) {
          router.replace("/onboarding");
       } else if (user.user_type === "STUDENT") {
          router.replace("/dashboard/student");

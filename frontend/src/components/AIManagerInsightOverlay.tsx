@@ -3,16 +3,14 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, ChevronRight } from "lucide-react";
-// Assumes socket implementation somewhere. If not, use standard event listeners or simple polling as fallback.
-// In this case, we act as a UI component that would receive state from a global store or socket hook.
+import { socketService } from "@/lib/socket";
 
 export function AIManagerInsightOverlay() {
-  const [insight, setInsight] = useState<{ id: number, text: string, context: string } | null>(null);
+  const [insight, setInsight] = useState<{ id: number, insight_text: string, context_type: string } | null>(null);
 
   useEffect(() => {
-    // Listen for custom event from the main websocket manager in the app
-    const handleInsight = (e: CustomEvent) => {
-      setInsight(e.detail);
+    const handleInsight = (data: any) => {
+      setInsight(data);
       
       // Auto-hide after 10 seconds
       setTimeout(() => {
@@ -20,8 +18,8 @@ export function AIManagerInsightOverlay() {
       }, 10000);
     };
 
-    window.addEventListener("mentorInsight", handleInsight as EventListener);
-    return () => window.removeEventListener("mentorInsight", handleInsight as EventListener);
+    socketService.on("mentor_insight", handleInsight);
+    return () => socketService.off("mentor_insight", handleInsight);
   }, []);
 
   return (

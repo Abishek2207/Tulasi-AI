@@ -164,3 +164,9 @@ async def webrtc_signal(sid, data):
                 'payload': payload
             }, to=target_sid)
 
+@sio.event
+async def ping_keepalive(sid):
+    # Extremely lightweight pong to prevent server sleep
+    await sio.emit('pong_keepalive', {'status': 'active'}, to=sid)
+
+

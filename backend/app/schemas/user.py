@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Any
 from datetime import datetime
-from app.models.user import UserTypeEnum
+from app.models.models import UserTypeEnum
 
 
 class SkillItem(BaseModel):
@@ -18,6 +18,10 @@ class ProfileBase(BaseModel):
     ai_mentor_name: Optional[str] = None
     skills: Optional[str] = None             # JSON string of SkillItem[]
     learning_hours_per_day: Optional[int] = 2
+    student_year: Optional[str] = None
+    student_goal: Optional[str] = None
+    current_salary_range: Optional[str] = None
+    target_salary_goal: Optional[str] = None
 
 
 class ProfileCreate(ProfileBase):
