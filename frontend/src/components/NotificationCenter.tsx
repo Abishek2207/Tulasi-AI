@@ -37,14 +37,32 @@ export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Load from localStorage or use defaults
+  // Load from backend or localStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      setNotifications(stored ? JSON.parse(stored) : DEFAULT_NOTIFICATIONS);
-    } catch {
-      setNotifications(DEFAULT_NOTIFICATIONS);
-    }
+    const fetchNotifications = async () => {
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("tulasi_token") : null;
+        if (token) {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/notifications`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setNotifications(data.notifications || []);
+            return;
+          }
+        }
+        throw new Error("Fallback to local");
+      } catch (err) {
+        try {
+          const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+          setNotifications(stored ? JSON.parse(stored) : DEFAULT_NOTIFICATIONS);
+        } catch {
+          setNotifications(DEFAULT_NOTIFICATIONS);
+        }
+      }
+    };
+    fetchNotifications();
   }, []);
 
   // Persist on change

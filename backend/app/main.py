@@ -178,19 +178,23 @@ async def log_requests(request: Request, call_next):
 
 
 # ── Routers (Lazy-Loaded to speed up cold starts) ────────────────────────
-from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, feed, mentor, follow
+from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, feed, mentor, follow, profile
+from app.api import roadmap_career, streak_api, notifications_api, certifications_api, local_rag_api
 
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
 app.include_router(interview.router,    prefix="/api/interview",    tags=["Mock Interview"])
-app.include_router(roadmap.router,      prefix="/api/roadmap",      tags=["Roadmaps"])
+app.include_router(roadmap.router,      prefix="/api/roadmap-legacy", tags=["Legacy Roadmaps"])
+app.include_router(roadmap_career.router, prefix="/api/roadmap/career", tags=["Career AI Roadmaps"])
 app.include_router(hackathons.router,   prefix="/api/hackathons",   tags=["Hackathons"])
 app.include_router(code.router,         prefix="/api/code",         tags=["Code Practice"])
-app.include_router(certificates.router, prefix="/api/certificates", tags=["Certificates"])
+app.include_router(certificates.router, prefix="/api/certificates-legacy", tags=["Legacy Certificates"])
+app.include_router(certifications_api.router, prefix="/api/certifications", tags=["Curated Certifications"])
 app.include_router(messages.router,     prefix="/api/messages",     tags=["Messages"])
 app.include_router(startup.router,      prefix="/api/startup",      tags=["Startup Lab"])
 app.include_router(admin.router,        prefix="/api/admin",        tags=["Admin"])
 app.include_router(activity.router,     prefix="/api/activity",     tags=["Activity & Streaks"])
+app.include_router(streak_api.router,   prefix="/api/streak",       tags=["Daily Streak Check-in"])
 app.include_router(resume.router,       prefix="/api/resume",       tags=["Resume Builder"])
 app.include_router(study.router,        prefix="/api/study",        tags=["Study Rooms"])
 app.include_router(groups.router,       prefix="/api/groups",       tags=["Group Chat"])
@@ -199,6 +203,8 @@ app.include_router(payment.router,      prefix="/api/payment",      tags=["Payme
 app.include_router(reviews.router,      prefix="/api/reviews",      tags=["Reviews"])
 app.include_router(users.router,        prefix="/api/users",        tags=["Users"])
 app.include_router(follow.router,       prefix="/api/follow",       tags=["Follow System"])
+app.include_router(profile.router,      prefix="/api/profile",      tags=["Profile"])
+app.include_router(notifications_api.router, prefix="/api/notifications", tags=["Notifications"])
 
 # Social, Feed and Mentor integration
 app.include_router(feed.router,         prefix="/api/feed",         tags=["Idea Feed"])
@@ -215,6 +221,7 @@ app.include_router(internships.router,  prefix="/api/internships",  tags=["Inter
 app.include_router(system_design.router,  prefix="/api/system-design",  tags=["System Design Module"])
 app.include_router(prep_plan.router,      prefix="/api/prep-plan",      tags=["Prep Plan"])
 app.include_router(rag.router,            prefix="/api/rag",            tags=["Knowledge Base"])
+app.include_router(local_rag_api.router,  prefix="/api/rag",            tags=["Personalized RAG"])
 app.include_router(daily_challenge.router, prefix="/api/daily-challenge", tags=["ORBIT DAILY"])
 
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────

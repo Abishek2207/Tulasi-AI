@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import { certificateApi, Certificate, Milestone } from "@/lib/api";
 import { Upload, FileText, Plus, CheckCircle2, Trophy, MoreVertical, ExternalLink } from "lucide-react";
+import { CertificationDirectory } from "@/components/dashboard/CertificationDirectory";
 
 // Local UI-specific extensions if needed, otherwise use the API types.
 interface DisplayMilestone extends Milestone {
@@ -293,6 +294,8 @@ export default function CertificatesPage() {
           </div>
         )}
       </div>
+
+      <CertificationDirectory />
     </div>
   );
 }
