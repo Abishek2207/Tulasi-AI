@@ -219,6 +219,14 @@ def get_strategic_plan(
 
     intelligence = json.loads(current_user.user_intelligence_profile or "{}")
     
+    # Retrieve RAG context for deeper personalization
+    rag_context = ""
+    try:
+        from app.services.vector_service import vector_service
+        rag_context = vector_service.retrieve_context(current_user.id, "Current career state and long term goals", db)
+    except Exception:
+        pass
+
     prompt = f"""
     You are the Tulasi AI Lead Career Strategist. Generate a world-class STRATEGIC BLUEPRINT.
     
@@ -228,7 +236,11 @@ def get_strategic_plan(
     - Technical Depth: {intelligence.get('technical_depth', 30)}
     - Gaps: {intelligence.get('gaps', [])}
     
-    The plan must be specific to their graduation year/professional stage.
+    COLLECTED CONTEXT:
+    {rag_context}
+    
+    The plan must be specific to their graduation year/professional stage and the COLLECTED CONTEXT.
+    Analyze the current standing and create a high-status evolution path.
     
     Format JSON:
     {{

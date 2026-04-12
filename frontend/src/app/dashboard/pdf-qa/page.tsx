@@ -3,9 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, FileText, Loader2, Send, Sparkles, Trash2, Upload, MessageSquare, ShieldCheck, Zap } from "lucide-react";
-import { pdfApi, chatApi } from "@/lib/api";
+import { pdfApi } from "@/lib/api";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  citations?: string[];
+}
 
 export default function PDFQAPage() {
   const { data: session } = useSession();
@@ -13,7 +19,7 @@ export default function PDFQAPage() {
   const [uploading, setUploading] = useState(false);
   const [indexing, setIndexing] = useState(false);
   const [indexedChunks, setIndexedChunks] = useState(0);
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -80,9 +86,13 @@ export default function PDFQAPage() {
     setSending(true);
 
     try {
-      // Use the generic chat API but indicate we want RAG context
-      const res = await chatApi.send(userMsg, undefined, "pdf_qa");
-      setMessages(prev => [...prev, { role: "assistant", content: res.response }]);
+      // Use the dedicated Gemini 1.5 RAG endpoint for document-aware answers
+      const res = await pdfApi.ask(userMsg);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: res.answer,
+        citations: res.citations
+      }]);
     } catch (err: any) {
       toast.error(err.message || "Failed to send message");
     } finally {
@@ -217,6 +227,15 @@ export default function PDFQAPage() {
                 }}>
                   {m.content}
                 </div>
+                {m.role === "assistant" && (m as any).citations?.length > 0 && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8, paddingLeft: 4 }}>
+                    {(m as any).citations.map((c: string, ci: number) => (
+                      <span key={ci} style={{ fontSize: 10, fontWeight: 700, color: "#8B5CF6", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)", padding: "2px 8px", borderRadius: 8 }}>
+                        📎 {c}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             ))
           )}

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.deps import get_current_user
-from app.models.user import User, UserTypeEnum
+from app.models.models import User, UserTypeEnum
 import datetime
 
 router = APIRouter()
@@ -100,8 +100,8 @@ async def get_notifications(
         notifications.append({**n, "read": False, "timestamp": now_ts})
 
     # Streak reminder if at risk
-    streak = current_user.streak_count or 0
-    last_login = current_user.last_login
+    streak = getattr(current_user, 'streak', 0)
+    last_login = current_user.last_seen
     if last_login:
         days_since = (today - last_login.date()).days
         if days_since >= 1:

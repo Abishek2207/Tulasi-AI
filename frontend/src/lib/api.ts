@@ -399,6 +399,8 @@ export const adminApi = {
     request<{ message: string; is_featured: boolean }>(`/api/admin/reviews/${id}/feature`, { method: "PATCH" }),
   seedHackathons: () =>
     request<{ message: string }>("/api/admin/seed-hackathons", { method: "POST" }),
+  seedReviews: () =>
+    request<{ message: string }>("/api/admin/seed-reviews", { method: "POST" }),
   deleteHackathon: (id: number) =>
     request<{ message: string }>(`/api/admin/hackathons/${id}`, { method: "DELETE" }),
   approveReview: (id: number) =>
@@ -1022,6 +1024,11 @@ export const pdfApi = {
   },
   status: () => request<{ indexed_chunks: number }>("/api/pdf/status"),
   clear: () => request<{ message: string }>("/api/pdf/clear", { method: "DELETE" }),
+  ask: (question: string, top_k = 5) =>
+    request<{ answer: string; citations: string[]; chunks_used?: number }>("/api/pdf/ask", {
+      method: "POST",
+      body: JSON.stringify({ question, top_k }),
+    }),
 };
 
 export interface StartupIdea {

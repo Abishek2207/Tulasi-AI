@@ -15,7 +15,7 @@ import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
   FileText, Award, BarChart3, MessageCircle, Briefcase,
-  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass, TrendingUp, Navigation, Flame
+  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass, TrendingUp, Navigation, Flame, Globe
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -59,6 +59,7 @@ const NAV_SECTIONS = [
   {
     label: "Community",
     items: [
+      { icon: Globe,           name: "Orbit HUB",      href: "/dashboard/orbit",             badge: "LIVE" },
       { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
       { icon: Lightbulb,       name: "Idea Feed",       href: "/dashboard/feed",           badge: "COMING SOON" },
       { icon: Mail,            name: "Messages",        href: "/dashboard/messages",       badge: "COMING SOON" },

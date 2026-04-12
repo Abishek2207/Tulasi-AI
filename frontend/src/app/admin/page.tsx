@@ -256,6 +256,12 @@ export default function AdminPage() {
     catch { toast.error("Seed failed."); }
     finally { setActionLoading(""); }
   };
+  const seedReviews = async () => {
+    setActionLoading("seedR");
+    try { const d = await adminApi.seedReviews(); toast.success(d.message); await load(); }
+    catch { toast.error("Seed reviews failed."); }
+    finally { setActionLoading(""); }
+  };
   const deleteHackathon = async (id: number) => {
     if (!confirm("Delete hackathon?")) return;
     try { await adminApi.deleteHackathon(id); setHackathons(h => h.filter(x => x.id !== id)); }
@@ -738,6 +744,10 @@ export default function AdminPage() {
                     <p style={{ color: "var(--text-muted)", fontSize: 13 }}>{reviews.length} total reviews</p>
                   </div>
                   <div style={{ display: "flex", gap: 10 }}>
+                    <button onClick={seedReviews} disabled={actionLoading === "seedR"}
+                      style={{ padding: "9px 16px", borderRadius: 10, border: "1px solid rgba(16,185,129,0.3)", background: "rgba(16,185,129,0.08)", color: "#10B981", fontSize: 12, cursor: actionLoading === "seedR" ? "not-allowed" : "pointer", fontWeight: 700 }}>
+                      {actionLoading === "seedR" ? "⏳ Seeding…" : "🌱 Seed Reviews"}
+                    </button>
                   </div>
                 </div>
 

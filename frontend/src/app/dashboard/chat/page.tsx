@@ -196,6 +196,7 @@ export default function ChatPage() {
   const [msgCount, setMsgCount] = useState(0);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [mentorName, setMentorName] = useState("Tulasi AI");
   
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -246,6 +247,19 @@ export default function ChatPage() {
     fetchSessions();
     const saved = localStorage.getItem("tulasi_chat_session");
     if (saved) loadHistory(saved);
+
+    // Fetch Mentor Name
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000"}/api/profile/me`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.ai_mentor_name) {
+            setMentorName(d.ai_mentor_name);
+            setMessages(prev => prev.map((m, i) => i === 0 ? { ...m, content: GREETING.replace("Tulasi AI", d.ai_mentor_name) } : m));
+        }
+    })
+    .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -320,8 +334,9 @@ export default function ChatPage() {
               <Bot size={20} color="white" />
             </div>
             <div>
-              <h1 style={{ fontSize: 20, fontWeight: 900, margin: 0, letterSpacing: "-0.5px", background: "linear-gradient(90deg, #fff, #A78BFA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Tulasi AI Chat</h1>
-              {/* Branding Removed per Founder Request */}
+              <h1 style={{ fontSize: 20, fontWeight: 900, margin: 0, letterSpacing: "-0.5px", background: "linear-gradient(90deg, #fff, #A78BFA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                {mentorName} Chat
+              </h1>
             </div>
           </div>
           <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(16,185,129,0.15)", padding: "4px 12px", borderRadius: 20, border: "1px solid rgba(16,185,129,0.3)" }}>

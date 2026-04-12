@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.deps import get_current_user
-from app.models.user import User, UserTypeEnum
+from app.models.models import User, UserTypeEnum
 from typing import Optional
 
 router = APIRouter()
@@ -137,9 +137,17 @@ async def get_certifications(
     # Sort: free first, then by rating
     filtered.sort(key=lambda x: (-int(x["free"]), -x["rating"]))
 
+    # Map to frontend expected format
+    formatted = []
+    for c in filtered:
+        item = dict(c)
+        item["cost"] = "Free" if c["free"] else "Paid"
+        item["role"] = c["roles"]
+        formatted.append(item)
+
     return {
-        "certifications": filtered,
-        "total": len(filtered),
+        "certifications": formatted,
+        "total": len(formatted),
         "filters_applied": {
             "skill_level": skill_level,
             "role": role,

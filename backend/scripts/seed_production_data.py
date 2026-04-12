@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from sqlmodel import Session, select, text
 from app.core.database import engine
 from app.models.models import Hackathon, Review, User
-from app.api.admin import REAL_HACKATHONS, REAL_REVIEWS
+from app.core.constants import REAL_HACKATHONS, REAL_REVIEWS
 
 def seed():
     with Session(engine) as db:

@@ -218,6 +218,7 @@ def get_me(current_user: User = Depends(get_current_user)):
 class OAuthLoginRequest(BaseModel):
     email: str
     name: Optional[str] = None
+    avatar: Optional[str] = None
     provider: str = "google"
     invite_code: Optional[str] = None
 
@@ -230,56 +231,67 @@ def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: Back
     result = db.exec(query)
     user = result.first()
 
+    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
+    is_admin = req.email.lower() in admin_emails
+    needs_commit = False
+
     if not user:
         # Auto-register the oauth user
-        admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-        is_admin = req.email.lower() in admin_emails
         user = User(
             email=req.email,
             hashed_password=None,  # No password for OAuth users
             name=req.name or req.email.split("@")[0],
+            avatar=req.avatar,
             role="admin" if is_admin else "student",
             provider=req.provider,
             invite_code=uuid.uuid4().hex[:8].upper(),
         )
-
+        
         # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
         if req.invite_code:
             query = select(User).where(User.invite_code == req.invite_code)
-            result = db.exec(query)
-            referer = result.first()
+            referer = db.exec(query).first()
             if referer:
                 referer.xp = (referer.xp or 0) + 500
                 user.xp = 500
                 user.referred_by = referer.invite_code
                 db.add(referer)
-                db.commit()
                 
                 # Check 10 referrals for Pro
-                total_referrals = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
-                if len(total_referrals) >= 9:
+                total_referral_count = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
+                if len(total_referral_count) >= 9:
                     referer.is_pro = True
-                    # Will add a dedicated pro_expiry date field next to track the 2 months
                     db.add(referer)
         # ─────────────────────────────────────────────────────────────
-
         db.add(user)
+        needs_commit = True
+    else:
+        # ── IDENTITY SYNC: Harden existing user metadata ──────────────
+        # Update name if changed
+        if req.name and user.name != req.name:
+            user.name = req.name
+            needs_commit = True
+            
+        # Update avatar if changed
+        if req.avatar and user.avatar != req.avatar:
+            user.avatar = req.avatar
+            needs_commit = True
+
+        # Update admin role if needed (security hardening)
+        if is_admin and user.role != "admin":
+            user.role = "admin"
+            needs_commit = True
+        
+        # Ensure provider is recorded
+        if not user.provider or user.provider == "email":
+            user.provider = req.provider
+            needs_commit = True
+
+    if needs_commit:
         db.commit()
         db.refresh(user)
 
     # Streak and last activity are now handled centrally by log_activity_internal below.
-
-    # ── Auto-elevate to admin if email matches ─────────────────────────
-    needs_commit = False
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-    if user.email.lower() in admin_emails and user.role != "admin":
-        user.role = "admin"
-        db.add(user)
-        needs_commit = True
-        
-    if needs_commit:
-        db.commit()
-        db.refresh(user)
 
     # ── 🔓 Log Activity In Background ──────────────────────────────
     background_tasks.add_task(background_log_login, user.id, "user_login", f"Logged in via {req.provider.capitalize()}")

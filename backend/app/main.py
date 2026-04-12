@@ -1,7 +1,19 @@
 import sys
 import os
-# Auto fix PYTHONPATH so 'app.main' and 'app.core' resolve when running from project root
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# ── [HOTFIX] SQLAlchemy 2.0 + Python 3.13 compatibility ──
+try:
+    import sqlalchemy.sql.elements as sqlalchemy_elements
+    if hasattr(sqlalchemy_elements, "TypingOnly"):
+        # The base class TypingOnly in some SQLAlchemy versions asserts that inheriting 
+        # classes have no extra attributes. Python 3.13+ injects __firstlineno__ 
+        # and __static_attributes__, triggering a false-positive AssertionError.
+        sqlalchemy_elements.TypingOnly.__init_subclass__ = classmethod(lambda cls, **kwargs: None)
+        print("🔧 Applied SQLAlchemy TypingOnly hotfix for Python 3.13")
+except Exception as e:
+    print(f"⚠️ SQLAlchemy Hotfix failed: {e}")
+
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
