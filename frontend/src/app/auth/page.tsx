@@ -115,7 +115,7 @@ export default function AuthPage() {
         window.dispatchEvent(new Event("tulasi-auth-change"));
         if (data.user?.role === "admin" || data.user?.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
           router.push("/admin");
-        } else if (!data.user?.is_onboarded) {
+        } else if (!(data.user as any)?.is_onboarded) {
           router.push("/onboarding");
         } else {
           router.push("/dashboard");
@@ -143,7 +143,7 @@ export default function AuthPage() {
         window.dispatchEvent(new Event("tulasi-auth-change"));
         if (data.user?.role === "admin" || data.user?.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
           router.push("/admin");
-        } else if (!data.user?.is_onboarded) {
+        } else if (!(data.user as any)?.is_onboarded) {
           router.push("/onboarding");
         } else {
           router.push("/dashboard");

@@ -87,7 +87,7 @@ export function AIManagerInsightOverlay() {
                 AGI MENTOR
               </div>
               <p style={{ fontSize: 14, color: "rgba(255,255,255,0.9)", lineHeight: 1.5, marginBottom: 12 }}>
-                {insight.text}
+                {insight.insight_text}
               </p>
               
               <button style={{
