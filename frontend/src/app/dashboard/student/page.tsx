@@ -158,6 +158,8 @@ export default function DashboardPage() {
   const [feed, setFeed] = useState<any[]>(() => getCached<any[]>("public_feed") || []);
   const [dailyPlan, setDailyPlan] = useState<any[]>(() => getCached<any[]>("next-action") || []);
   const [userType, setUserType] = useState<string>("student");
+  const [studentYear, setStudentYear] = useState<string>("");
+  const [studentGoal, setStudentGoal] = useState<string>("");
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [matchedInternships, setMatchedInternships] = useState<any[]>(() => getCached<any[]>("internships/matches") || []);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,6 +175,15 @@ export default function DashboardPage() {
       if (me?.is_onboarded === false) setNeedsOnboarding(true);
       if (me?.invite_code) setLocalStats(prev => ({ ...prev, invite_code: me.invite_code }));
     }).catch(() => null);
+
+    // Fetch profile for year-specific content
+    fetch(`${API}/api/profile/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        if (d?.student_year) setStudentYear(d.student_year);
+        if (d?.student_goal) setStudentGoal(d.student_goal);
+      })
+      .catch(() => null);
 
     activityApi.getStats(token).then((s: any) => {
       if (s) setLocalStats(prev => ({
@@ -244,6 +255,73 @@ export default function DashboardPage() {
           </div>
           <StreakCard />
         </motion.div>
+
+        {/* ── Year-Specific Focus Banner ── */}
+        {studentYear && (() => {
+          const YEAR_FOCUS: Record<string, { headline: string; bullets: string[]; color: string; actions: { label: string; href: string }[] }> = {
+            "1st Year": {
+              color: "#6366f1",
+              headline: `🎓 1st Year Focus — Build Your Foundation`,
+              bullets: ["C / Python programming basics", "Mathematics & Digital Logic", "Soft Skills & Communication", "NPTEL / Google certificate courses"],
+              actions: [
+                { label: "AI Chat", href: "/dashboard/chat" },
+                { label: "Soft Skills", href: "/dashboard/chat?mode=soft_skills" },
+                { label: "Flashcards", href: "/dashboard/flashcards" },
+              ]
+            },
+            "2nd Year": {
+              color: "#8B5CF6",
+              headline: `📚 2nd Year Focus — Master DSA & Core CS`,
+              bullets: ["Data Structures & Algorithms (DSA)", "OOP (Java / C++ / Python)", "DBMS & SQL fundamentals", "Web Dev basics + first mini-projects"],
+              actions: [
+                { label: "Code Arena", href: "/dashboard/code" },
+                { label: "Flashcards", href: "/dashboard/flashcards" },
+                { label: "Career Roadmap", href: "/dashboard/roadmaps" },
+              ]
+            },
+            "3rd Year": {
+              color: "#A855F7",
+              headline: `🚀 3rd Year Focus — Land Your Internship`,
+              bullets: ["Advanced DSA + LeetCode Medium", "Full Stack / AI-ML Project", "Internship applications (NOW!)", "Open source + GitHub contributions"],
+              actions: [
+                { label: "Internships", href: "/dashboard/internships" },
+                { label: "Resume Builder", href: "/dashboard/resume" },
+                { label: "Mock Interview", href: "/dashboard/interview" },
+              ]
+            },
+            "4th Year": {
+              color: "#EC4899",
+              headline: `🏆 4th Year Focus — Crack Placements`,
+              bullets: ["DSA — LeetCode Medium/Hard daily", "System Design (HLD + LLD)", "Company-specific prep (TCS / MAANG)", "GATE / GRE / MBA if higher studies"],
+              actions: [
+                { label: "Mock Interview", href: "/dashboard/interview" },
+                { label: "System Design", href: "/dashboard/system-design" },
+                { label: "Company Prep", href: "/dashboard/company-prep" },
+              ]
+            }
+          };
+          const yf = YEAR_FOCUS[studentYear];
+          if (!yf) return null;
+          return (
+            <motion.div variants={item} style={{ marginBottom: 32, background: `${yf.color}12`, border: `1px solid ${yf.color}30`, borderRadius: 20, padding: "20px 28px", display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 900, color: yf.color, marginBottom: 10 }}>{yf.headline}</h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
+                  {yf.bullets.map((b, i) => (
+                    <span key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>• {b}</span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+                {yf.actions.map((a, i) => (
+                  <Link key={i} href={a.href} style={{ textDecoration: "none", background: `${yf.color}25`, border: `1px solid ${yf.color}50`, color: yf.color, padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 800, whiteSpace: "nowrap", display: "block" }}>
+                    {a.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          );
+        })()}
 
         {/* ── Desktop: Bento Hub | Mobile: Vertical Stack ── */}
         <div className="bento-hub-grid" style={{ marginBottom: 40 }}>

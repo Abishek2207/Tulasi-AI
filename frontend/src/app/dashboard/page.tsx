@@ -16,8 +16,10 @@ export default function DashboardRouter() {
          router.replace("/auth");
       } else if (!user.is_onboarded) {
          router.replace("/onboarding");
-      } else if (user.user_type === "STUDENT") {
+      } else if (user.user_type?.toUpperCase() === "STUDENT") {
          router.replace("/dashboard/student");
+      } else if (user.user_type?.toUpperCase() === "PROFESSOR") {
+         router.replace("/dashboard/professor");
       } else {
          router.replace("/dashboard/professional");
       }

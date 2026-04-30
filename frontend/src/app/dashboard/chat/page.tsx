@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "@/hooks/useSession";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatApi, ChatMsg, ChatSession } from "@/lib/api";
 import { Bot, Send, Trash2, Plus, MessageSquare, Menu, X, Clock, History, BrainCircuit, Copy, Check, GraduationCap, Building2, TrendingUp, HelpCircle } from "lucide-react";
@@ -185,18 +186,33 @@ function MessageBubble({ msg, index }: { msg: ChatMsg; index: number }) {
 
 export default function ChatPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const initialMode = searchParams?.get("mode") || "chat";
+
   const [messages, setMessages] = useState<ChatMsg[]>([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [mode, setMode] = useState<string>("chat");
+  const [mode, setMode] = useState<string>(initialMode);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [msgCount, setMsgCount] = useState(0);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [mentorName, setMentorName] = useState("Tulasi AI");
+
+  // Mode greeting map
+  const MODE_GREETINGS: Record<string, string> = {
+    soft_skills: "Hello! I'm your Soft Skills Coach. I specialize in communication, leadership, teamwork, time management, and emotional intelligence. What soft skill would you like to master today?",
+    communication: "Hi! I'm your Communication Intelligence Coach. I'll help you with email writing, professional conversations, presentation skills, and more. What communication challenge can I help you with?",
+    interview: "Ready for your mock interview! Tell me: what role and company level are you preparing for? (e.g. 'SDE-1 at Google' or 'Fresher TCS placement')",
+    career_strategy: "I'm your Elite Career Strategist. Tell me your current year/role and your biggest career challenge — I'll build you a personalized action plan.",
+    doubt: "I'm your Doubt Solver! Ask me any question — technical, conceptual, or career-related. I'll give you a clear, step-by-step answer tailored to your level.",
+    chat: GREETING,
+    learning_engine: "I'm your Socratic Learning Engine. What concept would you like to master today? I'll guide you step by step!",
+    system_design: "Ready for System Design! Tell me what system you'd like to design (e.g. URL shortener, Instagram, payment gateway) and I'll walk you through the full architecture.",
+  };
   
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -256,11 +272,19 @@ export default function ChatPage() {
     .then(d => {
         if (d.ai_mentor_name) {
             setMentorName(d.ai_mentor_name);
-            setMessages(prev => prev.map((m, i) => i === 0 ? { ...m, content: GREETING.replace("Tulasi AI", d.ai_mentor_name) } : m));
         }
     })
     .catch(() => {});
   }, []);
+
+  // Update greeting when mode changes
+  useEffect(() => {
+    const greetingText = MODE_GREETINGS[mode] || GREETING;
+    const personalizedGreeting = greetingText.replace("Tulasi AI", mentorName);
+    setMessages([{ role: "assistant", content: personalizedGreeting }]);
+    setSessionId("");
+    localStorage.removeItem("tulasi_chat_session");
+  }, [mode]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -346,15 +370,16 @@ export default function ChatPage() {
         </div>
 
         {/* AI Mode Selector */}
-        <div style={{ display: "flex", gap: 10, padding: "4px 4px", overflowX: "auto", scrollbarWidth: "none", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 8, padding: "4px 4px", overflowX: "auto", scrollbarWidth: "none", marginBottom: 16, flexWrap: "wrap" }}>
           {[
             { id: "chat", label: "General Chat", icon: <MessageSquare size={14} /> },
             { id: "learning_engine", label: "Learning Engine", icon: <GraduationCap size={14} /> },
             { id: "doubt", label: "Doubt Solver", icon: <HelpCircle size={14} /> },
-            { id: "system_design", label: "System Design", icon: <Building2 size={14} /> },
             { id: "career_strategy", label: "Career Strategy", icon: <TrendingUp size={14} /> },
+            { id: "system_design", label: "System Design", icon: <Building2 size={14} /> },
             { id: "interview", label: "Mock Interview", icon: <BrainCircuit size={14} /> },
-            { id: "personal_rag", label: "Personalized RAG", icon: <BrainCircuit size={14} /> }
+            { id: "soft_skills", label: "Soft Skills", icon: <BrainCircuit size={14} /> },
+            { id: "communication", label: "Communication", icon: <MessageSquare size={14} /> },
           ].map(m => (
             <button
               key={m.id}

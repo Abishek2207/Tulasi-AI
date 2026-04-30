@@ -6,7 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
 import { TulasiLogo } from "@/components/TulasiLogo";
-import { GraduationCap, Briefcase, ArrowRight } from "lucide-react";
+import { GraduationCap, Briefcase, ArrowRight, BookOpen } from "lucide-react";
+
+const YEAR_INFO: Record<string, { label: string; focus: string; color: string }> = {
+  "1st Year": { label: "1st Year", focus: "C/Python basics, Maths, Digital Logic, Soft Skills, College orientation", color: "#6366f1" },
+  "2nd Year": { label: "2nd Year", focus: "DSA, OOP, DBMS, Web Dev basics, Mini-projects, LeetCode Easy", color: "#8B5CF6" },
+  "3rd Year": { label: "3rd Year", focus: "Advanced DSA, Internship prep, Full Stack / AI-ML, Open source, LeetCode Medium", color: "#A855F7" },
+  "4th Year": { label: "4th Year", focus: "Placement DSA, System Design, Company prep (TCS/MAANG), GATE/GRE, Resume", color: "#EC4899" },
+};
 
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
@@ -17,7 +24,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   
-  const [selectedType, setSelectedType] = useState<"STUDENT" | "PROFESSIONAL" | "">("");
+  const [selectedType, setSelectedType] = useState<"STUDENT" | "PROFESSIONAL" | "PROFESSOR" | "">("");
   
   // Student Data
   const [studentYear, setStudentYear] = useState("");
@@ -61,6 +68,13 @@ export default function OnboardingPage() {
         profilePayload = {
           student_year: studentYear,
           student_goal: studentGoal
+        };
+      } else if (selectedType === "PROFESSOR") {
+        profilePayload = {
+          current_role: currentRole,          // Designation e.g. "Assistant Professor"
+          company: companyName,               // Institution name
+          student_goal: salaryRange,          // Subjects / research area (reusing field)
+          experience_years: 0,
         };
       } else {
         profilePayload = {
@@ -127,13 +141,12 @@ export default function OnboardingPage() {
                 <p style={{ color: "rgba(255,255,255,0.6)", textAlign: "center", marginBottom: 32, fontSize: 16 }}>
                   so we can personalize your growth journey seamlessly.
                 </p>
-
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   <button onClick={() => setSelectedType("STUDENT")}
                     style={{ background: selectedType === "STUDENT" ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.02)",
                       border: `2px solid ${selectedType === "STUDENT" ? "#6366f1" : "rgba(255,255,255,0.05)"}`,
                       borderRadius: 16, padding: "24px", display: "flex", alignItems: "center", gap: 20, cursor: "pointer", transition: "0.2s" }}>
-                    <div style={{ background: selectedType === "STUDENT" ? "#6366f1" : "rgba(255,255,255,0.1)", p: 12, borderRadius: 12, color: "white", display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48 }}>
+                    <div style={{ background: selectedType === "STUDENT" ? "#6366f1" : "rgba(255,255,255,0.1)", borderRadius: 12, color: "white", display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, flexShrink: 0 }}>
                       <GraduationCap size={24} />
                     </div>
                     <div style={{ textAlign: "left" }}>
@@ -146,12 +159,25 @@ export default function OnboardingPage() {
                     style={{ background: selectedType === "PROFESSIONAL" ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.02)",
                       border: `2px solid ${selectedType === "PROFESSIONAL" ? "#10b981" : "rgba(255,255,255,0.05)"}`,
                       borderRadius: 16, padding: "24px", display: "flex", alignItems: "center", gap: 20, cursor: "pointer", transition: "0.2s" }}>
-                    <div style={{ background: selectedType === "PROFESSIONAL" ? "#10b981" : "rgba(255,255,255,0.1)", p: 12, borderRadius: 12, color: "white", display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48 }}>
+                    <div style={{ background: selectedType === "PROFESSIONAL" ? "#10b981" : "rgba(255,255,255,0.1)", borderRadius: 12, color: "white", display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, flexShrink: 0 }}>
                       <Briefcase size={24} />
                     </div>
                     <div style={{ textAlign: "left" }}>
                       <h3 style={{ color: "white", fontSize: 20, fontWeight: 700, margin: "0 0 4px 0" }}>Working Professional</h3>
-                      <p style={{ color: "rgba(255,255,255,0.5)", margin: 0, fontSize: 14 }}>Looking to upskill, transition roles, or increase salary.</p>
+                      <p style={{ color: "rgba(255,255,255,0.5)", margin: 0, fontSize: 14 }}>Upskill, switch roles, or grow salary.</p>
+                    </div>
+                  </button>
+
+                  <button onClick={() => setSelectedType("PROFESSOR")}
+                    style={{ background: selectedType === "PROFESSOR" ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.02)",
+                      border: `2px solid ${selectedType === "PROFESSOR" ? "#F59E0B" : "rgba(255,255,255,0.05)"}`,
+                      borderRadius: 16, padding: "24px", display: "flex", alignItems: "center", gap: 20, cursor: "pointer", transition: "0.2s" }}>
+                    <div style={{ background: selectedType === "PROFESSOR" ? "#F59E0B" : "rgba(255,255,255,0.1)", borderRadius: 12, color: "white", display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, flexShrink: 0 }}>
+                      <BookOpen size={24} />
+                    </div>
+                    <div style={{ textAlign: "left" }}>
+                      <h3 style={{ color: "white", fontSize: 20, fontWeight: 700, margin: "0 0 4px 0" }}>Professor / Academic</h3>
+                      <p style={{ color: "rgba(255,255,255,0.5)", margin: 0, fontSize: 14 }}>Teaching in college, doing research, or in academia.</p>
                     </div>
                   </button>
                 </div>
@@ -170,25 +196,30 @@ export default function OnboardingPage() {
             {step === 1 && selectedType === "STUDENT" && (
               <motion.div key="student-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Student Profile</h2>
-                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>Let's customize your TulasiAI experience.</p>
+                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>Your content will be 100% personalized to your year — no irrelevant topics.</p>
                 
                 <div style={{ marginBottom: 24 }}>
                   <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Which year are you currently in?</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    {["1st Year", "2nd Year", "3rd Year", "4th Year"].map(year => (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {Object.entries(YEAR_INFO).map(([year, info]) => (
                       <button key={year} onClick={() => setStudentYear(year)}
-                        style={{ background: studentYear === year ? "#6366f1" : "rgba(255,255,255,0.05)",
-                          color: "white", border: "none", padding: "16px", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
-                        {year}
+                        style={{ 
+                          background: studentYear === year ? `${info.color}20` : "rgba(255,255,255,0.03)",
+                          border: `2px solid ${studentYear === year ? info.color : "rgba(255,255,255,0.06)"}`,
+                          color: "white", padding: "16px 20px", borderRadius: 12, fontSize: 15, fontWeight: 600,
+                          cursor: "pointer", transition: "0.2s", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center"
+                        }}>
+                        <span>{info.label}</span>
+                        <span style={{ fontSize: 11, color: studentYear === year ? info.color : "rgba(255,255,255,0.3)", fontWeight: 500, maxWidth: "60%", textAlign: "right", lineHeight: 1.4 }}>{info.focus}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div style={{ marginBottom: 32 }}>
-                  <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>What is your goal?</label>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {["Placements", "Higher Studies", "Freelancing / Startup"].map(goal => (
+                  <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>What is your primary goal?</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {["Placements (On-campus / Off-campus)", "Higher Studies (GATE / GRE / MBA)", "Freelancing / Startup"].map(goal => (
                       <button key={goal} onClick={() => setStudentGoal(goal)}
                         style={{ background: studentGoal === goal ? "#6366f1" : "rgba(255,255,255,0.05)",
                           color: "white", border: "none", padding: "16px", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", textAlign: "left", transition: "0.2s" }}>
@@ -201,8 +232,8 @@ export default function OnboardingPage() {
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
                   <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
                   <button onClick={() => setStep(2)} disabled={!studentYear || !studentGoal || loading}
-                    style={{ background: (!studentYear || !studentGoal || loading) ? "rgba(255,255,255,0.1)" : "#6366f1", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!studentYear || !studentGoal || loading) ? "not-allowed" : "pointer" }}>
-                    Personalize Mentor <ArrowRight size={20} />
+                    style={{ background: (!studentYear || !studentGoal || loading) ? "rgba(255,255,255,0.1)" : "#6366f1", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!studentYear || !studentGoal || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                    Name Your Mentor <ArrowRight size={20} />
                   </button>
                 </div>
               </motion.div>
@@ -263,8 +294,42 @@ export default function OnboardingPage() {
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
                   <button onClick={() => setStep(2)} disabled={!currentRole || !companyName || !experienceYears || !salaryRange || !targetSalary || loading}
-                    style={{ background: (!currentRole || !companyName || !experienceYears || !salaryRange || !targetSalary || loading) ? "rgba(255,255,255,0.1)" : "#10b981", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!currentRole || !companyName || !experienceYears || !salaryRange || !targetSalary || loading) ? "not-allowed" : "pointer" }}>
-                    Personalize Mentor <ArrowRight size={20} />
+                    style={{ background: (!currentRole || !companyName || !experienceYears || !salaryRange || !targetSalary || loading) ? "rgba(255,255,255,0.1)" : "#10b981", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!currentRole || !companyName || !experienceYears || !salaryRange || !targetSalary || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                    Name Your Mentor <ArrowRight size={20} />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* PROFESSOR FLOW */}
+            {step === 1 && selectedType === "PROFESSOR" && (
+              <motion.div key="prof-acad-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Academic Profile</h2>
+                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>We'll personalize your AI to focus on research, pedagogy, and academic growth.</p>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Current Designation</label>
+                    <input type="text" value={currentRole} onChange={(e) => setCurrentRole(e.target.value)} placeholder="e.g. Assistant Professor, HOD, Research Scholar"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Institution / College Name</label>
+                    <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Anna University, NIT Trichy"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Subjects You Teach (or Research Area)</label>
+                    <input type="text" value={salaryRange} onChange={(e) => setSalaryRange(e.target.value)} placeholder="e.g. Data Structures, AI, Computer Networks"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
+                  <button onClick={() => setStep(2)} disabled={!currentRole || !companyName || loading}
+                    style={{ background: (!currentRole || !companyName || loading) ? "rgba(255,255,255,0.1)" : "#F59E0B", color: "black", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!currentRole || !companyName || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                    Name Your Mentor <ArrowRight size={20} />
                   </button>
                 </div>
               </motion.div>
