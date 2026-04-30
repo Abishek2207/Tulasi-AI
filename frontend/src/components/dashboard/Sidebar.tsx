@@ -42,6 +42,8 @@ const NAV_SECTIONS = [
       { icon: BookOpen,        name: "Platform Guides", href: "/dashboard/platform-guides" },
       { icon: Youtube,         name: "YouTube Hub",     href: "/dashboard/youtube-learning" },
       { icon: Building2,       name: "Company Prep",    href: "/dashboard/company-prep" },
+      { icon: MessageCircle,   name: "Soft Skills",     href: "/dashboard/chat?mode=soft_skills",  badge: "NEW" },
+      { icon: MessageSquare,   name: "Communication",   href: "/dashboard/chat?mode=communication", badge: "NEW" },
     ]
   },
   {
@@ -157,12 +159,26 @@ export default function Sidebar() {
             {section.items.map(item => {
               // Only show API Status for admins
               if (item.name === "API Status" && currentUser?.role !== "admin") return null;
+              
+              // For professors: hide student-specific heavy items
+              const userTypeLower = (currentUser?.user_type || "student").toLowerCase();
+              if (userTypeLower === "professor") {
+                const studentOnlyItems = ["Code Arena", "Company Prep", "Internships", "ORBIT DAILY", "Preparation Plan"];
+                if (studentOnlyItems.includes(item.name)) return null;
+              }
 
-              const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              // Dynamic dashboard href per user type
+              const itemHref = item.href === "/dashboard"
+                ? userTypeLower === "student" ? "/dashboard/student"
+                  : userTypeLower === "professor" ? "/dashboard/professor"
+                  : "/dashboard/professional"
+                : item.href;
+
+              const active = pathname === itemHref || pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
               const isLocked = item.requiresPro && !isPro;
               return (
                 <motion.div key={item.href} whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                  <Link href={item.href}
+                  <Link href={itemHref}
                     onClick={handleLinkClick}
                     style={{
                       display: "flex", alignItems: "center", gap: 10,

@@ -245,6 +245,35 @@ export default function DashboardPage() {
           <StreakCard />
         </motion.div>
 
+        {/* ── Professional Role Banner ── */}
+        {(() => {
+          const profRole = (session?.user as any)?.profile?.current_role || "";
+          const profExp = (session?.user as any)?.profile?.experience_years || 0;
+          return (
+            <motion.div variants={item} style={{
+              marginBottom: 32, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)",
+              borderRadius: 20, padding: "20px 28px", display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center", justifyContent: "space-between"
+            }}>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 900, color: "#10b981", marginBottom: 10 }}>
+                  💼 Professional Growth Hub
+                  {profRole ? ` — ${profRole}` : ""}
+                </h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
+                  {["System Design", "Salary Negotiation", "Leadership Skills", "Cloud Certifications", "AI Upskilling"].map((b, i) => (
+                    <span key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>• {b}</span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+                <Link href="/dashboard/resume" style={{ textDecoration: "none", background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)", color: "#10b981", padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 800 }}>Resume AI</Link>
+                <Link href="/dashboard/salary-intel" style={{ textDecoration: "none", background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)", color: "#10b981", padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 800 }}>Salary Intel</Link>
+                <Link href="/dashboard/chat?mode=career_strategy" style={{ textDecoration: "none", background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)", color: "#10b981", padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 800 }}>Career Strategy</Link>
+              </div>
+            </motion.div>
+          );
+        })()}
+
         {/* ── Desktop: Bento Hub | Mobile: Vertical Stack ── */}
         <div className="bento-hub-grid" style={{ marginBottom: 40 }}>
           {/* Mission Control - Personalized AI Mission */}
