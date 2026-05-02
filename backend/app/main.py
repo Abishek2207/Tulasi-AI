@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):
         import asyncio
         url = "https://tulasi-ai-hycl.onrender.com/api/ping"
         while True:
-            await asyncio.sleep(600)  # Ping every 10 mins (Render sleeps after 15 mins)
+            await asyncio.sleep(300)  # Ping every 5 mins — prevents 15-min Render sleep
             try:
                 async with httpx.AsyncClient() as client:
                     await client.get(url, timeout=10.0)
