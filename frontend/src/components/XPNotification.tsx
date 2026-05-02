@@ -106,14 +106,7 @@ export function showStreakAchieved(days: number) {
   );
 }
 
-// Auto-hook component to inject into layout
+// Auto-hook component — XP toasts disabled (no pop-ups on login)
 export function XPNotificationSystem() {
-  useEffect(() => {
-    // Fire a welcome notification on mount for demo
-    const timer = setTimeout(() => {
-      showXPGain(25, "Daily Login Bonus");
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
   return null;
 }

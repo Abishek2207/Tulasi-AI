@@ -28,14 +28,14 @@ const getNavSections = (userType: string) => {
     { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
     { icon: Lightbulb,       name: "Projects",        href: "/dashboard/projects" },
     { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
-    { icon: Bell,            name: "Notifications",   href: "/dashboard/notifications",  badge: "NEW" },
+    { icon: Bell,            name: "Notifications",   href: "/dashboard/notifications" },
     { icon: MessageSquare,   name: "AI Mentor",       href: "/dashboard/chat" },
   ] : [
     { icon: LayoutDashboard, name: "Overview",        href: "/dashboard/professional" },
     { icon: Target,          name: "AI Skill Gap",    href: "/dashboard/professional/skill-gap", badge: "AI" },
     { icon: TrendingUp,      name: "Career Growth",   href: "/dashboard/professional/career-growth" },
     { icon: ArrowUpRight,    name: "Package Roadmap", href: "/dashboard/professional/package-roadmap" },
-    { icon: CheckCircle,     name: "Daily Upskill Plan", href: "/dashboard/professional/daily-plan", badge: "NEW" },
+    { icon: CheckCircle,     name: "Daily Upskill Plan", href: "/dashboard/professional/daily-plan" },
     { icon: Award,           name: "Certifications",  href: "/dashboard/certificates" },
     { icon: Flame,           name: "Trending Skills", href: "/dashboard/professional/trending" },
     { icon: Bell,            name: "Notifications",   href: "/dashboard/notifications" },
@@ -50,7 +50,7 @@ const getNavSections = (userType: string) => {
     {
       label: "Learning & Practice",
       items: [
-        { icon: BrainCircuit,    name: "Flashcards",      href: "/dashboard/flashcards" },
+        ...(isStudent ? [{ icon: Zap, name: "Voice AI Chat", href: "/dashboard/voice", badge: "NEW" }] : []),
         { icon: Code,            name: "Code Arena",      href: "/dashboard/code" },
         { icon: Layers,          name: "System Design",   href: "/dashboard/system-design" },
         { icon: Trophy,          name: "Hackathons",      href: "/dashboard/hackathons" },
@@ -60,8 +60,8 @@ const getNavSections = (userType: string) => {
     {
       label: "Tools",
       items: [
-        { icon: Navigation,      name: "Career GPS",      href: "/dashboard/career-gps",     badge: "NEW" },
-        { icon: TrendingUp,      name: "Salary Intel",    href: "/dashboard/salary-intel",   badge: "NEW" },
+        { icon: Navigation,      name: "Career GPS",      href: "/dashboard/career-gps" },
+        { icon: TrendingUp,      name: "Salary Intel",    href: "/dashboard/salary-intel" },
         { icon: Briefcase,       name: "Internships",     href: "/dashboard/internships",    badge: "INDIA" },
         { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
         { icon: BarChart3,       name: "Analytics",       href: "/dashboard/analytics" },
@@ -71,7 +71,7 @@ const getNavSections = (userType: string) => {
       label: "Community",
       items: [
         { icon: Globe,           name: "Orbit HUB",       href: "/dashboard/orbit",         badge: "LIVE" },
-        { icon: Users,           name: "Network",         href: "/dashboard/network",       badge: "NEW" },
+        { icon: Users,           name: "Network",         href: "/dashboard/network" },
         { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
         { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
       ]
