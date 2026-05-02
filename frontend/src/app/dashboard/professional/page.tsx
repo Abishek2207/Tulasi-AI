@@ -110,19 +110,14 @@ function LiveActivityFeed({ activities: initialActivities }: { activities: any[]
 
 
 const MODULES = [
-  { id: "chat", title: "AI Learning Chat", desc: "Have a conversation with Tulasi AI to learn new concepts.", icon: <MessageSquare size={28} />, link: "/dashboard/chat", color: "#8B5CF6", span: 2 },
-  { id: "interview", title: "Mock Interview", desc: "Live voice & chat simulation with an AI Hiring Manager.", icon: <Target size={28} />, link: "/dashboard/interview", color: "#06B6D4", span: 2 },
-  { id: "flashcards", title: "Flashcard Studio", desc: "Master concepts with AI-powered 3D study decks.", icon: <BrainCircuit size={28} />, link: "/dashboard/flashcards", color: "#F43F5E", span: 1 },
-  { id: "projects", title: "Project Ideas", desc: "Generate portfolio-ready SaaS project architectures.", icon: <Lightbulb size={28} />, link: "/dashboard/projects", color: "#FFD93D", span: 1 },
-  { id: "roadmaps", title: "Career Roadmaps", desc: "Personalized week-by-week learning paths.", icon: <Map size={28} />, link: "/dashboard/roadmaps", color: "#8B5CF6", span: 1 },
-  { id: "code", title: "Coding Arena", desc: "Practice Data Structures with real-time feedback.", icon: <Code size={28} />, link: "/dashboard/code", color: "#10B981", span: 1 },
-  { id: "study", title: "Study Rooms", desc: "Join focus sessions with Pomodoro & live chat.", icon: <Users size={28} />, link: "/dashboard/study-rooms", color: "#EC4899", span: 1 },
-  { id: "resume", title: "Resume Builder", desc: "Precision-engineered ATS bypass for engineers.", icon: <FileText size={28} />, link: "/dashboard/resume", color: "#3B82F6", span: 1 },
-  { id: "startup", title: "Startup LAB", desc: "Ideate and generate full startup pitch decks.", icon: <Rocket size={28} />, link: "/dashboard/startup-lab", color: "#F97316", span: 1 },
-  { id: "yt", title: "YouTube Learning", desc: "Curated masterclasses for high-end engineering.", icon: <Youtube size={28} />, link: "/dashboard/youtube-learning", color: "#FF0000", span: 1 },
-  { id: "hackathon", title: "Hackathons", desc: "Find global AI & Web3 competitions.", icon: <Trophy size={28} />, link: "/dashboard/hackathons", color: "#EAB308", span: 1 },
-  { id: "analytics", title: "Learning Sync", desc: "Track your XP velocity and learning patterns.", icon: <BarChart3 size={28} />, link: "/dashboard/analytics", color: "#4ECDC4", span: 1 },
-  { id: "certs", title: "Certificates", desc: "Download verified learning credentials.", icon: <Award size={28} />, link: "/dashboard/certificates", color: "#34D399", span: 2 },
+  { id: "skill_gap", title: "AI Skill Gap", desc: "Identify your missing skills.", icon: <BrainCircuit size={28} />, link: "/dashboard/professional/skill-gap", color: "#8B5CF6", span: 2 },
+  { id: "career_growth", title: "Salary Intel", desc: "Predict your next package.", icon: <TrendingUp size={28} />, link: "/dashboard/salary-intel", color: "#10B981", span: 2 },
+  { id: "soft_skills", title: "Leadership Skills", desc: "Executive presence and communication.", icon: <MessageCircle size={28} />, link: "/dashboard/chat?mode=soft_skills", color: "#F43F5E", span: 1 },
+  { id: "communication", title: "Communication", desc: "Client & stakeholder communication.", icon: <Users size={28} />, link: "/dashboard/chat?mode=communication", color: "#EAB308", span: 1 },
+  { id: "interview", title: "Senior Mock Interview", desc: "System Design and Behavioral rounds.", icon: <Target size={28} />, link: "/dashboard/interview", color: "#06B6D4", span: 1 },
+  { id: "system_design", title: "System Design", desc: "Master architecture scaling.", icon: <Layers size={28} />, link: "/dashboard/system-design", color: "#EC4899", span: 1 },
+  { id: "resume", title: "Executive Resume", desc: "ATS bypass for senior roles.", icon: <FileText size={28} />, link: "/dashboard/resume", color: "#3B82F6", span: 1 },
+  { id: "certs", title: "Certificates", desc: "Professional credentials.", icon: <Award size={28} />, link: "/dashboard/certificates", color: "#34D399", span: 1 },
 ];
 
 interface DashboardStats {

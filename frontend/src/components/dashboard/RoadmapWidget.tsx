@@ -40,7 +40,7 @@ export function RoadmapWidget({ userType = "student" }: { userType?: string }) {
       const token = localStorage.getItem("tulasi_token");
       if (!token) return;
 
-      const endpoint = userType === "student" ? "/api/roadmap/student" : "/api/roadmap/professional";
+      const endpoint = userType === "student" ? "/api/roadmap/career/student" : "/api/roadmap/career/professional";
       
       const payload = userType === "student" 
         ? { days: 7, hours_per_day: hours, focus: "DSA" }
