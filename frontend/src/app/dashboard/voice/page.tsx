@@ -1,162 +1,460 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { websocketUrl } from "@/lib/api";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mic, MicOff, Volume2, VolumeX, RotateCcw, Zap, Brain } from "lucide-react";
+import { useSession } from "@/hooks/useSession";
+import { API_URL } from "@/lib/api";
 
-export default function VoiceRoomPage() {
-  const [roomId, setRoomId] = useState("");
-  const [inCall, setInCall] = useState(false);
-  const [status, setStatus] = useState("Idle");
-  const [peers, setPeers] = useState<number>(0);
-  
-  const localAudioRef = useRef<HTMLAudioElement>(null);
-  const remoteAudioRef = useRef<HTMLAudioElement>(null);
-  const peerConnection = useRef<RTCPeerConnection | null>(null);
-  const ws = useRef<WebSocket | null>(null);
-  const localStream = useRef<MediaStream | null>(null);
+type Message = { role: "user" | "ai"; text: string; ts: number };
 
-  const startCall = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!roomId.trim()) return;
-    
-    setStatus("Establishing connection...");
-    ws.current = new WebSocket(websocketUrl(`/api/voice/signal/ws/${roomId}`));
-    
-    ws.current.onopen = async () => {
-      setStatus("Connected. Requesting microphone...");
-      setInCall(true);
-      
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        localStream.current = stream;
-        if (localAudioRef.current) localAudioRef.current.srcObject = stream;
-        
-        initializePeerConnection();
-        setStatus("Waiting for someone to join...");
-        
-        // Broadcast presence
-        ws.current?.send(JSON.stringify({ type: "peer_joined" }));
-      } catch (err) {
-        setStatus("Microphone access denied.");
-      }
-    };
+const PULSE_COLORS = ["#8B5CF6", "#06B6D4", "#EC4899"];
 
-    ws.current.onmessage = async (event) => {
-      const msg = JSON.parse(event.data);
-      const pc = peerConnection.current;
-      if (!pc) return;
+export default function VoiceAIPage() {
+  const { data: session } = useSession();
+  const userName = session?.user?.name?.split(" ")[0] || "Student";
 
-      if (msg.type === "peer_joined") {
-        setPeers(1);
-        setStatus("Peer joined. Negotiating connection...");
-        // I create the offer
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        ws.current?.send(JSON.stringify({ type: "offer", sdp: offer.sdp }));
-      } 
-      else if (msg.type === "offer") {
-        setPeers(1);
-        setStatus("Received call. Connecting...");
-        await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: msg.sdp }));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        ws.current?.send(JSON.stringify({ type: "answer", sdp: answer.sdp }));
-      } 
-      else if (msg.type === "answer") {
-        setStatus("Call established!");
-        await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: msg.sdp }));
-      } 
-      else if (msg.type === "ice-candidate") {
-        if (msg.candidate) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
-          } catch (e) { console.error("Error adding ICE candidate", e); }
-        }
-      }
-      else if (msg.type === "peer_left") {
-        setPeers(0);
-        setStatus("Peer left the call.");
-      }
-    };
-  };
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [muted, setMuted] = useState(false);
+  const [status, setStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
+  const [error, setError] = useState("");
 
-  const initializePeerConnection = () => {
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-    });
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const silenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    pc.onicecandidate = (e) => {
-      if (e.candidate && ws.current) {
-        ws.current.send(JSON.stringify({ type: "ice-candidate", candidate: e.candidate }));
-      }
-    };
-
-    pc.ontrack = (e) => {
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = e.streams[0];
-        setStatus("Call established! Audio receiving.");
-      }
-    };
-
-    if (localStream.current) {
-      localStream.current.getTracks().forEach(t => pc.addTrack(t, localStream.current!));
-    }
-
-    peerConnection.current = pc;
-  };
-
-  const leaveCall = () => {
-    if (ws.current) ws.current.close();
-    if (peerConnection.current) peerConnection.current.close();
-    if (localStream.current) localStream.current.getTracks().forEach(t => t.stop());
-    setInCall(false);
-    setStatus("Idle");
-  };
-
-  // Required cleanup
   useEffect(() => {
-    return () => leaveCall();
+    if (typeof window !== "undefined") {
+      synthRef.current = window.speechSynthesis;
+    }
   }, []);
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const speakText = useCallback((text: string) => {
+    if (muted || !synthRef.current) return;
+    synthRef.current.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = "en-IN";
+    utt.rate = 1.05;
+    utt.pitch = 1.0;
+    utt.volume = 1.0;
+
+    // Prefer a natural Indian English voice if available
+    const voices = synthRef.current.getVoices();
+    const preferred = voices.find(v =>
+      v.lang.startsWith("en-IN") ||
+      v.name.toLowerCase().includes("google") ||
+      v.name.toLowerCase().includes("natural")
+    ) || voices.find(v => v.lang.startsWith("en"));
+    if (preferred) utt.voice = preferred;
+
+    utt.onstart = () => setIsSpeaking(true);
+    utt.onend = () => {
+      setIsSpeaking(false);
+      setStatus("idle");
+    };
+    utteranceRef.current = utt;
+    synthRef.current.speak(utt);
+    setStatus("speaking");
+  }, [muted]);
+
+  const sendToAI = useCallback(async (text: string) => {
+    if (!text.trim()) return;
+    setIsProcessing(true);
+    setStatus("thinking");
+    setTranscript("");
+
+    const userMsg: Message = { role: "user", text, ts: Date.now() };
+    setMessages(prev => [...prev, userMsg]);
+
+    try {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${API_URL}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          message: text,
+          tool: "chat",
+          session_id: "voice_ai_session",
+        }),
+      });
+
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+      const data = await res.json();
+      const reply = data.response || data.message || "I couldn't process that. Please try again.";
+
+      const aiMsg: Message = { role: "ai", text: reply, ts: Date.now() };
+      setMessages(prev => [...prev, aiMsg]);
+      setError("");
+      speakText(reply);
+    } catch {
+      setError("Connection issue. Please try again.");
+      setStatus("idle");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [speakText]);
+
+  const startListening = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setError("Voice not supported in this browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    if (synthRef.current) synthRef.current.cancel();
+
+    const rec = new SpeechRecognition();
+    rec.lang = "en-IN";
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+
+    rec.onstart = () => {
+      setIsListening(true);
+      setStatus("listening");
+      setError("");
+    };
+
+    rec.onresult = (e: any) => {
+      const t = Array.from(e.results)
+        .map((r: any) => r[0].transcript)
+        .join(" ");
+      setTranscript(t);
+
+      // Auto-send after 1.5s silence
+      if (silenceTimer.current) clearTimeout(silenceTimer.current);
+      if (e.results[e.results.length - 1].isFinal) {
+        silenceTimer.current = setTimeout(() => {
+          rec.stop();
+          sendToAI(t);
+        }, 400);
+      }
+    };
+
+    rec.onerror = (e: any) => {
+      setError(e.error === "no-speech" ? "No speech detected. Tap mic and speak clearly." : `Error: ${e.error}`);
+      setIsListening(false);
+      setStatus("idle");
+    };
+
+    rec.onend = () => {
+      setIsListening(false);
+      if (status === "listening" && transcript) sendToAI(transcript);
+    };
+
+    recognitionRef.current = rec;
+    rec.start();
+  }, [sendToAI, status, transcript]);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+    setStatus("idle");
+    if (silenceTimer.current) clearTimeout(silenceTimer.current);
+  }, []);
+
+  const toggleListen = useCallback(() => {
+    if (isListening) stopListening();
+    else startListening();
+  }, [isListening, startListening, stopListening]);
+
+  const toggleMute = useCallback(() => {
+    setMuted(m => {
+      if (!m && synthRef.current) synthRef.current.cancel();
+      return !m;
+    });
+  }, []);
+
+  const resetConversation = useCallback(() => {
+    if (synthRef.current) synthRef.current.cancel();
+    recognitionRef.current?.stop();
+    setMessages([]);
+    setTranscript("");
+    setStatus("idle");
+    setIsListening(false);
+    setIsSpeaking(false);
+    setError("");
+  }, []);
+
+  const statusLabel: Record<string, string> = {
+    idle: "Tap mic to speak",
+    listening: "Listening...",
+    thinking: "Thinking...",
+    speaking: "AI is responding...",
+  };
+
+  const statusColor: Record<string, string> = {
+    idle: "rgba(255,255,255,0.3)",
+    listening: "#EC4899",
+    thinking: "#8B5CF6",
+    speaking: "#06B6D4",
+  };
+
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto", padding: 24, background: "var(--surface)", borderRadius: 12 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>🎙️ Voice Rooms</h1>
-      <p style={{ color: "var(--text-muted)", marginBottom: 24 }}>End-to-End encrypted WebRTC peer audio streams.</p>
-      
-      {!inCall ? (
-        <form onSubmit={startCall} style={{ display: "flex", gap: 12 }}>
-          <input 
-            className="input-field" 
-            placeholder="Enter Room Code (e.g. 1234)" 
-            value={roomId} 
-            onChange={e => setRoomId(e.target.value)}
-            style={{ flex: 1, padding: "12px 16px", borderRadius: 8 }}
-          />
-          <button type="submit" className="btn btn-primary" style={{ padding: "12px 24px", borderRadius: 8 }}>
-            Join Call
-          </button>
-        </form>
-      ) : (
-        <div style={{ padding: 24, border: "1px solid var(--border)", borderRadius: 8, textAlign: "center" }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>📞</div>
-          <h2 style={{ fontSize: 20, marginBottom: 8 }}>Room: {roomId}</h2>
-          <div style={{ color: "var(--brand-primary)", fontWeight: 600, marginBottom: 24 }}>{status}</div>
-          
-          <div style={{ display: "flex", gap: 24, justifyContent: "center", marginBottom: 24 }}>
-            <div style={{ padding: 16, background: "rgba(255,255,255,0.05)", borderRadius: 8 }}>
-              Local Audio
-              <audio ref={localAudioRef} autoPlay muted style={{ display: "block", marginTop: 8 }} />
-            </div>
-            <div style={{ padding: 16, background: "rgba(255,255,255,0.05)", borderRadius: 8 }}>
-              Remote Audio ({peers} peers)
-              <audio ref={remoteAudioRef} autoPlay style={{ display: "block", marginTop: 8 }} />
-            </div>
-          </div>
-          
-          <button onClick={leaveCall} className="btn bg-red-500 hover:bg-red-600" style={{ background: "#ef4444", color: "white", padding: "12px 24px", borderRadius: 8 }}>
-            End Call
-          </button>
+    <div style={{ maxWidth: 700, margin: "0 auto", paddingBottom: 60 }}>
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ marginBottom: 32, textAlign: "center" }}
+      >
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 8,
+          padding: "6px 16px", borderRadius: 30,
+          background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)",
+          fontSize: 11, fontWeight: 900, color: "#8B5CF6", letterSpacing: 1.5, marginBottom: 16
+        }}>
+          <Zap size={12} /> STUDENT ONLY · VOICE AI
         </div>
+        <h1 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, letterSpacing: "-1.5px", marginBottom: 8 }}>
+          Talk to Your <span className="gradient-text">AI Mentor</span>
+        </h1>
+        <p style={{ color: "var(--text-secondary)", fontSize: 16 }}>
+          Speak naturally — your AI mentor hears, understands, and responds in real-time.
+        </p>
+      </motion.div>
+
+      {/* Orb + Status */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 40, gap: 24 }}
+      >
+        {/* Animated Orb */}
+        <div style={{ position: "relative", width: 160, height: 160 }}>
+          {/* Pulse rings */}
+          {(status === "listening" || status === "speaking") && [0, 1, 2].map(i => (
+            <motion.div
+              key={i}
+              animate={{ scale: [1, 1.6 + i * 0.3], opacity: [0.4, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.4, ease: "easeOut" }}
+              style={{
+                position: "absolute", inset: 0, borderRadius: "50%",
+                border: `2px solid ${status === "listening" ? "#EC4899" : "#06B6D4"}`,
+              }}
+            />
+          ))}
+
+          {/* Main orb button */}
+          <motion.button
+            whileTap={{ scale: 0.92 }}
+            onClick={toggleListen}
+            animate={status === "thinking" ? { rotate: 360 } : { rotate: 0 }}
+            transition={status === "thinking" ? { repeat: Infinity, duration: 2, ease: "linear" } : {}}
+            style={{
+              position: "absolute", inset: 0,
+              borderRadius: "50%",
+              background: status === "idle"
+                ? "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(6,182,212,0.3))"
+                : status === "listening"
+                  ? "linear-gradient(135deg, #EC4899, #8B5CF6)"
+                  : status === "thinking"
+                    ? "linear-gradient(135deg, #8B5CF6, #4338CA)"
+                    : "linear-gradient(135deg, #06B6D4, #0891B2)",
+              border: `2px solid ${statusColor[status]}`,
+              cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: status !== "idle"
+                ? `0 0 40px ${statusColor[status]}60, 0 0 80px ${statusColor[status]}30`
+                : "0 20px 40px rgba(0,0,0,0.4)",
+            }}
+          >
+            {status === "thinking" ? (
+              <Brain size={40} color="white" />
+            ) : isListening ? (
+              <Mic size={40} color="white" />
+            ) : (
+              <MicOff size={40} color={status === "idle" ? "rgba(255,255,255,0.5)" : "white"} />
+            )}
+          </motion.button>
+        </div>
+
+        {/* Status text */}
+        <motion.div
+          key={status}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            fontSize: 15, fontWeight: 700,
+            color: statusColor[status],
+            letterSpacing: "0.5px"
+          }}
+        >
+          {statusLabel[status]}
+        </motion.div>
+
+        {/* Live transcript */}
+        <AnimatePresence>
+          {transcript && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              style={{
+                padding: "12px 20px", borderRadius: 16,
+                background: "rgba(236,72,153,0.08)", border: "1px solid rgba(236,72,153,0.2)",
+                color: "#EC4899", fontSize: 14, fontWeight: 600, maxWidth: 500, textAlign: "center",
+                fontStyle: "italic"
+              }}
+            >
+              "{transcript}"
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{
+                padding: "10px 18px", borderRadius: 12,
+                background: "rgba(255,107,107,0.08)", border: "1px solid rgba(255,107,107,0.2)",
+                color: "#FF6B6B", fontSize: 13, fontWeight: 600, maxWidth: 440, textAlign: "center"
+              }}
+            >
+              ⚠️ {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Controls */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 40 }}>
+        <motion.button
+          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={toggleMute}
+          style={{
+            padding: "10px 20px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)",
+            background: muted ? "rgba(255,107,107,0.1)" : "rgba(255,255,255,0.05)",
+            color: muted ? "#FF6B6B" : "rgba(255,255,255,0.6)",
+            display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, cursor: "pointer"
+          }}
+        >
+          {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          {muted ? "Unmute AI" : "Mute AI"}
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={resetConversation}
+          style={{
+            padding: "10px 20px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)",
+            background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)",
+            display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, cursor: "pointer"
+          }}
+        >
+          <RotateCcw size={16} /> Reset
+        </motion.button>
+      </div>
+
+      {/* Conversation */}
+      {messages.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          ref={scrollRef}
+          style={{
+            maxHeight: 420, overflowY: "auto", scrollbarWidth: "none",
+            display: "flex", flexDirection: "column", gap: 14, paddingRight: 4
+          }}
+        >
+          {messages.map((msg, i) => (
+            <motion.div
+              key={msg.ts}
+              initial={{ opacity: 0, y: 14, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0, duration: 0.2 }}
+              style={{
+                display: "flex",
+                justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+              }}
+            >
+              <div style={{
+                maxWidth: "82%", padding: "14px 18px", borderRadius: msg.role === "user" ? "20px 20px 6px 20px" : "20px 20px 20px 6px",
+                background: msg.role === "user"
+                  ? "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(6,182,212,0.2))"
+                  : "rgba(255,255,255,0.04)",
+                border: msg.role === "user"
+                  ? "1px solid rgba(139,92,246,0.3)"
+                  : "1px solid rgba(255,255,255,0.07)",
+                fontSize: 15, lineHeight: 1.6, color: "white", fontWeight: 500
+              }}>
+                {msg.role === "ai" && (
+                  <div style={{ fontSize: 10, fontWeight: 900, color: "#8B5CF6", marginBottom: 6, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                    AI Mentor
+                  </div>
+                )}
+                {msg.text}
+              </div>
+            </motion.div>
+          ))}
+
+          {/* Thinking indicator */}
+          {isProcessing && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ display: "flex", justifyContent: "flex-start" }}
+            >
+              <div style={{
+                padding: "14px 18px", borderRadius: "20px 20px 20px 6px",
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+                display: "flex", gap: 6, alignItems: "center"
+              }}>
+                {[0, 1, 2].map(i => (
+                  <motion.div
+                    key={i}
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.15 }}
+                    style={{ width: 8, height: 8, borderRadius: "50%", background: "#8B5CF6" }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Empty state */}
+      {messages.length === 0 && !isListening && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          style={{ textAlign: "center", padding: "40px 20px" }}
+        >
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🎙️</div>
+          <p style={{ color: "var(--text-muted)", fontSize: 15, fontWeight: 500 }}>
+            Tap the mic and ask anything — placement prep, DSA doubts, resume tips, HR questions...
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 20 }}>
+            {["How do I crack TCS NQT?", "Explain binary search", "Help me with my resume", "HR interview tips"].map(q => (
+              <motion.button
+                key={q}
+                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                onClick={() => sendToAI(q)}
+                style={{
+                  padding: "8px 16px", borderRadius: 20,
+                  background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)",
+                  color: "#A78BFA", fontSize: 13, fontWeight: 600, cursor: "pointer"
+                }}
+              >
+                {q}
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
       )}
     </div>
   );
