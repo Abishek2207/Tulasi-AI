@@ -36,10 +36,10 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [oAuthLoading, setOAuthLoading] = useState<string | null>(null);
-  // Use window.location.origin if in browser; fallback to env var; then production fallback.
-  const appUrl = (typeof window !== "undefined" && window.location.origin && !window.location.origin.includes("localhost"))
+  // Use window.location.origin to support dynamic environments (localhost vs Vercel).
+  const appUrl = typeof window !== "undefined" 
     ? window.location.origin 
-    : (process.env.NEXT_PUBLIC_APP_URL || "https://tulasiai.in");
+    : (process.env.NEXT_PUBLIC_APP_URL || "https://tulasiai.vercel.app");
   
   const router = useRouter();
   const { isOnline, isChecking, wakeNow } = useBackendWake();
