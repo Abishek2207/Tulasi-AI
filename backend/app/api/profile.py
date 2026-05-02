@@ -18,76 +18,111 @@ async def get_my_profile(current_user: User = Depends(get_current_user), db: Ses
 
 from app.services.vector_service import vector_service
 
-@router.put("/me", response_model=ProfileResponse)
+@router.put("/me")
 async def update_my_profile(
     profile_data: ProfileCreate,
     current_user: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
-    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
-    if not profile:
-        profile = Profile(user_id=current_user.id)
-        db.add(profile)
-    
-    data = profile_data.model_dump(exclude_unset=True)
-    for key, value in data.items():
-        setattr(profile, key, value)
-        
-    db.commit()
-    db.refresh(profile)
-
-    # Index into RAG Memory for instant Jarvis awareness
     try:
-        context_parts = []
-        if current_user.user_type:
-            context_parts.append(f"User is a {current_user.user_type}.")
-        if profile.current_role:
-            context_parts.append(f"Current Role: {profile.current_role}.")
-        if profile.company:
-            context_parts.append(f"Company: {profile.company}.")
-        if profile.experience_years:
-            context_parts.append(f"Experience: {profile.experience_years} years.")
-        if profile.student_year:
-            context_parts.append(f"Academic Year: {profile.student_year}.")
-        if profile.student_goal:
-            context_parts.append(f"Goal: {profile.student_goal}.")
-        if profile.current_salary_range:
-            context_parts.append(f"Current Salary: {profile.current_salary_range}.")
-        if profile.target_salary_goal:
-            context_parts.append(f"Target Salary Goal: {profile.target_salary_goal}.")
+        profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
+        if not profile:
+            profile = Profile(user_id=current_user.id)
+            db.add(profile)
+        
+        data = profile_data.model_dump(exclude_unset=True)
+        for key, value in data.items():
+            # Only set attributes that actually exist on the Profile model
+            if hasattr(profile, key):
+                try:
+                    setattr(profile, key, value)
+                except Exception as field_err:
+                    print(f"⚠️ Skipping field '{key}': {field_err}")
+                
+        db.commit()
+        db.refresh(profile)
 
-        if context_parts:
-            summary = " ".join(context_parts)
-            vector_service.store_embeddings(current_user.id, f"PROFILE CONTEXT: {summary}", db)
-            print(f"✅ Indexed profile context for user {current_user.id}")
+        # Index into RAG Memory for instant Jarvis awareness
+        try:
+            context_parts = []
+            if current_user.user_type:
+                context_parts.append(f"User is a {current_user.user_type}.")
+            if profile.current_role:
+                context_parts.append(f"Current Role: {profile.current_role}.")
+            if profile.company:
+                context_parts.append(f"Company: {profile.company}.")
+            if profile.experience_years:
+                context_parts.append(f"Experience: {profile.experience_years} years.")
+            if profile.student_year:
+                context_parts.append(f"Academic Year: {profile.student_year}.")
+            if profile.student_goal:
+                context_parts.append(f"Goal: {profile.student_goal}.")
+            if profile.current_salary_range:
+                context_parts.append(f"Current Salary: {profile.current_salary_range}.")
+            if profile.target_salary_goal:
+                context_parts.append(f"Target Salary Goal: {profile.target_salary_goal}.")
+
+            if context_parts:
+                summary = " ".join(context_parts)
+                vector_service.store_embeddings(current_user.id, f"PROFILE CONTEXT: {summary}", db)
+                print(f"✅ Indexed profile context for user {current_user.id}")
+        except Exception as e:
+            print(f"⚠️ Profile indexing failed: {e}")
+
+        # Return a safe dict response
+        return {
+            "id": profile.id,
+            "user_id": profile.user_id,
+            "current_role": profile.current_role,
+            "company": profile.company,
+            "experience_years": profile.experience_years,
+            "skill_level": profile.skill_level,
+            "student_year": profile.student_year,
+            "updated_at": profile.updated_at.isoformat() if profile.updated_at else None,
+        }
     except Exception as e:
-        print(f"⚠️ Profile indexing failed: {e}")
+        db.rollback()
+        print(f"❌ update_my_profile error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save profile: {str(e)}")
 
-    return profile
-
-@router.post("/set-user-type", response_model=UserResponse)
+@router.post("/set-user-type")
 async def set_user_type(
     user_type: UserTypeEnum,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    current_user.user_type = user_type
-    # ── Critical Fix: persist onboarded flag to DB so it survives new sessions ──
-    current_user.is_onboarded = True
-    
-    # Auto-create profile if doesn't exist
-    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
-    if not profile:
-        profile = Profile(user_id=current_user.id)
-        if user_type == UserTypeEnum.STUDENT:
-            profile.current_role = "Student"
-        elif user_type == UserTypeEnum.PROFESSIONAL:
-            profile.current_role = "Professional"
-        db.add(profile)
+    try:
+        current_user.user_type = user_type
+        current_user.is_onboarded = True
         
-    db.commit()
-    db.refresh(current_user)
-    return current_user
+        # Auto-create profile if doesn't exist
+        profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
+        if not profile:
+            profile = Profile(user_id=current_user.id)
+            if user_type == UserTypeEnum.STUDENT:
+                profile.current_role = "Student"
+            elif user_type == UserTypeEnum.PROFESSIONAL:
+                profile.current_role = "Professional"
+            db.add(profile)
+            
+        db.commit()
+        db.refresh(current_user)
+        
+        # Return a plain dict — avoids Pydantic validation errors on incomplete profiles
+        return {
+            "id": current_user.id,
+            "email": current_user.email,
+            "name": current_user.name,
+            "role": current_user.role,
+            "user_type": current_user.user_type,
+            "is_onboarded": current_user.is_onboarded,
+            "streak_count": current_user.streak,
+            "xp": current_user.xp,
+            "level": current_user.level,
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to set user type: {str(e)}")
 
 
 # ── NEW: AI Mentor Name ──────────────────────────────────────────────────────
