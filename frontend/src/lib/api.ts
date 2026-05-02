@@ -639,13 +639,13 @@ export const startupApi = {
 // ─── Certificates ────────────────────────────────────────────────────────────
 
 export const certificateApi = {
-  list: (token: string) => request<{ certificates: Certificate[], milestones: Milestone[] }>("/api/certificates/my", {}, token),
-  generate: (milestoneId: string, token: string) => request<{ message: string }>(`/api/certificates/generate/${milestoneId}`, { method: "POST" }, token),
+  list: (token: string) => request<{ certificates: Certificate[], milestones: Milestone[] }>("/api/certificates-legacy/my", {}, token),
+  generate: (milestoneId: string, token: string) => request<{ message: string }>(`/api/certificates-legacy/generate/${milestoneId}`, { method: "POST" }, token),
   uploadFile: async (file: File, title: string, token: string) => {
     const form = new FormData();
     form.append("file", file);
     form.append("title", title);
-    const res = await fetchWithRetry(`${API_URL}/api/certificates/upload`, {
+    const res = await fetchWithRetry(`${API_URL}/api/certificates-legacy/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: form,
@@ -688,8 +688,6 @@ export const activityApi = {
   getPublicFeed: () => request<{ feed: any[] }>("/api/activity/public-feed"),
 };
 
-// ─── Profile ─────────────────────────────────────────────────────────────────
-
 export const profileApi = {
   update: (data: { name?: string; bio?: string; skills?: string; avatar?: string; target_role?: string; interest_areas?: string }) =>
     request<{ message: string; user: User }>("/api/users/profile", {
@@ -697,11 +695,15 @@ export const profileApi = {
       body: JSON.stringify(data),
     }),
   getExtended: (token: string) =>
-    request<{ current_role?: string; company?: string; experience_years?: number; skill_level?: string }>("/api/profile/me", {}, token),
-  updateExtended: (data: { current_role?: string; company?: string; experience_years?: number; skill_level?: string }, token: string) =>
+    request<{ current_role?: string; company?: string; experience_years?: number; skill_level?: string; student_year?: string }>("/api/profile/me", {}, token),
+  updateExtended: (data: { current_role?: string; company?: string; experience_years?: number; skill_level?: string; student_year?: string }, token: string) =>
     request<any>("/api/profile/me", {
       method: "PUT",
       body: JSON.stringify(data),
+    }, token),
+  setUserType: (user_type: string, token: string) =>
+    request<{ id: number; user_type: string; is_onboarded: boolean }>(`/api/profile/set-user-type?user_type=${user_type}`, {
+      method: "POST"
     }, token),
 };
 
