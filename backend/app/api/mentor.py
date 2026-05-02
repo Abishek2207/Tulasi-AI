@@ -18,8 +18,6 @@ async def generate_mentor_insight(user_id: int, context_type: str, action_desc: 
     """Mock LLM insight generation."""
     # In a real setup, this triggers LangChain chain or Groq API.
     # To keep latency minimal, we might pre-compute or use simple rules for now.
-    import asyncio
-    await asyncio.sleep(0.5) # simulate minor latency
     
     if context_type == "idea":
         return f"Great idea! The AI market is growing. Have you considered adding a monetization plan?"
