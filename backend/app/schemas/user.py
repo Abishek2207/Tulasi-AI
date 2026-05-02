@@ -78,6 +78,8 @@ class UserResponse(UserBase):
     role: str
     streak_count: int = 0
     created_at: datetime
+    is_onboarded: bool = False
+    user_type: Optional[str] = None
     profile: Optional[ProfileResponse] = None
 
     class Config:
