@@ -24,11 +24,18 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   
-  const [selectedType, setSelectedType] = useState<"STUDENT" | "PROFESSIONAL" | "PROFESSOR" | "">("");
+  const [selectedType, setSelectedType] = useState<"STUDENT" | "PROFESSIONAL" | "">("");
   
   // Student Data
+  const [collegeName, setCollegeName] = useState("");
+  const [degree, setDegree] = useState("");
+  const [department, setDepartment] = useState("");
   const [studentYear, setStudentYear] = useState("");
-  const [studentGoal, setStudentGoal] = useState("");
+  const [targetRole, setTargetRole] = useState("");
+  const [placementGoal, setPlacementGoal] = useState("");
+  const [weakAreas, setWeakAreas] = useState("");
+  const [resumeStatus, setResumeStatus] = useState("");
+  const [existingProjects, setExistingProjects] = useState("");
   
   // Professional Data
   const [currentRole, setCurrentRole] = useState("");
@@ -36,6 +43,14 @@ export default function OnboardingPage() {
   const [experienceYears, setExperienceYears] = useState("");
   const [salaryRange, setSalaryRange] = useState("");
   const [targetSalary, setTargetSalary] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [careerGoal, setCareerGoal] = useState("");
+  const [toolsUsed, setToolsUsed] = useState("");
+  const [aiToolsKnown, setAiToolsKnown] = useState("");
+  
+  // Shared Preferences Data
+  const [dailyAvailableTime, setDailyAvailableTime] = useState("");
+  const [availableDays, setAvailableDays] = useState("");
   
   // AI Mentor
   const [mentorName, setMentorName] = useState("Jarvis");
@@ -67,22 +82,30 @@ export default function OnboardingPage() {
       if (selectedType === "STUDENT") {
         profilePayload = {
           student_year: studentYear,
-          student_goal: studentGoal
-        };
-      } else if (selectedType === "PROFESSOR") {
-        profilePayload = {
-          current_role: currentRole,          // Designation e.g. "Assistant Professor"
-          company: companyName,               // Institution name
-          student_goal: salaryRange,          // Subjects / research area (reusing field)
-          experience_years: 0,
+          placement_goal: placementGoal,
+          college_name: collegeName,
+          degree: degree,
+          department: department,
+          target_role: targetRole,
+          weak_areas: weakAreas,
+          resume_status: resumeStatus,
+          existing_projects: existingProjects,
+          daily_available_hours: dailyAvailableTime,
+          available_days: availableDays
         };
       } else {
         profilePayload = {
           current_role: currentRole,
           company: companyName,
           experience_years: parseInt(experienceYears) || 0,
-          current_salary_range: salaryRange,
-          target_salary_goal: targetSalary
+          current_package_range_prof: salaryRange,
+          target_package: targetSalary,
+          industry: industry,
+          career_goal: careerGoal,
+          tools_used: toolsUsed,
+          ai_tools_known: aiToolsKnown,
+          daily_available_hours: dailyAvailableTime,
+          available_days: availableDays
         };
       }
 
@@ -167,19 +190,6 @@ export default function OnboardingPage() {
                       <p style={{ color: "rgba(255,255,255,0.5)", margin: 0, fontSize: 14 }}>Upskill, switch roles, or grow salary.</p>
                     </div>
                   </button>
-
-                  <button onClick={() => setSelectedType("PROFESSOR")}
-                    style={{ background: selectedType === "PROFESSOR" ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.02)",
-                      border: `2px solid ${selectedType === "PROFESSOR" ? "#F59E0B" : "rgba(255,255,255,0.05)"}`,
-                      borderRadius: 16, padding: "24px", display: "flex", alignItems: "center", gap: 20, cursor: "pointer", transition: "0.2s" }}>
-                    <div style={{ background: selectedType === "PROFESSOR" ? "#F59E0B" : "rgba(255,255,255,0.1)", borderRadius: 12, color: "white", display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, flexShrink: 0 }}>
-                      <BookOpen size={24} />
-                    </div>
-                    <div style={{ textAlign: "left" }}>
-                      <h3 style={{ color: "white", fontSize: 20, fontWeight: 700, margin: "0 0 4px 0" }}>Professor / Academic</h3>
-                      <p style={{ color: "rgba(255,255,255,0.5)", margin: 0, fontSize: 14 }}>Teaching in college, doing research, or in academia.</p>
-                    </div>
-                  </button>
                 </div>
 
                 <div style={{ marginTop: 32, display: "flex", justifyContent: "flex-end" }}>
@@ -194,36 +204,67 @@ export default function OnboardingPage() {
 
             {/* STUDENT FLOW */}
             {step === 1 && selectedType === "STUDENT" && (
-              <motion.div key="student-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <motion.div key="student-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 10 }}>
                 <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Student Profile</h2>
-                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>Your content will be 100% personalized to your year — no irrelevant topics.</p>
+                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>We'll build your AI roadmap based on this data.</p>
                 
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 700 }}>College Name</label>
+                    <input type="text" value={collegeName} onChange={(e) => setCollegeName(e.target.value)} placeholder="e.g. NIT Trichy"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 700 }}>Degree & Department</label>
+                    <input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g. B.Tech CS"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
+                  </div>
+                </div>
+
                 <div style={{ marginBottom: 24 }}>
                   <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Which year are you currently in?</label>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {Object.entries(YEAR_INFO).map(([year, info]) => (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                    {Object.keys(YEAR_INFO).map((year) => (
                       <button key={year} onClick={() => setStudentYear(year)}
-                        style={{ 
-                          background: studentYear === year ? `${info.color}20` : "rgba(255,255,255,0.03)",
-                          border: `2px solid ${studentYear === year ? info.color : "rgba(255,255,255,0.06)"}`,
-                          color: "white", padding: "16px 20px", borderRadius: 12, fontSize: 15, fontWeight: 600,
-                          cursor: "pointer", transition: "0.2s", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center"
-                        }}>
-                        <span>{info.label}</span>
-                        <span style={{ fontSize: 11, color: studentYear === year ? info.color : "rgba(255,255,255,0.3)", fontWeight: 500, maxWidth: "60%", textAlign: "right", lineHeight: 1.4 }}>{info.focus}</span>
+                        style={{ flex: "1 1 45%", background: studentYear === year ? "#6366f1" : "rgba(255,255,255,0.03)", border: `1px solid ${studentYear === year ? "#6366f1" : "rgba(255,255,255,0.06)"}`, color: "white", padding: "12px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
+                        {year}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 32 }}>
-                  <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>What is your primary goal?</label>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {["Placements (On-campus / Off-campus)", "Higher Studies (GATE / GRE / MBA)", "Freelancing / Startup"].map(goal => (
-                      <button key={goal} onClick={() => setStudentGoal(goal)}
-                        style={{ background: studentGoal === goal ? "#6366f1" : "rgba(255,255,255,0.05)",
-                          color: "white", border: "none", padding: "16px", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", textAlign: "left", transition: "0.2s" }}>
-                        {goal}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 700 }}>Target Role</label>
+                    <input type="text" value={targetRole} onChange={(e) => setTargetRole(e.target.value)} placeholder="e.g. Software Engineer"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 700 }}>Placement Goal</label>
+                    <input type="text" value={placementGoal} onChange={(e) => setPlacementGoal(e.target.value)} placeholder="e.g. MAANG / Startups"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Daily Available Time for Upskilling</label>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    {["1 hour/day", "2 hours/day", "3 hours/day", "Custom"].map(time => (
+                      <button key={time} onClick={() => setDailyAvailableTime(time)}
+                        style={{ flex: 1, background: dailyAvailableTime === time ? "#6366f1" : "rgba(255,255,255,0.05)", color: "white", border: "none", padding: "12px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Available Days</label>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    {["Mon to Sun", "Mon to Fri", "Weekends Only"].map(days => (
+                      <button key={days} onClick={() => setAvailableDays(days)}
+                        style={{ flex: 1, background: availableDays === days ? "#6366f1" : "rgba(255,255,255,0.05)", color: "white", border: "none", padding: "12px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
+                        {days}
                       </button>
                     ))}
                   </div>
@@ -231,8 +272,8 @@ export default function OnboardingPage() {
 
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
                   <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
-                  <button onClick={() => setStep(2)} disabled={!studentYear || !studentGoal || loading}
-                    style={{ background: (!studentYear || !studentGoal || loading) ? "rgba(255,255,255,0.1)" : "#6366f1", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!studentYear || !studentGoal || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                  <button onClick={() => setStep(2)} disabled={!studentYear || !targetRole || !dailyAvailableTime || loading}
+                    style={{ background: (!studentYear || !targetRole || !dailyAvailableTime || loading) ? "rgba(255,255,255,0.1)" : "#6366f1", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!studentYear || !targetRole || !dailyAvailableTime || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                     Name Your Mentor <ArrowRight size={20} />
                   </button>
                 </div>
@@ -241,27 +282,41 @@ export default function OnboardingPage() {
 
             {/* PROFESSIONAL FLOW */}
             {step === 1 && selectedType === "PROFESSIONAL" && (
-              <motion.div key="prof-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <motion.div key="prof-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 10 }}>
                 <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Professional Tracking</h2>
                 <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>Define your current career velocity.</p>
                 
                 <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Current Role</label>
-                    <input type="text" value={currentRole} onChange={(e) => setCurrentRole(e.target.value)} placeholder="e.g. Frontend Developer"
-                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
-                  </div>
-                  
                   <div style={{ display: "flex", gap: 16 }}>
                     <div style={{ flex: 1 }}>
-                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Company Name</label>
-                      <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Current Employer"
-                        style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
+                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Current Role</label>
+                      <input type="text" value={currentRole} onChange={(e) => setCurrentRole(e.target.value)} placeholder="e.g. Frontend Developer"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
                     </div>
                     <div style={{ width: 120 }}>
                       <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Years Exp.</label>
                       <input type="number" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value)} placeholder="e.g. 2"
-                        style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
+                        style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Company Name</label>
+                      <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Current Employer"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Career Goal</label>
+                      <select value={careerGoal} onChange={e => setCareerGoal(e.target.value)}
+                        style={{ width: "100%", background: "#11131F", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14, cursor: "pointer" }}>
+                        <option value="">Select Goal...</option>
+                        <option value="Upskill in current role">Upskill in current role</option>
+                        <option value="Switch company">Switch company</option>
+                        <option value="Increase package">Increase package</option>
+                        <option value="Move into AI/ML">Move into AI/ML</option>
+                        <option value="Become Tech Lead">Become Tech Lead</option>
+                      </select>
                     </div>
                   </div>
 
@@ -269,66 +324,56 @@ export default function OnboardingPage() {
                     <div>
                       <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Current Salary Range</label>
                       <select value={salaryRange} onChange={e => setSalaryRange(e.target.value)}
-                        style={{ width: "100%", background: "#11131F", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15, cursor: "pointer" }}>
+                        style={{ width: "100%", background: "#11131F", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14, cursor: "pointer" }}>
                         <option value="">Select Range...</option>
-                        <option value="< $50k">&lt; $50k</option>
-                        <option value="$50k - $100k">$50k - $100k</option>
-                        <option value="$100k - $150k">$100k - $150k</option>
-                        <option value="$150k+">$150k+</option>
+                        <option value="< $50k">&lt; 5 LPA</option>
+                        <option value="$50k - $100k">5 - 10 LPA</option>
+                        <option value="$100k - $150k">10 - 20 LPA</option>
+                        <option value="$150k+">20+ LPA</option>
                       </select>
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Target Salary Goal</label>
                       <select value={targetSalary} onChange={e => setTargetSalary(e.target.value)}
-                        style={{ width: "100%", background: "#11131F", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15, cursor: "pointer" }}>
+                        style={{ width: "100%", background: "#11131F", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14, cursor: "pointer" }}>
                         <option value="">Select Target...</option>
-                        <option value="$100k+">$100k+</option>
-                        <option value="$150k+">$150k+</option>
-                        <option value="$200k+">$200k+</option>
-                        <option value="$300k+">$300k+</option>
+                        <option value="$100k+">10+ LPA</option>
+                        <option value="$150k+">20+ LPA</option>
+                        <option value="$200k+">30+ LPA</option>
+                        <option value="$300k+">50+ LPA</option>
                       </select>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Daily Available Time for Upskilling</label>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      {["1 hour/day", "2 hours/day", "3 hours/day", "Custom"].map(time => (
+                        <button key={time} onClick={() => setDailyAvailableTime(time)}
+                          style={{ flex: 1, background: dailyAvailableTime === time ? "#10b981" : "rgba(255,255,255,0.05)", color: "white", border: "none", padding: "12px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
+                          {time}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Available Days</label>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      {["Mon to Sun", "Mon to Fri", "Weekends Only"].map(days => (
+                        <button key={days} onClick={() => setAvailableDays(days)}
+                          style={{ flex: 1, background: availableDays === days ? "#10b981" : "rgba(255,255,255,0.05)", color: "white", border: "none", padding: "12px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
+                          {days}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
-                  <button onClick={() => setStep(2)} disabled={!currentRole || !companyName || !experienceYears || !salaryRange || !targetSalary || loading}
-                    style={{ background: (!currentRole || !companyName || !experienceYears || !salaryRange || !targetSalary || loading) ? "rgba(255,255,255,0.1)" : "#10b981", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!currentRole || !companyName || !experienceYears || !salaryRange || !targetSalary || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                    Name Your Mentor <ArrowRight size={20} />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* PROFESSOR FLOW */}
-            {step === 1 && selectedType === "PROFESSOR" && (
-              <motion.div key="prof-acad-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Academic Profile</h2>
-                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>We'll personalize your AI to focus on research, pedagogy, and academic growth.</p>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Current Designation</label>
-                    <input type="text" value={currentRole} onChange={(e) => setCurrentRole(e.target.value)} placeholder="e.g. Assistant Professor, HOD, Research Scholar"
-                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Institution / College Name</label>
-                    <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Anna University, NIT Trichy"
-                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Subjects You Teach (or Research Area)</label>
-                    <input type="text" value={salaryRange} onChange={(e) => setSalaryRange(e.target.value)} placeholder="e.g. Data Structures, AI, Computer Networks"
-                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "16px", borderRadius: 12, outline: "none", fontSize: 15 }} />
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
-                  <button onClick={() => setStep(2)} disabled={!currentRole || !companyName || loading}
-                    style={{ background: (!currentRole || !companyName || loading) ? "rgba(255,255,255,0.1)" : "#F59E0B", color: "black", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!currentRole || !companyName || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                  <button onClick={() => setStep(2)} disabled={!currentRole || !careerGoal || !dailyAvailableTime || loading}
+                    style={{ background: (!currentRole || !careerGoal || !dailyAvailableTime || loading) ? "rgba(255,255,255,0.1)" : "#10b981", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!currentRole || !careerGoal || !dailyAvailableTime || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                     Name Your Mentor <ArrowRight size={20} />
                   </button>
                 </div>

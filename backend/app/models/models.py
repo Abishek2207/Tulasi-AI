@@ -16,7 +16,6 @@ class AuthProviderEnum(str, enum.Enum):
 class UserTypeEnum(str, enum.Enum):
     STUDENT = "STUDENT"
     PROFESSIONAL = "PROFESSIONAL"
-    PROFESSOR = "PROFESSOR"
 
 class SenderEnum(str, enum.Enum):
     USER = "USER"
@@ -88,10 +87,64 @@ class Profile(SQLModel, table=True):
     current_salary_range: Optional[str] = None
     target_salary_goal: Optional[str] = None
     
+    # ── TulasiAI Career Shield Expansion ──
+    daily_available_hours: Optional[str] = None # e.g. "2 hours"
+    available_days: Optional[str] = None # e.g. "Monday to Sunday"
+    placement_goal: Optional[str] = None
+    preferred_companies: Optional[str] = None
+    weak_areas: Optional[str] = None
+    resume_status: Optional[str] = None
+    existing_projects: Optional[str] = None
+    current_package_range_prof: Optional[str] = None
+    target_package: Optional[str] = None
+    industry: Optional[str] = None
+    career_goal: Optional[str] = None
+    tools_used: Optional[str] = None
+    ai_tools_known: Optional[str] = None
+    college_name: Optional[str] = None
+    degree: Optional[str] = None
+    department: Optional[str] = None
+    year_of_study: Optional[str] = None
+    target_role: Optional[str] = None
+    current_skills: Optional[str] = None
+    
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     user: Optional["User"] = Relationship(back_populates="profile")
 
+class RoadmapItem(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    roadmap_type: str  # student | professional
+    day_number: int
+    title: str
+    description: str
+    estimated_time: int # in minutes
+    status: str = "Not Started" # Not Started | In Progress | Completed | Skipped
+    due_date: Optional[str] = None
+    skill_category: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserCertification(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    title: str
+    provider: str
+    skill_category: str
+    difficulty: str
+    estimated_time: str
+    external_url: str
+    status: str = "Recommended" # Recommended | Started | Completed
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Notification(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    title: str
+    message: str
+    category: str # AI Skills | Certifications | Placement | Job Switch | Package Growth | Roadmap Reminder
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class ChatSession(SQLModel, table=True):

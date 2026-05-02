@@ -22,6 +22,27 @@ class ProfileBase(BaseModel):
     student_goal: Optional[str] = None
     current_salary_range: Optional[str] = None
     target_salary_goal: Optional[str] = None
+    
+    # ── TulasiAI Career Shield Expansion ──
+    daily_available_hours: Optional[str] = None
+    available_days: Optional[str] = None
+    placement_goal: Optional[str] = None
+    preferred_companies: Optional[str] = None
+    weak_areas: Optional[str] = None
+    resume_status: Optional[str] = None
+    existing_projects: Optional[str] = None
+    current_package_range_prof: Optional[str] = None
+    target_package: Optional[str] = None
+    industry: Optional[str] = None
+    career_goal: Optional[str] = None
+    tools_used: Optional[str] = None
+    ai_tools_known: Optional[str] = None
+    college_name: Optional[str] = None
+    degree: Optional[str] = None
+    department: Optional[str] = None
+    year_of_study: Optional[str] = None
+    target_role: Optional[str] = None
+    current_skills: Optional[str] = None
 
 
 class ProfileCreate(ProfileBase):

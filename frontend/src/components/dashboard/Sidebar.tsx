@@ -15,71 +15,78 @@ import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket, 
   Code, Users, Trophy, BookOpen, Youtube, Building2, 
   FileText, Award, BarChart3, MessageCircle, Briefcase,
-  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass, TrendingUp, Navigation, Flame, Globe
+  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass, TrendingUp, Navigation, Flame, Globe, CheckCircle, GraduationCap, Bell, ArrowUpRight
 } from "lucide-react";
 
-const NAV_SECTIONS = [
-  {
-    label: "Core",
-    items: [
-      { icon: LayoutDashboard, name: "Dashboard",       href: "/dashboard" },
-      { icon: MessageSquare,   name: "AI Chat",         href: "/dashboard/chat" },
-      { icon: Flame,           name: "ORBIT DAILY",     href: "/dashboard/daily-challenge", badge: "NEW" },
-      { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
-      { icon: Map,             name: "Career Path",     href: "/dashboard/roadmaps" },
-      { icon: Rocket,          name: "Startup Lab",     href: "/dashboard/startup-lab" },
-    ]
-  },
-  {
-    label: "Learning",
-    items: [
-      { icon: BrainCircuit,    name: "Flashcards",      href: "/dashboard/flashcards" },
-      { icon: Code,            name: "Code Arena",      href: "/dashboard/code" },
-      { icon: Layers,          name: "System Design",   href: "/dashboard/system-design" },
-      { icon: Compass,         name: "Preparation Plan", href: "/dashboard/prep-plan" },
-      { icon: Users,           name: "Study Rooms",     href: "/dashboard/study-rooms" },
-      { icon: Trophy,          name: "Hackathons",      href: "/dashboard/hackathons" },
-      { icon: BookOpen,        name: "Platform Guides", href: "/dashboard/platform-guides" },
-      { icon: Youtube,         name: "YouTube Hub",     href: "/dashboard/youtube-learning" },
-      { icon: Building2,       name: "Company Prep",    href: "/dashboard/company-prep" },
-      { icon: MessageCircle,   name: "Soft Skills",     href: "/dashboard/chat?mode=soft_skills",  badge: "NEW" },
-      { icon: MessageSquare,   name: "Communication",   href: "/dashboard/chat?mode=communication", badge: "NEW" },
-    ]
-  },
-  {
-    label: "Tools",
-    items: [
-      { icon: Map,             name: "AI Roadmap",      href: "/dashboard/ai-roadmap",    badge: "AI" },
-      { icon: Navigation,      name: "Career GPS",      href: "/dashboard/career-gps",     badge: "NEW" },
-      { icon: TrendingUp,      name: "Salary Intel",    href: "/dashboard/salary-intel",   badge: "NEW" },
-      { icon: Briefcase,       name: "Internships",     href: "/dashboard/internships",    badge: "INDIA" },
-      { icon: Lightbulb,       name: "Project Ideas",   href: "/dashboard/projects" },
-      { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
-      { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
-      { icon: BarChart3,       name: "Analytics",       href: "/dashboard/analytics" },
-    ]
-  },
-  {
-    label: "Community",
-    items: [
-      { icon: Globe,           name: "Orbit HUB",      href: "/dashboard/orbit",         badge: "LIVE" },
-      { icon: Users,           name: "Network",         href: "/dashboard/network",       badge: "NEW" },
-      { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
-      { icon: Lightbulb,       name: "Idea Feed",       href: "/dashboard/feed" },
-      { icon: Mail,            name: "Messages",        href: "/dashboard/messages" },
-      { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
-    ]
-  },
-  {
-    label: "Account",
-    items: [
-      { icon: User,            name: "Profile",         href: "/dashboard/profile" },
-      { icon: Gift,            name: "Rewards Store",   href: "/dashboard/rewards" },
-      { icon: CreditCard,      name: "Billing & Pro",   href: "/dashboard/billing" },
-      { icon: Activity,        name: "API Status",      href: `${API_URL}/api/health` },
-    ]
-  }
-];
+const getNavSections = (userType: string) => {
+  const isStudent = userType === "student";
+
+  const coreItems = isStudent ? [
+    { icon: LayoutDashboard, name: "Overview",        href: "/dashboard/student" },
+    { icon: Map,             name: "Placement Roadmap",href: "/dashboard/roadmaps" },
+    { icon: Code,            name: "Skills",          href: "/dashboard/student/skills" },
+    { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
+    { icon: Lightbulb,       name: "Projects",        href: "/dashboard/projects" },
+    { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
+    { icon: Bell,            name: "Notifications",   href: "/dashboard/notifications",  badge: "NEW" },
+    { icon: MessageSquare,   name: "AI Mentor",       href: "/dashboard/chat" },
+  ] : [
+    { icon: LayoutDashboard, name: "Overview",        href: "/dashboard/professional" },
+    { icon: Target,          name: "AI Skill Gap",    href: "/dashboard/professional/skill-gap", badge: "AI" },
+    { icon: TrendingUp,      name: "Career Growth",   href: "/dashboard/professional/career-growth" },
+    { icon: ArrowUpRight,    name: "Package Roadmap", href: "/dashboard/professional/package-roadmap" },
+    { icon: CheckCircle,     name: "Daily Upskill Plan", href: "/dashboard/professional/daily-plan", badge: "NEW" },
+    { icon: Award,           name: "Certifications",  href: "/dashboard/certificates" },
+    { icon: Flame,           name: "Trending Skills", href: "/dashboard/professional/trending" },
+    { icon: Bell,            name: "Notifications",   href: "/dashboard/notifications" },
+    { icon: MessageSquare,   name: "AI Mentor",       href: "/dashboard/chat" },
+  ];
+
+  return [
+    {
+      label: "Career Shield",
+      items: coreItems
+    },
+    {
+      label: "Learning & Practice",
+      items: [
+        { icon: BrainCircuit,    name: "Flashcards",      href: "/dashboard/flashcards" },
+        { icon: Code,            name: "Code Arena",      href: "/dashboard/code" },
+        { icon: Layers,          name: "System Design",   href: "/dashboard/system-design" },
+        { icon: Trophy,          name: "Hackathons",      href: "/dashboard/hackathons" },
+        { icon: Building2,       name: "Company Prep",    href: "/dashboard/company-prep" },
+      ]
+    },
+    {
+      label: "Tools",
+      items: [
+        { icon: Navigation,      name: "Career GPS",      href: "/dashboard/career-gps",     badge: "NEW" },
+        { icon: TrendingUp,      name: "Salary Intel",    href: "/dashboard/salary-intel",   badge: "NEW" },
+        { icon: Briefcase,       name: "Internships",     href: "/dashboard/internships",    badge: "INDIA" },
+        { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
+        { icon: BarChart3,       name: "Analytics",       href: "/dashboard/analytics" },
+      ]
+    },
+    {
+      label: "Community",
+      items: [
+        { icon: Globe,           name: "Orbit HUB",       href: "/dashboard/orbit",         badge: "LIVE" },
+        { icon: Users,           name: "Network",         href: "/dashboard/network",       badge: "NEW" },
+        { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
+        { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
+      ]
+    },
+    {
+      label: "Account",
+      items: [
+        { icon: User,            name: "Profile",         href: "/dashboard/profile" },
+        { icon: Gift,            name: "Rewards Store",   href: "/dashboard/rewards" },
+        { icon: CreditCard,      name: "Billing & Pro",   href: "/dashboard/billing" },
+        { icon: Activity,        name: "API Status",      href: `${API_URL}/api/health` },
+      ]
+    }
+  ];
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -107,8 +114,10 @@ export default function Sidebar() {
     }
   };
 
-
   const { sidebarOpen } = useSelector((s: RootState) => s.ui);
+  
+  const userTypeLower = (currentUser?.user_type || "student").toLowerCase();
+  const NAV_SECTIONS = getNavSections(userTypeLower);
 
   return (
     <div style={{
