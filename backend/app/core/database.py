@@ -93,7 +93,26 @@ def sync_profile_schema(engine):
         ("student_year", "VARCHAR"),
         ("student_goal", "VARCHAR"),
         ("current_salary_range", "VARCHAR"),
-        ("target_salary_goal", "VARCHAR")
+        ("target_salary_goal", "VARCHAR"),
+        ("daily_available_hours", "VARCHAR"),
+        ("available_days", "VARCHAR"),
+        ("placement_goal", "VARCHAR"),
+        ("preferred_companies", "VARCHAR"),
+        ("weak_areas", "VARCHAR"),
+        ("resume_status", "VARCHAR"),
+        ("existing_projects", "VARCHAR"),
+        ("current_package_range_prof", "VARCHAR"),
+        ("target_package", "VARCHAR"),
+        ("industry", "VARCHAR"),
+        ("career_goal", "VARCHAR"),
+        ("tools_used", "VARCHAR"),
+        ("ai_tools_known", "VARCHAR"),
+        ("college_name", "VARCHAR"),
+        ("degree", "VARCHAR"),
+        ("department", "VARCHAR"),
+        ("year_of_study", "VARCHAR"),
+        ("target_role", "VARCHAR"),
+        ("current_skills", "VARCHAR")
     ]
     
     try:
