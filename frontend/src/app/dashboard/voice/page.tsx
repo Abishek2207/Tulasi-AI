@@ -44,29 +44,33 @@ export default function VoiceAIPage() {
   const speakText = useCallback((text: string) => {
     if (muted || !synthRef.current) return;
     synthRef.current.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = "en-IN";
-    utt.rate = 1.05;
-    utt.pitch = 1.0;
-    utt.volume = 1.0;
 
-    // Prefer a natural Indian English voice if available
+    // Split into sentences so TTS starts immediately on first sentence
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
     const voices = synthRef.current.getVoices();
     const preferred = voices.find(v =>
       v.lang.startsWith("en-IN") ||
       v.name.toLowerCase().includes("google") ||
       v.name.toLowerCase().includes("natural")
     ) || voices.find(v => v.lang.startsWith("en"));
-    if (preferred) utt.voice = preferred;
 
-    utt.onstart = () => setIsSpeaking(true);
-    utt.onend = () => {
-      setIsSpeaking(false);
-      setStatus("idle");
+    let idx = 0;
+    const speakNext = () => {
+      if (idx >= sentences.length) { setIsSpeaking(false); setStatus("idle"); return; }
+      const utt = new SpeechSynthesisUtterance(sentences[idx].trim());
+      utt.lang = "en-IN";
+      utt.rate = 1.1;
+      utt.pitch = 1.0;
+      utt.volume = 1.0;
+      if (preferred) utt.voice = preferred;
+      utt.onstart = () => { setIsSpeaking(true); setStatus("speaking"); };
+      utt.onend = () => { idx++; speakNext(); };
+      utt.onerror = () => { idx++; speakNext(); };
+      utteranceRef.current = utt;
+      synthRef.current!.speak(utt);
     };
-    utteranceRef.current = utt;
-    synthRef.current.speak(utt);
-    setStatus("speaking");
+    speakNext();
   }, [muted]);
 
   const sendToAI = useCallback(async (text: string) => {
@@ -80,7 +84,7 @@ export default function VoiceAIPage() {
 
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${API_URL}/api/chat`, {
+      const res = await fetch(`${API_URL}/api/chat/voice`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -136,13 +140,13 @@ export default function VoiceAIPage() {
         .join(" ");
       setTranscript(t);
 
-      // Auto-send after 1.5s silence
-      if (silenceTimer.current) clearTimeout(silenceTimer.current);
+      // Send immediately on final result (fastest possible)
       if (e.results[e.results.length - 1].isFinal) {
+        if (silenceTimer.current) clearTimeout(silenceTimer.current);
         silenceTimer.current = setTimeout(() => {
           rec.stop();
           sendToAI(t);
-        }, 400);
+        }, 200);
       }
     };
 
@@ -154,7 +158,7 @@ export default function VoiceAIPage() {
 
     rec.onend = () => {
       setIsListening(false);
-      if (status === "listening" && transcript) sendToAI(transcript);
+      // Do NOT auto-send here — onresult already handles it
     };
 
     recognitionRef.current = rec;

@@ -395,6 +395,80 @@ def chat(
     return ChatResponse(response=response_text, session_id=session_id, ai_model="tulasi-ai")
 
 
+# ── ⚡ VOICE FAST ENDPOINT — Skip Safety + RAG + Reasoning for <1s response ──
+@router.post("/voice")
+@limiter.limit("30/minute")
+def chat_voice(
+    request: Request,
+    req: ChatRequest,
+    db: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    """Ultra-fast voice endpoint: direct AI call, no safety check, no RAG, no ReasoningEngine."""
+    from app.models.models import Profile
+
+    session_id = req.session_id or str(uuid.uuid4())
+
+    # Build compact context (fast — no DB fetches except profile)
+    profile = db.query(Profile).filter(Profile.user_id == user.id).first()
+    mentor_name = profile.ai_mentor_name if profile and profile.ai_mentor_name else "Tulasi"
+    student_year = (profile.student_year or "") if profile else ""
+    student_goal = (profile.student_goal or "") if profile else ""
+    prof_role = (profile.current_role or "") if profile else ""
+
+    user_type_upper = (user.user_type or "student").upper()
+    year_map = {
+        "1st Year": "1st year student. Focus: C/Python basics, Maths, Soft Skills.",
+        "2nd Year": "2nd year student. Focus: DSA, OOP, DBMS, Web Dev basics.",
+        "3rd Year": "3rd year student. Focus: Advanced DSA, internships, Full Stack/AI-ML.",
+        "4th Year": "4th year student. Focus: Placement DSA, System Design, Company prep.",
+    }
+    if user_type_upper == "STUDENT":
+        year_ctx = year_map.get(student_year, f"Student ({student_year or 'unknown year'}).")
+        if student_goal: year_ctx += f" Goal: {student_goal}."
+    elif user_type_upper == "PROFESSIONAL":
+        year_ctx = f"Working Professional (Role: {prof_role or 'Software Engineer'})."
+    else:
+        year_ctx = f"User type: {user_type_upper}."
+
+    is_founder = user.email and user.email.lower() == "abishekramamoorthy22@gmail.com"
+    founder_ctx = "FOUNDER MODE: Abishek R (CEO, Tulasi AI). Elite mode. " if is_founder else ""
+
+    system_instruction = (
+        f"You are {mentor_name}, a sharp, friendly AI career mentor from Tulasi AI (built by Abishek R). "
+        f"{founder_ctx}"
+        f"USER: {year_ctx} "
+        "RULES: "
+        "1. Answer ONLY what was asked. Be concise and direct. "
+        "2. For greetings (hi/hello), respond casually in 1 sentence. "
+        "3. No bullet overload — speak naturally as if talking. "
+        "4. End with ONE short follow-up question. "
+        f"Year: 2026."
+    )
+
+    # Direct AI call — fastest path
+    try:
+        response_text = get_ai_response(
+            req.message,
+            system_instruction=system_instruction,
+            force_model="fast_flash",
+        )
+    except Exception as e:
+        print(f"⚠️ Voice AI fast call failed: {e}")
+        response_text = "Sorry, I couldn't process that right now. Please try again."
+
+    # Fire-and-forget DB persistence (background, non-blocking)
+    try:
+        db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
+        db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=response_text))
+        db.commit()
+    except Exception:
+        pass
+
+    return ChatResponse(response=response_text, session_id=session_id, ai_model="tulasi-voice-fast")
+
+
+
 @router.post("/stream")
 @limiter.limit("20/minute")
 def chat_stream(
