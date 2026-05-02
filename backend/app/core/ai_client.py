@@ -530,7 +530,17 @@ class HybridAIClient:
                 try:
                     f_model = self.GEMINI_MODELS[0] if force_model == "complex_reasoning" else force_model
                     f_model_lower = f_model.lower()
-                    if any(m in f_model for m in ["gemini", "gemma"]) or f_model.startswith("models/"):
+                    if f_model == "fast_flash":
+                        # Fast Flash = fastest Gemini model (sub-1s responses)
+                        print(f"🎯 [AI] Fast Flash → gemini-2.0-flash-lite")
+                        res = self._call_gemini(gemini_contents, "gemini-2.0-flash-lite", stream=False, system_instruction=system_instruction)
+                        if res and res != "No response generated.":
+                            return res
+                        # Fallback to next fastest Gemini
+                        res = self._call_gemini(gemini_contents, "gemini-2.0-flash", stream=False, system_instruction=system_instruction)
+                        if res and res != "No response generated.":
+                            return res
+                    elif any(m in f_model for m in ["gemini", "gemma"]) or f_model.startswith("models/"):
                         print(f"🎯 [AI] Forcing model: {f_model}")
                         res = self._call_gemini(gemini_contents, f_model, stream=False, system_instruction=system_instruction)
                         if res and res != "No response generated.":
@@ -540,7 +550,7 @@ class HybridAIClient:
                         res = self._call_openrouter(compat_messages, model=f_model, stream=False)
                         if res:
                             return res
-                    elif "llama" in f_model_lower or f_model == "fast_flash":
+                    elif "llama" in f_model_lower or f_model == "groq":
                         print(f"🎯 [AI] Forcing Groq")
                         res = self._call_groq(compat_messages, stream=False)
                         if res:

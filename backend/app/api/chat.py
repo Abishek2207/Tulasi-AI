@@ -585,6 +585,7 @@ def chat_stream(
     system_instruction = f"{system_prompt}. {awareness}"
 
     def generate():
+        full_response = ""  # ← Critical: must be initialized before any yield
         # 1. Simple tools bypass reasoning (prevents THOUGHT: in stream)
         structured_tools = ["flashcards", "roadmap_gen", "json_mode"]
         if tool in structured_tools:
