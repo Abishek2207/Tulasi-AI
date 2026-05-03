@@ -8,7 +8,7 @@ import { Toaster } from "react-hot-toast";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+
 import { XPNotificationSystem } from "@/components/XPNotification";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -154,7 +154,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <OnboardingTour />
             <CommandPalette />
             <KeepAlive />
-            <PWAInstallPrompt />
+
             <ServiceWorkerRegistrar />
             <BackendWarmup />
             <Analytics />

@@ -130,7 +130,7 @@ export default function TopBar() {
         </a>
 
         {/* Search opens Command Palette */}
-        <div style={{ flex: 1, maxWidth: 420, position: "relative" }}>
+        <div className="desktop-only" style={{ flex: 1, maxWidth: 420, position: "relative" }}>
           <button
             onClick={() => {
               window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }));
@@ -149,9 +149,9 @@ export default function TopBar() {
           >
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Search size={16} color="var(--brand-primary)" />
-              <span className="desktop-only">Search features, topics...</span>
+              <span>Search features, topics...</span>
             </span>
-            <span className="desktop-only" style={{
+            <span style={{
               fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "var(--font-mono)",
               background: "rgba(255,255,255,0.04)", padding: "4px 6px", borderRadius: 5,
               border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 2
@@ -159,8 +159,18 @@ export default function TopBar() {
           </button>
         </div>
 
+        {/* Mobile Search Icon */}
+        <div className="mobile-only" style={{ flex: 1, display: "flex", justifyContent: "flex-end", marginRight: 8 }}>
+          <button
+             onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }))}
+             style={{ background: "transparent", border: "none", color: "var(--text-muted)", padding: 8, display: "flex" }}
+          >
+             <Search size={20} />
+          </button>
+        </div>
+
         {/* Neural Sync Indicator */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: 20 }}>
+        <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: 20 }}>
           <div style={{ position: "relative", width: 8, height: 8 }}>
             <motion.div animate={{ scale: [1, 1.8, 1], opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 2 }} 
               style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#10B981" }} />
