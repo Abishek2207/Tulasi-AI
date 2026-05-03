@@ -417,36 +417,90 @@ def chat_voice(
     prof_role = (profile.current_role or "") if profile else ""
 
     user_type_upper = (user.user_type or "student").upper()
+    
+    # Strict year-wise content enforcement for voice
     year_map = {
-        "1st Year": "1st year student. Focus: C/Python basics, Maths, Soft Skills.",
-        "2nd Year": "2nd year student. Focus: DSA, OOP, DBMS, Web Dev basics.",
-        "3rd Year": "3rd year student. Focus: Advanced DSA, internships, Full Stack/AI-ML.",
-        "4th Year": "4th year student. Focus: Placement DSA, System Design, Company prep.",
+        "1st Year": (
+            "You are a 1st year engineering student. "
+            "Focus ONLY on: C/Python programming basics, mathematics (calculus, linear algebra), "
+            "digital logic, basic computer fundamentals, soft skills, college orientation, "
+            "beginner certificate courses (Google, NPTEL), and foundational projects. "
+            "DO NOT discuss internships, advanced DSA, system design, or placement topics. "
+            "Keep explanations simple and beginner-friendly."
+        ),
+        "2nd Year": (
+            "You are a 2nd year engineering student. "
+            "Focus ONLY on: Data Structures & Algorithms (arrays, stacks, queues, trees, graphs), "
+            "Object-Oriented Programming (Java/C++/Python), Database Management (SQL basics), "
+            "Web Development basics (HTML, CSS, JavaScript), Operating Systems concepts, "
+            "Computer Networks basics, mini-projects, beginner competitive coding (LeetCode easy), "
+            "and building LinkedIn profile. "
+            "DO NOT discuss advanced system design or heavy placement prep."
+        ),
+        "3rd Year": (
+            "You are a 3rd year engineering student. "
+            "Focus ONLY on: Advanced DSA (graphs, DP, segment trees), "
+            "Full Stack Web Development or AI/ML specialization, open source contributions, "
+            "internship preparation (resume, behavioral questions), competitive programming (LeetCode medium), "
+            "real-world projects with GitHub, system design basics, advanced DBMS, "
+            "and internship application strategy for top companies. "
+            "This is the MOST critical year for landing quality internships."
+        ),
+        "4th Year": (
+            "You are a 4th year engineering student focused on placements. "
+            "Focus ONLY on: Intense DSA preparation (LeetCode medium-hard, competitive coding), "
+            "System Design (HLD, LLD), company-specific preparation (TCS, Infosys, Wipro, MAANG), "
+            "HR interview prep, resume building, ATS optimization, mock interviews, "
+            "GATE preparation (if applicable), higher studies abroad (GRE, IELTS, SOP writing), "
+            "and off-campus application strategy. "
+            "Placement season is NOW — prioritize accordingly."
+        ),
     }
+    
     if user_type_upper == "STUDENT":
-        year_ctx = year_map.get(student_year, f"Student ({student_year or 'unknown year'}).")
-        if student_goal: year_ctx += f" Goal: {student_goal}."
+        year_ctx = year_map.get(student_year, 
+            "You are an engineering student. Focus on computer science fundamentals and career growth appropriate to your level."
+        )
+        if student_goal: 
+            year_ctx += f" Your stated goal: {student_goal}. Align all advice toward this goal."
     elif user_type_upper == "PROFESSIONAL":
-        year_ctx = f"Working Professional (Role: {prof_role or 'Software Engineer'})."
+        year_ctx = (
+            f"You are a working professional (Role: {prof_role or 'Software Engineer'}, "
+            f"Experience: {getattr(profile, 'experience_years', 0) or 0} years). "
+            "Focus on: advanced technical skills, system design at scale, leadership, "
+            "salary negotiation, career transitions, upskilling for senior/staff roles, "
+            "cloud certifications, AI integration in workflows, and professional networking."
+        )
+    elif user_type_upper == "PROFESSOR":
+        year_ctx = (
+            "You are a professor/academic professional. "
+            "Focus ONLY on: pedagogy and teaching methodologies, academic research and publications, "
+            "curriculum design, supervising student projects, research grants (DST, UGC, AICTE), "
+            "conference presentations, paper writing, AI in education, academic career progression, "
+            "and building academic collaborations. Do NOT give student placement advice."
+        )
     else:
-        year_ctx = f"User type: {user_type_upper}."
+        year_ctx = "You are a learner focused on technology and career growth."
 
     is_founder = user.email and user.email.lower() == "abishekramamoorthy22@gmail.com"
     founder_ctx = "FOUNDER MODE: Abishek R (CEO, Tulasi AI). Elite mode. " if is_founder else ""
 
+    # Compact system instruction for fast voice response
     system_instruction = (
         f"You are {mentor_name}, a sharp, friendly AI career mentor from Tulasi AI (built by Abishek R). "
         f"{founder_ctx}"
-        f"USER: {year_ctx} "
-        "RULES: "
-        "1. Answer ONLY what was asked. Be concise and direct. "
-        "2. For greetings (hi/hello), respond casually in 1 sentence. "
-        "3. No bullet overload — speak naturally as if talking. "
-        "4. End with ONE short follow-up question. "
-        f"Year: 2026."
+        f"Year: 2026. "
+        f"USER CONTEXT: {year_ctx}\n\n"
+        "VOICE RESPONSE RULES: "
+        "1. Answer ONLY what was asked. Be concise and direct (max 3-4 sentences). "
+        "2. For greetings (hi/hello/hey), respond casually in 1 short sentence. "
+        "3. Speak naturally as if having a conversation — no bullet points. "
+        "4. Match the user's year/role EXACTLY — never give content for other years. "
+        "5. End with ONE short follow-up question. "
+        "6. Keep responses under 100 words for voice clarity."
     )
 
-    # Direct AI call — fastest path
+    # Direct AI call — fastest path with fast_flash model
     try:
         response_text = get_ai_response(
             req.message,
