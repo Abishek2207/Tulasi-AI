@@ -88,7 +88,7 @@ class ReasoningEngine:
 
         try:
             raw_response = ai_client.get_response(
-                prompt, history=history, force_model="complex_reasoning"
+                prompt, history=history, force_model="fast_flash"  # Use fast model — complex_reasoning causes hangs
             )
 
             # 3. Parse THOUGHT / RESPONSE components
@@ -128,7 +128,7 @@ class ReasoningEngine:
         """
         try:
             stream_gen = ai_client.get_response(
-                prompt, history=history, stream=True, force_model="complex_reasoning"
+                prompt, history=history, stream=True, force_model="fast_flash"  # Fast model prevents stream hangs
             )
 
             full_text = ""
@@ -236,7 +236,8 @@ class ReasoningEngine:
 
     def _update_profile_background(self, user: User, full_text: str, db: Session):
         """
-        Analyzes the interaction to update the long-term intelligence JSON.
+        Updates the long-term intelligence JSON using fast keyword extraction.
+        NO additional AI API calls — prevents double-billing and latency spikes.
         """
         try:
             if len(full_text) < 50:
@@ -244,47 +245,36 @@ class ReasoningEngine:
 
             current_intel = json.loads(user.user_intelligence_profile or "{}")
 
-            analysis_prompt = f"""
-            Analyze this interaction and extract structural intelligence updates for the user.
-            CURRENT_INTEL: {json.dumps(current_intel)}
-            interaction: {full_text[:2000]}
+            # Fast keyword-based extraction (no extra AI call needed)
+            text_lower = full_text.lower()
 
-            Return ONLY a JSON object with:
-            {{
-              "new_facts": ["fact1", "fact2"],
-              "new_strengths": ["strength1"],
-              "new_gaps": ["gap1"],
-              "velocity_delta": 1,
-              "depth_delta": 1
-            }}
-            """
-            analysis_res = ai_client.get_response(analysis_prompt, force_model="fast_flash")
-            match = re.search(r"\{.*\}", analysis_res, re.DOTALL)
-            if match:
-                update = json.loads(match.group())
+            # Detect topic strengths from keywords
+            strength_keywords = {
+                "dsa": ["array", "tree", "graph", "dynamic programming", "dp", "sorting", "linked list"],
+                "system_design": ["scalability", "load balancer", "database", "cache", "microservice"],
+                "web_dev": ["react", "next.js", "api", "rest", "frontend", "backend", "fastapi"],
+                "career": ["resume", "interview", "placement", "internship", "job", "company"],
+            }
+            new_strengths = []
+            for strength, keywords in strength_keywords.items():
+                if any(k in text_lower for k in keywords):
+                    new_strengths.append(strength)
 
-                current_intel["facts"] = list(
-                    set(current_intel.get("facts", []) + update.get("new_facts", []))
-                )[:15]
-                current_intel["strengths"] = list(
-                    set(current_intel.get("strengths", []) + update.get("new_strengths", []))
-                )[:10]
-                current_intel["gaps"] = list(
-                    set(current_intel.get("gaps", []) + update.get("new_gaps", []))
-                )[:10]
-                current_intel["career_velocity"] = min(
-                    100,
-                    current_intel.get("career_velocity", 50) + update.get("velocity_delta", 0),
-                )
-                current_intel["technical_depth"] = min(
-                    100,
-                    current_intel.get("technical_depth", 30) + update.get("depth_delta", 0),
-                )
+            if new_strengths:
+                current_strengths = set(current_intel.get("strengths", []))
+                current_strengths.update(new_strengths)
+                current_intel["strengths"] = list(current_strengths)[:10]
 
-                user.user_intelligence_profile = json.dumps(current_intel)
-                user.last_intelligence_update = datetime.utcnow()
-                db.add(user)
-                db.commit()
+            # Increment velocity slightly for each interaction
+            current_intel["career_velocity"] = min(
+                100,
+                current_intel.get("career_velocity", 50) + 1,
+            )
+
+            user.user_intelligence_profile = json.dumps(current_intel)
+            user.last_intelligence_update = datetime.utcnow()
+            db.add(user)
+            db.commit()
         except Exception as e:
             print(f"⚠️ Background intel update failed: {e}")
 

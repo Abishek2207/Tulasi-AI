@@ -192,29 +192,34 @@ def chat(
 
     system_prompt = TOOL_PROMPTS.get(tool, TOOL_PROMPTS["chat"])
 
-    # ── Safety Triage (single, non-duplicated block) ──────────────────────────
-    try:
-        safety_prompt = (
-            f"Evaluate this message for policy violations (PII leaks, extreme toxicity, illegal acts). "
-            f"Message: \"{req.message}\"\n"
-            f"Return JSON: {{\"is_safe\": true/false, \"reason\": \"short reason if unsafe\"}}"
-        )
-        safety_res = get_ai_response(safety_prompt, force_model="fast_flash")
-        safety_match = re.search(r"\{.*\}", safety_res, re.DOTALL)
-        if safety_match:
-            safety_data = json.loads(safety_match.group())
-            if not safety_data.get("is_safe", True):
-                abuse_count = (getattr(user, "abuse_count", 0) or 0) + 1
-                user.abuse_count = abuse_count
-                db.add(user)
-                db.commit()
-                return ChatResponse(
-                    response=f"⚠️ **Safety Alert ({abuse_count}/5):** {safety_data.get('reason', 'Policy violation detected.')}",
-                    session_id=session_id,
-                    ai_model="tulasi-safety",
-                )
-    except Exception:
-        pass  # If safety check itself fails, allow through
+    # ── Safety Triage — Skip for short/common messages to save latency ──────
+    # Only run safety check on longer messages (>80 chars) or flagged keywords
+    _needs_safety = len(req.message) > 80 or any(
+        k in req.message.lower() for k in ["hack", "exploit", "illegal", "bomb", "kill", "drug"]
+    )
+    if _needs_safety:
+        try:
+            safety_prompt = (
+                f"Evaluate this message for policy violations (PII leaks, extreme toxicity, illegal acts). "
+                f"Message: \"{req.message}\"\n"
+                f"Return JSON: {{\"is_safe\": true/false, \"reason\": \"short reason if unsafe\"}}"
+            )
+            safety_res = get_ai_response(safety_prompt, force_model="fast_flash")
+            safety_match = re.search(r"\{.*\}", safety_res, re.DOTALL)
+            if safety_match:
+                safety_data = json.loads(safety_match.group())
+                if not safety_data.get("is_safe", True):
+                    abuse_count = (getattr(user, "abuse_count", 0) or 0) + 1
+                    user.abuse_count = abuse_count
+                    db.add(user)
+                    db.commit()
+                    return ChatResponse(
+                        response=f"⚠️ **Safety Alert ({abuse_count}/5):** {safety_data.get('reason', 'Policy violation detected.')}",
+                        session_id=session_id,
+                        ai_model="tulasi-safety",
+                    )
+        except Exception:
+            pass  # If safety check itself fails, allow through
 
     # ── RAG Memory Retrieval ──────────────────────────────────────────────────
     rag_context = ""
