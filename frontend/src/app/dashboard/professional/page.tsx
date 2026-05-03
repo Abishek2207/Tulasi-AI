@@ -16,7 +16,7 @@ import {
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award,
   Flame, Zap, Linkedin, Share2, MessageCircle, Terminal,
   CheckCircle2, Star, Sparkles, BrainCircuit, Lightbulb,
-  LayoutDashboard, TrendingUp, ArrowRight, Share, MapPin, Clock, Link2
+  LayoutDashboard, TrendingUp, ArrowRight, Share, MapPin, Clock, Link2, Layers
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
