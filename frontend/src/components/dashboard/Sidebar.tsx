@@ -24,7 +24,7 @@ const getNavSections = (userType: string) => {
   const coreItems = isStudent ? [
     { icon: LayoutDashboard, name: "Overview",        href: "/dashboard/student" },
     { icon: Map,             name: "Placement Roadmap",href: "/dashboard/roadmaps" },
-    { icon: Code,            name: "Skills",          href: "/dashboard/student/skills" },
+    { icon: Code,            name: "Skills",          href: "/dashboard/coming-soon?feature=Skills" },
     { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
     { icon: Lightbulb,       name: "Projects",        href: "/dashboard/projects" },
     { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
@@ -32,12 +32,12 @@ const getNavSections = (userType: string) => {
     { icon: MessageSquare,   name: "AI Mentor",       href: "/dashboard/chat" },
   ] : [
     { icon: LayoutDashboard, name: "Overview",        href: "/dashboard/professional" },
-    { icon: Target,          name: "AI Skill Gap",    href: "/dashboard/professional/skill-gap", badge: "AI" },
-    { icon: TrendingUp,      name: "Career Growth",   href: "/dashboard/professional/career-growth" },
-    { icon: ArrowUpRight,    name: "Package Roadmap", href: "/dashboard/professional/package-roadmap" },
-    { icon: CheckCircle,     name: "Daily Upskill Plan", href: "/dashboard/professional/daily-plan" },
+    { icon: Target,          name: "AI Skill Gap",    href: "/dashboard/coming-soon?feature=AI Skill Gap", badge: "AI" },
+    { icon: TrendingUp,      name: "Career Growth",   href: "/dashboard/coming-soon?feature=Career Growth" },
+    { icon: ArrowUpRight,    name: "Package Roadmap", href: "/dashboard/coming-soon?feature=Package Roadmap" },
+    { icon: CheckCircle,     name: "Daily Upskill Plan", href: "/dashboard/coming-soon?feature=Daily Upskill Plan" },
     { icon: Award,           name: "Certifications",  href: "/dashboard/certificates" },
-    { icon: Flame,           name: "Trending Skills", href: "/dashboard/professional/trending" },
+    { icon: Flame,           name: "Trending Skills", href: "/dashboard/coming-soon?feature=Trending Skills" },
     { icon: Bell,            name: "Notifications",   href: "/dashboard/notifications" },
     { icon: MessageSquare,   name: "AI Mentor",       href: "/dashboard/chat" },
   ];
