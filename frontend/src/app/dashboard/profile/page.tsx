@@ -129,7 +129,7 @@ export default function ProfilePage() {
       if (storedUser.user_type?.toLowerCase() !== userType) {
          try {
              const typeRes = await profileApi.setUserType(userType.toUpperCase(), token);
-             updatedUserTypeStr = typeRes.user_type;
+             updatedUserTypeStr = typeRes.user_type as "student" | "professional";
          } catch (e) { console.error("Failed to update user_type", e); }
       }
       
