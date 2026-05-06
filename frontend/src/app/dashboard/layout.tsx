@@ -91,6 +91,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (status === "authenticated") fetchGlobalStats();
   }, [status, dispatch]);
 
+  // ── Render Backend Wake-up Ping ──
+  useEffect(() => {
+    // Fire and forget health check to warm up the backend
+    const wakeup = async () => {
+      try {
+        await fetch(`${API_URL}/api/health`).catch(() => null);
+        console.log("[Sync] Pre-emptive wake-up call sent to backend.");
+      } catch (e) {}
+    };
+    if (mounted) wakeup();
+  }, [mounted]);
+
   const isFounder = session?.user?.email?.toLowerCase() === "abishekramamoorthy22@gmail.com";
 
   if (!mounted) {
