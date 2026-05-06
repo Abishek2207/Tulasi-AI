@@ -23,11 +23,14 @@ export default function VoiceAIPage() {
   const [status, setStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const [error, setError] = useState("");
 
+  const [mentorName, setMentorName] = useState("Tulasi");
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const silenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isExplicitlyStopped = useRef(false);
+  const wakeWordDetected = useRef(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -40,6 +43,20 @@ export default function VoiceAIPage() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token") || "";
+        const res = await fetch(`${API_URL}/api/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data?.ai_mentor_name) setMentorName(data.ai_mentor_name);
+      } catch (e) { console.error(e); }
+    };
+    fetchProfile();
+  }, []);
 
   const speakText = useCallback((text: string) => {
     if (muted || !synthRef.current) return;
@@ -116,10 +133,11 @@ export default function VoiceAIPage() {
       setStatus("idle");
     } finally {
       setIsProcessing(false);
+      // After AI finishes thinking, if we want to continue, the speaker will set status to speaking
     }
   }, [speakText]);
 
-  const startListening = useCallback(() => {
+  const startListening = useCallback((isWakeWordMode = false) => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setError("Voice not supported in this browser. Please use Chrome or Edge.");
@@ -127,56 +145,104 @@ export default function VoiceAIPage() {
     }
 
     if (synthRef.current) synthRef.current.cancel();
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch(e) {}
+    }
 
     const rec = new SpeechRecognition();
     rec.lang = "en-IN";
-    rec.continuous = false;
+    rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
 
     rec.onstart = () => {
       setIsListening(true);
-      setStatus("listening");
+      if (!isWakeWordMode) {
+        setStatus("listening");
+        wakeWordDetected.current = true;
+      } else {
+        setStatus("idle");
+        wakeWordDetected.current = false;
+      }
       setError("");
+      isExplicitlyStopped.current = false;
     };
 
     rec.onresult = (e: any) => {
-      const t = Array.from(e.results)
-        .map((r: any) => r[0].transcript)
-        .join(" ");
+      const results = Array.from(e.results);
+      const lastResult = results[results.length - 1];
+      const t = lastResult[0].transcript.toLowerCase().trim();
+      
       setTranscript(t);
 
-      // Send immediately on final result (fastest possible)
-      if (e.results[e.results.length - 1].isFinal) {
+      // ── STOP COMMAND ──────────────────────────────────────────────────────
+      if (t.includes("stop") || t.includes("shut up") || t.includes("bye bye") || t.includes("quiet")) {
+        speakText("Okay, I'm going to sleep now. Bye!");
+        stopListening();
+        return;
+      }
+
+      // ── WAKE WORD DETECTION ───────────────────────────────────────────────
+      if (!wakeWordDetected.current) {
+        const trigger = `hey ${mentorName.toLowerCase()}`;
+        const altTrigger = "hey tulasi";
+        if (t.includes(trigger) || t.includes(altTrigger) || t.includes("hey hey")) {
+          wakeWordDetected.current = true;
+          setStatus("listening");
+          setTranscript("Wake word detected!");
+          speakText(`Hey ${userName}! I'm awake. How can I help you?`);
+          return;
+        }
+        return; // Stay in idle/background mode
+      }
+
+      // ── ACTIVE CONVERSATION ───────────────────────────────────────────────
+      if (lastResult.isFinal) {
         if (silenceTimer.current) clearTimeout(silenceTimer.current);
         silenceTimer.current = setTimeout(() => {
-          rec.stop();
-          sendToAI(t);
-        }, 200);
+          if (status === "listening" && t.length > 1) {
+            sendToAI(t);
+          }
+        }, 800);
       }
     };
 
     rec.onerror = (e: any) => {
-      setError(e.error === "no-speech" ? "No speech detected. Tap mic and speak clearly." : `Error: ${e.error}`);
+      if (e.error === "no-speech") return; // Ignore and let onend restart it
+      setError(`Voice Error: ${e.error}`);
       setIsListening(false);
       setStatus("idle");
     };
 
     rec.onend = () => {
       setIsListening(false);
-      // Do NOT auto-send here — onresult already handles it
+      // Restart automatically if not explicitly stopped by user
+      if (!isExplicitlyStopped.current) {
+        setTimeout(() => startListening(!wakeWordDetected.current), 100);
+      }
     };
 
     recognitionRef.current = rec;
     rec.start();
-  }, [sendToAI, status, transcript]);
+  }, [sendToAI, mentorName, userName, speakText, status]);
 
   const stopListening = useCallback(() => {
+    isExplicitlyStopped.current = true;
     recognitionRef.current?.stop();
+    if (synthRef.current) synthRef.current.cancel();
     setIsListening(false);
     setStatus("idle");
-    if (silenceTimer.current) clearTimeout(silenceTimer.current);
+    wakeWordDetected.current = false;
   }, []);
+
+  // Auto-start in background mode on mount
+  useEffect(() => {
+    const timer = setTimeout(() => startListening(true), 1500);
+    return () => {
+      clearTimeout(timer);
+      if (recognitionRef.current) recognitionRef.current.stop();
+    };
+  }, [startListening]);
 
   const toggleListen = useCallback(() => {
     if (isListening) stopListening();
@@ -202,14 +268,14 @@ export default function VoiceAIPage() {
   }, []);
 
   const statusLabel: Record<string, string> = {
-    idle: "Tap mic to speak",
-    listening: "Listening...",
-    thinking: "Thinking...",
-    speaking: "AI is responding...",
+    idle: "Waiting for 'Hey'...",
+    listening: "Hearing you...",
+    thinking: "Analyzing...",
+    speaking: "Mentor Speaking...",
   };
 
   const statusColor: Record<string, string> = {
-    idle: "rgba(255,255,255,0.3)",
+    idle: "rgba(139,92,246,0.4)",
     listening: "#EC4899",
     thinking: "#8B5CF6",
     speaking: "#06B6D4",
