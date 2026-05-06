@@ -45,8 +45,14 @@ export default function VoiceAIPage() {
     if (muted || !synthRef.current) return;
     synthRef.current.cancel();
 
+    // Clean markdown for natural speaking
+    const cleanText = text
+      .replace(/[*#_`\[\]]/g, "") // remove markdown symbols
+      .replace(/<[^>]+>/g, "")    // remove html tags
+      .replace(/\n+/g, ". ");     // replace newlines with pauses
+
     // Split into sentences so TTS starts immediately on first sentence
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
 
     const voices = synthRef.current.getVoices();
     const preferred = voices.find(v =>

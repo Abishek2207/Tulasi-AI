@@ -5,6 +5,7 @@ import { API_URL } from "@/lib/api";
 import { motion } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
+import { paymentApi } from "@/lib/api";
 
 export default function BillingPage() {
   const { data: session } = useSession();
@@ -14,13 +15,8 @@ export default function BillingPage() {
   const handleSubscribe = async () => {
     setLoading(true);
     try {
-      const RENDER_BACKEND_URL = API_URL;
-      const res = await fetch(`${RENDER_BACKEND_URL}/api/payment/simulate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, credentials:"include", mode:"cors"
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const data = await paymentApi.simulatePayment();
+      if (data.success) {
         toast.success("Payment Successful! You are now a PRO member! 🎉");
         
         // Trigger massive confetti
