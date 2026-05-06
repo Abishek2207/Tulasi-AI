@@ -22,6 +22,30 @@ STUDENT_TOPICS = {
         "Graphs & BFS/DFS", "Dynamic Programming", "Recursion & Backtracking",
         "Heaps & Priority Queues", "Tries", "Bit Manipulation"
     ],
+    "C & Python Basics": [
+        "Introduction to Programming (C/Python)", "Variables, Data Types & Operators",
+        "Control Flow (If/Else, Loops)", "Functions & Modularity",
+        "Arrays & Strings Fundamentals", "Pointers (C) & References",
+        "File Handling Basics", "Simple Mini-Project"
+    ],
+    "DSA & Web Dev Basics": [
+        "Core DSA: Stacks, Queues, Linked Lists", "HTML5 & CSS3 Fundamentals",
+        "JavaScript Basics (DOM, ES6)", "Object-Oriented Programming (OOP)",
+        "Database Management Systems (SQL)", "Responsive Web Design",
+        "Intro to Git & GitHub", "Frontend Mini-Project"
+    ],
+    "Advanced DSA & Internships": [
+        "Advanced DSA (Graphs, DP, Trees)", "Full-Stack Frameworks (React/Node)",
+        "REST API Design & Postman", "MongoDB & NoSQL Databases",
+        "System Architecture Basics", "Resume Building & ATS Optimization",
+        "Behavioral Interview Prep (STAR method)", "Open Source Contributions"
+    ],
+    "System Design & Placement Mock": [
+        "System Design (HLD & LLD)", "Mock Technical Interviews",
+        "Company-Specific Question Banks (FAANG/TCS)", "Advanced SQL & Database Sharding",
+        "Microservices & Load Balancing", "HR & Negotiation Interviews",
+        "Coding Round Time Management", "Final Capstone Architecture"
+    ],
     "Aptitude": [
         "Number Systems", "Percentage & Ratio", "Time & Work",
         "Speed Distance Time", "Logical Reasoning", "Verbal Ability",

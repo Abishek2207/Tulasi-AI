@@ -110,7 +110,7 @@ function LiveActivityFeed({ activities: initialActivities }: { activities: any[]
 
 
 const MODULES = [
-  { id: "skill_gap", title: "AI Skill Gap", desc: "Identify your missing skills.", icon: <BrainCircuit size={28} />, link: "/dashboard/professional/skill-gap", color: "#8B5CF6", span: 2 },
+  { id: "skill_gap", title: "AI Skill Gap", desc: "Identify your missing skills.", icon: <BrainCircuit size={28} />, link: "/dashboard/coming-soon?feature=AI Skill Gap", color: "#8B5CF6", span: 2 },
   { id: "career_growth", title: "Salary Intel", desc: "Predict your next package.", icon: <TrendingUp size={28} />, link: "/dashboard/salary-intel", color: "#10B981", span: 2 },
   { id: "soft_skills", title: "Leadership Skills", desc: "Executive presence and communication.", icon: <MessageCircle size={28} />, link: "/dashboard/chat?mode=soft_skills", color: "#F43F5E", span: 1 },
   { id: "communication", title: "Communication", desc: "Client & stakeholder communication.", icon: <Users size={28} />, link: "/dashboard/chat?mode=communication", color: "#EAB308", span: 1 },

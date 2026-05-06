@@ -18,7 +18,6 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { PageTransition } from "@/components/PageTransition";
 import { UsernameModal } from "@/components/UsernameModal";
-import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 
 /** Safe hook — avoids SSR crash and only fires on real resize events. */
 function useIsDesktop() {
@@ -193,11 +192,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <TopBar />
         <AnnouncementBanner />
         <main className="dash-content">
-          <PageErrorBoundary>
-            <PageTransition>
-              {children}
-            </PageTransition>
-          </PageErrorBoundary>
+          <PageTransition>
+            {children}
+          </PageTransition>
         </main>
       </div>
 

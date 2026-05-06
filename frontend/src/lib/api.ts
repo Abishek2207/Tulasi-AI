@@ -190,9 +190,9 @@ export function setCached(key: string, data: any, ttl = CACHE_TTL) {
   }
 }
 
-const FETCH_TIMEOUT_MS = 60_000; // 60s timeout for AI endpoints
+const FETCH_TIMEOUT_MS = 15_000; // Reduced to 15s to avoid hangs
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3, backoff = 1000): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, retries = 1, backoff = 1000): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -200,9 +200,8 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, ba
     const res = await fetch(url, { ...options, signal: controller.signal });
     clearTimeout(timeoutId);
 
-    // If we get a 500, 502, 503, or 504, the backend might be starting (cold start).
     if (res.status >= 500 && retries > 0) {
-      console.warn(`[Sync] Backend status ${res.status}. Synchronizing in ${backoff}ms... (${retries} retries left)`);
+      console.warn(`[Sync] Backend status ${res.status}. Retrying in ${backoff}ms...`);
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
@@ -211,11 +210,11 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, ba
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (retries > 0 && err.name !== "AbortError") {
-      console.warn(`[Sync] Network handshake delayed. Retrying in ${backoff}ms... (${retries} retries left)`);
+      console.warn(`[Sync] Network handshake delayed. Retrying in ${backoff}ms...`);
       await new Promise(resolve => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
-    if (err.name === "AbortError") throw new Error("Request timed out (60s). Please try again.");
+    if (err.name === "AbortError") throw new Error("Request timed out (15s). Please try again.");
     throw err;
   }
 }
@@ -772,6 +771,13 @@ export const paymentApi = {
   getStatus: () =>
     request<{ user_id: number; email: string; is_pro: boolean; plan: string }>(
       "/api/payment/status"
+    ),
+
+  /** Simulate Pro Upgrade */
+  simulatePayment: () =>
+    request<{ success: boolean; message: string; is_pro: boolean }>(
+      "/api/payment/simulate",
+      { method: "POST" }
     ),
 };
 

@@ -16,7 +16,7 @@ import {
   Rocket, Users, Trophy, Youtube, BarChart3, Gift, Award,
   Flame, Zap, Linkedin, Share2, MessageCircle, Terminal,
   CheckCircle2, Star, Sparkles, BrainCircuit, Lightbulb,
-  LayoutDashboard, TrendingUp, ArrowRight, Share, MapPin, Clock, Link2
+  LayoutDashboard, TrendingUp, ArrowRight, Share, MapPin, Clock, Link2, Briefcase, Compass
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { Variants } from "framer-motion";
@@ -118,7 +118,26 @@ const MODULES = [
   { id: "resume", title: "Resume Builder", desc: "ATS-optimized resume with AI analysis.", icon: <FileText size={28} />, link: "/dashboard/resume", color: "#3B82F6", span: 1 },
   { id: "company", title: "Company Prep", desc: "Crack FAANG, TCS, Infosys with targeted question banks.", icon: <Trophy size={28} />, link: "/dashboard/company-prep", color: "#F97316", span: 1 },
   { id: "certs", title: "Certificates", desc: "Download verified learning credentials.", icon: <Award size={28} />, link: "/dashboard/certificates", color: "#34D399", span: 1 },
+  { id: "system-design", title: "System Design", desc: "Master high-level architecture & scalable systems.", icon: <Map size={28} />, link: "/dashboard/system-design", color: "#8B5CF6", span: 1 },
+  { id: "internships", title: "Internships", desc: "Find top off-campus internship opportunities.", icon: <Briefcase size={28} />, link: "/dashboard/internships", color: "#06B6D4", span: 1 },
+  { id: "roadmap", title: "Roadmaps", desc: "Step-by-step career & technology roadmaps.", icon: <Compass size={28} />, link: "/dashboard/roadmaps", color: "#10B981", span: 1 },
 ];
+
+const getFilteredModules = (year: string) => {
+  if (year === "1st Year") {
+    return MODULES.filter(m => ["chat", "voice", "projects", "roadmap", "certs"].includes(m.id));
+  }
+  if (year === "2nd Year") {
+    return MODULES.filter(m => ["chat", "voice", "code", "projects", "roadmap", "certs"].includes(m.id));
+  }
+  if (year === "3rd Year") {
+    return MODULES.filter(m => ["chat", "interview", "code", "projects", "resume", "internships", "certs"].includes(m.id));
+  }
+  if (year === "4th Year") {
+    return MODULES.filter(m => ["chat", "interview", "code", "system-design", "company", "resume", "certs"].includes(m.id));
+  }
+  return MODULES.slice(0, 8); // Default fallback
+};
 
 interface DashboardStats {
   streak: number;
@@ -332,7 +351,7 @@ export default function DashboardPage() {
 
           {/* ── NEW: Injected AI Roadmap (Student) ── */}
           <motion.div variants={item} className="bento-span-2">
-            <RoadmapWidget userType="student" />
+            <RoadmapWidget userType="student" studentYear={studentYear} />
           </motion.div>
 
           {/* ── NEW: Injected Skill Progression (Student) ── */}
@@ -371,7 +390,7 @@ export default function DashboardPage() {
 
         {/* ── Mobile: Quick Action Ribbon ── */}
         <div className="mobile-only" style={{ marginBottom: 40, overflowX: "auto", display: "flex", gap: 12, paddingBottom: 8, scrollbarWidth: "none" }}>
-          {MODULES.slice(0, 6).map(mod => (
+          {getFilteredModules(studentYear).slice(0, 6).map(mod => (
             <Link key={mod.id} href={mod.link} style={{ textDecoration: "none", flexShrink: 0 }}>
               <div style={{ padding: "12px 20px", borderRadius: 16, background: `${mod.color}15`, border: `1px solid ${mod.color}30`, display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ color: mod.color }}>{React.cloneElement(mod.icon as any, { size: 18 })}</div>
@@ -513,8 +532,8 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Module Grid - Main */}
-          {MODULES.map((mod) => (
-            <motion.div key={mod.id} variants={item} className={`module-span-${mod.span}`}>
+          {getFilteredModules(studentYear).map((mod) => (
+            <motion.div key={mod.id} variants={item} className={`module-span-${mod.span || 1}`}>
               <TiltCard intensity={5} style={{ height: "100%" }}>
                 <Link href={mod.link} style={{ textDecoration: "none", display: "block", height: "100%" }}>
                   <div className="glass-card-premium" style={{

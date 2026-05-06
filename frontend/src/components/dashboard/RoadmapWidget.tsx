@@ -28,7 +28,7 @@ interface RoadmapDay {
   tip?: string;
 }
 
-export function RoadmapWidget({ userType = "student" }: { userType?: string }) {
+export function RoadmapWidget({ userType = "student", studentYear = "" }: { userType?: string, studentYear?: string }) {
   const [roadmap, setRoadmap] = useState<RoadmapDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeDay, setActiveDay] = useState(1);
@@ -42,8 +42,16 @@ export function RoadmapWidget({ userType = "student" }: { userType?: string }) {
 
       const endpoint = userType === "student" ? "/api/roadmap/career/student" : "/api/roadmap/career/professional";
       
+      let dynamicFocus = "DSA";
+      if (userType === "student" && studentYear) {
+        if (studentYear === "1st Year") dynamicFocus = "C & Python Basics";
+        else if (studentYear === "2nd Year") dynamicFocus = "DSA & Web Dev Basics";
+        else if (studentYear === "3rd Year") dynamicFocus = "Advanced DSA & Internships";
+        else if (studentYear === "4th Year") dynamicFocus = "System Design & Placement Mock";
+      }
+
       const payload = userType === "student" 
-        ? { days: 7, hours_per_day: hours, focus: "DSA" }
+        ? { days: 7, hours_per_day: hours, focus: dynamicFocus }
         : { target_skill: "AI" }; // Default for professional
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${endpoint}`, {
@@ -68,7 +76,7 @@ export function RoadmapWidget({ userType = "student" }: { userType?: string }) {
 
   useEffect(() => {
     fetchRoadmap(hoursPreference);
-  }, [hoursPreference, userType]);
+  }, [hoursPreference, userType, studentYear]);
 
   const handleTimeChange = (hrs: number) => {
     setHoursPreference(hrs);
