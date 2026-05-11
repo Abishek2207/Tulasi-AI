@@ -35,7 +35,7 @@ export default function BillingPage() {
           window.location.href = "/dashboard";
         }, 2000);
       } else {
-        toast.error(data.detail || "Failed to initiate checkout");
+        toast.error((data as any).message || "Failed to initiate checkout");
         setLoading(false);
       }
     } catch (err) {

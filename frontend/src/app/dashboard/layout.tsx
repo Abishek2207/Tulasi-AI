@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store";
 import { toggleSidebar, updateStats } from "@/store/slices/uiSlice";
-import { activityApi } from "@/lib/api";
+import { activityApi, API_URL } from "@/lib/api";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
 import { motion, AnimatePresence } from "framer-motion";
