@@ -170,7 +170,7 @@ export default function VoiceAIPage() {
 
     rec.onresult = (e: any) => {
       const results = Array.from(e.results);
-      const lastResult = results[results.length - 1];
+      const lastResult = results[results.length - 1] as any;
       const t = lastResult[0].transcript.toLowerCase().trim();
       
       setTranscript(t);
