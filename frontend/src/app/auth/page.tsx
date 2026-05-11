@@ -209,7 +209,26 @@ export default function AuthPage() {
             transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
             style={{ display: "flex", justifyContent: "center", marginBottom: 40 }}
           >
-            <TulasiLogo size={64} showText glow />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+              <TulasiLogo size={80} splash glow />
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                style={{
+                  fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
+                  fontWeight: 900,
+                  fontSize: 28,
+                  background: "linear-gradient(135deg, #ffffff 0%, #00E5A0 55%, #A855F7 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  letterSpacing: "-0.04em",
+                }}
+              >
+                TulasiAI
+              </motion.div>
+            </div>
           </motion.div>
 
           <div style={{ textAlign: "center", marginBottom: 32 }}>
