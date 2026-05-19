@@ -385,6 +385,7 @@ class HybridAIClient:
                 "| **Career GPS** | Personalized 6-month roadmap |\n"
                 "| **Resume** | ATS-optimized, impact-focused bullets |\n"
                 "| **Code Review** | Debug, optimize, explain |\n\n"
+                "**Founder & CEO:** Abishek R\n\n"
                 "**Try asking:**\n"
                 "- *\"Design a URL shortener for 100M users\"*\n"
                 "- *\"I'm a 3rd year CS student targeting Google — give me my roadmap\"*\n"

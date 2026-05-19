@@ -54,14 +54,23 @@ export default function AboutPage() {
             A
           </div>
 
-          <h1 style={{ fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-2px", marginBottom: 16, lineHeight: 1.05 }}>
+          <h1 
+            itemScope 
+            itemType="https://schema.org/Person"
+            style={{ fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-2px", marginBottom: 16, lineHeight: 1.05 }}
+          >
             Built by{" "}
-            <span style={{
-              background: "linear-gradient(90deg, #A78BFA, #22D3EE)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-            }}>
-              Abishek R, Founder & CEO
+            <span 
+              itemProp="name"
+              style={{
+                background: "linear-gradient(90deg, #A78BFA, #22D3EE)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
+              }}
+            >
+              Abishek R
             </span>
+            <span itemProp="jobTitle" style={{ display: "none" }}>Founder & CEO</span>
+            <span itemProp="description" style={{ display: "none" }}>Founder and CEO of Tulasi AI</span>
           </h1>
 
           <p style={{ fontSize: 20, color: "rgba(255,255,255,0.6)", maxWidth: 600, margin: "0 auto 16px", lineHeight: 1.7 }}>

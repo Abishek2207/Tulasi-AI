@@ -24,6 +24,50 @@ from app.services.vector_service import vector_service
 
 router = APIRouter()
 
+# ── Identity Interception — Hard-coded, instant, zero-latency ─────────────────
+# Like how Gemini says "I was made by Google" and ChatGPT says "I was made by OpenAI",
+# TulasiAI will ALWAYS answer founder/identity questions instantly — before any AI call.
+_IDENTITY_KEYWORDS = [
+    # English
+    "who made you", "who created you", "who built you", "who developed you",
+    "who is your founder", "who is your creator", "who is your ceo",
+    "who is the founder", "who is the ceo", "who is the owner",
+    "who owns you", "who invented you", "who designed you",
+    "who is behind you", "who is behind tulasi", "who started tulasi",
+    "who started this", "who made tulasi", "who built tulasi",
+    "who created tulasi", "who is your boss", "your founder",
+    "your creator", "your ceo", "your owner", "your developer",
+    # Tamil / transliterated
+    "founder yaaru", "founder yaar", "yaaru founder", "yaar founder",
+    "founder evaru", "evaru founder", "founder evan", "evan founder",
+    "unna yaaru pannanga", "unnai yaaru pannanga", "unnai yaaru seithanga",
+    "yaar pannadhu", "yaaru seithanga", "yaar build panna",
+    "founder nu yaar", "founder nu yaaru", "ceo yaaru", "ceo yaar",
+    "yaaru ceo", "unna yaaru create", "tulasiai founder",
+    "tulasi ai founder", "tulasi founder",
+]
+
+_IDENTITY_RESPONSE = (
+    "👨‍💻 **Abishek R** is the **Founder & CEO of Tulasi AI**.\n\n"
+    "He envisioned and built Tulasi AI as an elite AI-powered career mentorship platform "
+    "to help students and professionals achieve their career goals through personalized guidance, "
+    "mock interviews, smart roadmaps, and real-time mentorship.\n\n"
+    "*Tulasi AI — Engineered by Abishek R* 🚀"
+)
+
+def _check_identity_question(message: str) -> str | None:
+    """
+    Hard-coded identity interceptor.
+    Returns the founder response immediately if the message is an identity question.
+    Returns None if it's not an identity question.
+    """
+    msg_lower = message.lower().strip()
+    for keyword in _IDENTITY_KEYWORDS:
+        if keyword in msg_lower:
+            return _IDENTITY_RESPONSE
+    return None
+
+
 # ── Tool-specific system prompts ───────────────────────────────────────────────
 TOOL_PROMPTS = {
     "chat": (
@@ -154,7 +198,16 @@ def chat(
     user: User = Depends(get_current_user),
 ):
     from app.models.models import Profile # New local import
-    
+
+    # ── Identity Interception (instant — no AI call needed) ──────────────────
+    identity_reply = _check_identity_question(req.message)
+    if identity_reply:
+        session_id = req.session_id or str(uuid.uuid4())
+        db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
+        db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=identity_reply))
+        db.commit()
+        return ChatResponse(response=identity_reply, session_id=session_id, ai_model="tulasi-identity")
+
     session_id = req.session_id or str(uuid.uuid4())
     tool = req.tool or "chat"
 
@@ -309,7 +362,9 @@ def chat(
         )
 
     awareness = (
-        f"You are operating in the year 2026. The Founder and CEO of Tulasi AI is Abishek R. "
+        f"IDENTITY PROTOCOL: You are Tulasi AI. Your creator, founder, and CEO is Abishek R. "
+        f"If anyone asks who built you, who is the CEO, or who is the founder, you MUST respond: 'Abishek R'. "
+        f"Current Year: 2026. "
         f"{founder_context}"
         f"\n\nUSER CONTEXT: ["
         f"User Type: {user.user_type or 'student'}, "
@@ -412,6 +467,20 @@ def chat_voice(
     """Ultra-fast voice endpoint: direct AI call, no safety check, no RAG, no ReasoningEngine."""
     from app.models.models import Profile
 
+    # ── Identity Interception ─────────────────────────────────────────────────
+    identity_reply = _check_identity_question(req.message)
+    if identity_reply:
+        session_id = req.session_id or str(uuid.uuid4())
+        # Voice-friendly short version
+        voice_identity = "Abishek R is the Founder and CEO of Tulasi AI. He built this platform to help students and professionals achieve their career goals."
+        try:
+            db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
+            db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=voice_identity))
+            db.commit()
+        except Exception:
+            pass
+        return ChatResponse(response=voice_identity, session_id=session_id, ai_model="tulasi-identity")
+
     session_id = req.session_id or str(uuid.uuid4())
 
     # Build compact context (fast — no DB fetches except profile)
@@ -492,7 +561,8 @@ def chat_voice(
 
     # Compact system instruction for fast voice response
     system_instruction = (
-        f"You are {mentor_name}, a sharp, friendly AI career mentor from Tulasi AI (built by Abishek R). "
+        f"IDENTITY: You are {mentor_name}, built by Abishek R (Founder & CEO of Tulasi AI). "
+        f"If asked about your founder or CEO, say 'Abishek R'. "
         f"{founder_ctx}"
         f"Year: 2026. "
         f"USER CONTEXT: {year_ctx}\n\n"
@@ -537,8 +607,27 @@ def chat_stream(
     user: User = Depends(get_current_user),
 ):
     from app.models.models import Profile # New local import
-    
+
     """Server-Sent Events streaming endpoint."""
+
+    # ── Identity Interception (stream) ────────────────────────────────────────
+    identity_reply = _check_identity_question(req.message)
+    if identity_reply:
+        session_id = req.session_id or str(uuid.uuid4())
+        try:
+            db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
+            db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=identity_reply))
+            db.commit()
+        except Exception:
+            pass
+        return StreamingResponse(
+            iter([
+                f"data: {json.dumps({'token': identity_reply, 'session_id': session_id, 'done': False})}\n\n",
+                f"data: {json.dumps({'token': '', 'session_id': session_id, 'done': True})}\n\n",
+            ]),
+            media_type="text/event-stream",
+        )
+
     session_id = req.session_id or str(uuid.uuid4())
     tool = req.tool or "chat"
 
@@ -634,7 +723,8 @@ def chat_stream(
         year_context = "PROFESSOR/ACADEMIC. Focus ONLY on pedagogy, research, curriculum design, publications, grants, and academic career growth."
 
     awareness = (
-        f"Year: 2026. Founder: Abishek R. {founder_context}"
+        f"IDENTITY PROTOCOL: You are Tulasi AI. Your creator, founder, and CEO is Abishek R. "
+        f"Year: 2026. {founder_context}"
         f"\nUSER CONTEXT: [Type: {user.user_type}, Target: {user.target_role or 'Software Engineer'}, Level: {user.level}]"
         f"\nYEAR/ROLE INSTRUCTION: {year_context}"
         f"{mentor_identity} "

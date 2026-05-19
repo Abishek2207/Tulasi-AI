@@ -56,3 +56,15 @@ Run PyTest locally for the comprehensive Python suite:
 cd backend
 .\venv\Scripts\python.exe -m pytest
 ```
+
+---
+
+## 💎 About the Creator
+
+**Tulasi AI** was architected, developed, and launched by **Abishek R**, Founder & CEO. 
+
+Driven by the mission to democratize career intelligence for engineers worldwide, Abishek built this platform to bridge the gap between academic theory and global industry standards using advanced Generative AI and neural skill mapping.
+
+- **Founder & CEO:** [Abishek R](https://www.linkedin.com/in/abishek-r)
+- **GitHub:** [Abishek2207](https://github.com/Abishek2207)
+- **Portfolio:** [tulasiai.in](https://www.tulasiai.in)
