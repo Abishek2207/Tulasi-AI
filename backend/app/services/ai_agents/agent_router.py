@@ -155,6 +155,16 @@ class AgentRouter:
         """
         Route a message to the correct specialized agent and return a response.
         """
+        # ── Identity Interception — always first, zero-latency ────────────────
+        from app.api.chat import _check_identity_question
+        identity_reply = _check_identity_question(message)
+        if identity_reply:
+            if stream:
+                def _id_gen():
+                    yield identity_reply
+                return _id_gen()
+            return identity_reply
+
         agent_key = MODULE_TO_AGENT.get(module, "default")
         agent = AGENTS[agent_key]
 

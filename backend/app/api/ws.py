@@ -114,12 +114,22 @@ async def websocket_chat(
                     {"type": "ack", "status": "processing"}, websocket
                 )
 
+                # ── Identity Interception — instant, no AI call ────────────
+                from app.api.chat import _check_identity_question
+                identity_reply = _check_identity_question(content)
+                if identity_reply:
+                    await manager.send_personal(
+                        {"type": "response", "content": identity_reply, "role": "assistant"},
+                        websocket,
+                    )
+                    continue
+
                 # Run AI response in thread pool to avoid blocking event loop
                 loop = asyncio.get_event_loop()
                 ai_reply = await loop.run_in_executor(
                     None,
                     get_ai_response,
-                    f"You are Tulasi AI, a helpful learning assistant. {content}",
+                    f"You are Tulasi AI — built by Abishek R (Founder & CEO). {content}",
                 )
 
                 # Send AI response back to this client

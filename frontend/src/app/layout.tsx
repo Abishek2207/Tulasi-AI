@@ -30,7 +30,8 @@ export const metadata: Metadata = {
   keywords: [
     "AI career coach", "mock interview AI", "personalized roadmaps", "skill radar chart", 
     "engineering career platform", "ATS resume builder", "technical interview prep",
-    "personalized learning AI", "career readiness score", "TulasiAI", "Tulasiai"
+    "personalized learning AI", "career readiness score", "TulasiAI", "Tulasiai",
+    "Abishek R", "Tulasi AI Founder", "Tulasi AI CEO"
   ],
   openGraph: {
     title: "TulasiAI | Personalized Career Intelligence Engine",
@@ -45,6 +46,10 @@ export const metadata: Metadata = {
       alt: "TulasiAI Interface Preview"
     }],
   },
+  other: {
+    "og:founder": "Abishek R",
+    "og:ceo": "Abishek R",
+  },
   twitter: {
     card: "summary_large_image",
     title: "TulasiAI | Personalized Career Intelligence",
@@ -56,6 +61,9 @@ export const metadata: Metadata = {
     shortcut: "/images/logo-transparent.png",
     apple: "/images/logo.png",
   },
+  authors: [{ name: "Abishek R", url: "https://www.linkedin.com/in/abishek-r" }],
+  creator: "Abishek R",
+  publisher: "Abishek R",
   alternates: {
     canonical: "https://www.tulasiai.in",
   },
@@ -99,11 +107,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "name": "Tulasi AI Labs",
+                "alternateName": ["tulasiai", "Tulasi AI", "Tulasi-AI"],
                 "url": "https://www.tulasiai.in",
                 "logo": "https://www.tulasiai.in/images/logo.png",
+                "founder": {
+                  "@type": "Person",
+                  "name": "Abishek R"
+                },
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "contactType": "Founder",
+                  "email": "abishekramamoorthy22@gmail.com"
+                },
+                "ceo": {
+                   "@type": "Person",
+                   "name": "Abishek R"
+                },
                 "sameAs": [
                   "https://instagram.com/_.abi22._",
-                  "https://github.com/Abishek2207"
+                  "https://github.com/Abishek2207",
+                  "https://www.linkedin.com/in/abishek-r"
                 ]
               },
               {
