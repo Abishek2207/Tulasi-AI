@@ -25,17 +25,18 @@ export const metadata: Metadata = {
     default: "TulasiAI | Personalized Career Intelligence Engine",
     template: "%s | TulasiAI",
   },
-  description: "Bridge the gap from theory to global offers. TulasiAI provides personalized mock interviews, neural skill mapping, and daily AI missions for engineers.",
+  description: "Bridge the gap from theory to global offers. TulasiAI provides personalized mock interviews, neural skill mapping, and daily AI missions for engineers. Built by Abishek R, Founder & CEO of TulasiAI.",
   manifest: "/manifest.json",
   keywords: [
     "AI career coach", "mock interview AI", "personalized roadmaps", "skill radar chart", 
     "engineering career platform", "ATS resume builder", "technical interview prep",
     "personalized learning AI", "career readiness score", "TulasiAI", "Tulasiai",
-    "Abishek R", "Tulasi AI Founder", "Tulasi AI CEO"
+    "Abishek R Founder of TulasiAI", "TulasiAI CEO Abishek R", 
+    "Founder & CEO of TulasiAI", "Tulasi AI Labs Founder", "Abishek R"
   ],
   openGraph: {
     title: "TulasiAI | Personalized Career Intelligence Engine",
-    description: "The autonomous career engine: Neural skill mapping, AI mock interviews, and personalized missions.",
+    description: "The autonomous career engine: Neural skill mapping, AI mock interviews, and personalized missions. Founded by Abishek R.",
     type: "website",
     siteName: "TulasiAI",
     url: "https://www.tulasiai.in",
@@ -53,7 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "TulasiAI | Personalized Career Intelligence",
-    description: "Personalized AI engineering missions and career intelligence mapped to your skills.",
+    description: "Personalized AI engineering missions and career intelligence mapped to your skills. By TulasiAI CEO Abishek R.",
     creator: "@_.abi22._",
   },
   icons: {
@@ -85,55 +86,53 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify([
               {
                 "@context": "https://schema.org",
-                "@type": "SoftwareApplication",
-                "name": "TulasiAI",
-                "alternateName": ["tulasiai", "tulasi ai", "Tulasi AI"],
-                "applicationCategory": "EducationalApplication",
-                "operatingSystem": "All",
-                "url": "https://www.tulasiai.in",
-                "image": "https://www.tulasiai.in/opengraph-image.png",
-                "description": "Personalized AI engineering missions and career intelligence mapped to your skills.",
-                "producer": {
-                  "@type": "Person",
-                  "name": "Abishek R"
+                "@type": "Person",
+                "@id": "https://www.tulasiai.in/#founder",
+                "name": "Abishek R",
+                "jobTitle": "Founder & CEO",
+                "worksFor": {
+                  "@id": "https://www.tulasiai.in/#organization"
                 },
-                "offers": {
-                  "@type": "Offer",
-                  "price": "0",
-                  "priceCurrency": "USD"
-                }
+                "url": "https://www.linkedin.com/in/abishek-r",
+                "sameAs": [
+                  "https://instagram.com/_.abi22._",
+                  "https://github.com/Abishek2207",
+                  "https://www.linkedin.com/in/abishek-r"
+                ],
+                "description": "Abishek R is the Founder and CEO of TulasiAI."
               },
               {
                 "@context": "https://schema.org",
                 "@type": "Organization",
+                "@id": "https://www.tulasiai.in/#organization",
                 "name": "Tulasi AI Labs",
-                "alternateName": ["tulasiai", "Tulasi AI", "Tulasi-AI"],
+                "alternateName": ["TulasiAI", "Tulasi AI", "Tulasi-AI"],
                 "url": "https://www.tulasiai.in",
                 "logo": "https://www.tulasiai.in/images/logo.png",
                 "founder": {
-                  "@type": "Person",
-                  "name": "Abishek R"
+                  "@id": "https://www.tulasiai.in/#founder"
                 },
                 "contactPoint": {
                   "@type": "ContactPoint",
                   "contactType": "Founder",
                   "email": "abishekramamoorthy22@gmail.com"
                 },
-                "ceo": {
-                   "@type": "Person",
-                   "name": "Abishek R"
-                },
                 "sameAs": [
-                  "https://instagram.com/_.abi22._",
-                  "https://github.com/Abishek2207",
-                  "https://www.linkedin.com/in/abishek-r"
+                  "https://github.com/Abishek2207"
                 ]
               },
               {
                 "@context": "https://schema.org",
                 "@type": "WebSite",
+                "@id": "https://www.tulasiai.in/#website",
                 "name": "TulasiAI",
                 "url": "https://www.tulasiai.in",
+                "publisher": {
+                  "@id": "https://www.tulasiai.in/#organization"
+                },
+                "author": {
+                  "@id": "https://www.tulasiai.in/#founder"
+                },
                 "potentialAction": {
                   "@type": "SearchAction",
                   "target": "https://www.tulasiai.in/search?q={search_term_string}",
