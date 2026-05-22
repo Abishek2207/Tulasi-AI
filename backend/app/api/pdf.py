@@ -127,7 +127,7 @@ Provide a detailed, accurate answer with citations where applicable."""
             return {"answer": "Gemini API key not configured. Please contact the administrator.", "citations": []}
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+        model = genai.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(system_prompt)
 
         # 4. Extract citation numbers from response text

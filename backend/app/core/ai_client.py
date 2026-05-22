@@ -27,14 +27,11 @@ class HybridAIClient:
         "gemini-2.0-flash-lite",
         "gemini-2.0-flash",
         "gemini-1.5-flash-8b",
-        "gemini-1.5-flash",
-        "gemini-1.0-pro",
     ]
 
     OPENROUTER_FREE_MODELS = [
         "google/gemma-2-9b-it:free",
         "meta-llama/llama-3-8b-instruct:free",
-        "mistralai/mistral-7b-instruct:free",
         "gryphe/mythomist-7b:free",
     ]
 

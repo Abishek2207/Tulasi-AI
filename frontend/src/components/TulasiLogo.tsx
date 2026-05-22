@@ -189,8 +189,7 @@ export function TulasiLogo({
                 color: isFounder ? "black" : "white",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                display: "inline-block",
-                marginTop: 4
+                display: "inline-block"
               }}
             >
               {effectiveBadge}

@@ -109,7 +109,7 @@ class LocalRAGService:
         """Fallback to Google Gemini"""
         # Initialize generative API if needed
         genai.configure(api_key=settings.effective_gemini_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash-lite")
         response = model.generate_content(prompt)
         return response.text
 
