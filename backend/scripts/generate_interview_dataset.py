@@ -40,7 +40,7 @@ Each object must have these exactly 4 keys:
 """
         print(f"Generating for theme: {theme}...")
         try:
-            response = get_ai_response(prompt, force_model="gemini-2.5-flash")
+            response = get_ai_response(prompt, force_model="gemini-2.0-flash-lite")
             import re
             # Extract JSON array
             match = re.search(r'\[.*\]', response, re.DOTALL)

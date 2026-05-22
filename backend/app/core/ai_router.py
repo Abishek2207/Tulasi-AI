@@ -2,7 +2,7 @@
 Tulasi AI — Resilient Gemini AI Router
 - Explicit startup guard: raises clear error if GOOGLE_API_KEY is missing
 - Exponential backoff retry (3 attempts: 1s, 2s, 4s delays)
-- Model fallback chain: gemini-2.5-flash → gemini-1.5-flash → gemini-1.0-pro
+- Model fallback chain: gemini-2.0-flash-lite → gemini-2.0-flash → gemini-1.5-flash-8b
 - Clean structured error returns (no raw exception dumps)
 """
 import os
@@ -16,7 +16,7 @@ from app.core.config import settings
 
 # Exported constants (used by chat.py and other modules)
 GOOGLE_API_KEY: str = settings.effective_gemini_key or ""
-FALLBACK_MODELS: List[str] = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+FALLBACK_MODELS: List[str] = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash-8b"]
 
 def get_ai_response(
     message: str,
