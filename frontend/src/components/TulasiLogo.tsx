@@ -1,12 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 /**
  * TulasiLogo — single source of truth for the Tulasi AI logo.
- * Now using the Minimalist Triangle Design requested by the user.
- * 
- * Design: White Triangle inside Black Circle inside White Outer Ring.
+ * Now using the Lotus Neural Design requested by the user.
  */
 export function TulasiLogo({
   className = "",
@@ -29,7 +28,7 @@ export function TulasiLogo({
 }) {
   const glowColor = isFounder
     ? "radial-gradient(circle at center, rgba(245,158,11,0.5) 0%, rgba(217,119,6,0.35) 35%, rgba(180,83,9,0.2) 65%, transparent 100%)"
-    : "radial-gradient(circle at center, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 50%, transparent 100%)";
+    : "radial-gradient(circle at center, rgba(0,229,160,0.4) 0%, rgba(0,200,255,0.3) 30%, rgba(168,85,247,0.2) 65%, transparent 100%)";
 
   const effectiveBadge = isFounder ? "FOUNDER" : badge;
 
@@ -44,46 +43,24 @@ export function TulasiLogo({
         justifyContent: "center",
         flexShrink: 0,
       }}
+      whileHover={{
+        scale: 1.1,
+        filter: "brightness(1.1) drop-shadow(0 0 15px rgba(0,229,160,0.5))",
+      }}
+      transition={{ type: "spring", stiffness: 350, damping: 15 }}
       animate={splash ? { 
         scale: [1, 1.05, 1],
       } : {}}
-      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
     >
-      {/* Outer White Ring */}
-      <div style={{
-        position: "absolute",
-        inset: 0,
-        borderRadius: "50%",
-        border: `${size * 0.05}px solid white`,
-        zIndex: 1
-      }} />
-
-      {/* Inner Black Circle */}
-      <div style={{
-        position: "absolute",
-        inset: size * 0.08,
-        borderRadius: "50%",
-        background: "#000",
-        zIndex: 2
-      }} />
-
-      {/* Center White Triangle */}
-      <svg 
-        viewBox="0 0 100 100" 
-        style={{ 
-          width: "55%", 
-          height: "55%", 
-          position: "relative", 
-          zIndex: 3,
-        }}
-      >
-        <path 
-          d="M50 22 L82 78 L18 78 Z" 
-          fill="white" 
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      </svg>
+      <Image
+        src="/images/logo.png"
+        alt="Tulasi AI Logo"
+        width={size}
+        height={size}
+        className="object-contain animate-pulse-subtle"
+        style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))" }}
+        priority
+      />
     </motion.div>
   );
 
@@ -108,10 +85,28 @@ export function TulasiLogo({
               position: "absolute",
               inset: -size * 0.4,
               borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)",
+              background: glowColor,
               filter: "blur(20px)",
               zIndex: 0
             }}
+          />
+          {/* Outer rotating ring */}
+          <motion.div
+            style={{
+              position: "absolute",
+              inset: -size * 0.2,
+              borderRadius: "50%",
+              border: "1.5px solid transparent",
+              backgroundImage: "linear-gradient(135deg, rgba(0,229,160,0.6), rgba(168,85,247,0.6), rgba(0,200,255,0.6))",
+              backgroundOrigin: "border-box",
+              backgroundClip: "border-box",
+              WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              WebkitMaskComposite: "xor",
+              maskComposite: "exclude",
+              zIndex: 1,
+            }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
           />
           <LogoIcon />
         </div>
@@ -121,15 +116,18 @@ export function TulasiLogo({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           style={{
-            fontFamily: "var(--font-outfit)",
+            fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
             fontWeight: 900,
             fontSize: size * 0.8,
-            color: "white",
+            background: "linear-gradient(135deg, #ffffff 0%, #00E5A0 60%, #A855F7 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
             letterSpacing: "-0.05em",
             textAlign: "center"
           }}
         >
-          Tulasi<span style={{ color: "var(--brand-primary)" }}>AI</span>
+          TulasiAI
         </motion.div>
       </div>
     );
@@ -143,8 +141,8 @@ export function TulasiLogo({
       <div style={{ position: "relative" }}>
         {glow && (
           <motion.div
-            animate={{ opacity: [0.2, 0.4, 0.2] }}
-            transition={{ duration: 4, repeat: Infinity }}
+            animate={{ opacity: [0.2, 0.4, 0.2], scale: [1, 1.1, 1] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             style={{
               position: "absolute",
               inset: -size * 0.3,
@@ -166,12 +164,15 @@ export function TulasiLogo({
               fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
               fontWeight: 900,
               fontSize: size * 0.55,
-              color: "white",
+              background: "linear-gradient(135deg, #ffffff 0%, #00E5A0 60%, #A855F7 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
               letterSpacing: "-0.03em",
               lineHeight: 1,
             }}
           >
-            Tulasi<span style={{ color: "var(--brand-primary)" }}>AI</span>
+            TulasiAI
           </span>
 
           {effectiveBadge && (
@@ -180,8 +181,7 @@ export function TulasiLogo({
                 marginTop: size * 0.1,
                 background: isFounder
                   ? "#F59E0B"
-                  : "rgba(255,255,255,0.1)",
-                border: isFounder ? "none" : "1px solid rgba(255,255,255,0.2)",
+                  : "linear-gradient(135deg, #A855F7, #00E5A0)",
                 padding: `${size * 0.04}px ${size * 0.14}px`,
                 borderRadius: size * 0.12,
                 fontSize: size * 0.18,
@@ -189,7 +189,10 @@ export function TulasiLogo({
                 color: isFounder ? "black" : "white",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                display: "inline-block"
+                display: "inline-block",
+                boxShadow: isFounder
+                  ? "0 0 15px rgba(245,158,11,0.4)"
+                  : "0 0 18px rgba(0,229,160,0.3)",
               }}
             >
               {effectiveBadge}
