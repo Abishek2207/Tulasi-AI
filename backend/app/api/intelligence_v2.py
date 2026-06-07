@@ -19,7 +19,7 @@ router = APIRouter()
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
 class CareerGPSRequest(BaseModel):
-    year: str          # 1st_year | 2nd_year | 3rd_year | 4th_year | professional
+    year: str          # 1st_year | 2nd_year | 3rd_year | 4th_year
     target_role: str   # AI Engineer | Software Engineer | Data Scientist | etc.
     current_skills: Optional[str] = ""
 
@@ -56,7 +56,7 @@ def _make_gps_fallback(role: str, year: str) -> dict:
     skills = role_skills.get(role, ["Python", "Data Structures", "System Design", "SQL", "Git"])
 
     year_offsets = {
-        "1st_year": 0, "2nd_year": 1, "3rd_year": 2, "4th_year": 3, "professional": 4
+        "1st_year": 0, "2nd_year": 1, "3rd_year": 2, "4th_year": 3
     }
     offset = year_offsets.get(year, 2)
 
@@ -187,8 +187,7 @@ def get_career_gps(
         "1st_year": "a first-year engineering student (just started college). Focus on fundamentals.",
         "2nd_year": "a second-year student. Introduce DSA, projects, open source.",
         "3rd_year": "a third-year student ready for internships and advanced topics.",
-        "4th_year": "a final-year student preparing for campus placements and full-time offers.",
-        "professional": "a working professional looking to upskill or switch roles.",
+        "4th_year": "a final-year student aiming for placement and interviews.",
     }.get(body.year, "an engineering student")
 
     skills_context = f"Current skills: {body.current_skills}" if body.current_skills else "Skills not specified — provide general guidance."

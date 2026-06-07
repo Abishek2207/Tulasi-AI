@@ -49,7 +49,7 @@ export default function StartupLabPage() {
 
   const audiences = [
     "University Students", "Software Engineers", "Small Businesses", 
-    "Remote Workers", "Healthcare Professionals", "Gamers", 
+    "Remote Workers", "Healthcare Workers", "Gamers", 
     "Event Organizers", "Content Creators"
   ];
 
@@ -341,7 +341,7 @@ Fill in all fields with real, specific content tailored for ${domain} targeting 
                                  DRAFTING 10-SLIDE INVESTOR DECK...
                               </>
                            ) : (
-                              <>📊 GENERATE PROFESSIONAL PITCH DECK</>
+                              <>📊 GENERATE PITCH DECK</>
                            )}
                         </motion.button>
                      ) : (

@@ -13,14 +13,13 @@ router = APIRouter()
 
 SKILL_MAP = {
     "coding": ["code_solved", "hackathon_joined"],
-    "system_design": ["roadmap_step", "resume_generated"],
+    "system_design": ["roadmap_step", "roadmap_advanced", "project_created"],
     "ai_ml": ["message_sent", "startup_saved"],
-    "professionalism": ["interview_completed", "resume_generated"],
-    "projects": ["course_completed", "roadmap_completed", "startup_saved"],
+    "projects": ["course_completed", "roadmap_completed", "startup_saved", "project_created", "hackathon_completed"],
     "theory": ["video_watched", "reel_watched"]
 }
 
-DIMENSIONS = ["Coding", "System Design", "AI/ML", "Professionalism", "Projects", "Theory"]
+DIMENSIONS = ["Coding", "System Design", "AI/ML", "Projects", "Theory"]
 
 class MentorChat(BaseModel):
     content: str
@@ -33,7 +32,7 @@ def get_skill_profile(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Normalizes ActivityLog into 6 skill dimensions for radar chart visualization.
+    Normalizes ActivityLog into 5 skill dimensions for radar chart visualization.
     Scores are on a scale of 0-100.
     """
     # Fetch all activity logs for this user
@@ -47,10 +46,9 @@ def get_skill_profile(
     # Weight per action type
     weights = {
         "Coding": {"code_solved": 5, "hackathon_joined": 15},
-        "System Design": {"roadmap_step": 8, "resume_generated": 10},
+        "System Design": {"roadmap_step": 8, "roadmap_advanced": 15, "project_created": 20},
         "AI/ML": {"message_sent": 2, "startup_saved": 15},
-        "Professionalism": {"interview_completed": 20, "resume_generated": 10},
-        "Projects": {"course_completed": 25, "roadmap_completed": 30, "startup_saved": 10},
+        "Projects": {"course_completed": 25, "roadmap_completed": 30, "startup_saved": 10, "project_created": 30, "hackathon_completed": 40},
         "Theory": {"video_watched": 4, "reel_watched": 2}
     }
 
@@ -135,7 +133,8 @@ def get_daily_mission(
 ):
     """
     Generates a hyper-personalized engineering mission using AI.
-    Differentiates between students (foundations) and professionals (architecture/scale).
+    Differentiates between students based on their goals.
+    Suggests areas of improvement across coding, system design, and theory.
     """
     from app.core.config import settings
     import google.generativeai as genai
@@ -154,8 +153,9 @@ def get_daily_mission(
     
     RULES:
     - For 1st/2nd years: Focus on elite foundations (DSA, Systems).
-    - For 3rd/4th years: Focus on projects, system design, and internship readiness.
-    - For Professionals: Focus on architectural trade-offs, scaling, and leadership.
+    - For 3rd/4th years: Focus on projects, system design,
+    - Give actionable, micro-step advice.
+    - Be encouraging but highly critical of weaknesses.
     
     Return JSON:
     {{
@@ -239,7 +239,7 @@ def get_strategic_plan(
     COLLECTED CONTEXT:
     {rag_context}
     
-    The plan must be specific to their graduation year/professional stage and the COLLECTED CONTEXT.
+    The plan must be specific to their graduation year and the COLLECTED CONTEXT.
     Analyze the current standing and create a high-status evolution path.
     
     Format JSON:

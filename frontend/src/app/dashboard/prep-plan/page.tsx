@@ -52,7 +52,7 @@ Respond with ONLY a valid JSON object, no markdown, no explanation. Use this EXA
   ]
 }
 
-Ensure you provide a week-by-week plan for all 4*${duration} weeks. Fill in real, professional technical tasks and resources. Return ONLY JSON.`;
+Ensure you provide a week-by-week plan for all 4*${duration} weeks. Fill in real, industry-standard technical tasks and resources. Return ONLY JSON.`;
 
       const response = await chatApi.send(message, undefined, "prep_plan");
       

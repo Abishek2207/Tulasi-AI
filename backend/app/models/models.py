@@ -15,7 +15,6 @@ class AuthProviderEnum(str, enum.Enum):
 
 class UserTypeEnum(str, enum.Enum):
     STUDENT = "STUDENT"
-    PROFESSIONAL = "PROFESSIONAL"
 
 class SenderEnum(str, enum.Enum):
     USER = "USER"
@@ -50,7 +49,7 @@ class User(SQLModel, table=True):
     last_reset_date: Optional[str] = None
     pro_expiry_date: Optional[str] = None  # Tracks 2-month free pro rewards
     # ── Platform Upgrade Fields ──
-    user_type: str = "student"           # 1st_year | 2nd_year | 3rd_year | 4th_year | professional | professor
+    user_type: str = "student"           # 1st_year | 2nd_year | 3rd_year | 4th_year
     abuse_count: int = 0                 # Safety: incremented on harmful input
     is_onboarded: bool = False           # True after user completes onboarding modal
     

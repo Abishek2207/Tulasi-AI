@@ -17,7 +17,7 @@ interface NextActionData {
 const USER_TYPE_LABELS: Record<string, string> = {
   "1st_year": "1st Year Student", "2nd_year": "2nd Year Student",
   "3rd_year": "3rd Year Student", "4th_year": "4th Year Student",
-  "professional": "Working Professional", "professor": "Professor", "student": "Student",
+  "student": "Student",
 };
 
 export default function NextActionPage() {

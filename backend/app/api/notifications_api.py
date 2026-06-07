@@ -55,19 +55,6 @@ STUDENT_REMINDERS = [
      "cta": "View Roadmap", "cta_url": "/dashboard/roadmaps", "color": "#8B5CF6"},
 ]
 
-PROFESSIONAL_REMINDERS = [
-    {"id": "pr1", "type": "daily_reminder", "priority": "high",
-     "title": "Your upskilling goal: 45 min/day 🎯",
-     "body": "Research shows 45 min of focused learning daily leads to 2x career growth in 1 year.",
-     "cta": "Continue Learning", "cta_url": "/dashboard/roadmaps", "color": "#F97316"},
-
-    {"id": "pr2", "type": "daily_reminder", "priority": "medium",
-     "title": "Weekly reflection: Did you learn something new?",
-     "body": "Professionals who track learning are 3x more likely to get promoted.",
-     "cta": "Track Skills", "cta_url": "/dashboard/profile", "color": "#10B981"},
-]
-
-
 @router.get("")
 async def get_notifications(
     current_user: User = Depends(get_current_user),

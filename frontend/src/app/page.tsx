@@ -360,7 +360,7 @@ function BentoFeatures() {
             Engineered for <span className="gradient-text">Elite Engineers.</span>
           </h2>
           <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 2vw, 18px)", maxWidth: 640, margin: "0 auto", padding: "0 8px" }}>
-            Our mission is zero-to-one velocity. Every tool in the Tulasi ecosystem is optimized for deep mastery and professional transition.
+            Our mission is zero-to-one velocity. Every tool in the Tulasi ecosystem is optimized for deep mastery and career transition.
           </p>
         </motion.div>
 
@@ -595,7 +595,6 @@ function ReviewsSection() {
                     placeholder="Your Name"
                     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px 16px", color: userName ? "var(--text-muted)" : "white", fontSize: 15, outline: "none", width: "100%", boxSizing: "border-box" }} 
                   />
-                  {userName && <span style={{ fontSize: 10, color: "var(--brand-primary)", fontWeight: 700 }}>Logged in</span>}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Email Address (optional)</label>
@@ -605,8 +604,8 @@ function ReviewsSection() {
               </div>
               
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>Professional Role (optional)</label>
-                <input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. Developer @ Meta"
+                <label style={{ fontSize: 11, fontWeight: 900, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5 }}>College / University (optional)</label>
+                <input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. Stanford University"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "12px 16px", color: "white", fontSize: 15, outline: "none", width: "100%", boxSizing: "border-box" }} />
               </div>
 
@@ -698,7 +697,7 @@ function Footer() {
           <div>
             <BrandText size={32} />
             <p style={{ color: "var(--text-secondary)", fontSize: 16, marginTop: 28, maxWidth: 360, lineHeight: 1.8 }}>
-              Tulasi AI is an autonomous intelligence platform meticulously designed to close the gap between theoretical knowledge and global professional offers.
+              Tulasi AI is an autonomous intelligence platform meticulously designed to close the gap between theoretical knowledge and global career offers.
             </p>
             <div style={{ display: "flex", gap: 20, marginTop: 32 }}>
               {[

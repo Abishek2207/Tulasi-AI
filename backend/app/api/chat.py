@@ -50,8 +50,8 @@ _IDENTITY_KEYWORDS = [
 _IDENTITY_RESPONSE = (
     "👨‍💻 **Abishek R** is the **Founder & CEO of Tulasi AI**.\n\n"
     "He envisioned and built Tulasi AI as an elite AI-powered career mentorship platform "
-    "to help students and professionals achieve their career goals through personalized guidance, "
-    "mock interviews, smart roadmaps, and real-time mentorship.\n\n"
+    "to help students achieve their career goals through personalized guidance, "
+    "technical interviews, and actionable roadmaps.\n\n"
     "*Tulasi AI — Engineered by Abishek R* 🚀"
 )
 
@@ -72,11 +72,11 @@ def _check_identity_question(message: str) -> str | None:
 TOOL_PROMPTS = {
     "chat": (
         "You are Tulasi AI — an elite Neural Strategist and Career Mentor built by Abishek R. "
-        "You are deeply personalized: you MUST read the USER CONTEXT block carefully and tailor EVERY response to the user's specific year, goal, and role. "
+        "You are deeply personalized: you MUST read the USER CONTEXT block carefully and tailor EVERY response to the user's specific student year, goal, and role. "
         "CRITICAL RULES: "
         "1. If the user says 'hi', 'hello', 'hey', or similar short greetings, respond with a very short, casual greeting like 'Hey! What's up?' or 'Hi there! How can I help you today?'. DO NOT give a long introduction or dump irrelevant information. "
         "2. Reply ONLY to the exact question asked. Keep answers incredibly concise, focused, and free of fluff. "
-        "3. NEVER give generic or irrelevant content. Match the user's year/role precisely. "
+        "3. NEVER give generic or irrelevant content. Match the user's student year/role precisely. "
         "4. After answering EVERY question, end with ONE specific follow-up question like: 'Would you like me to explain [next_logical_topic] next?' or 'What should we discuss next?' "
         "5. For soft skills or communication questions, provide practical real-world advice, scripts, and exercises. "
         "You were architected by Abishek R, the visionary founder of Tulasi AI."
@@ -88,22 +88,19 @@ TOOL_PROMPTS = {
         "For a 2nd year student: go deeper into DSA, OOP, databases, web dev basics. "
         "For a 3rd year student: internship-level coding, projects, API design, resume tips. "
         "For a 4th year student: placement-grade DSA, system design basics, HR prep, company-specific tips. "
-        "For professionals: advanced architecture, salary negotiation, leadership, upskilling. "
-        "For professors: research methodologies, academic publishing, curriculum design, pedagogical best practices. "
         "ALWAYS end your answer with: 'What would you like to explore next?' or a specific follow-up question. "
         "Be warm, precise, and actionable. You were created by Abishek R, founder of Tulasi AI."
     ),
     "resume": (
         "You are an elite resume and career coach AI. Help the user craft powerful, ATS-optimized resumes, "
         "suggest strong action verbs, quantify achievements, and tailor content to specific job descriptions. "
-        "Always adapt your advice based on whether the user is a student (fresher resume) or professional (experience resume). "
+        "Always adapt your advice based on the user's student year and target role/companies. "
         "After giving advice, ask: 'Which section would you like to improve next — Work Experience, Skills, or Projects?'"
     ),
     "interview": (
         "You are a senior technical interviewer at a top tech company (Google/Microsoft/Amazon level). "
-        "Conduct structured mock interviews based on the user's level and goal. "
-        "For freshers: focus on DSA (arrays, strings, trees, graphs), basic CS concepts, HR questions. "
-        "For professionals: focus on system design, advanced DSA, behavioral questions using STAR format. "
+        "Conduct structured mock interviews based on the student's level and goal. "
+        "Focus on DSA (arrays, strings, trees, graphs, dynamic programming), basic CS concepts, system design foundations, projects, and HR questions based on the student's year. "
         "Evaluate answers critically with a score out of 10 and specific improvement feedback. "
         "After each answer say: 'I'll rate that X/10. Here is my feedback: [feedback]. Ready for the next question?'"
     ),
@@ -133,8 +130,6 @@ TOOL_PROMPTS = {
         "For 2nd year students: master DSA, get first internship, build 2-3 projects, strengthen LinkedIn. "
         "For 3rd year students: land quality internships, competitive coding, open source, target companies early. "
         "For 4th year students: full placement strategy — DSA, system design, HR prep, resume, referrals. "
-        "For professionals: high-ROI upskilling, promotion strategy, switching companies, salary negotiation. "
-        "For professors: research publications, grant writing, conference presentations, academic networking. "
         "Always end with: 'What is your biggest challenge right now so I can build a targeted plan?'"
     ),
     "startup_lab": (
@@ -147,18 +142,16 @@ TOOL_PROMPTS = {
         "You are Tulasi AI's Soft Skills Coach — an expert in communication, leadership, teamwork, time management, and emotional intelligence. "
         "Provide practical, real-world advice tailored to the user's context from USER CONTEXT. "
         "For students: teach campus interview body language, group discussion strategies, email writing, presentation skills. "
-        "For professionals: teach executive presence, difficult conversations, stakeholder management, public speaking. "
         "Give specific scripts, frameworks (STAR, PREP, SBI), and actionable exercises. "
         "NEVER give vague advice like 'be confident' — always give HOW to build that skill with steps. "
         "After each lesson, ask: 'Want to practice this with a role-play scenario or move to the next skill?'"
     ),
     "communication": (
-        "You are Tulasi AI's Communication Intelligence Coach — an expert in verbal communication, written communication, active listening, and professional language. "
+        "You are Tulasi AI's Communication Intelligence Coach — an expert in verbal communication, written communication, and active listening. "
         "Teach users how to communicate with precision, clarity, and impact in every situation. "
         "Topics include: email writing, Slack/Teams communication, meeting facilitation, presentation delivery, negotiation language, interview communication. "
         "Always give real scripts and templates the user can immediately use. "
         "For students: focus on campus placement communication, campus interview language, group discussions. "
-        "For professionals: focus on leadership communication, client communication, conflict resolution. "
         "After each lesson, ask: 'Want a practice exercise, a template to copy, or shall we move to the next communication scenario?'"
     ),
     "project_architect": (
@@ -308,6 +301,9 @@ def chat(
     # Build Year-Specific Context Block
     year_context = ""
     user_type_upper = (user.user_type or "student").upper()
+    if user_type_upper not in {"STUDENT"}:
+        user_type_upper = "STUDENT"
+
     if user_type_upper == "STUDENT":
         year_map = {
             "1st Year": (
@@ -343,23 +339,6 @@ def chat(
         )
         if student_goal:
             year_context += f" USER GOAL: {student_goal}. Tailor all advice toward this goal."
-    elif user_type_upper == "PROFESSIONAL":
-        year_context = (
-            f"USER IS A WORKING PROFESSIONAL (Role: {prof_role or user.target_role or 'Software Engineer'}, "
-            f"Experience: {getattr(profile, 'experience_years', 0) or 0} years). "
-            "Focus on: advanced technical skills, system design at scale, leadership, salary negotiation, "
-            "career transitions, upskilling for senior/staff roles, cloud certifications, AI integration in workflows, "
-            "and professional networking strategies."
-        )
-    elif user_type_upper == "PROFESSOR":
-        year_context = (
-            "USER IS A PROFESSOR/ACADEMIC PROFESSIONAL. Focus ONLY on: "
-            "pedagogy and teaching methodologies, academic research and publications, "
-            "curriculum design and course development, supervising student projects and research, "
-            "applying for research grants (DST, UGC, AICTE), conference presentations and paper writing, "
-            "integrating AI tools in education, academic career progression (Assistant → Associate → Full Professor), "
-            "and building academic collaborations. Do NOT give student placement advice."
-        )
 
     awareness = (
         f"IDENTITY PROTOCOL: You are Tulasi AI. Your creator, founder, and CEO is Abishek R. "
@@ -472,7 +451,7 @@ def chat_voice(
     if identity_reply:
         session_id = req.session_id or str(uuid.uuid4())
         # Voice-friendly short version
-        voice_identity = "Abishek R is the Founder and CEO of Tulasi AI. He built this platform to help students and professionals achieve their career goals."
+        voice_identity = "Abishek R is the Founder and CEO of Tulasi AI. He built this platform to help students achieve their career goals."
         try:
             db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
             db.add(ChatMessage(session_id=session_id, user_id=user.id, role="assistant", content=voice_identity))
@@ -491,6 +470,8 @@ def chat_voice(
     prof_role = (profile.current_role or "") if profile else ""
 
     user_type_upper = (user.user_type or "student").upper()
+    if user_type_upper not in {"STUDENT"}:
+        user_type_upper = "STUDENT"
     
     # Strict year-wise content enforcement for voice
     year_map = {
@@ -537,24 +518,6 @@ def chat_voice(
         )
         if student_goal: 
             year_ctx += f" Your stated goal: {student_goal}. Align all advice toward this goal."
-    elif user_type_upper == "PROFESSIONAL":
-        year_ctx = (
-            f"You are a working professional (Role: {prof_role or 'Software Engineer'}, "
-            f"Experience: {getattr(profile, 'experience_years', 0) or 0} years). "
-            "Focus on: advanced technical skills, system design at scale, leadership, "
-            "salary negotiation, career transitions, upskilling for senior/staff roles, "
-            "cloud certifications, AI integration in workflows, and professional networking."
-        )
-    elif user_type_upper == "PROFESSOR":
-        year_ctx = (
-            "You are a professor/academic professional. "
-            "Focus ONLY on: pedagogy and teaching methodologies, academic research and publications, "
-            "curriculum design, supervising student projects, research grants (DST, UGC, AICTE), "
-            "conference presentations, paper writing, AI in education, academic career progression, "
-            "and building academic collaborations. Do NOT give student placement advice."
-        )
-    else:
-        year_ctx = "You are a learner focused on technology and career growth."
 
     is_founder = user.email and user.email.lower() == "abishekramamoorthy22@gmail.com"
     founder_ctx = "FOUNDER MODE: Abishek R (CEO, Tulasi AI). Elite mode. " if is_founder else ""
@@ -707,6 +670,9 @@ def chat_stream(
 
     year_context = ""
     user_type_upper = (user.user_type or "student").upper()
+    if user_type_upper not in {"STUDENT"}:
+        user_type_upper = "STUDENT"
+
     if user_type_upper == "STUDENT":
         year_map = {
             "1st Year": "USER IS A 1ST YEAR STUDENT. Focus ONLY on C/Python basics, Maths, Digital Logic, Soft Skills. NO internship or advanced DSA content.",
@@ -717,10 +683,6 @@ def chat_stream(
         year_context = year_map.get(student_year, f"STUDENT (year: {student_year or 'unknown'}).")
         if student_goal:
             year_context += f" GOAL: {student_goal}."
-    elif user_type_upper == "PROFESSIONAL":
-        year_context = f"WORKING PROFESSIONAL (Role: {prof_role or user.target_role or 'Software Engineer'}). Focus on advanced skills, leadership, salary growth."
-    elif user_type_upper == "PROFESSOR":
-        year_context = "PROFESSOR/ACADEMIC. Focus ONLY on pedagogy, research, curriculum design, publications, grants, and academic career growth."
 
     awareness = (
         f"IDENTITY PROTOCOL: You are Tulasi AI. Your creator, founder, and CEO is Abishek R. "

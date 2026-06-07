@@ -32,7 +32,7 @@ export default function OrbitHubPage() {
     id: "welcome",
     user_name: "Tulasi Orbit",
     user_id: 0,
-    content: "🌌 Welcome to Orbit HUB — The global Tulasi AI community. Connect with thousands of students and professionals in real-time. All messages are visible to everyone online.",
+    content: "🌌 Welcome to Orbit HUB — The global Tulasi AI community. Connect with thousands of students and peers in real-time. All messages are visible to everyone online.",
     created_at: new Date().toISOString(),
     role: "system",
   };

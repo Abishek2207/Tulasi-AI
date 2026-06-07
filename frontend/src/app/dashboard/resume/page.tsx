@@ -101,7 +101,7 @@ export default function ResumeBuilderPage() {
 
     const opt = {
       margin: 0.5,
-      filename: `TulasiAI_Optimized_${session?.user?.name || "Professional"}.pdf`,
+      filename: `TulasiAI_Optimized_${session?.user?.name || "Resume"}.pdf`,
       image: { type: "jpeg" as const, quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, letterRendering: true },
       jsPDF: { unit: "in", format: "letter", orientation: "portrait" as const }
@@ -186,7 +186,7 @@ export default function ResumeBuilderPage() {
             
             <textarea 
               value={resumeText} onChange={(e) => setResumeText(e.target.value)}
-              placeholder="Paste your raw professional narrative..."
+              placeholder="Paste your raw career narrative..."
               className="input-field"
               style={{ width: "100%", height: 320, borderRadius: 16, padding: "20px", fontSize: 14, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)" }}
             />
@@ -255,7 +255,7 @@ export default function ResumeBuilderPage() {
                 </motion.div>
                 <h3 style={{ fontSize: 24, fontWeight: 900, marginBottom: 16 }}>Optimization Hub</h3>
                 <p style={{ color: "var(--text-secondary)", maxWidth: 450, lineHeight: 1.8, fontSize: 16 }}>
-                  Synthesize your experience data streams to generate an elite, ATS-immune professional profile.
+                  Synthesize your experience data streams to generate an elite, ATS-immune resume profile.
                 </p>
               </div>
             )}

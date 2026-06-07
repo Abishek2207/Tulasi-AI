@@ -30,28 +30,6 @@ interface StudentDay {
   tip: string;
 }
 
-interface ProfessionalTask {
-  type: string;
-  description: string;
-  hrs: number;
-}
-
-interface ProfessionalWeek {
-  week: number;
-  label: string;
-  focus: string;
-  topic: string;
-  level: string;
-  duration_hrs: number;
-  salary_impact: { boost_pct: number; avg_hike: string; demand: string };
-  tasks: ProfessionalTask[];
-  completed: boolean;
-}
-
-type UserType = "STUDENT" | "PROFESSIONAL";
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-
 function getToken() {
   return typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
 }
@@ -63,7 +41,6 @@ const HOUR_OPTIONS = [
 ];
 
 const STUDENT_FOCUS = ["DSA", "Aptitude", "Projects", "Core CS"];
-const PROFESSIONAL_SKILLS = ["AI", "Cloud", "System Design", "Leadership"];
 
 const TYPE_ICON: Record<string, any> = {
   learn: <BookOpen size={13} />,
@@ -203,77 +180,19 @@ function StudentDayCard({ day, index }: { day: StudentDay; index: number }) {
   );
 }
 
-// ── Professional Week Card ──────────────────────────────────────────────────
-
-function ProfWeekCard({ week, index }: { week: ProfessionalWeek; index: number }) {
-  const [open, setOpen] = useState(index === 0);
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.35 }}
-      style={{
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 18, overflow: "hidden",
-      }}
-    >
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{ width: "100%", padding: "18px 22px", display: "flex", alignItems: "center", gap: 14, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
-      >
-        <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(16,185,129,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#10B981", flexShrink: 0 }}>
-          W{week.week}
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 800, fontSize: 15, color: "white" }}>{week.topic}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
-            <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 6, background: LEVEL_COLOR[week.level] + "20", color: LEVEL_COLOR[week.level] }}>
-              {week.level.toUpperCase()}
-            </span>
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>{week.duration_hrs}h total</span>
-            {week.salary_impact && (
-              <span style={{ fontSize: 11, color: "#10B981", fontWeight: 700 }}>+{week.salary_impact.boost_pct}% salary potential</span>
-            )}
-          </div>
-        </div>
-        <div style={{ color: "rgba(255,255,255,0.3)" }}>{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</div>
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} style={{ overflow: "hidden", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-            <div style={{ padding: "16px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {week.tasks.map((task, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <span style={{ color: TYPE_COLOR[task.type] || "#8B5CF6", marginTop: 1, flexShrink: 0 }}>{TYPE_ICON[task.type] || <Target size={13} />}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{task.description}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, marginTop: 2 }}>{task.hrs}h estimated</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
 // ── Main Page ───────────────────────────────────────────────────────────────
 
 export default function AIRoadmapPage() {
   const { data: session } = useSession();
   const user = session?.user as any;
-  const userType: UserType = (user?.user_type as UserType) || "STUDENT";
   const mentorName = user?.profile?.ai_mentor_name || "Jarvis";
 
   const [hours, setHours] = useState(3);
   const [customHours, setCustomHours] = useState("");
   const [isCustom, setIsCustom] = useState(false);
-  const [focus, setFocus] = useState(userType === "STUDENT" ? "DSA" : "AI");
+  const [focus, setFocus] = useState("DSA");
 
-  const [roadmap, setRoadmap] = useState<StudentDay[] | ProfessionalWeek[]>([]);
+  const [roadmap, setRoadmap] = useState<StudentDay[]>([]);
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [meta, setMeta] = useState<any>(null);
@@ -284,28 +203,18 @@ export default function AIRoadmapPage() {
     setLoading(true);
     const token = getToken();
     try {
-      if (userType === "STUDENT") {
-        const res = await fetch(`${API_URL}/api/roadmap/career/student`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ hours_per_day: effectiveHours, days: 7, focus, target_company: "FAANG" }),
-        });
-        const d = await res.json();
-        if (d.roadmap) { setRoadmap(d.roadmap); setMeta(d); setGenerated(true); }
-      } else {
-        const res = await fetch(`${API_URL}/api/roadmap/career/professional`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ role: user?.profile?.current_role || "Developer", experience_years: user?.profile?.experience_years || 2, target_skill: focus, days: 5 }),
-        });
-        const d = await res.json();
-        if (d.roadmap) { setRoadmap(d.roadmap); setMeta(d); setGenerated(true); }
-      }
+      const res = await fetch(`${API_URL}/api/roadmap/career/student`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ hours_per_day: effectiveHours, days: 7, focus, target_company: "FAANG" }),
+      });
+      const d = await res.json();
+      if (d.roadmap) { setRoadmap(d.roadmap); setMeta(d); setGenerated(true); }
     } catch {}
     finally { setLoading(false); }
   };
 
-  const focusOptions = userType === "STUDENT" ? STUDENT_FOCUS : PROFESSIONAL_SKILLS;
+  const focusOptions = STUDENT_FOCUS;
 
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", paddingBottom: 80 }}>
@@ -331,7 +240,7 @@ export default function AIRoadmapPage() {
           {" "}Roadmap
         </h1>
         <p style={{ color: "var(--text-secondary)", fontSize: 15 }}>
-          Hi! I'm <strong style={{ color: "#A78BFA" }}>{mentorName}</strong>. Let me build your custom {userType === "STUDENT" ? "placement" : "career growth"} plan.
+          Hi! I'm <strong style={{ color: "#A78BFA" }}>{mentorName}</strong>. Let me build your custom placement plan.
         </p>
       </motion.div>
 
@@ -345,7 +254,7 @@ export default function AIRoadmapPage() {
         {/* Focus selector */}
         <div style={{ marginBottom: 22 }}>
           <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
-            {userType === "STUDENT" ? "📚 Focus Area" : "🚀 Target Skill"}
+            📚 Focus Area
           </label>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {focusOptions.map(f => (
@@ -366,9 +275,8 @@ export default function AIRoadmapPage() {
           </div>
         </div>
 
-        {/* Hours selector (student only) */}
-        {userType === "STUDENT" && (
-          <div style={{ marginBottom: 22 }}>
+        {/* Hours selector */}
+        <div style={{ marginBottom: 22 }}>
             <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
               ⏱ Daily Study Time
             </label>
@@ -414,8 +322,7 @@ export default function AIRoadmapPage() {
                 />
               )}
             </div>
-          </div>
-        )}
+        </div>
 
         {/* Generate Button */}
         <motion.button
@@ -440,7 +347,7 @@ export default function AIRoadmapPage() {
           ) : (
             <>
               <Zap size={18} />
-              {generated ? "Regenerate" : "Generate"} My {userType === "STUDENT" ? "7-Day Placement" : "Career Growth"} Roadmap
+              Generate My 7-Day Placement Roadmap
             </>
           )}
         </motion.button>
@@ -449,43 +356,18 @@ export default function AIRoadmapPage() {
       {/* Meta stats */}
       {generated && meta && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginBottom: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
-          {userType === "STUDENT" ? (
-            <>
-              <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: "#8B5CF6" }}>{meta.days || 7}</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Days</div>
-              </div>
-              <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: "#F59E0B" }}>{meta.hours_per_day || effectiveHours}</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Hrs/Day</div>
-              </div>
-              <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: "#10B981" }}>{meta.focus || focus}</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Focus</div>
-              </div>
-            </>
-          ) : (
-            <>
-              {meta.salary_impact && (
-                <>
-                  <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: "#10B981" }}>{meta.salary_impact.avg_hike}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Avg Hike</div>
-                  </div>
-                  <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#8B5CF6" }}>+{meta.salary_impact.boost_pct}%</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Salary Boost</div>
-                  </div>
-                </>
-              )}
-              {meta.next_skill_prediction && (
-                <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center", gridColumn: "span 2" }}>
-                  <div style={{ fontSize: 14, fontWeight: 900, color: "#F59E0B" }}>Next: {meta.next_skill_prediction.skill}</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, marginTop: 4 }}>{meta.next_skill_prediction.reason}</div>
-                </div>
-              )}
-            </>
-          )}
+          <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#8B5CF6" }}>{meta.days || 7}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Days</div>
+          </div>
+          <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#F59E0B" }}>{meta.hours_per_day || effectiveHours}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Hrs/Day</div>
+          </div>
+          <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px", textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#10B981" }}>{meta.focus || focus}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Focus</div>
+          </div>
         </motion.div>
       )}
 
@@ -493,12 +375,9 @@ export default function AIRoadmapPage() {
       {generated && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-            {userType === "STUDENT" ? `📅 ${roadmap.length}-Day Plan` : `📅 ${roadmap.length}-Week Plan`}
+            📅 {roadmap.length}-Day Plan
           </div>
-          {userType === "STUDENT"
-            ? (roadmap as StudentDay[]).map((day, i) => <StudentDayCard key={day.day} day={day} index={i} />)
-            : (roadmap as ProfessionalWeek[]).map((week, i) => <ProfWeekCard key={week.week} week={week} index={i} />)
-          }
+          {(roadmap as StudentDay[]).map((day, i) => <StudentDayCard key={day.day} day={day} index={i} />)}
         </div>
       )}
 
@@ -506,7 +385,7 @@ export default function AIRoadmapPage() {
         <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 2.5 }}
           style={{ textAlign: "center", padding: "60px 20px", color: "rgba(255,255,255,0.25)", fontSize: 14 }}>
           <Map size={48} style={{ margin: "0 auto 16px", opacity: 0.3 }} />
-          Hit "Generate" to get your personalized {userType === "STUDENT" ? "7-day placement" : "career growth"} roadmap.
+          Hit "Generate" to get your personalized 7-day placement roadmap.
         </motion.div>
       )}
     </div>
