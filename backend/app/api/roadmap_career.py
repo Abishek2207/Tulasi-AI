@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.models.models import User
-from app.schemas.user import StudentRoadmapRequest, ProfessionalRoadmapRequest
+from app.schemas.user import StudentRoadmapRequest
 from typing import List, Dict, Any
 import json
 
@@ -175,39 +175,7 @@ def _generate_student_roadmap(req: StudentRoadmapRequest, user_profile: Any) -> 
         })
 
     return roadmap
-
-
-def _generate_professional_roadmap(req: ProfessionalRoadmapRequest) -> List[Dict]:
-    """
-    Generates week-by-week professional upskilling roadmap.
-    AI-ready: replace body with Gemini/OpenAI call when API key is available.
-    """
-    target = req.target_skill or "AI"
-    topics_list = PROFESSIONAL_ROADMAP.get(target, PROFESSIONAL_ROADMAP["AI"])
-    salary_data = SALARY_IMPACT.get(target, {"boost_pct": 20, "avg_hike": "₹2–5 LPA", "demand": "Medium"})
-
-    roadmap = []
-    for i, topic_data in enumerate(topics_list):
-        week = i + 1
-        roadmap.append({
-            "week": week,
-            "label": f"Week {week}",
-            "focus": target,
-            "topic": topic_data["topic"],
-            "level": topic_data["level"],
-            "duration_hrs": topic_data["duration_hrs"],
-            "salary_impact": salary_data,
-            "tasks": [
-                {"type": "learn", "description": f"Study: {topic_data['topic']}", "hrs": int(topic_data["duration_hrs"] * 0.6)},
-                {"type": "practice", "description": "Build a mini-project or solve related problem", "hrs": int(topic_data["duration_hrs"] * 0.3)},
-                {"type": "review", "description": "Review, document learnings in Notion/GitHub", "hrs": int(topic_data["duration_hrs"] * 0.1)},
-            ],
-            "completed": False
-        })
-
-    return roadmap
-
-
+# Removed professional roadmap generation
 def _get_daily_tip(day: int, focus: str) -> str:
     tips = {
         "DSA": ["Start with brute force, then optimize.", "Draw the problem on paper first.", "Pattern recognition beats memorization."],
@@ -242,45 +210,7 @@ async def get_student_roadmap(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Roadmap generation failed: {str(e)}")
-
-
-@router.post("/professional")
-async def get_professional_roadmap(
-    req: ProfessionalRoadmapRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Generate a personalized week-by-week upskilling roadmap for professionals."""
-    try:
-        profile = current_user.profile
-        # Use profile data as fallback if not provided
-        role = req.role or (profile.current_role if profile else "Software Engineer")
-        exp = req.experience_years or (profile.experience_years if profile else 2)
-        company = req.company or (profile.company if profile else None)
-
-        roadmap = _generate_professional_roadmap(req)
-        target = req.target_skill or "AI"
-        salary = SALARY_IMPACT.get(target, {})
-
-        # Next best skill prediction (simple rule-based, AI-ready to replace)
-        next_skill = _predict_next_skill(role, exp, target)
-
-        return {
-            "success": True,
-            "role": role,
-            "experience_years": exp,
-            "company": company,
-            "target_skill": target,
-            "roadmap": roadmap,
-            "salary_impact": salary,
-            "next_skill_prediction": next_skill,
-            "layoff_prevention": LAYOFF_PREVENTION_SKILLS[:3],
-            "ai_note": "Career path optimized by Tulasi AI Intelligence Engine.",
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Roadmap generation failed: {str(e)}")
-
-
+# Removed professional endpoint
 @router.get("/trending-skills")
 async def get_trending_skills():
     """Return trending industry skills — no auth required."""

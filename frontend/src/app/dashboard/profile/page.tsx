@@ -37,7 +37,7 @@ export default function ProfilePage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [formData, setFormData] = useState({ name: "", bio: "", skills: "" });
   const [extendedData, setExtendedData] = useState({ current_role: "", company: "", experience_years: 0, skill_level: "", student_year: "" });
-  const [userType, setUserType] = useState<"student" | "professional">("student");
+  const [userType, setUserType] = useState<"student">("student");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [removingBg, setRemovingBg] = useState(false);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -53,7 +53,8 @@ export default function ProfilePage() {
       const stored = localStorage.getItem("user");
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.user_type) setUserType(parsed.user_type.toLowerCase() as "student" | "professional");
+        // Always treat as student
+        if (parsed.user_type) setUserType("student");
       }
 
       // Google OAuth photo or custom uploaded avatar
@@ -129,7 +130,7 @@ export default function ProfilePage() {
       if (storedUser.user_type?.toLowerCase() !== userType) {
          try {
              const typeRes = await profileApi.setUserType(userType.toUpperCase(), token);
-             updatedUserTypeStr = typeRes.user_type as "student" | "professional";
+             updatedUserTypeStr = "student" as "student";
          } catch (e) { console.error("Failed to update user_type", e); }
       }
       
@@ -409,16 +410,13 @@ export default function ProfilePage() {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-               <div>
-                 <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Career Goal</label>
-                 <select value={userType} onChange={e => setUserType(e.target.value as "student" | "professional")} className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12 }}>
-                   <option value="student">Student / Fresher</option>
-                   <option value="professional">Working Professional</option>
-                 </select>
-               </div>
-               <div>
-                 <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Academic Year</label>
-                 <select value={extendedData.student_year} onChange={e => setExtendedData(p => ({ ...p, student_year: e.target.value }))} disabled={userType !== "student"} className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12, opacity: userType === "student" ? 1 : 0.5 }}>
+                 <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>User Type</label>
+                  <div style={{ padding: "13px 16px", fontSize: 14, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6366f1", fontWeight: 700 }}>🎓 Student</div>
+                 </div>
+                 <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Academic Year</label>
+                  <select value={extendedData.student_year} onChange={e => setExtendedData(p => ({ ...p, student_year: e.target.value }))} className="input-field" style={{ width: "100%", padding: "13px 16px", fontSize: 14, borderRadius: 12 }}>
                    <option value="">Not Applicable</option>
                    <option value="1st Year">1st Year</option>
                    <option value="2nd Year">2nd Year</option>

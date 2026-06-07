@@ -43,7 +43,7 @@ Generate a high-fidelity 'Neural Blueprint' with these EXACT sections:
 4. [ROADMAP]: A 4-phase implementation strategy (Alpha, Beta, v1, Scale).
 5. [SCALING]: How this handles 100k+ users and potential AGI-integration points.
 
-Use Markdown for structure but keep it extremely professional and dense with engineering value. No conversational filler.`;
+Use Markdown for structure but keep it extremely formal and dense with engineering value. No conversational filler.`;
 
     try {
       const { chatApi } = await import("@/lib/api");

@@ -53,16 +53,6 @@ YEAR_PLANS: Dict[str, List[Dict]] = {
         {"title": "Full Mock Interview", "desc": "Simulate a complete interview at your dream company.", "link": "/dashboard/interview", "xp": 80, "icon": "🎯"},
         {"title": "Optimise Your Resume", "desc": "ATS-proof your resume with strong action verbs.", "link": "/dashboard/resume", "xp": 40, "icon": "📄"},
     ],
-    "professional": [
-        {"title": "Upskill: AI/ML Fundamentals", "desc": "Add AI skills to your existing profile.", "link": "/dashboard/roadmaps", "xp": 50, "icon": "🤖"},
-        {"title": "System Design Practice", "desc": "Prep for senior-level architecture questions.", "link": "/dashboard/system-design", "xp": 60, "icon": "🏗️"},
-        {"title": "Prepare for Role Switching", "desc": "Build a 3-month transition plan.", "link": "/dashboard/prep-plan", "xp": 40, "icon": "🔄"},
-    ],
-    "professor": [
-        {"title": "Explore AI Teaching Tools", "desc": "Use Tulasi AI to create course content.", "link": "/dashboard/chat", "xp": 20, "icon": "📚"},
-        {"title": "Review Student Roadmaps", "desc": "Guide students through their career paths.", "link": "/dashboard/roadmaps", "xp": 30, "icon": "🗺️"},
-        {"title": "Build a Coding Challenge", "desc": "Create practice problems for your students.", "link": "/dashboard/code", "xp": 40, "icon": "💡"},
-    ],
     "student": [
         {"title": "Take a Mock Interview", "desc": "Sharpen your skills with an AI-powered mock interview.", "link": "/dashboard/interview", "xp": 60, "icon": "🎤"},
         {"title": "Build Your Roadmap", "desc": "Create a personalised learning path for your goal.", "link": "/dashboard/roadmaps", "xp": 40, "icon": "🗺️"},
@@ -79,8 +69,8 @@ def get_next_actions(
     """
     Returns personalised next-action recommendations based on:
     1. User's activity in the past 7 days
-    2. Detected weak areas
-    3. User type (year / professional)
+    2. Streak (danger vs safe)
+    3. User type (year)
     """
     since = datetime.utcnow() - timedelta(days=7)
     logs = db.exec(
@@ -102,6 +92,8 @@ def get_next_actions(
 
     # Build recommendations based on user type
     user_type = getattr(current_user, "user_type", "student") or "student"
+    if user_type not in YEAR_PLANS:
+        user_type = "student"
     base_actions = YEAR_PLANS.get(user_type, YEAR_PLANS["student"]).copy()
 
     # Inject weak-area specific nudges
@@ -142,6 +134,8 @@ def get_daily_plan(
 ):
     """Returns a structured daily plan based on user type and XP level."""
     user_type = getattr(current_user, "user_type", "student") or "student"
+    if user_type not in YEAR_PLANS:
+        user_type = "student"
     actions = YEAR_PLANS.get(user_type, YEAR_PLANS["student"])
 
     return {
@@ -158,6 +152,8 @@ def get_weekly_plan(
 ):
     """Returns a structured weekly plan expanding daily tasks."""
     user_type = getattr(current_user, "user_type", "student") or "student"
+    if user_type not in YEAR_PLANS:
+        user_type = "student"
     actions = YEAR_PLANS.get(user_type, YEAR_PLANS["student"])
     
     weekly_schedule = [
@@ -183,13 +179,13 @@ class OnboardRequest:
 from pydantic import BaseModel
 
 class OnboardPayload(BaseModel):
-    user_type: str  # 1st_year | 2nd_year | 3rd_year | 4th_year | professional | professor
+    user_type: str  # 1st_year | 2nd_year | 3rd_year | 4th_year | student
     department: Optional[str] = None
     target_role: Optional[str] = None
     target_companies: Optional[List[str]] = []
     interest_areas: Optional[List[str]] = []
 
-VALID_USER_TYPES = {"1st_year", "2nd_year", "3rd_year", "4th_year", "professional", "professor", "student"}
+VALID_USER_TYPES = {"1st_year", "2nd_year", "3rd_year", "4th_year", "student"}
 
 
 @router.post("/onboard")

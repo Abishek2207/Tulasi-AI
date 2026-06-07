@@ -40,19 +40,17 @@ export function RoadmapWidget({ userType = "student", studentYear = "" }: { user
       const token = localStorage.getItem("tulasi_token");
       if (!token) return;
 
-      const endpoint = userType === "student" ? "/api/roadmap/career/student" : "/api/roadmap/career/professional";
+      const endpoint = "/api/roadmap/career/student";
       
       let dynamicFocus = "DSA";
-      if (userType === "student" && studentYear) {
+      if (studentYear) {
         if (studentYear === "1st Year") dynamicFocus = "C & Python Basics";
         else if (studentYear === "2nd Year") dynamicFocus = "DSA & Web Dev Basics";
         else if (studentYear === "3rd Year") dynamicFocus = "Advanced DSA & Internships";
         else if (studentYear === "4th Year") dynamicFocus = "System Design & Placement Mock";
       }
 
-      const payload = userType === "student" 
-        ? { days: 7, hours_per_day: hours, focus: dynamicFocus }
-        : { target_skill: "AI" }; // Default for professional
+      const payload = { days: 7, hours_per_day: hours, focus: dynamicFocus };
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${endpoint}`, {
         method: "POST",
@@ -105,7 +103,7 @@ export function RoadmapWidget({ userType = "student", studentYear = "" }: { user
   if (roadmap.length === 0) return null;
 
   const currentDayData = roadmap.find(d => d.day === activeDay) || roadmap[0];
-  const isProfessional = userType === "professional";
+  const isProfessional = false;
 
   return (
     <div style={{ 

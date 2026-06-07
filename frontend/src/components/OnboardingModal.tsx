@@ -12,8 +12,6 @@ const USER_TYPES = [
   { id: "2nd_year", label: "2nd Year Student", icon: <Code size={24} />, desc: "Learning DSA", color: "#06B6D4" },
   { id: "3rd_year", label: "3rd Year Student", icon: <Briefcase size={24} />, desc: "Internship hunt", color: "#10B981" },
   { id: "4th_year", label: "4th Year Student", icon: <Target size={24} />, desc: "Placement prep", color: "#F43F5E" },
-  { id: "professional", label: "Professional", icon: <Rocket size={24} />, desc: "Upskilling", color: "#FFD93D" },
-  { id: "professor", label: "Professor", icon: <GraduationCap size={24} />, desc: "Educator", color: "#3B82F6" },
 ];
 
 const DEPTS = ["Computer Science", "Information Tech", "Electronics", "Mechanical", "Electrical", "Civil", "Other"];

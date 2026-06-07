@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
 import { TulasiLogo } from "@/components/TulasiLogo";
-import { GraduationCap, Briefcase, ArrowRight, BookOpen } from "lucide-react";
+import { GraduationCap, ArrowRight } from "lucide-react";
 
 const YEAR_INFO: Record<string, { label: string; focus: string; color: string }> = {
   "1st Year": { label: "1st Year", focus: "C/Python basics, Maths, Digital Logic, Soft Skills, College orientation", color: "#6366f1" },
@@ -21,11 +21,10 @@ export default function OnboardingPage() {
   const isLoaded = status !== "loading";
   const router = useRouter();
   
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  const [selectedType, setSelectedType] = useState<"STUDENT" | "PROFESSIONAL" | "">("");
-  
+    
   // Student Data
   const [collegeName, setCollegeName] = useState("");
   const [degree, setDegree] = useState("");
@@ -37,17 +36,7 @@ export default function OnboardingPage() {
   const [resumeStatus, setResumeStatus] = useState("");
   const [existingProjects, setExistingProjects] = useState("");
   
-  // Professional Data
-  const [currentRole, setCurrentRole] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [experienceYears, setExperienceYears] = useState("");
-  const [salaryRange, setSalaryRange] = useState("");
-  const [targetSalary, setTargetSalary] = useState("");
-  const [industry, setIndustry] = useState("");
-  const [careerGoal, setCareerGoal] = useState("");
-  const [toolsUsed, setToolsUsed] = useState("");
-  const [aiToolsKnown, setAiToolsKnown] = useState("");
-  
+
   // Shared Preferences Data
   const [dailyAvailableTime, setDailyAvailableTime] = useState("");
   const [availableDays, setAvailableDays] = useState("");
@@ -68,8 +57,8 @@ export default function OnboardingPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
       const token = localStorage.getItem("token") || "";
 
-      // 1. Set User Type
-      const typeRes = await fetch(`${apiUrl}/api/profile/set-user-type?user_type=${selectedType}`, {
+      // 1. Set User Type to STUDENT
+      const typeRes = await fetch(`${apiUrl}/api/profile/set-user-type?user_type=STUDENT`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
       });
@@ -77,37 +66,20 @@ export default function OnboardingPage() {
       
       const updatedUser = await typeRes.json();
 
-      // 2. Build Profile Data
-      let profilePayload: any = {};
-      if (selectedType === "STUDENT") {
-        profilePayload = {
-          student_year: studentYear,
-          placement_goal: placementGoal,
-          college_name: collegeName,
-          degree: degree,
-          department: department,
-          target_role: targetRole,
-          weak_areas: weakAreas,
-          resume_status: resumeStatus,
-          existing_projects: existingProjects,
-          daily_available_hours: dailyAvailableTime,
-          available_days: availableDays
-        };
-      } else {
-        profilePayload = {
-          current_role: currentRole,
-          company: companyName,
-          experience_years: parseInt(experienceYears) || 0,
-          current_package_range_prof: salaryRange,
-          target_package: targetSalary,
-          industry: industry,
-          career_goal: careerGoal,
-          tools_used: toolsUsed,
-          ai_tools_known: aiToolsKnown,
-          daily_available_hours: dailyAvailableTime,
-          available_days: availableDays
-        };
-      }
+      // 2. Build Student Profile Payload
+      const profilePayload = {
+        student_year: studentYear,
+        placement_goal: placementGoal,
+        college_name: collegeName,
+        degree: degree,
+        department: department,
+        target_role: targetRole,
+        weak_areas: weakAreas,
+        resume_status: resumeStatus,
+        existing_projects: existingProjects,
+        daily_available_hours: dailyAvailableTime,
+        available_days: availableDays
+      };
 
       // 3. Update Profile Data
       const profRes = await fetch(`${apiUrl}/api/profile/me`, {
@@ -156,54 +128,10 @@ export default function OnboardingPage() {
           style={{ background: "#0C0F1A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 24, padding: "40px", boxShadow: "0 24px 60px rgba(0,0,0,0.4)" }}>
           
           <AnimatePresence mode="wait">
-            {step === 0 && (
-              <motion.div key="step-0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h1 style={{ fontSize: 32, fontWeight: 800, color: "white", marginBottom: 12, textAlign: "center", fontFamily: "var(--font-outfit)" }}>
-                  Tell us about your current stage
-                </h1>
-                <p style={{ color: "rgba(255,255,255,0.6)", textAlign: "center", marginBottom: 32, fontSize: 16 }}>
-                  so we can personalize your growth journey seamlessly.
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <button onClick={() => setSelectedType("STUDENT")}
-                    style={{ background: selectedType === "STUDENT" ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.02)",
-                      border: `2px solid ${selectedType === "STUDENT" ? "#6366f1" : "rgba(255,255,255,0.05)"}`,
-                      borderRadius: 16, padding: "24px", display: "flex", alignItems: "center", gap: 20, cursor: "pointer", transition: "0.2s" }}>
-                    <div style={{ background: selectedType === "STUDENT" ? "#6366f1" : "rgba(255,255,255,0.1)", borderRadius: 12, color: "white", display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, flexShrink: 0 }}>
-                      <GraduationCap size={24} />
-                    </div>
-                    <div style={{ textAlign: "left" }}>
-                      <h3 style={{ color: "white", fontSize: 20, fontWeight: 700, margin: "0 0 4px 0" }}>Student</h3>
-                      <p style={{ color: "rgba(255,255,255,0.5)", margin: 0, fontSize: 14 }}>In college, hunting for internships or placements.</p>
-                    </div>
-                  </button>
-
-                  <button onClick={() => setSelectedType("PROFESSIONAL")}
-                    style={{ background: selectedType === "PROFESSIONAL" ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.02)",
-                      border: `2px solid ${selectedType === "PROFESSIONAL" ? "#10b981" : "rgba(255,255,255,0.05)"}`,
-                      borderRadius: 16, padding: "24px", display: "flex", alignItems: "center", gap: 20, cursor: "pointer", transition: "0.2s" }}>
-                    <div style={{ background: selectedType === "PROFESSIONAL" ? "#10b981" : "rgba(255,255,255,0.1)", borderRadius: 12, color: "white", display: "flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, flexShrink: 0 }}>
-                      <Briefcase size={24} />
-                    </div>
-                    <div style={{ textAlign: "left" }}>
-                      <h3 style={{ color: "white", fontSize: 20, fontWeight: 700, margin: "0 0 4px 0" }}>Working Professional</h3>
-                      <p style={{ color: "rgba(255,255,255,0.5)", margin: 0, fontSize: 14 }}>Upskill, switch roles, or grow salary.</p>
-                    </div>
-                  </button>
-                </div>
-
-                <div style={{ marginTop: 32, display: "flex", justifyContent: "flex-end" }}>
-                  <button onClick={() => setStep(1)} disabled={!selectedType}
-                    style={{ background: !selectedType ? "rgba(255,255,255,0.1)" : "white", color: !selectedType ? "rgba(255,255,255,0.3)" : "#000",
-                      padding: "16px 32px", borderRadius: 12, border: "none", fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8, cursor: !selectedType ? "not-allowed" : "pointer", transition: "0.2s" }}>
-                    Continue <ArrowRight size={20} />
-                  </button>
-                </div>
-              </motion.div>
-            )}
+            
 
             {/* STUDENT FLOW */}
-            {step === 1 && selectedType === "STUDENT" && (
+            {step === 1 && (
               <motion.div key="student-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 10 }}>
                 <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Student Profile</h2>
                 <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>We'll build your AI roadmap based on this data.</p>
@@ -270,8 +198,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
-                  <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 32 }}>
                   <button onClick={() => setStep(2)} disabled={!studentYear || !targetRole || !dailyAvailableTime || loading}
                     style={{ background: (!studentYear || !targetRole || !dailyAvailableTime || loading) ? "rgba(255,255,255,0.1)" : "#6366f1", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!studentYear || !targetRole || !dailyAvailableTime || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                     Name Your Mentor <ArrowRight size={20} />
@@ -280,105 +207,7 @@ export default function OnboardingPage() {
               </motion.div>
             )}
 
-            {/* PROFESSIONAL FLOW */}
-            {step === 1 && selectedType === "PROFESSIONAL" && (
-              <motion.div key="prof-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 10 }}>
-                <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Professional Tracking</h2>
-                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>Define your current career velocity.</p>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
-                  <div style={{ display: "flex", gap: 16 }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Current Role</label>
-                      <input type="text" value={currentRole} onChange={(e) => setCurrentRole(e.target.value)} placeholder="e.g. Frontend Developer"
-                        style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
-                    </div>
-                    <div style={{ width: 120 }}>
-                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Years Exp.</label>
-                      <input type="number" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value)} placeholder="e.g. 2"
-                        style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
-                    </div>
-                  </div>
-                  
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Company Name</label>
-                      <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Current Employer"
-                        style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Career Goal</label>
-                      <select value={careerGoal} onChange={e => setCareerGoal(e.target.value)}
-                        style={{ width: "100%", background: "#11131F", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14, cursor: "pointer" }}>
-                        <option value="">Select Goal...</option>
-                        <option value="Upskill in current role">Upskill in current role</option>
-                        <option value="Switch company">Switch company</option>
-                        <option value="Increase package">Increase package</option>
-                        <option value="Move into AI/ML">Move into AI/ML</option>
-                        <option value="Become Tech Lead">Become Tech Lead</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={{ gridTemplateColumns: "1fr 1fr", display: "grid", gap: 16 }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Current Salary Range</label>
-                      <select value={salaryRange} onChange={e => setSalaryRange(e.target.value)}
-                        style={{ width: "100%", background: "#11131F", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14, cursor: "pointer" }}>
-                        <option value="">Select Range...</option>
-                        <option value="< $50k">&lt; 5 LPA</option>
-                        <option value="$50k - $100k">5 - 10 LPA</option>
-                        <option value="$100k - $150k">10 - 20 LPA</option>
-                        <option value="$150k+">20+ LPA</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>Target Salary Goal</label>
-                      <select value={targetSalary} onChange={e => setTargetSalary(e.target.value)}
-                        style={{ width: "100%", background: "#11131F", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14, cursor: "pointer" }}>
-                        <option value="">Select Target...</option>
-                        <option value="$100k+">10+ LPA</option>
-                        <option value="$150k+">20+ LPA</option>
-                        <option value="$200k+">30+ LPA</option>
-                        <option value="$300k+">50+ LPA</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: 12 }}>
-                    <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Daily Available Time for Upskilling</label>
-                    <div style={{ display: "flex", gap: 10 }}>
-                      {["1 hour/day", "2 hours/day", "3 hours/day", "Custom"].map(time => (
-                        <button key={time} onClick={() => setDailyAvailableTime(time)}
-                          style={{ flex: 1, background: dailyAvailableTime === time ? "#10b981" : "rgba(255,255,255,0.05)", color: "white", border: "none", padding: "12px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
-                          {time}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Available Days</label>
-                    <div style={{ display: "flex", gap: 10 }}>
-                      {["Mon to Sun", "Mon to Fri", "Weekends Only"].map(days => (
-                        <button key={days} onClick={() => setAvailableDays(days)}
-                          style={{ flex: 1, background: availableDays === days ? "#10b981" : "rgba(255,255,255,0.05)", color: "white", border: "none", padding: "12px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
-                          {days}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
-                  <button onClick={() => setStep(2)} disabled={!currentRole || !careerGoal || !dailyAvailableTime || loading}
-                    style={{ background: (!currentRole || !careerGoal || !dailyAvailableTime || loading) ? "rgba(255,255,255,0.1)" : "#10b981", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!currentRole || !careerGoal || !dailyAvailableTime || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                    Name Your Mentor <ArrowRight size={20} />
-                  </button>
-                </div>
-              </motion.div>
-            )}
+            
 
             {/* AI MENTOR STEP */}
             {step === 2 && (

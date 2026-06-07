@@ -159,7 +159,7 @@ export default function NetworkPage() {
             Network
           </span>
         </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 16 }}>Discover and connect with students and professionals on TulasiAI.</p>
+        <p style={{ color: "var(--text-secondary)", fontSize: 16 }}>Discover and connect with students and peers on TulasiAI.</p>
       </motion.div>
 
       {/* Search Bar */}

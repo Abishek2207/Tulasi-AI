@@ -12,7 +12,6 @@ const YEARS = [
   { value: "2nd_year", label: "2nd Year", desc: "DSA & Projects", icon: "⚡" },
   { value: "3rd_year", label: "3rd Year", desc: "Internships & Advanced", icon: "🚀" },
   { value: "4th_year", label: "4th Year", desc: "Placements & FAANG Prep", icon: "🎯" },
-  { value: "professional", label: "Professional", desc: "Upskill & Role Switch", icon: "💎" },
 ];
 const ROLES = [
   "AI Engineer", "AI Research Scientist", "Software Engineer", "Data Scientist",

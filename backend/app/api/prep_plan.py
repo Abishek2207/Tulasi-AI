@@ -39,11 +39,6 @@ def _year_context(user_type: str) -> str:
             "full system design mastery, FAANG-level mock interviews, campus placement strategy, "
             "offer negotiation, behavioral interview STAR method. MAXIMUM intensity."
         ),
-        "professional": (
-            "This is a working professional looking to upskill or switch roles. Focus on: "
-            "advanced system design, distributed systems, domain specialization, "
-            "leadership skills, senior-level interview prep, salary negotiation tactics."
-        ),
     }
     return mapping.get(user_type, mapping["3rd_year"])
 
@@ -142,16 +137,6 @@ def _make_fallback_plan(role: str, months: int, user_type: str) -> dict:
              "tasks": ["Write 10 STAR method stories", "Practice leadership + conflict stories", "Research target company culture + values"], "daily_time_hours": 3},
             {"week": 4, "focus": "Full Mock Interview Loop", "goal": "Pass a simulated full interview loop",
              "tasks": ["2 Technical mock interviews (Pramp/Exponent)", "1 System Design mock interview", "1 HR/Behavioral mock interview"], "daily_time_hours": 4},
-        ],
-        "professional": [
-            {"week": 1, "focus": "Role Gap Analysis", "goal": "Identify top 5 skill gaps for target role",
-             "tasks": [f"Research 20 JDs for {role} and list top 5 skills", "Assess current expertise vs requirements", "Create a personal learning roadmap"], "daily_time_hours": 2},
-            {"week": 2, "focus": "Advanced System Design", "goal": "Design one distributed system end-to-end",
-             "tasks": ["Design: Distributed Rate Limiter", "Study: CAP Theorem + PACELC", "Read: Designing Data-Intensive Applications Ch 1"], "daily_time_hours": 2},
-            {"week": 3, "focus": "Leadership Signals", "goal": "Prepare senior-level behavioral narratives",
-             "tasks": ["Write 5 leadership stories with business impact", "Quantify achievements from current role", "Practice: 'Tell me about a system you built at scale'"], "daily_time_hours": 2},
-            {"week": 4, "focus": "Interview Simulation", "goal": "Complete 3 full senior interview simulations",
-             "tasks": ["Senior mock technical interview", "System design mock at staff level", "Compensation research + negotiation prep"], "daily_time_hours": 2},
         ],
     }
 

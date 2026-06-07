@@ -97,12 +97,11 @@ async def set_user_type(
         
         # Auto-create profile if doesn't exist
         profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
-        if not profile:
-            profile = Profile(user_id=current_user.id)
-            if user_type == UserTypeEnum.STUDENT:
-                profile.current_role = "Student"
-            elif user_type == UserTypeEnum.PROFESSIONAL:
-                profile.current_role = "Professional"
+        # Set roles based on student year
+        if profile.student_year:
+            profile.current_role = f"{profile.student_year} Student"
+        else:
+            profile.current_role = "Student"
             db.add(profile)
             
         db.commit()
@@ -156,22 +155,14 @@ async def get_my_skills(
     profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
     if not profile or not profile.skills:
         # Return default skills based on user_type
-        if current_user.user_type == UserTypeEnum.STUDENT:
-            default_skills = [
-                {"name": "Data Structures & Algorithms", "progress": 0, "category": "placement"},
-                {"name": "Problem Solving", "progress": 0, "category": "placement"},
-                {"name": "Aptitude & Reasoning", "progress": 0, "category": "placement"},
-                {"name": "Web Development", "progress": 0, "category": "projects"},
-                {"name": "System Design Basics", "progress": 0, "category": "core"},
-            ]
-        else:
-            default_skills = [
-                {"name": "AI / Machine Learning", "progress": 0, "category": "ai"},
-                {"name": "Cloud Computing", "progress": 0, "category": "cloud"},
-                {"name": "System Design", "progress": 0, "category": "architecture"},
-                {"name": "Leadership", "progress": 0, "category": "soft-skills"},
-                {"name": "DevOps / CI-CD", "progress": 0, "category": "devops"},
-            ]
+        # Return default skills
+        default_skills = [
+            {"name": "Data Structures & Algorithms", "progress": 0, "category": "placement"},
+            {"name": "Problem Solving", "progress": 0, "category": "placement"},
+            {"name": "Aptitude & Reasoning", "progress": 0, "category": "placement"},
+            {"name": "Web Development", "progress": 0, "category": "projects"},
+            {"name": "System Design Basics", "progress": 0, "category": "core"},
+        ]
         return {"skills": default_skills, "is_default": True}
 
     try:

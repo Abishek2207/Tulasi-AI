@@ -162,18 +162,9 @@ export default function Sidebar() {
               // Only show API Status for admins
               if (item.name === "API Status" && currentUser?.role !== "admin") return null;
               
-              // For professors: hide student-specific heavy items
-              const userTypeLower = (currentUser?.user_type || "student").toLowerCase();
-              if (userTypeLower === "professor") {
-                const studentOnlyItems = ["Code Arena", "Company Prep", "Internships", "ORBIT DAILY", "Preparation Plan"];
-                if (studentOnlyItems.includes(item.name)) return null;
-              }
-
-              // Dynamic dashboard href per user type
+              // Always direct dashboard link to student dashboard
               const itemHref = item.href === "/dashboard"
-                ? userTypeLower === "student" ? "/dashboard/student"
-                  : userTypeLower === "professor" ? "/dashboard/professor"
-                  : "/dashboard/professional"
+                ? "/dashboard/student"
                 : item.href;
 
               const active = pathname === itemHref || pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));

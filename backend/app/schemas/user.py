@@ -31,7 +31,6 @@ class ProfileBase(BaseModel):
     weak_areas: Optional[str] = None
     resume_status: Optional[str] = None
     existing_projects: Optional[str] = None
-    current_package_range_prof: Optional[str] = None
     target_package: Optional[str] = None
     industry: Optional[str] = None
     career_goal: Optional[str] = None
@@ -97,13 +96,6 @@ class StudentRoadmapRequest(BaseModel):
     hours_per_day: int = 2
     focus: Optional[str] = None       # e.g. "DSA", "Projects", "Aptitude"
     target_company: Optional[str] = None
-
-
-class ProfessionalRoadmapRequest(BaseModel):
-    role: Optional[str] = None
-    experience_years: Optional[int] = None
-    company: Optional[str] = None
-    target_skill: Optional[str] = None   # e.g. "AI", "Cloud", "System Design"
 
 
 # --------------- Skill Update Schema ---------------

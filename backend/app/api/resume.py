@@ -30,7 +30,7 @@ def improve_resume(
 
     # Map the requested mode to specific persona instructions
     mode_instructions = {
-        "Professional": "Focus on highly professional, corporate language. Emphasize polished execution, robust leadership, and executive presence. Make it sound formal and confident.",
+        "Student": "Focus on academic projects, hackathons, open-source contributions, and theoretical foundations. Emphasize fast learning and raw potential.",
         "Creative": "Use a dynamic, modern, and creative tone. Emphasize out-of-the-box thinking, design aesthetics, and innovative problem-solving suitable for marketing or design roles.",
         "ATS-Optimized": "Prioritize strict keyword matching against the job description. Use standard conventional formatting, direct action verbs, and ensure zero fluff so that robotic ATS parsers rank it exactly 100/100."
     }

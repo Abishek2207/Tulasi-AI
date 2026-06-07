@@ -246,11 +246,6 @@ YEAR_ROADMAPS = {
         {"week": "5-8", "focus": "System Design Mastery", "topics": ["Scalability", "Load balancing", "DB sharding", "CAP theorem", "Microservices"], "project": "Design a URL shortener"},
         {"week": "9-12","focus": "Offer & Onboarding Prep", "topics": ["Salary negotiation", "FAANG vs product vs service", "First 90 days plan"], "project": "Career roadmap post-offer"},
     ]},
-    "professional": {"title": "Working Professional Upskilling Track", "phases": [
-        {"week": "1-4", "focus": "Skill Gap Analysis", "topics": ["Market demand analysis", "AI/ML fundamentals", "System design advanced", "Leadership skills"], "project": "Personal upskilling roadmap"},
-        {"week": "5-8", "focus": "Domain Transition", "topics": ["New tech stack", "Open source contributions", "Side projects", "LinkedIn networking"], "project": "One shipped side project"},
-        {"week": "9-12","focus": "Job Switch Readiness", "topics": ["Updated resume", "Senior-level interview prep", "Negotiation strategies", "Company research"], "project": "5 targeted job applications"},
-    ]},
 }
 
 PREP_PLANS = {
