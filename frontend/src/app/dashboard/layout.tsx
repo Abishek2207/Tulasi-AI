@@ -9,6 +9,7 @@ import { toggleSidebar, updateStats } from "@/store/slices/uiSlice";
 import { activityApi, API_URL } from "@/lib/api";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
+import BottomNav from "@/components/dashboard/BottomNav";
 import { motion, AnimatePresence } from "framer-motion";
 import { BackgroundBeams } from "@/components/ui/BackgroundBeams";
 import { XPNotificationSystem } from "@/components/XPNotification";
@@ -50,9 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!mounted || isRehydrating) return;
     
-    // ── Protection Logic ──
     if (status === "unauthenticated") {
-      // Direct localStorage check to be 100% sure we don't have a fresh token
       const token = localStorage.getItem("token");
       if (!token) {
         console.log("[Dashboard] Unauthenticated and no local token. Redirecting...");
@@ -61,7 +60,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     
     if (status === "authenticated") {
-      // ── Onboarding Gate: enforce on every login session ──
       if (user && !user.is_onboarded) {
         router.replace("/onboarding");
         return;
@@ -72,7 +70,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [status, user, router, mounted]);
 
-  // Sync Stats to Redux
   useEffect(() => {
     const fetchGlobalStats = async () => {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
@@ -91,9 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (status === "authenticated") fetchGlobalStats();
   }, [status, dispatch]);
 
-  // ── Render Backend Wake-up Ping ──
   useEffect(() => {
-    // Fire and forget health check to warm up the backend
     const wakeup = async () => {
       try {
         await fetch(`${API_URL}/api/health`).catch(() => null);
@@ -109,27 +104,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
         <TulasiLogo size={72} glow showText={false} isFounder={isFounder} />
-        <motion.div
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-          style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}
-        >
+        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }} style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>
           Neural Link Establishing…
         </motion.div>
       </div>
     );
   }
 
-  // Optimistic rendering: If we have a local token, don't show the full-screen sync message
-  // to avoid artificial delays. The hooks/components will handle their own loading states.
   if ((status === "loading" || isRehydrating) && !hasLocalToken) return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
       <TulasiLogo size={72} glow showText={false} />
-      <motion.div
-        animate={{ opacity: [0.4, 1, 0.4] }}
-        transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-        style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}
-      >
+      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }} style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>
         Neural Link Establishing…
       </motion.div>
     </div>
@@ -141,96 +126,53 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div style={{ display: "flex", minHeight: "100vh", background: "transparent", position: "relative" }}>
       <BackgroundBeams />
 
-      {/* ── Sidebar ── */}
       <AnimatePresence mode="wait">
-        {/* Mobile Sidebar Overlay */}
         {sidebarOpen && !isDesktop && (
           <>
-            <motion.div
-              key="backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => dispatch(toggleSidebar())}
-              style={{
-                position: "fixed", inset: 0, zIndex: 48,
-                background: "rgba(0,0,0,0.55)",
-                backdropFilter: "blur(4px)",
-                WebkitBackdropFilter: "blur(4px)",
-              }}
-            />
-            <motion.div
-              key="sidebar-mobile"
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50 }}
-            >
+            <motion.div key="backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => dispatch(toggleSidebar())}
+              style={{ position: "fixed", inset: 0, zIndex: 51, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }} />
+            <motion.div key="sidebar-mobile" initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              style={{ position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 52 }}>
               <Sidebar />
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Desktop Persistent Sidebar */}
       {isDesktop && (
-        <motion.div
-          animate={{ 
-            width: sidebarOpen ? 280 : 0,
-            opacity: sidebarOpen ? 1 : 0,
-          }}
-          style={{ 
-            flexShrink: 0, 
-            overflow: "hidden", 
-            borderRight: "1px solid rgba(255,255,255,0.04)",
-            zIndex: 49
-          }}
-        >
-          <div style={{ width: 280 }}>
-            <Sidebar />
-          </div>
+        <motion.div animate={{ width: sidebarOpen ? 280 : 0, opacity: sidebarOpen ? 1 : 0 }} style={{ flexShrink: 0, overflow: "hidden", borderRight: "1px solid rgba(255,255,255,0.04)", zIndex: 49 }}>
+          <div style={{ width: 280 }}><Sidebar /></div>
         </motion.div>
       )}
 
-      {/* ── Main content area ── */}
-      <div className="dash-main" style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
-        minWidth: 0,
-      }}>
+      <div className="dash-main" style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", minWidth: 0, paddingBottom: isDesktop ? 0 : 70 }}>
         <TopBar />
         <AnnouncementBanner />
-        <main className="dash-content">
+        <main className="dash-content" style={{ flex: 1, position: "relative" }}>
           <PageTransition>
             {children}
           </PageTransition>
         </main>
       </div>
 
+      {!isDesktop && <BottomNav />}
+
       <XPNotificationSystem />
       <OnboardingModal />
       <AIManagerInsightOverlay />
       
       {user && !user.username && (
-        <UsernameModal
-          isOpen={true}
-          onSuccess={(newUsername) => {
-            // Patch the stored user object so the modal disappears without full page reload
-            const stored = localStorage.getItem("user");
-            if (stored) {
-              try {
-                const parsed = JSON.parse(stored);
-                parsed.username = newUsername;
-                localStorage.setItem("user", JSON.stringify(parsed));
-              } catch {}
-            }
-            // Fire the auth-change event so useSession re-reads localStorage
-            window.dispatchEvent(new Event("tulasi-auth-change"));
-          }}
-        />
+        <UsernameModal isOpen={true} onSuccess={(newUsername) => {
+          const stored = localStorage.getItem("user");
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              parsed.username = newUsername;
+              localStorage.setItem("user", JSON.stringify(parsed));
+            } catch {}
+          }
+          window.dispatchEvent(new Event("tulasi-auth-change"));
+        }} />
       )}
     </div>
   );
