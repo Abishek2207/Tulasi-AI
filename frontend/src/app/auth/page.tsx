@@ -93,6 +93,26 @@ export default function AuthPage() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      toast.error("Enter your email first.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: `${appUrl}/auth`,
+      });
+      if (error) {
+        toast.error("Password reset failed: " + error.message);
+        return;
+      }
+      toast.success("Password reset link sent.");
+    } catch {
+      toast.error("Unexpected reset error. Please try again.");
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -211,23 +231,6 @@ export default function AuthPage() {
           >
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
               <TulasiLogo size={80} splash glow />
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                style={{
-                  fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
-                  fontWeight: 900,
-                  fontSize: 28,
-                  background: "linear-gradient(135deg, #ffffff 0%, #00E5A0 55%, #A855F7 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  letterSpacing: "-0.04em",
-                }}
-              >
-                TulasiAI
-              </motion.div>
             </div>
           </motion.div>
 
@@ -317,7 +320,17 @@ export default function AuthPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <label style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Password</label>
-                {isLogin && <a href="#" style={{ fontSize: 12, color: "#4ECDC4", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="white"} onMouseLeave={e => e.currentTarget.style.color="#4ECDC4"}>Forgot password?</a>}
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    style={{ background: "transparent", border: "none", padding: 0, fontSize: 12, color: "#4ECDC4", textDecoration: "none", fontWeight: 500, transition: "color 0.2s", cursor: "pointer" }}
+                    onMouseEnter={e => e.currentTarget.style.color="white"}
+                    onMouseLeave={e => e.currentTarget.style.color="#4ECDC4"}
+                  >
+                    Forgot password?
+                  </button>
+                )}
               </div>
               <motion.input whileFocus={{ scale: 1.02 }} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required 
                 style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px 18px", color: "white", fontSize: 15, outline: "none", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}
