@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { API_URL } from "@/lib/api";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
@@ -11,102 +10,49 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { toggleSidebar } from "@/store/slices/uiSlice";
 
-import { 
-  LayoutDashboard, MessageSquare, Target, Map, Rocket, 
-  Code, Users, Trophy, BookOpen, Youtube, Building2, 
-  FileText, Award, BarChart3, MessageCircle, Briefcase,
-  Mail, Medal, User, Gift, CreditCard, Activity, Settings, Lightbulb, BrainCircuit, Zap, CircleHelp, Layers, Compass, TrendingUp, Navigation, Flame, Globe, CheckCircle, GraduationCap, Bell, ArrowUpRight
+import {
+  LayoutDashboard, MessageSquare, Target, Map, Rocket,
+  FileText, CreditCard, TrendingUp, Bell,
+  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness
 } from "lucide-react";
 
-const getNavSections = (userType: string) => {
-  const isStudent = userType === "student";
-
-  const coreItems = isStudent ? [
-    { icon: LayoutDashboard, name: "Overview",        href: "/dashboard/student" },
-    { icon: Map,             name: "Placement Roadmap",href: "/dashboard/roadmaps" },
-    { icon: Code,            name: "Skills",          href: "/dashboard/coming-soon?feature=Skills" },
-    { icon: Target,          name: "Mock Interview",  href: "/dashboard/interview",      requiresPro: true },
-    { icon: Lightbulb,       name: "Projects",        href: "/dashboard/projects" },
-    { icon: Award,           name: "Certificates",    href: "/dashboard/certificates" },
-    { icon: Bell,            name: "Notifications",   href: "/dashboard/notifications" },
-    { icon: MessageSquare,   name: "AI Mentor",       href: "/dashboard/chat" },
-  ] : [
-    { icon: LayoutDashboard, name: "Overview",        href: "/dashboard/professional" },
-    { icon: Target,          name: "AI Skill Gap",    href: "/dashboard/coming-soon?feature=AI Skill Gap", badge: "AI" },
-    { icon: TrendingUp,      name: "Career Growth",   href: "/dashboard/coming-soon?feature=Career Growth" },
-    { icon: ArrowUpRight,    name: "Package Roadmap", href: "/dashboard/coming-soon?feature=Package Roadmap" },
-    { icon: CheckCircle,     name: "Daily Upskill Plan", href: "/dashboard/coming-soon?feature=Daily Upskill Plan" },
-    { icon: Award,           name: "Certifications",  href: "/dashboard/certificates" },
-    { icon: Flame,           name: "Trending Skills", href: "/dashboard/coming-soon?feature=Trending Skills" },
-    { icon: Bell,            name: "Notifications",   href: "/dashboard/notifications" },
-    { icon: MessageSquare,   name: "AI Mentor",       href: "/dashboard/chat" },
-  ];
-
-  return [
-    {
-      label: "Career Shield",
-      items: coreItems
-    },
-    {
-      label: "Learning & Practice",
-      items: [
-        ...(isStudent ? [{ icon: Zap, name: "Voice AI Chat", href: "/dashboard/voice", badge: "NEW" }] : []),
-        { icon: Code,            name: "Code Arena",      href: "/dashboard/code" },
-        { icon: Layers,          name: "System Design",   href: "/dashboard/system-design" },
-        { icon: Trophy,          name: "Hackathons",      href: "/dashboard/hackathons" },
-        { icon: Building2,       name: "Company Prep",    href: "/dashboard/company-prep" },
-      ]
-    },
-    {
-      label: "Tools",
-      items: [
-        { icon: Navigation,      name: "Career GPS",      href: "/dashboard/career-gps" },
-        { icon: TrendingUp,      name: "Salary Intel",    href: "/dashboard/salary-intel" },
-        { icon: Briefcase,       name: "Internships",     href: "/dashboard/internships",    badge: "INDIA" },
-        { icon: FileText,        name: "Resume Builder",  href: "/dashboard/resume",          requiresPro: true },
-        { icon: BarChart3,       name: "Analytics",       href: "/dashboard/analytics" },
-      ]
-    },
-    {
-      label: "Community",
-      items: [
-        { icon: Globe,           name: "Orbit HUB",       href: "/dashboard/orbit",         badge: "LIVE" },
-        { icon: Users,           name: "Network",         href: "/dashboard/network" },
-        { icon: MessageCircle,   name: "Group Chat",      href: "/dashboard/groups" },
-        { icon: Medal,           name: "Leaderboard",     href: "/dashboard/leaderboard" },
-      ]
-    },
-    {
-      label: "Account",
-      items: [
-        { icon: User,            name: "Profile",         href: "/dashboard/profile" },
-        { icon: Gift,            name: "Rewards Store",   href: "/dashboard/rewards" },
-        { icon: CreditCard,      name: "Billing & Pro",   href: "/dashboard/billing" },
-        { icon: Activity,        name: "API Status",      href: `${API_URL}/api/health` },
-      ]
-    }
-  ];
+type NavItem = {
+  icon: React.ComponentType<{ size?: number }>;
+  name: string;
+  href: string;
+  badge?: string;
 };
+
+const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
+  {
+    label: "AI Core Agents",
+    items: [
+      { icon: LayoutDashboard,    name: "Dashboard",         href: "/dashboard/student" },
+      { icon: MessageSquare,      name: "Career Copilot",    href: "/dashboard/career-copilot" },
+      { icon: FileText,           name: "Resume Analyzer",   href: "/dashboard/resume-analyzer" },
+      { icon: Map,                name: "Roadmap Agent",     href: "/dashboard/personalized-roadmap" },
+      { icon: Target,             name: "AI Interviewer",    href: "/dashboard/ai-interview" },
+      { icon: FolderKanban,       name: "Project Builder",   href: "/dashboard/project-builder" },
+      { icon: BriefcaseBusiness,  name: "Job & Internship",  href: "/dashboard/job-internship-match" },
+      { icon: Rocket,             name: "Hackathon Agent",   href: "/dashboard/hackathon-agent" },
+      { icon: LayoutTemplate,     name: "Portfolio Builder", href: "/dashboard/portfolio-builder" },
+      { icon: TrendingUp,         name: "Progress Tracker",  href: "/dashboard/progress-tracker" },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { icon: Bell,        name: "Notifications", href: "/dashboard/notifications" },
+      { icon: CreditCard,  name: "Billing & Pro", href: "/dashboard/billing" },
+    ],
+  },
+];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const { data: session } = useSession();
-  const sessionUser = session?.user;
-  const [isPro, setIsPro] = useState(true);
-  const [chatsUsed, setChatsUsed] = useState(0);
-
-  useEffect(() => {
-    setIsPro(true);
-    setChatsUsed(0);
-  }, [sessionUser]);
-
-  const stats = useSelector((s: RootState) => s.ui.stats);
-  const currentUser = sessionUser;
-  const currentXp = stats?.xp ?? 0;
-  const chatsUsedCurrent = chatsUsed;
-  const chatLimit = 100 + Math.floor(currentXp / 100);
-  const usagePercent = Math.min((chatsUsedCurrent / chatLimit) * 100, 100);
+  const currentUser = session?.user;
 
   const handleLinkClick = () => {
     if (window.innerWidth < 1024) {
@@ -114,16 +60,11 @@ export default function Sidebar() {
     }
   };
 
-  const { sidebarOpen } = useSelector((s: RootState) => s.ui);
-  
-  const userTypeLower = (currentUser?.user_type || "student").toLowerCase();
-  const NAV_SECTIONS = getNavSections(userTypeLower);
-
   return (
     <div style={{
       width: 280, height: "100vh",
-      background: "rgba(10, 10, 15, 0.95)",
-      borderRight: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(10, 10, 15, 0.98)",
+      borderRight: "1px solid rgba(255,255,255,0.06)",
       display: "flex", flexDirection: "column",
       overflow: "hidden",
       position: "relative"
@@ -131,9 +72,10 @@ export default function Sidebar() {
       {/* Premium Ambient Background */}
       <div className="bg-dot" style={{ position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none" }} />
       <div className="neural-pulse" style={{ position: "absolute", top: "20%", left: "-20%", width: "100%", height: "40%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)", pointerEvents: "none" }} />
+
       {/* Logo */}
       <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        <Link href="/dashboard" style={{ textDecoration: "none" }}>
+        <Link href="/dashboard/student" style={{ textDecoration: "none" }}>
           <motion.div whileHover={{ scale: 1.02 }} style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <TulasiLogo size={40} glow showText={false} />
             <div>
@@ -143,6 +85,9 @@ export default function Sidebar() {
               }}>
                 Tulasi<span style={{ color: "var(--brand-primary)" }}>AI</span>
               </div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>
+                Career OS
+              </div>
             </div>
           </motion.div>
         </Link>
@@ -151,45 +96,32 @@ export default function Sidebar() {
       {/* Nav */}
       <nav style={{ flex: 1, overflowY: "auto", padding: "12px 10px", scrollbarWidth: "none" }}>
         {NAV_SECTIONS.map(section => (
-          <div key={section.label} style={{ marginBottom: 20 }}>
+          <div key={section.label} style={{ marginBottom: 24 }}>
             <div style={{
               fontSize: 9, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase",
-              color: "rgba(255,255,255,0.2)", padding: "0 8px", marginBottom: 4
+              color: "rgba(255,255,255,0.2)", padding: "0 8px", marginBottom: 6
             }}>
               {section.label}
             </div>
-            {section.items.map(item => {
-              // Only show API Status for admins
-              if (item.name === "API Status" && currentUser?.role !== "admin") return null;
-              
-              // Always direct dashboard link to student dashboard
-              const itemHref = item.href === "/dashboard"
-                ? "/dashboard/student"
-                : item.href;
-
-              const active = pathname === itemHref || pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-              const isLocked = item.requiresPro && !isPro;
+            {section.items.map((item: NavItem) => {
+              const active = pathname === item.href || (item.href !== "/dashboard/student" && pathname.startsWith(item.href));
               return (
                 <motion.div key={item.href} whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                  <Link href={itemHref}
+                  <Link href={item.href}
                     onClick={handleLinkClick}
                     style={{
                       display: "flex", alignItems: "center", gap: 10,
-                      padding: "8px 10px", borderRadius: 9, marginBottom: 1,
+                      padding: "9px 10px", borderRadius: 10, marginBottom: 2,
                       textDecoration: "none",
                       color: active ? "#fff" : "rgba(255,255,255,0.45)",
-                      background: active
-                        ? "rgba(139,92,246,0.08)"
-                        : "transparent",
+                      background: active ? "rgba(139,92,246,0.1)" : "transparent",
                       borderLeft: active ? "3px solid #8B5CF6" : "3px solid transparent",
-                      backdropFilter: active ? "blur(10px)" : "none",
-                      transition: "all 0.2s var(--ease-premium)",
-                      fontSize: 13, fontWeight: active ? 600 : 400,
-                      opacity: isLocked ? 0.55 : 1,
+                      transition: "all 0.2s ease",
+                      fontSize: 13, fontWeight: active ? 700 : 400,
                     }}
                     onMouseEnter={e => {
-                      if (!active) (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.75)";
-                      if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
+                      if (!active) (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)";
+                      if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
                     }}
                     onMouseLeave={e => {
                       if (!active) (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.45)";
@@ -203,17 +135,11 @@ export default function Sidebar() {
                       {item.icon ? <item.icon size={16} /> : <CircleHelp size={16} />}
                     </span>
                     <span style={{ flex: 1 }}>{item.name}</span>
-                    {(item as any).badge && (
+                    {item.badge && (
                       <span style={{
                         fontSize: 8, padding: "2px 5px", borderRadius: 4,
                         background: "rgba(249,115,22,0.2)", color: "#F97316", fontWeight: 900, letterSpacing: 0.5
-                      }}>{(item as any).badge}</span>
-                    )}
-                    {isLocked && (
-                      <span style={{
-                        fontSize: 9, padding: "2px 5px", borderRadius: 4,
-                        background: "rgba(139,92,246,0.15)", color: "#8B5CF6", fontWeight: 700
-                      }}>PRO</span>
+                      }}>{item.badge}</span>
                     )}
                     {active && (
                       <motion.div layoutId="sidebar-active-dot"
@@ -235,7 +161,7 @@ export default function Sidebar() {
               borderRadius: 9, textDecoration: "none", color: "#FF6B9D", fontSize: 13, fontWeight: 600,
               background: "rgba(255,107,157,0.06)",
             }}>
-              {Settings ? <Settings size={14} /> : <CircleHelp size={14} />}
+              <Settings size={14} />
               Admin Panel
               <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "rgba(255,107,157,0.15)", fontWeight: 700 }}>ADMIN</span>
             </Link>
@@ -243,36 +169,32 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* Usage Limit Tracker — REMOVED FOR PLATINUM PRO UNLIMITED */}
-      {/* { !isPro && ... } */}
-
       {/* User footer */}
       {currentUser && (
-        <div className="glass-card-premium" style={{ 
+        <div style={{
           margin: "12px",
-          padding: "16px", 
-          borderRadius: 20,
+          padding: "14px 16px",
+          borderRadius: 18,
           background: "rgba(255,255,255,0.02)",
           border: "1px solid rgba(255,255,255,0.05)",
-          boxShadow: "0 10px 20px rgba(0,0,0,0.2)"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{
-              width: 40, height: 40, borderRadius: 14,
+              width: 38, height: 38, borderRadius: 12,
               background: currentUser.avatar ? `url(${currentUser.avatar}) center/cover no-repeat` : "linear-gradient(135deg, #8B5CF6, #06B6D4)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 900, fontSize: 15, color: "white", flexShrink: 0,
-              boxShadow: "0 8px 16px rgba(139,92,246,0.4)",
+              fontWeight: 900, fontSize: 14, color: "white", flexShrink: 0,
+              boxShadow: "0 6px 14px rgba(139,92,246,0.35)",
               overflow: "hidden"
             }}>
               {!currentUser.avatar && (currentUser.name || currentUser.email || "U")[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.3px" }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {currentUser.name || "Student"}
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>
-                 {isPro ? "PRO" : "FREE MEMBER"}
+              <div style={{ fontSize: 10, color: "rgba(16,185,129,0.9)", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                PRO
               </div>
             </div>
           </div>
