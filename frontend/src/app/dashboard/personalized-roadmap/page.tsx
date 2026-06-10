@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Map, Sparkles, Code, Terminal, Target, Briefcase, CalendarDays, CheckCircle, Shield, BrainCircuit, PenTool, GitBranch, ArrowRight, BookOpen } from "lucide-react";
+import { Map, Sparkles, Code, Terminal, Target, Briefcase, CalendarDays, CheckCircle, Shield, BrainCircuit, PenTool, GitBranch, ArrowRight, BookOpen, ExternalLink, Activity } from "lucide-react";
+import { roadmapApi } from "@/lib/api";
+import { useSession } from "@/hooks/useSession";
+import toast from "react-hot-toast";
 
 const GOALS = [
   { id: "ai", label: "AI Engineer", icon: <BrainCircuit size={18} /> },
@@ -17,107 +20,56 @@ const GOALS = [
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 const TIMELINES = ["3 Months", "6 Months"];
 
-interface RoadmapData {
-  timeline: {
-    week: number;
+interface BackendRoadmap {
+  title: string;
+  description: string;
+  estimated_months: number;
+  milestones: {
+    phase: string;
     title: string;
-    focus: string;
-    days: { day: number; task: string }[];
+    duration: string;
+    topics: string[];
+    project_idea: string;
+    resources: { name: string; url: string }[];
   }[];
-  skills: { category: string; items: string[] }[];
-  projects: { phase: string; title: string; desc: string }[];
-  interviewPrep: string[];
-  resumeMilestones: string[];
 }
 
 export default function PersonalizedRoadmapPage() {
+  const { data: session } = useSession();
   const [phase, setPhase] = useState<"input" | "loading" | "dashboard">("input");
   const [goal, setGoal] = useState("");
   const [level, setLevel] = useState("Beginner");
   const [timeline, setTimeline] = useState("3 Months");
-  const [activeTab, setActiveTab] = useState<"timeline" | "skills" | "projects" | "prep">("timeline");
-  const [expandedWeek, setExpandedWeek] = useState<number | null>(1);
-  const [roadmap, setRoadmap] = useState<RoadmapData | null>(null);
+  const [expandedPhase, setExpandedPhase] = useState<string | null>("1");
+  const [roadmap, setRoadmap] = useState<BackendRoadmap | null>(null);
 
   const generate = async () => {
     if (!goal) return;
-    setPhase("loading");
-    await new Promise(r => setTimeout(r, 2500));
+    if (!session?.token) {
+      toast.error("Please log in to generate a roadmap.");
+      return;
+    }
     
-    setRoadmap({
-      timeline: [
-        {
-          week: 1, title: "Foundation Basics", focus: "Language syntax, basic data structures",
-          days: [
-            { day: 1, task: "Set up development environment and IDE" },
-            { day: 2, task: "Learn variables, loops, and control flow" },
-            { day: 3, task: "Understand Arrays, Strings, and basic manipulation" },
-            { day: 4, task: "Solve 5 easy algorithmic problems" },
-            { day: 5, task: "Learn basic Git commands (commit, push, branch)" },
-            { day: 6, task: "Build a simple CLI calculator" },
-            { day: 7, task: "Review week 1 concepts and rest" }
-          ]
-        },
-        {
-          week: 2, title: "Core Architecture", focus: "APIs, HTTP, and Server logic",
-          days: [
-            { day: 8, task: "Learn how the web works (HTTP/HTTPS, DNS)" },
-            { day: 9, task: "Set up a basic web server" },
-            { day: 10, task: "Understand REST API principles" },
-            { day: 11, task: "Create your first GET and POST endpoints" },
-            { day: 12, task: "Learn about JSON data structures" },
-            { day: 13, task: "Connect your server to a mock frontend" },
-            { day: 14, task: "Deploy server to a free tier platform" }
-          ]
-        },
-        {
-          week: 3, title: "Database Integration", focus: "SQL vs NoSQL, basic queries",
-          days: [
-            { day: 15, task: "Understand relational vs non-relational DBs" },
-            { day: 16, task: "Set up a local PostgreSQL or MongoDB instance" },
-            { day: 17, task: "Learn basic CRUD operations" },
-            { day: 18, task: "Integrate database with your web server" },
-            { day: 19, task: "Learn about indexing and query optimization basics" },
-            { day: 20, task: "Implement basic authentication (JWT)" },
-            { day: 21, task: "Build a complete backend for a To-Do app" }
-          ]
-        },
-        {
-          week: 4, title: "Project & Portfolio", focus: "Putting it all together",
-          days: [
-            { day: 22, task: "Plan architecture for Milestone Project 1" },
-            { day: 23, task: "Build database schema and API endpoints" },
-            { day: 24, task: "Implement business logic and error handling" },
-            { day: 25, task: "Write unit tests for critical functions" },
-            { day: 26, task: "Write documentation (README, API docs)" },
-            { day: 27, task: "Deploy complete project to production" },
-            { day: 28, task: "Update Resume and LinkedIn with new project" }
-          ]
+    setPhase("loading");
+    
+    try {
+      const selectedLabel = GOALS.find(g => g.id === goal)?.label || goal;
+      const fullGoal = `${level} level ${selectedLabel} in ${timeline}`;
+      
+      const res = await roadmapApi.generate(fullGoal, session.token);
+      if (res && res.roadmap) {
+        setRoadmap(res.roadmap as any);
+        if (res.roadmap.milestones && res.roadmap.milestones.length > 0) {
+            setExpandedPhase(res.roadmap.milestones[0].phase);
         }
-      ],
-      skills: [
-        { category: "Core Languages", items: ["Python", "JavaScript/TypeScript", "SQL"] },
-        { category: "Frameworks & Tools", items: ["React", "Node.js", "Docker", "Git"] },
-        { category: "Computer Science", items: ["Data Structures", "Algorithms", "System Design"] }
-      ],
-      projects: [
-        { phase: "Month 1: Foundation", title: "CLI Task Manager", desc: "Build a command-line application using file I/O to solidify core programming logic." },
-        { phase: "Month 2: Integration", title: "RESTful API Platform", desc: "Develop a robust backend service with authentication, database integration, and deployed endpoints." },
-        { phase: "Month 3: Capstone", title: "Full-Stack AI Application", desc: "Integrate a 3rd-party AI API into a full-stack web app, handle state management, and deploy with CI/CD." }
-      ],
-      interviewPrep: [
-        "Master Big O Notation (Time/Space complexity)",
-        "Practice Top 50 LeetCode patterns (Sliding Window, Two Pointers, BFS/DFS)",
-        "Prepare Behavioral STAR stories for past challenges",
-        "Understand basic System Design trade-offs (Monolith vs Microservices)"
-      ],
-      resumeMilestones: [
-        "Week 4: Add 'Technical Skills' section based on Month 1 learnings.",
-        "Week 8: Add the Integration Project with quantifiable metrics.",
-        "Week 12: Complete resume overhaul, adding Capstone Project and linking GitHub."
-      ]
-    });
-    setPhase("dashboard");
+        setPhase("dashboard");
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate roadmap");
+      setPhase("input");
+    }
   };
 
   const selectedGoalName = GOALS.find(g => g.id === goal)?.label;
@@ -174,10 +126,11 @@ export default function PersonalizedRoadmapPage() {
               </div>
             </div>
 
-            <button onClick={generate} disabled={!goal}
-              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: !goal ? 0.5 : 1, boxShadow: !goal ? "none" : "0 14px 28px rgba(16,185,129,0.3)" }}>
+            <button onClick={generate} disabled={!goal || !session?.token}
+              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: (!goal || !session?.token) ? 0.5 : 1, boxShadow: (!goal || !session?.token) ? "none" : "0 14px 28px rgba(16,185,129,0.3)" }}>
               <Sparkles size={20} /> Generate Personalized Roadmap
             </button>
+            {!session?.token && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to generate roadmaps.</p>}
           </div>
         </motion.div>
       )}
@@ -188,7 +141,7 @@ export default function PersonalizedRoadmapPage() {
             <div style={{ width: 64, height: 64, borderRadius: "50%", border: "4px solid rgba(16,185,129,0.2)", borderTopColor: "#10B981" }} />
           </motion.div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>Architecting Your Future...</h2>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Building a custom {timeline.toLowerCase()} plan for {selectedGoalName}.</p>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Generating custom plan via AI. This may take up to 10 seconds.</p>
         </div>
       )}
 
@@ -206,127 +159,66 @@ export default function PersonalizedRoadmapPage() {
             </button>
           </div>
 
-          {/* Navigation Tabs */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 32, paddingBottom: 16, borderBottom: "1px solid rgba(255,255,255,0.08)", overflowX: "auto" }}>
-            {[
-              { id: "timeline", label: "Roadmap Timeline", icon: <CalendarDays size={16} /> },
-              { id: "skills", label: "Required Skills", icon: <Target size={16} /> },
-              { id: "projects", label: "Recommended Projects", icon: <Briefcase size={16} /> },
-              { id: "prep", label: "Interview & Resume", icon: <PenTool size={16} /> },
-            ].map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
-                style={{ padding: "10px 18px", borderRadius: 14, background: activeTab === tab.id ? "rgba(16,185,129,0.1)" : "transparent", border: activeTab === tab.id ? "1px solid rgba(16,185,129,0.3)" : "1px solid transparent", color: activeTab === tab.id ? "#10B981" : "rgba(255,255,255,0.5)", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                {tab.icon} {tab.label}
-              </button>
-            ))}
+          <div style={{ marginBottom: 32, padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <h2 style={{ fontSize: 24, fontWeight: 900, color: "white", marginBottom: 8 }}>{roadmap.title}</h2>
+            <p style={{ fontSize: 15, color: "rgba(255,255,255,0.7)" }}>{roadmap.description}</p>
           </div>
 
-          {/* Tab Content */}
-          <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-              
-              {/* TIMELINE TAB */}
-              {activeTab === "timeline" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }}>
-                  {roadmap.timeline.map((week) => (
-                    <div key={week.week} style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: `1px solid ${expandedWeek === week.week ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.06)"}`, transition: "all 0.3s" }}>
-                      <div onClick={() => setExpandedWeek(expandedWeek === week.week ? null : week.week)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }}>
+            {roadmap.milestones?.map((milestone) => (
+              <div key={milestone.phase} style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: `1px solid ${expandedPhase === milestone.phase ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.06)"}`, transition: "all 0.3s" }}>
+                <div onClick={() => setExpandedPhase(expandedPhase === milestone.phase ? null : milestone.phase)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#10B981", marginBottom: 6, textTransform: "uppercase", letterSpacing: "1px" }}>Phase {milestone.phase} • {milestone.duration}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 4 }}>{milestone.title}</div>
+                  </div>
+                  <div style={{ width: 36, height: 36, borderRadius: 12, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <motion.div animate={{ rotate: expandedPhase === milestone.phase ? 90 : 0 }}><ArrowRight size={18} color="white" /></motion.div>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {expandedPhase === milestone.phase && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: "hidden" }}>
+                      <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 24 }}>
+                        
                         <div>
-                          <div style={{ fontSize: 12, fontWeight: 800, color: "#10B981", marginBottom: 6, textTransform: "uppercase", letterSpacing: "1px" }}>Week {week.week}</div>
-                          <div style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 4 }}>{week.title}</div>
-                          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Focus: {week.focus}</div>
-                        </div>
-                        <div style={{ width: 36, height: 36, borderRadius: 12, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <motion.div animate={{ rotate: expandedWeek === week.week ? 90 : 0 }}><ArrowRight size={18} color="white" /></motion.div>
-                        </div>
-                      </div>
-
-                      <AnimatePresence>
-                        {expandedWeek === week.week && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: "hidden" }}>
-                            <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 12 }}>
-                              {week.days.map(d => (
-                                <div key={d.day} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-                                  <div style={{ padding: "4px 8px", borderRadius: 8, background: "rgba(16,185,129,0.1)", color: "#10B981", fontSize: 11, fontWeight: 800, minWidth: 50, textAlign: "center", marginTop: 2 }}>Day {d.day}</div>
-                                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{d.task}</div>
-                                </div>
-                              ))}
+                            <h4 style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.4)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "1px", display: "flex", alignItems: "center", gap: 8 }}><BookOpen size={14} /> Topics to Cover</h4>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                {milestone.topics?.map(topic => (
+                                    <span key={topic} style={{ padding: "6px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>{topic}</span>
+                                ))}
                             </div>
-                          </motion.div>
+                        </div>
+
+                        {milestone.project_idea && (
+                            <div style={{ padding: 16, borderRadius: 16, background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 800, color: "#10B981", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}><Briefcase size={14} /> Recommended Project</h4>
+                                <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{milestone.project_idea}</p>
+                            </div>
                         )}
-                      </AnimatePresence>
-                    </div>
-                  ))}
-                </div>
-              )}
 
-              {/* SKILLS TAB */}
-              {activeTab === "skills" && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-                  {roadmap.skills.map((skillGroup, i) => (
-                    <div key={i} style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                        <BookOpen size={18} color="#10B981" /> {skillGroup.category}
-                      </h3>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        {skillGroup.items.map(item => (
-                          <div key={item} style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", fontSize: 14, color: "rgba(255,255,255,0.8)", fontWeight: 500, display: "flex", alignItems: "center", gap: 10 }}>
-                            <CheckCircle size={16} color="rgba(255,255,255,0.2)" /> {item}
-                          </div>
-                        ))}
+                        {milestone.resources && milestone.resources.length > 0 && (
+                            <div>
+                                <h4 style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.4)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "1px", display: "flex", alignItems: "center", gap: 8 }}><Activity size={14} /> Resources</h4>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                    {milestone.resources.map(res => (
+                                        <a key={res.name} href={res.url} target="_blank" rel="noopener noreferrer" style={{ padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", fontSize: 13, color: "#3B82F6", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}>
+                                            {res.name}
+                                            <ExternalLink size={14} />
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* PROJECTS TAB */}
-              {activeTab === "projects" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  {roadmap.projects.map((proj, i) => (
-                    <div key={i} style={{ padding: 28, borderRadius: 24, background: "linear-gradient(135deg, rgba(16,185,129,0.05), rgba(255,255,255,0.01))", border: "1px solid rgba(16,185,129,0.15)" }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: "#10B981", marginBottom: 8, textTransform: "uppercase", letterSpacing: "1px" }}>{proj.phase}</div>
-                      <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 12 }}>{proj.title}</h3>
-                      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>{proj.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* INTERVIEW & RESUME TAB */}
-              {activeTab === "prep" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                  <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-                      <Target size={20} color="#F59E0B" /> Interview Topics
-                    </h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      {roadmap.interviewPrep.map((prep, i) => (
-                        <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F59E0B", marginTop: 8 }} />
-                          <span style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{prep}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-                      <PenTool size={20} color="#3B82F6" /> Resume Milestones
-                    </h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      {roadmap.resumeMilestones.map((milestone, i) => (
-                        <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                          <CheckCircle size={18} color="#3B82F6" style={{ marginTop: 2, flexShrink: 0 }} />
-                          <span style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{milestone}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </motion.div>
-          </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
         </motion.div>
       )}
     </motion.div>
