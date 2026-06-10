@@ -25,7 +25,7 @@ export default function JobMatchPage() {
   const load = async () => {
     setLoading(true);
     setError(null);
-    const skills = session?.user?.skills?.join(",") || "";
+    const skills = (session?.user as any)?.skills?.join(",") || "";
     const res = await jobsApi.list(skills ? { skills } : undefined);
     if (res.error) {
       setError(res.error);

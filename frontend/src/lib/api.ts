@@ -1,120 +1,733 @@
 /**
- * TulasiAI — Centralized API Client
- * All backend calls go through here. Never put fetch() directly in pages.
+ * Central API client for Tulasi AI backend.
+ * Usage: import { api } from "@/lib/api"
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://tulasi-ai-hycl.onrender.com";
+const isBrowser = typeof window !== "undefined";
+const isDev = process.env.NODE_ENV === "development";
+import toast from "react-hot-toast";
 
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("token");
+// ─── Types ─────────────────────────────────────────────────────────
+export interface Stats {
+  total_users: number; active_24h: number; active_today: number;
+  total_reviews: number; total_submissions: number;
+  total_hackathon_participants: number; total_chat_messages: number;
+  pro_users: number;
+}
+export interface AdminUser {
+  id: number; name: string; email: string; role: string; xp: number;
+  level: number; streak: number; is_pro: boolean; created_at: string;
+  last_seen: string; last_activity_date: string; is_active: boolean;
+  user_type?: string; is_onboarded?: boolean; abuse_count?: number;
+  provider?: string; invite_code?: string; referred_by?: string;
+}
+export interface Review {
+  id: number; name: string; role: string; review: string; rating: number;
+  created_at: string; user_email: string; is_featured: boolean; is_approved: boolean;
+}
+export interface Activity {
+  id: number; user_name: string; user_email: string; action_type: string;
+  title: string; metadata: string; xp: number; created_at: string;
+}
+export interface LeaderboardEntry {
+  rank: number; id: number; name: string; email: string; xp: number;
+  level: number; streak: number; is_pro: boolean; is_top10: boolean;
+}
+export interface CodeAnalytics {
+  total_submissions: number; accepted_count: number; wrong_answer_count: number;
+  acceptance_rate: number; top_solvers: { name: string; email: string; solved_count: number; xp: number }[];
+  unique_solvers: number; total_problems_available: number;
+}
+export interface ChatAnalytics {
+  total_messages: number; user_messages: number; ai_messages: number;
+  active_users_7d: number; active_users_24h: number;
+  last_conversations: { title: string; user_name: string; user_email: string; last_message: string; created_at: string }[];
+}
+export interface Analytics {
+  growth: { date: string; signups: number; actions: number }[];
+  segmentation: { name: string; value: number; color: string }[];
+  total_reviews?: number;
+  approved_reviews?: number;
+  pending_reviews?: number;
+  retention_rate?: number;
+}
+export interface Hackathon {
+  id: number; name: string; organizer: string; status: string;
+  deadline: string; prize: string; link: string; participants_count: number;
+}
+export interface RevenueAnalytics {
+  total_pro_users: number;
+  paying_subscribers: number;
+  referral_pro: number;
+  free_users: number;
+  mrr_inr: number;
+  mrr_usd: number;
+  arr_inr: number;
+  conversion_rate: number;
+  monthly_chart: { month: string; new_pro: number; revenue_inr: number }[];
+  recent_pro_activations: { name: string; email: string; created_at: string; via_referral: boolean }[];
+}
+export interface SystemHealth {
+  status: string;
+  server: { 
+    python_version: string; 
+    platform: string; 
+    response_time_ms: number;
+    cpu_usage_percent?: number;
+    memory_usage_percent?: number;
+    memory_available_gb?: number;
+  };
+  database: { status: string; latency_ms: number; size_bytes: number; size_label: string; table_stats: Record<string, number> };
+  ai_models: Record<string, { available: boolean; model: string; status: string }>;
+  features: Record<string, boolean>;
 }
 
-async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<{ data: T | null; error: string | null; source?: string; fetched_at?: string }> {
-  try {
-    const token = getToken();
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers as Record<string, string> || {}),
-    };
+export interface ReadinessStats {
+  readiness_score: number;
+  label: string;
+  readiness_matrix: Record<string, number>;
+  strengths: string[];
+  gaps: string[];
+  target_role: string;
+  consistency: number;
+}
+export interface AiUserProfile {
+  user_id: number; name: string; email: string;
+  ai_profile: {
+    engagement_level: string; churn_risk: string; user_type: string;
+    strengths: string[]; weaknesses: string[]; growth_opportunities: string[];
+    admin_recommendation: string; summary: string;
+  };
+  fallback?: boolean;
+}
+export interface Announcement {
+  id: string; message: string; type: string;
+  created_at: string; expires_at: string | null; created_by: string;
+}
+export interface InviteCodeStats {
+  total_referred_users: number;
+  unique_codes_used: number;
+  top_codes: { code: string; users: number }[];
+}
+export interface RetentionData {
+  d1_retention: number; d7_retention: number; d30_retention: number;
+  active_7d: number; active_30d: number; dau_mau_ratio: number;
+  total_users: number;
+  daily_signups_chart: { date: string; signups: number }[];
+  weekly_retention: { week: string; cohort_size: number; retained: number; rate: number }[];
+}
+export interface HeatmapData {
+  matrix: { day: string; day_index: number; hour: number; count: number }[];
+  peak: { day: string; hour: number; count: number };
+  total_logged_events: number;
+}
+export interface LiveUsers {
+  online_now: number; active_1h: number; active_24h: number;
+  online_users: { id: number; name: string; email: string; last_seen: string }[];
+}
 
-    const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "Request failed" }));
-      return { data: null, error: err.detail || `Error ${res.status}` };
-    }
 
-    const json = await res.json();
-    return { data: json, error: null, fetched_at: new Date().toISOString() };
-  } catch (e: any) {
-    return { data: null, error: e?.message || "Network error" };
+const LOCAL_DEV_URL = "http://127.0.0.1:10000";
+const PRODUCTION_URL = "https://tulasi-ai-hycl.onrender.com";
+
+// If we are on Vercel (production), and no env var is set, we MUST use Render, not localhost.
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || (isDev ? LOCAL_DEV_URL : PRODUCTION_URL);
+export const API = API_URL;
+
+/** Centralised debug logger — always prints in dev; silent in prod unless token missing */
+function log(label: string, data?: unknown) {
+  if (isDev) {
+    console.log(`[TulasiAPI] ${label}`, data ?? "");
   }
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-export const authApi = {
-  me: () => apiFetch<any>("/api/auth/me"),
-};
-
-// ─── Profile ──────────────────────────────────────────────────────────────────
-export const profileApi = {
-  get: () => apiFetch<any>("/api/profile"),
-  update: (data: any) => apiFetch<any>("/api/profile", { method: "PUT", body: JSON.stringify(data) }),
-};
-
-// ─── Hackathons ───────────────────────────────────────────────────────────────
-export interface Hackathon {
-  id: string | number;
-  title: string;
-  deadline?: string;
-  mode?: string;          // online / offline / hybrid
-  eligibility?: string;
-  registration_url?: string;
-  source_url?: string;
-  source?: string;
-  fetched_at?: string;
-  prize?: string;
-  description?: string;
+/** Resolve token EXCLUSIVELY from localStorage */
+function resolveToken(): string | undefined {
+  if (isBrowser) {
+    const stored = localStorage.getItem("token");
+    if (stored) return stored;
+    // Don't redirect here — the dashboard layout handles auth guards.
+    // Redirecting from API helper causes loops during the session loading phase.
+  }
+  return undefined;
 }
 
-export const hackathonsApi = {
-  list: () => apiFetch<Hackathon[]>("/api/opportunities/hackathons"),
+/** Build a WebSocket URL pointing at the correct host (wss in production, ws locally) */
+export function websocketUrl(path: string): string {
+  if (!isBrowser) return "";
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const host = new URL(API_URL).host;
+  return `${protocol}//${host}${path}`;
+}
+
+// ── Simple In-Memory / LocalStorage Cache ───────────────────────────
+const API_CACHE: Record<string, { data: any; expiry: number }> = {};
+const CACHE_TTL = 300_000; // 5 minutes
+
+export function getCached<T>(key: string): T | null {
+  const item = API_CACHE[key];
+  if (item && Date.now() < item.expiry) return item.data as T;
+  
+  // Try localStorage for cross-session speed
+  if (isBrowser) {
+    const stored = localStorage.getItem(`tulasi_cache_${key}`);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Date.now() < parsed.expiry) return parsed.data as T;
+      } catch (e) {}
+    }
+  }
+  return null;
+}
+
+export function setCached(key: string, data: any, ttl = CACHE_TTL) {
+  const expiry = Date.now() + ttl;
+  API_CACHE[key] = { data, expiry };
+  if (isBrowser && typeof data === "object") {
+    localStorage.setItem(`tulasi_cache_${key}`, JSON.stringify({ data, expiry }));
+  }
+}
+
+const FETCH_TIMEOUT_MS = 15_000; // Reduced to 15s to avoid hangs
+
+async function fetchWithRetry(url: string, options: RequestInit, retries = 1, backoff = 1000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.status >= 500 && retries > 0) {
+      console.warn(`[Sync] Backend status ${res.status}. Retrying in ${backoff}ms...`);
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      return fetchWithRetry(url, options, retries - 1, backoff * 2);
+    }
+
+    return res;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (retries > 0 && err.name !== "AbortError") {
+      console.warn(`[Sync] Network handshake delayed. Retrying in ${backoff}ms...`);
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      return fetchWithRetry(url, options, retries - 1, backoff * 2);
+    }
+    if (err.name === "AbortError") throw new Error("Request timed out (15s). Please try again.");
+    throw err;
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  ignoredToken?: string
+): Promise<T> {
+  const token = resolveToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const fullUrl = `${API_URL}${path}`;
+
+    try {
+      // We use Bearer token headers for auth — cookies are not needed.
+      // Using 'omit' removes the CORS preflight restriction entirely.
+      console.log(`[API Request] → ${options.method || "GET"} ${fullUrl}`);
+      const t0 = performance.now();
+      const res = await fetchWithRetry(fullUrl, { 
+        credentials: "omit", 
+        ...options, 
+        headers, 
+        mode: "cors",
+        cache: "no-store", // Prevent stale health/session data
+      });
+      const t1 = performance.now();
+      console.log(`[API Response] ← ${res.status} ${fullUrl} (${Math.round(t1 - t0)}ms)`);
+      log(`← ${res.status} ${fullUrl}`);
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        if (isBrowser && !window.location.pathname.startsWith("/auth")) {
+          window.location.href = "/auth";
+        }
+        throw new Error("Session expired. Please log in again.");
+      }
+      
+      let backendMsg = res.statusText;
+      try {
+        const errJson = await res.json();
+        if (errJson.detail && Array.isArray(errJson.detail)) {
+          backendMsg = errJson.detail.map((e: any) => e.msg || JSON.stringify(e)).join(". ");
+        } else if (typeof errJson.detail === "string") {
+          backendMsg = errJson.detail;
+        } else {
+          backendMsg = errJson.message || errJson.error || backendMsg;
+        }
+      } catch (e) {}
+      
+      if (res.status === 400) throw new Error(`Invalid Request: ${backendMsg}`);
+      if (res.status >= 500) throw new Error(`Server Error (503): ${backendMsg}`);
+      throw new Error(backendMsg || `Request failed: ${res.status}`);
+    }
+    const data = await res.json();
+    
+    // XP toast — cinematographic
+    if (data && typeof data === "object" && (data as any).xp_earned > 0) {
+      import("@/components/XPNotification").then(mod => {
+        mod.showXPGain((data as any).xp_earned, (data as any).xp_reason || "Learning Milestone");
+      });
+    }
+
+    // Cache GET requests
+    if (options.method === "GET" || !options.method) {
+      setCached(path, data);
+    }
+    
+    return data;
+  } catch (err: unknown) {
+    const error = err as Error;
+    
+    // Check if we have a stale cache version to show as fallback
+    const stale = getCached<T>(path);
+    if (stale && (options.method === "GET" || !options.method)) {
+      console.warn(`[API] Network failed, using stale cache for ${path}`);
+      return stale;
+    }
+
+    const msg = error.message || "Network Error";
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED") || msg.includes("ECONNREFUSED")) {
+      const isLocal = API_URL.includes("localhost") || API_URL.includes("127.0.0.1");
+      throw new Error(isLocal 
+        ? `Backend unreachable at ${API_URL}. Ensure your FastAPI server is running (npm run backend).`
+        : "Backend unreachable. Check your internet connection or Render status.");
+    }
+    throw new Error(msg);
+  }
+}
+
+/**
+ * Safely extract and parse JSON from a potentially messy string (markdown blocks, chatty AI).
+ */
+export function extractAndParseJson<T>(raw: string, fallback: T): T {
+  if (!raw || typeof raw !== "string") return fallback;
+  
+  try {
+    let cleaned = raw.trim();
+    
+    // 1. Try to find the LARGEST array or object structure
+    // This handles: "Sure! [{\"a\":1}]" -> "[{\"a\":1}]"
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+    
+    if (arrayMatch && (!objectMatch || arrayMatch[0].length >= objectMatch[0].length)) {
+      cleaned = arrayMatch[0];
+    } else if (objectMatch) {
+      cleaned = objectMatch[0];
+    }
+
+    // 2. Remove markdown backticks if they are still there
+    cleaned = cleaned.replace(/```[a-z]*\s*|\s*```/gi, "").trim();
+
+    // 3. Clean up trailing commas (common LLM error)
+    cleaned = cleaned.replace(/,\s*([\}\]])/g, "$1");
+
+    return JSON.parse(cleaned) as T;
+  } catch (e) {
+    console.error("[AI Resilience] Global parse failed for raw input:", raw);
+    console.warn("[AI Resilience] Using fallback due to error:", e);
+    return fallback;
+  }
+}
+
+// ─── Admin ───────────────────────────────────────────────────────────────────
+export const adminApi = {
+  stats: () => request<Stats>("/api/admin/stats"),
+  users: () => request<{ users: AdminUser[] }>("/api/admin/users"),
+  reviews: () => request<{ reviews: Review[] }>("/api/admin/reviews"),
+  activity: () => request<{ activity: Activity[] }>("/api/admin/activity"),
+  leaderboard: () => request<{ leaderboard: LeaderboardEntry[] }>("/api/admin/leaderboard"),
+  code: () => request<CodeAnalytics>("/api/admin/code-analytics"),
+  chat: () => request<ChatAnalytics>("/api/admin/chat-analytics"),
+  hackathons: () => request<{ hackathons: Hackathon[] }>("/api/admin/hackathons"),
+  analytics: () => request<Analytics>("/api/admin/analytics"),
+  revenue: () => request<RevenueAnalytics>("/api/admin/revenue"),
+  systemHealth: () => request<SystemHealth>("/api/admin/system-health"),
+  aiProfile: (userId: number) => request<AiUserProfile>(`/api/admin/users/${userId}/ai-profile`),
+  bulkAction: (user_ids: number[], action: string) =>
+    request<{ message: string; affected: number; skipped: number }>("/api/admin/users/bulk-action", {
+      method: "POST",
+      body: JSON.stringify({ user_ids, action }),
+    }),
+  editXP: (user_id: number, xp_delta: number, reason: string) =>
+    request<{ message: string; old_xp: number; new_xp: number; new_level: number }>("/api/admin/users/edit-xp", {
+      method: "POST",
+      body: JSON.stringify({ user_id, xp_delta, reason }),
+    }),
+  exportUsersCSV: () => `${API_URL}/api/admin/export/users`,
+  createAnnouncement: (message: string, type: string, expires_hours: number) =>
+    request<{ message: string; announcement: Announcement }>("/api/admin/announcements", {
+      method: "POST",
+      body: JSON.stringify({ message, type, expires_hours }),
+    }),
+  getAnnouncements: () => request<{ announcements: Announcement[]; count: number }>("/api/admin/announcements"),
+  deleteAnnouncement: (id: string) =>
+    request<{ message: string }>(`/api/admin/announcements/${id}`, { method: "DELETE" }),
+  generateInviteCodes: (count: number, grants_pro: boolean) =>
+    request<{ codes: string[]; count: number; grants_pro: boolean; generated_at: string }>("/api/admin/invite-codes/generate", {
+      method: "POST",
+      body: JSON.stringify({ count, grants_pro }),
+    }),
+  inviteCodeStats: () => request<InviteCodeStats>("/api/admin/invite-codes/stats"),
+  retention: () => request<RetentionData>("/api/admin/retention"),
+  activityHeatmap: () => request<HeatmapData>("/api/admin/activity-heatmap"),
+  liveUsers: () => request<LiveUsers>("/api/admin/live-users"),
+  toggleUser: (user_id: number, is_active: boolean) =>
+    request<{ message: string }>("/api/admin/toggle-user", {
+      method: "POST",
+      body: JSON.stringify({ user_id, is_active }),
+    }),
+  deleteReview: (id: number) =>
+    request<{ message: string }>(`/api/admin/reviews/${id}`, { method: "DELETE" }),
+  featureReview: (id: number) =>
+    request<{ message: string; is_featured: boolean }>(`/api/admin/reviews/${id}/feature`, { method: "PATCH" }),
+  seedHackathons: () =>
+    request<{ message: string }>("/api/admin/seed-hackathons", { method: "POST" }),
+  seedReviews: () =>
+    request<{ message: string }>("/api/admin/seed-reviews", { method: "POST" }),
+  deleteHackathon: (id: number) =>
+    request<{ message: string }>(`/api/admin/hackathons/${id}`, { method: "DELETE" }),
+  approveReview: (id: number) =>
+    request<{ message: string; is_approved: boolean }>(`/api/admin/reviews/${id}/approve`, { method: "PUT" }),
+  foundersProtocol: (topic: string, depth: string = "Deep") =>
+    request<{ topic: string; report: string; generated_at: string }>("/api/admin/founders-protocol", {
+      method: "POST",
+      body: JSON.stringify({ topic, depth }),
+    }),
 };
 
-// ─── Jobs / Internships ───────────────────────────────────────────────────────
+// ─── Intelligence ────────────────────────────────────────────────────────────
+export const intelligenceApi = {
+  getReadiness: () => request<ReadinessStats>("/api/intelligence/career-readiness"),
+  getDailyMission: () => request<{ mission_title: string; mission_description: string; reward_xp: number; module_link: string }>("/api/intelligence/daily-mission"),
+  getDailyRoutine: () => request<{ routine: { time: string; task: string; topic: string; intensity: string }[]; generated_at: string; is_fallback?: boolean }>("/api/intelligence/daily-routine"),
+  getStrategicPlan: () => request<{ master_goal: string; current_standing: string; six_month_roadmap: { month: string; focus: string; milestone: string }[]; immediate_pivot: string }>("/api/intelligence/strategic-plan"),
+  getSystemDesignSolution: (problem_id: string, user_query: string) =>
+    request<{ analysis: string; guidance: string; architecture_tip: string; next_step: string }>("/api/system-design/guided-solution", {
+      method: "POST",
+      body: JSON.stringify({ problem_id, user_query }),
+    }),
+
+  // Intelligence V2
+  getDailyPlan: () => request<{ greeting: string; focus_theme: string; tasks: any[]; daily_quote: string; xp_potential: number; streak_note: string | null }>("/api/intel/daily-plan"),
+  getNextTask: () => request<{ next_task: { action: string; href: string; reason: string; xp: number; icon: string }; current_xp: number; current_streak: number }>("/api/intel/next-task"),
+  getCareerGPS: (year: string, role: string, skills?: string) =>
+    request<any>("/api/intel/career-gps", {
+      method: "POST",
+      body: JSON.stringify({ year, target_role: role, current_skills: skills }),
+    }),
+  getSalaryIntel: (role: string, location: string, yoe: number) =>
+    request<any>("/api/intel/salary-intel", {
+      method: "POST",
+      body: JSON.stringify({ role, location, yoe }),
+    }),
+  askMentor: (question: string, mode: string = "career") =>
+    request<{ response: string; mode: string; mentor_name: string }>("/api/intel/ask-mentor", {
+      method: "POST",
+      body: JSON.stringify({ question, mode }),
+    }),
+  getProfile: () => request<{ profile: any; patterns: any; user: any }>("/api/intel/profile"),
+};
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<{ data: T | null; error: string | null }> {
+  try {
+    const data = await request<T>(endpoint, options);
+    return { data, error: null };
+  } catch (err: any) {
+    return { data: null, error: err.message };
+  }
+}
+
+export const authApi = {
+  register: (email: string, password: string, name: string, invite_code?: string) =>
+    request<{ access_token: string; user: User }>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password, name, invite_code }),
+    }),
+
+  login: (email: string, password: string) =>
+    request<{ access_token: string; user: User }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+
+  me: (token: string) =>
+    request<User & { invite_code: string }>("/api/auth/me", {}, token),
+
+  updateProfile: (data: { name?: string; bio?: string; skills?: string; avatar?: string; target_role?: string; interest_areas?: string }) =>
+    request<{ message: string; user: User }>("/api/users/profile", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+};
+
+// ─── Chat ────────────────────────────────────────────────────────────────────
+
+export const chatApi = {
+  send: async (message: string, session_id?: string, tool?: string) => {
+    let retries = 2;
+    while (retries >= 0) {
+      try {
+        return await request<{ response: string; session_id?: string; model_used?: string }>(
+          "/api/chat",
+          { method: "POST", body: JSON.stringify({ message, session_id, tool }) }
+        );
+      } catch (err) {
+        if (retries === 0) throw err;
+        retries--;
+        await new Promise(r => setTimeout(r, 2000)); // 2 sec delay
+      }
+    }
+    throw new Error("Chat send failed after retries.");
+  },
+
+  feedback: (session_id: string, message_id: string, rating: number) =>
+    request<{ status: string }>("/api/chat/feedback", {
+      method: "POST",
+      body: JSON.stringify({ session_id, message_id, rating }),
+    }),
+
+  history: (session_id: string) =>
+    request<{ messages: ChatMsg[]; session_id: string }>(
+      `/api/chat/history/${session_id}`,
+      {}
+    ),
+
+  clearHistory: (session_id: string) =>
+    request<{ message: string }>(`/api/chat/history/${session_id}`, { method: "DELETE" }),
+
+  sessions: () =>
+    request<{ sessions: ChatSession[] }>("/api/chat/sessions"),
+
+  ragQuery: (query: string) =>
+    request<{ answer: string; sources: any[]; used_model: string }>("/api/rag/query", {
+      method: "POST",
+      body: JSON.stringify({ query }),
+    }),
+
+  indexRag: (documents: { type: string; content: string }[]) =>
+    request<{ status: string }>("/api/rag/index", {
+      method: "POST",
+      body: JSON.stringify({ documents }),
+    }),
+};
+
 export interface JobListing {
-  id: string | number;
+  id: string;
   title: string;
   company: string;
-  location?: string;
-  remote?: boolean;
-  stipend?: string;
-  posted_date?: string;
-  apply_link?: string;
+  location: string;
+  type: string;
+  salary?: string;
+  url: string;
+  skills?: string[];
+  posted_at?: string;
   source?: string;
-  match_reason?: string;
+  stipend?: string;
+  remote?: boolean;
+  posted_date?: string;
   skills_required?: string[];
-  fetched_at?: string;
+  match_reason?: string;
+  apply_link?: string;
 }
 
-export const jobsApi = {
+export const internshipsApi = {
   list: (params?: { skills?: string; location?: string }) => {
     const qs = params ? "?" + new URLSearchParams(params as any).toString() : "";
     return apiFetch<JobListing[]>(`/api/opportunities/jobs${qs}`);
   },
+  apply: (id: string, data: { resume_id?: string; cover_letter?: string }) =>
+    apiFetch<any>(`/api/internships/${id}/apply`, { method: "POST", body: JSON.stringify(data) }),
 };
 
-// ─── Interview ────────────────────────────────────────────────────────────────
-export const interviewApi = {
-  start: (data: { role: string; level: string }) =>
-    apiFetch<any>("/api/interview/start", { method: "POST", body: JSON.stringify(data) }),
-  submit: (sessionId: string, answer: string) =>
-    apiFetch<any>("/api/interview/answer", { method: "POST", body: JSON.stringify({ session_id: sessionId, answer }) }),
-};
+// alias — some pages import jobsApi instead of internshipsApi
+export const jobsApi = internshipsApi;
 
-// ─── Roadmap ──────────────────────────────────────────────────────────────────
+// ─── Roadmap ─────────────────────────────────────────────────────────────────
+
 export const roadmapApi = {
-  generate: (data: any) =>
-    apiFetch<any>("/api/roadmap/generate", { method: "POST", body: JSON.stringify(data) }),
-  get: () => apiFetch<any>("/api/roadmap"),
+  getRoadmaps: (token: string) => request<{ roadmaps: Roadmap[], completed_milestones: string[] }>("/api/roadmap/", {}, token),
+  getRoadmap: (id: string, token: string) => request<Roadmap>(`/api/roadmap/${id}`, {}, token),
+  logProgress: (roadmap_id: string, milestone_id: string, token: string) =>
+    request<{ message: string; xp_earned: number }>("/api/roadmap/progress", {
+      method: "POST",
+      body: JSON.stringify({ roadmap_id, milestone_id }),
+    }, token),
+  generate: (goal: string, token: string) =>
+    request<{ roadmap: Roadmap }>("/api/roadmap/generate", {
+      method: "POST",
+      body: JSON.stringify({ goal }),
+    }, token),
 };
 
-// ─── Chat (AI) ────────────────────────────────────────────────────────────────
-export const chatApi = {
-  send: (message: string, context?: string) =>
-    apiFetch<any>("/api/chat", { method: "POST", body: JSON.stringify({ message, context }) }),
+// ─── Interview ───────────────────────────────────────────────────────────────
+
+export const interviewApi = {
+  start: (role: string, company: string = "Any Company", interview_type: string = "Technical", token: string) =>
+    request<{ question: string; session_id: string; total_questions: number; question_number: number }>("/api/interview/start", {
+      method: "POST",
+      body: JSON.stringify({ role, company, interview_type }),
+    }, token),
+
+  answer: (answer: string, session_id: string, token: string) =>
+    request<{ feedback: string; score: number; next_question?: string }>(
+      "/api/interview/answer",
+      { method: "POST", body: JSON.stringify({ answer, session_id }) },
+      token
+    ),
 };
 
-// ─── Activity / Progress ─────────────────────────────────────────────────────
-export const activityApi = {
-  get: () => apiFetch<any>("/api/activity"),
-  log: (data: { type: string; value: any }) =>
-    apiFetch<any>("/api/activity", { method: "POST", body: JSON.stringify(data) }),
+// ─── Hackathons ──────────────────────────────────────────────────────────────
+
+export const hackathonApi = {
+  list: (tag?: string, status?: string, q?: string, difficulty?: string, mode?: string, token?: string, limit: number = 12, offset: number = 0) => {
+    const params = new URLSearchParams();
+    if (tag && tag !== "All") params.append("tag", tag);
+    if (status && status !== "All") params.append("status", status);
+    if (q) params.append("q", q);
+    if (difficulty && difficulty !== "All") params.append("difficulty", difficulty);
+    if (mode && mode !== "All") params.append("mode", mode);
+    params.append("limit", limit.toString());
+    params.append("offset", offset.toString());
+    return request<{ hackathons: Hackathon[]; total: number; limit: number; offset: number }>(`/api/hackathons?${params.toString()}`, {}, token);
+  },
+  get: (id: number, token?: string) => request<Hackathon>(`/api/hackathons/${id}`, {}, token),
+  recommend: (token: string) => request<{ recommendations: Hackathon[] }>("/api/hackathons/recommend", {}, token),
+  apply: (id: number, token: string) =>
+    request<{ message: string; status: string }>(`/api/hackathons/${id}/apply`, { method: "POST" }, token),
+  create: (data: Partial<Hackathon>, token: string) =>
+    request<Hackathon>("/api/hackathons", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token),
+  bookmark: (id: number, token: string) =>
+    request<Hackathon>(`/api/hackathons/${id}/bookmark`, { method: "POST" }, token),
+  unbookmark: (id: number, token: string) =>
+    request<Hackathon>(`/api/hackathons/${id}/bookmark`, { method: "DELETE" }, token),
+  bookmarked: (token: string) =>
+    request<{ hackathons: Hackathon[] }>("/api/hackathons/bookmarked", {}, token),
+};
+
+export const hackathonsApi = {
+  list: () => apiFetch<Hackathon[]>("/api/opportunities/hackathons"),
+  stats: () => apiFetch<any>("/api/hackathons/stats"),
+  register: (id: string, teamId?: string) =>
+    apiFetch<any>(`/api/hackathons/${id}/register`, { method: "POST", body: JSON.stringify({ team_id: teamId }) }),
+};
+
+// ─── Study Rooms ─────────────────────────────────────────────────────────────
+
+export const studyApi = {
+  rooms: () => request<{ rooms: StudyRoom[] }>("/api/study/rooms"),
+  create: (data: Partial<StudyRoom>, token: string) =>
+    request<StudyRoom>("/api/study/create", { method: "POST", body: JSON.stringify(data) }, token),
+  join: (roomId: number | string, token: string) =>
+    request<StudyRoom>(`/api/study/join/${roomId}`, { method: "POST" }, token),
+  messages: (roomId: number | string, token: string, limit = 50) =>
+    request<{ room_id: number; room_name: string; messages: StudyMessage[] }>(`/api/study/${roomId}/messages?limit=${limit}`, {}, token),
+  sendMessage: (roomId: number | string, content: string, token: string) =>
+    request<StudyMessage>(`/api/study/${roomId}/messages`, { method: "POST", body: JSON.stringify({ content }) }, token),
+};
+
+// ─── Code Practice ───────────────────────────────────────────────────────────
+
+export const codeApi = {
+  problems: (category?: string, difficulty?: string, search?: string, token?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.append("category", category);
+    if (difficulty) params.append("difficulty", difficulty);
+    if (search) params.append("search", search);
+    return request<{ problems: CodeProblem[]; categories: string[]; total: number; solved_count: number }>(`/api/code/problems?${params.toString()}`, {}, token);
+  },
+  getProblem: (id: string, token: string) => request<CodeProblem>(`/api/code/problems/${id}`, {}, token),
+  markSolved: (id: string, token: string) =>
+    request<{ success: boolean; newly_solved: boolean; problem_id: string; solved_count: number; progress_pct: number; xp_earned: number }>(`/api/code/problems/${id}/solve`, { method: "POST" }, token),
+  run: (code: string, language: string, token: string, stdin?: string) =>
+    request<{ stdout: string; stderr: string; output: string; status: string; execution_time_ms?: number }>("/api/code/run", { method: "POST", body: JSON.stringify({ code, language, stdin }) }, token),
+  submit: (code: string, language: string, problem_id: string, token: string) =>
+    request<{ verdict: string; status: string; message: string; stdout: string; stderr: string; expected: string; execution_time_ms: number; newly_solved: boolean; xp_earned: number; failed_input?: string; test_cases_passed?: number; total_test_cases?: number }>("/api/code/submit", { method: "POST", body: JSON.stringify({ code, language, problem_id }) }, token),
+  explain: (code: string, language: string, token: string) =>
+    request<{ explanation: string; status: string }>("/api/code/explain", { method: "POST", body: JSON.stringify({ code, language }) }, token),
+};
+
+// ─── Auth / User ─────────────────────────────────────────────────────────────
+
+// ─── Startup Lab ─────────────────────────────────────────────────────────────
+
+export const startupApi = {
+  generate: (domain: string, target_audience: string, token: string) =>
+    request<{ status: string; idea: StartupIdea }>("/api/startup/generate", { method: "POST", body: JSON.stringify({ domain, target_audience }) }, token),
+  save: (idea: Partial<StartupIdea>, token: string) =>
+    request<{ message: string; id: number }>("/api/startup/save", { method: "POST", body: JSON.stringify(idea) }, token),
+  ideas: (token: string) => request<{ ideas: StartupIdea[] }>("/api/startup/ideas", {}, token),
+  generatePitchDeck: (data: { name: string; problem: string; solution: string; market_opportunity: string; monetization: string }, token: string) =>
+    request<{ status: string; pitch_deck: string }>("/api/startup/pitch-deck", { method: "POST", body: JSON.stringify(data) }, token),
+};
+
+// ─── Certificates ────────────────────────────────────────────────────────────
+
+export const certificateApi = {
+  list: (token: string) => request<{ certificates: Certificate[], milestones: Milestone[] }>("/api/certificates-legacy/my", {}, token),
+  generate: (milestoneId: string, token: string) => request<{ message: string }>(`/api/certificates-legacy/generate/${milestoneId}`, { method: "POST" }, token),
+  uploadFile: async (file: File, title: string, token: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("title", title);
+    const res = await fetchWithRetry(`${API_URL}/api/certificates-legacy/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Upload failed");
+    return res.json() as Promise<{ id: number; title: string; file_path: string }>;
+  },
+};
+
+// ─── Resume Builder ──────────────────────────────────────────────────────────
+
+export const resumeApi = {
+  improve: (data: { resume_text: string, job_description: string, mode: string, document_type: string }, token: string) =>
+    request<{ ats_score: number; readability_score: number; keyword_match_percent: number; feedback: string[]; missing_keywords: string[]; improved_resume: string }>("/api/resume/improve", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token),
+  
+  getHistory: (token: string) =>
+    request<ResumeHistory[]>("/api/resume/history", {
+      method: "GET",
+    }, token),
+};
+
+// ─── Health Check ─────────────────────────────────────────────────────────────
+
+/** Health check — uses the correct /api/health path (NOT /health) */
+export const healthCheck = () =>
+  request<{ status: string; server: string; version: string; services: string[]; uptime_seconds: number }>("/api/health");
+
+// ─── Gamification & Activity ─────────────────────────────────────────────────
+
+export const dailyChallengeApi = {
+  getToday: () => apiFetch<any>("/api/daily-challenge/today"),
+  submit: (code: string) =>
+    apiFetch<any>("/api/daily-challenge/submit", { method: "POST", body: JSON.stringify({ code }) }),
+  getLeaderboard: () => apiFetch<any[]>("/api/daily-challenge/leaderboard"),
 };
 
 // ─── Specialized Agents ──────────────────────────────────────────────────────
@@ -131,3 +744,379 @@ export const portfolioApi = {
     apiFetch<any>(`/api/portfolio/github?username=${encodeURIComponent(username)}`),
 };
 
+export const activityApi = {
+  getStats: (token: string) => request<Record<string, unknown>>("/api/activity/stats", {}, token),
+  getLeaderboard: (token?: string) => request<{ 
+    leaderboard: LeaderboardUser[]; 
+    user_context?: { rank: number; xp: number; streak: number; problems_solved: number; is_pro: boolean } 
+  }>("/api/activity/leaderboard", {}, token),
+  getAnalytics: (token: string) => request<{ time_series: AnalyticsSeries[], total_period_xp: number, total_period_problems: number }>("/api/activity/analytics", {}, token),
+  getPublicFeed: () => request<{ feed: any[] }>("/api/activity/public-feed"),
+  get: () => apiFetch<any>("/api/activity"),
+  log: (data: { type: string; value: any }) => apiFetch<any>("/api/activity", { method: "POST", body: JSON.stringify(data) }),
+};
+
+export const profileApi = {
+  update: (data: { name?: string; bio?: string; skills?: string; avatar?: string; target_role?: string; interest_areas?: string }) =>
+    request<{ message: string; user: User }>("/api/users/profile", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  getExtended: (token: string) =>
+    request<{ current_role?: string; company?: string; experience_years?: number; skill_level?: string; student_year?: string }>("/api/profile/me", {}, token),
+  updateExtended: (data: { current_role?: string; company?: string; experience_years?: number; skill_level?: string; student_year?: string }, token: string) =>
+    request<any>("/api/profile/me", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token),
+  setUserType: (user_type: string, token: string) =>
+    request<{ id: number; user_type: string; is_onboarded: boolean }>(`/api/profile/set-user-type?user_type=${user_type}`, {
+      method: "POST"
+    }, token),
+};
+
+// ─── Group Chat ───────────────────────────────────────────────────────────────
+
+export const groupApi = {
+  list: (token: string) => request<{ groups: Group[] }>("/api/groups", {}, token),
+  create: (name: string, description: string, token: string) =>
+    request<Group>("/api/groups/create", {
+      method: "POST",
+      body: JSON.stringify({ name, description }),
+    }, token),
+  join: (join_code: string, token: string) =>
+    request<{ message: string; group: Group }>("/api/groups/join", {
+      method: "POST",
+      body: JSON.stringify({ join_code }),
+    }, token),
+  getMessages: (groupId: number, token: string) =>
+    request<{ group_id: number; messages: GroupMessage[] }>(`/api/groups/${groupId}/messages`, {}, token),
+  sendMessage: (groupId: number, content: string, token: string, is_encrypted: boolean = false) =>
+    request<GroupMessage>(`/api/groups/${groupId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content, is_encrypted }),
+    }, token),
+};
+
+// ─── Rewards ─────────────────────────────────────────────────────────────────
+
+export const rewardApi = {
+  getRewards: (token: string) => request<{ rewards: Reward[] }>("/api/activity/rewards", {}, token),
+  redeem: (reward_id: number, token: string) => 
+    request<{ message: string; remaining_xp: number }>("/api/activity/rewards/redeem", {
+      method: "POST",
+      body: JSON.stringify({ reward_id })
+    }, token)
+};
+
+// ─── Payment (Razorpay) ──────────────────────────────────────────────────────
+
+export const paymentApi = {
+  /**
+   * Create a Razorpay order on the backend.
+   * Returns order_id, amount (in paise), currency, and the public key_id.
+   */
+  createOrder: () =>
+    request<{ order_id: string; amount: number; currency: string; key_id: string }>(
+      "/api/payment/create-order",
+      { method: "POST" }
+    ),
+
+  /**
+   * Verify Razorpay payment signature on the backend.
+   * Backend checks HMAC-SHA256 and sets is_pro = true on success.
+   */
+  verifyPayment: (data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) =>
+    request<{ success: boolean; message: string; is_pro: boolean }>(
+      "/api/payment/verify",
+      { method: "POST", body: JSON.stringify(data) }
+    ),
+
+  /** Get current user's Pro status */
+  getStatus: () =>
+    request<{ user_id: number; email: string; is_pro: boolean; plan: string }>(
+      "/api/payment/status"
+    ),
+
+  /** Simulate Pro Upgrade */
+  simulatePayment: () =>
+    request<{ success: boolean; message: string; is_pro: boolean }>(
+      "/api/payment/simulate",
+      { method: "POST" }
+    ),
+};
+
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+
+export interface ReviewItem {
+  id: number;
+  name: string;
+  email?: string;
+  role?: string;
+  review: string;
+  rating: number;
+  created_at: string;
+}
+
+export const reviewsApi = {
+  getReviews: () => request<ReviewItem[]>("/api/reviews"),
+  submitReview: (data: { name: string; email?: string; role?: string; review: string; rating: number }) =>
+    request<ReviewItem>("/api/reviews", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+export const messagesApi = {
+  getDirectory: () => request<{ users: any[] }>("/api/messages/users/directory"),
+  getMessages: (userId: number) => request<{ messages: any[] }>(`/api/messages/${userId}`),
+  markAsSeen: (senderId: number) => request<{ status: string; count: number }>(`/api/messages/seen/${senderId}`, { method: "PATCH" }),
+  getStatus: (userId: number) => request<{ status: string; is_initiator: boolean }>(`/api/messages/requests/status/${userId}`),
+  handleRequest: (sender_id: number, action: string) => request<{ status: string; new_status: string }>("/api/messages/requests/handle", {
+    method: "POST",
+    body: JSON.stringify({ sender_id, action }),
+  }),
+  sendMessage: (receiver_id: number, content: string, media_type?: string, media_url?: string, reply_to_id?: number) => 
+    request<{ status: string; message: any; request_status: string }>("/api/messages", {
+      method: "POST",
+      body: JSON.stringify({ receiver_id, content, media_type, media_url, reply_to_id }),
+    }),
+  deleteMessage: (message_id: number) => request<{ status: string; message_id: number }>(`/api/messages/${message_id}`, {
+    method: "DELETE",
+  }),
+  uploadMedia: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<{ status: string; media_url: string; media_type: string }>("/api/messages/upload", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  toggleReaction: (messageId: number, emoji: string) => 
+    request<{ status: string; reactions: any[] }>(`/api/messages/${messageId}/react?emoji=${encodeURIComponent(emoji)}`, {
+      method: "PATCH",
+    }),
+  
+  // ── Extended dashboard methods ──
+  mentorChat: async (content: string, media_type?: string, media_url?: string) =>
+    request<any>("/api/intel/chat", {
+      method: "POST",
+      body: JSON.stringify({ message: content, media: media_url })
+    }),
+  searchUsers: (q: string) => request<{ users: any[] }>(`/api/users/search?q=${encodeURIComponent(q)}`),
+  getGroupMessages: async (groupId: number, limit = 50) =>
+    request<any>(`/api/groups/${groupId}/messages?limit=${limit}`),
+  sendGroupMessage: (groupId: number, content: string) =>
+    request<any>(`/api/groups/${groupId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content })
+    }),
+  // Follow logic
+  followUser: (userId: number) => request<{ status: string; follow_status: string }>(`/api/follow/${userId}`, { method: "POST" }),
+  acceptFollow: (userId: number) => request<{ status: string; follow_status: string }>(`/api/follow/${userId}/accept`, { method: "PATCH" }),
+  unfollowUser: (userId: number) => request<{ status: string }>(`/api/follow/${userId}`, { method: "DELETE" }),
+};
+
+export const usersApi = {
+  uploadAvatar: async (file: File, token: string): Promise<{ status: string; avatar_url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_URL}/api/users/avatar/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Avatar upload failed");
+    }
+    return res.json();
+  },
+  removeBg: async (file: File, token: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_URL}/api/users/avatar/remove-bg`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) throw new Error("Background removal failed");
+    return res.blob();
+  },
+  setUsername: (username: string) => request<{ status: string; username: string }>("/api/users/set-username", {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  }),
+  search: (q: string) => request<{ users: any[] }>(`/api/users/search?q=${encodeURIComponent(q)}`),
+};
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export interface User {
+  id: number;
+  email: string;
+  username?: string;
+  name: string;
+  role: "student" | "admin";
+  avatar?: string;
+  streak?: number;
+  xp?: number;
+  level?: number;
+  invite_code?: string;
+  is_pro?: boolean;
+}
+
+export interface ChatMsg {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatSession {
+  session_id: string;
+  title: string;
+  last_active: string;
+}
+
+export interface Hackathon {
+  id: number;
+  title: string;
+  organizer: string;
+  description: string;
+  prize_pool: string;
+  deadline: string;
+  registration_deadline?: string;
+  registration_link: string;
+  tags: string;
+  image_url: string;
+  participants_count: number;
+  status: string;
+  bookmarked: boolean;
+  applied: boolean;
+  application_status: string;
+  mode: string;
+  difficulty: string;
+  team_size: string;
+  start_date: string;
+  end_date: string;
+  domains: string;
+  currency: string;
+  location?: string;
+  [key: string]: string | number | boolean | string[] | undefined | null;
+}
+
+export interface StudyRoom {
+  id: number;
+  name: string;
+  topic?: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface StudyMessage {
+  id: number;
+  user_name: string;
+  content: string;
+  created_at: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface CodeProblem {
+  id: string;
+  title: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Milestone {
+  id: string;
+  title: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Certificate {
+  id: number;
+  title: string;
+  file_path: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Group {
+  id: number;
+  name: string;
+  description: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface GroupMessage {
+  id: number;
+  user_name: string;
+  content: string;
+  created_at: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface Roadmap {
+  id: string;
+  title: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface AnalyticsSeries {
+  date: string;
+  xp: number;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface LeaderboardUser {
+  rank: number;
+  name: string;
+  xp: number;
+  level: number;
+  avatar?: string;
+  streak: number;
+  problems_solved: number;
+  is_pro: boolean;
+}
+
+export interface Reward {
+  id: number;
+  title: string;
+  cost: number;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+// ─── PDF / Document Q&A ──────────────────────────────────────────────
+
+export const pdfApi = {
+  upload: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<{ filename: string; chunks_indexed: number; message: string }>("/api/pdf/upload", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  status: () => request<{ indexed_chunks: number }>("/api/pdf/status"),
+  clear: () => request<{ message: string }>("/api/pdf/clear", { method: "DELETE" }),
+  ask: (question: string, top_k = 5) =>
+    request<{ answer: string; citations: string[]; chunks_used?: number }>("/api/pdf/ask", {
+      method: "POST",
+      body: JSON.stringify({ question, top_k }),
+    }),
+};
+
+export interface StartupIdea {
+  id: number;
+  domain: string;
+  idea: string;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export interface ResumeHistory {
+  id: number;
+  score: number;
+  [key: string]: string | number | boolean | undefined | null;
+}
