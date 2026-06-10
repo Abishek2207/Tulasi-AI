@@ -63,7 +63,7 @@ export interface Hackathon {
 }
 
 export const hackathonsApi = {
-  list: () => apiFetch<Hackathon[]>("/api/hackathons"),
+  list: () => apiFetch<Hackathon[]>("/api/opportunities/hackathons"),
 };
 
 // ─── Jobs / Internships ───────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ export interface JobListing {
 export const jobsApi = {
   list: (params?: { skills?: string; location?: string }) => {
     const qs = params ? "?" + new URLSearchParams(params as any).toString() : "";
-    return apiFetch<JobListing[]>(`/api/internships${qs}`);
+    return apiFetch<JobListing[]>(`/api/opportunities/jobs${qs}`);
   },
 };
 
@@ -116,3 +116,18 @@ export const activityApi = {
   log: (data: { type: string; value: any }) =>
     apiFetch<any>("/api/activity", { method: "POST", body: JSON.stringify(data) }),
 };
+
+// ─── Specialized Agents ──────────────────────────────────────────────────────
+export const agentsApi = {
+  dsa: (message: string, context?: string) =>
+    apiFetch<any>("/api/agents/dsa", { method: "POST", body: JSON.stringify({ message, context }) }),
+  communication: (message: string, prompt_id?: string) =>
+    apiFetch<any>("/api/agents/communication", { method: "POST", body: JSON.stringify({ message, prompt_id }) }),
+};
+
+// ─── Portfolio ───────────────────────────────────────────────────────────────
+export const portfolioApi = {
+  getGithub: (username: string) => 
+    apiFetch<any>(`/api/portfolio/github?username=${encodeURIComponent(username)}`),
+};
+

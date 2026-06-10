@@ -190,6 +190,14 @@ class Hackathon(SQLModel, table=True):
     domains: str = "" # Comma-separated domains
     currency: str = "USD"
     location: Optional[str] = None
+    
+    # ── Platform Upgrade API Source Tracking ──
+    source_name: Optional[str] = None
+    source_url: Optional[str] = None
+    fetched_at: Optional[datetime] = None
+    raw_payload: Optional[str] = None
+    verified_status: str = "pending" # pending | verified | rejected
+
 
 
 # IMPORTANT FIX
@@ -452,6 +460,13 @@ class Internship(SQLModel, table=True):
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    # ── Platform Upgrade API Source Tracking ──
+    source_name: Optional[str] = None
+    source_url: Optional[str] = None
+    fetched_at: Optional[datetime] = None
+    raw_payload: Optional[str] = None
+    verified_status: str = "pending" # pending | verified | rejected
+
 
 # ── Feature #6: Prep Plan ─────────────────────────────────────────────────────
 class PrepPlan(SQLModel, table=True):
@@ -556,3 +571,33 @@ class MentorInsight(SQLModel, table=True):
     insight_text: str
     is_read: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ── Production Update Models ──────────────────────────────────────────────
+
+class ApplicationTracker(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    company: str
+    role: str
+    status: str = "Applied" # Applied | Shortlisted | Interview | Offer | Rejected
+    applied_date: str
+    source_url: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AgentLog(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    agent_name: str
+    action: str
+    data_source: Optional[str] = None
+    confidence: Optional[int] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ApiSource(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True)
+    status: str = "connected" # connected | error | disabled
+    last_sync: Optional[datetime] = None
+    error_message: Optional[str] = None
+

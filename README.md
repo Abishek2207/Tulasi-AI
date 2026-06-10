@@ -22,11 +22,42 @@ To gracefully kill both servers when you are done, simply double-click or run:
 ./stop_dev.bat
 ```
 
+## 🔐 Environment Setup (Production Upgrade)
+
+TulasiAI now uses a Free-First API architecture! No credit cards required.
+
+1. **Backend API Keys:**
+   Navigate to the `backend/` directory, copy `.env.example` to `.env`, and fill in the keys:
+   ```bash
+   cd backend
+   cp .env.example .env
+   ```
+   *Required Keys:*
+   - `GEMINI_API_KEY` (Free tier from Google AI Studio. Required for DSA, Communication, Interview Agents)
+
+   *Optional Keys:*
+   - `ADZUNA_APP_ID` & `ADZUNA_APP_KEY` (For additional Job matches, otherwise RemoteOK is used)
+   - `JOOBLE_API_KEY` (For additional Job matches)
+   - `GITHUB_TOKEN` (Not required, Public API is used. Add to increase rate limits)
+
+2. **Frontend Config:**
+   Navigate to the `frontend/` directory, copy `.env.example` to `.env.local`:
+   ```bash
+   cd frontend
+   cp .env.example .env.local
+   ```
+   *Required Keys:*
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+3. **Verify Configuration:**
+   Once both servers are running, go to **`http://localhost:3000/dashboard/settings/api-setup`** in your browser to verify that your integrations are securely connected.
+
 ## 🔄 Toggling API Connections
 
-If you want to use your Local Backend (`http://127.0.0.1:10000`), simply add this to your `frontend/.env.local`:
+If you want to use your Local Backend (`http://127.0.0.1:8000`), simply add this to your `frontend/.env.local`:
 ```env
-NEXT_PUBLIC_LOCAL_BACKEND="http://127.0.0.1:10000"
+NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
 ```
 To reconnect back to the live Production Cloud API (`https://tulasi-ai-hycl.onrender.com`), simply delete that line.
 
@@ -40,7 +71,8 @@ cd backend
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 10000
+python create_db.py  # Run database migration for first-time setup
+uvicorn app.main:app --reload --port 8000
 ```
 
 **Frontend:**
