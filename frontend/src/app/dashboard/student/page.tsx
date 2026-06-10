@@ -1,119 +1,341 @@
 "use client";
 
-import React from "react";
-import { motion, Variants } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useSession } from "@/hooks/useSession";
-import { TiltCard } from "@/components/ui/TiltCard";
+import { AgentBadge } from "@/components/ui/AgentBadge";
 import {
-  MessageSquare, Target, Map, FileText,
-  Rocket, FolderKanban, BriefcaseBusiness, LayoutTemplate, TrendingUp,
-  Sparkles, ArrowRight
+  Brain, Briefcase, Target, ChevronRight, ChevronDown,
+  Code2, MessageCircle, Mic, Map, FileText, FolderGit2,
+  Rocket, BriefcaseBusiness, LayoutTemplate, TrendingUp,
+  ClipboardList, Sparkles, ArrowRight, Zap, Activity,
 } from "lucide-react";
 
-const AGENTS = [
-  { id: "career-copilot", title: "Career Copilot", desc: "Your personal AI guide navigating you to your dream role.", icon: <MessageSquare size={28} />, link: "/dashboard/career-copilot", color: "#8B5CF6" },
-  { id: "resume-analyzer", title: "Resume Analyzer", desc: "Instantly parse and optimize your resume for ATS systems.", icon: <FileText size={28} />, link: "/dashboard/resume-analyzer", color: "#3B82F6" },
-  { id: "roadmap", title: "Personalized Roadmap", desc: "Generate a custom, day-by-day technical learning path.", icon: <Map size={28} />, link: "/dashboard/personalized-roadmap", color: "#10B981" },
-  { id: "interview", title: "AI Interviewer", desc: "Live mock interviews with an adaptive AI Hiring Manager.", icon: <Target size={28} />, link: "/dashboard/ai-interview", color: "#F43F5E" },
-  { id: "project-builder", title: "Project Builder", desc: "Architecture, step-by-step guidance, and code scaffolds.", icon: <FolderKanban size={28} />, link: "/dashboard/project-builder", color: "#FFD93D" },
-  { id: "job-match", title: "Job & Internship Match", desc: "AI algorithms match your skills to live opportunities.", icon: <BriefcaseBusiness size={28} />, link: "/dashboard/job-internship-match", color: "#06B6D4" },
-  { id: "hackathon", title: "Hackathon Agent", desc: "Idea generation, team forming, and rapid prototyping.", icon: <Rocket size={28} />, link: "/dashboard/hackathon-agent", color: "#F97316" },
-  { id: "portfolio", title: "Portfolio Builder", desc: "Auto-generate a stunning developer portfolio site.", icon: <LayoutTemplate size={28} />, link: "/dashboard/portfolio-builder", color: "#A855F7" },
-  { id: "progress", title: "Progress Tracker", desc: "Quantify your growth with deep neural analytics.", icon: <TrendingUp size={28} />, link: "/dashboard/progress-tracker", color: "#EC4899" },
+// ─── Hub & Agent Definitions ────────────────────────────────────────────────
+
+const HUBS = [
+  {
+    id: "learn",
+    icon: Brain,
+    title: "Learn & Crack Interviews",
+    tagline: "Master DSA, communication, and live mock interviews.",
+    color: "#8B5CF6",
+    gradient: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(99,102,241,0.05))",
+    border: "rgba(139,92,246,0.3)",
+    agents: [
+      {
+        id: "dsa-agent",
+        title: "DSA Agent",
+        desc: "Personalized DSA plan, weak-area detection, and daily problems.",
+        icon: Code2,
+        link: "/dashboard/dsa-agent",
+        badge: "beta" as const,
+        color: "#8B5CF6",
+      },
+      {
+        id: "communication-agent",
+        title: "Communication Agent",
+        desc: "Interview speaking prompts, grammar feedback, confidence score.",
+        icon: Mic,
+        link: "/dashboard/communication-agent",
+        badge: "beta" as const,
+        color: "#A78BFA",
+      },
+      {
+        id: "ai-interview",
+        title: "AI Interview Agent",
+        desc: "Live mock interviews based on your role, resume, and target company.",
+        icon: MessageCircle,
+        link: "/dashboard/ai-interview",
+        badge: "live" as const,
+        color: "#6D28D9",
+      },
+    ],
+  },
+  {
+    id: "career",
+    icon: Briefcase,
+    title: "Career Builder",
+    tagline: "Build your roadmap, resume, projects, and hackathon strategy.",
+    color: "#10B981",
+    gradient: "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.05))",
+    border: "rgba(16,185,129,0.3)",
+    agents: [
+      {
+        id: "roadmap",
+        title: "Roadmap Agent",
+        desc: "Real personalized roadmap based on year, skills, target role, and time.",
+        icon: Map,
+        link: "/dashboard/personalized-roadmap",
+        badge: "live" as const,
+        color: "#10B981",
+      },
+      {
+        id: "resume",
+        title: "Resume Agent",
+        desc: "ATS-optimized resume builder from your real data.",
+        icon: FileText,
+        link: "/dashboard/resume-analyzer",
+        badge: "live" as const,
+        color: "#34D399",
+      },
+      {
+        id: "project-builder",
+        title: "Project Agent",
+        desc: "Project recommendations based on your skill level and career goals.",
+        icon: FolderGit2,
+        link: "/dashboard/project-builder",
+        badge: "live" as const,
+        color: "#059669",
+      },
+      {
+        id: "hackathon",
+        title: "Hackathon Agent",
+        desc: "Real live hackathons with deadlines, mode, and registration links.",
+        icon: Rocket,
+        link: "/dashboard/hackathon-agent",
+        badge: "live" as const,
+        color: "#F97316",
+      },
+    ],
+  },
+  {
+    id: "opportunities",
+    icon: Target,
+    title: "Opportunities & Tracking",
+    tagline: "Find real jobs, track applications, and build your portfolio.",
+    color: "#3B82F6",
+    gradient: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.05))",
+    border: "rgba(59,130,246,0.3)",
+    agents: [
+      {
+        id: "job-match",
+        title: "Job Match Agent",
+        desc: "Real internships/jobs matched to your resume, skills, and location.",
+        icon: BriefcaseBusiness,
+        link: "/dashboard/job-internship-match",
+        badge: "live" as const,
+        color: "#3B82F6",
+      },
+      {
+        id: "application-tracker",
+        title: "Application Tracker",
+        desc: "Track applied, shortlisted, interview, offer, and rejected stages.",
+        icon: ClipboardList,
+        link: "/dashboard/application-tracker",
+        badge: "live" as const,
+        color: "#60A5FA",
+      },
+      {
+        id: "portfolio",
+        title: "Portfolio Agent",
+        desc: "Generate portfolio from your GitHub, resume, and real projects.",
+        icon: LayoutTemplate,
+        link: "/dashboard/portfolio-builder",
+        badge: "beta" as const,
+        color: "#A855F7",
+      },
+    ],
+  },
 ];
 
-export default function DashboardPage() {
+// ─── Main Component ──────────────────────────────────────────────────────────
+
+export default function StudentDashboard() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Engineer";
+  const [openHub, setOpenHub] = useState<string | null>(null);
 
-  const container: Variants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
-  };
-
-  const item: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } }
-  };
+  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
+  const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" as const } } };
 
   return (
-    <motion.div initial="hidden" animate="show" variants={container} style={{ maxWidth: 1400, margin: "0 auto", paddingBottom: 60, position: "relative" }}>
-      {/* Technical Background Elements */}
-      <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
-        <div className="bg-grid" style={{ position: "absolute", inset: 0, opacity: 0.05 }} />
-        <div className="bg-dot" style={{ position: "absolute", inset: 0, opacity: 0.1, transform: "scale(1.2)" }} />
-        <div className="neural-pulse" style={{ position: "absolute", top: "10%", left: "5%", width: "40%", height: "40%", background: "radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)" }} />
-      </div>
-
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <motion.div variants={item} style={{ marginBottom: 40, marginTop: 20 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 20, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", color: "#A78BFA", fontSize: 13, fontWeight: 800, marginBottom: 16 }}>
-            <Sparkles size={16} /> AI CAREER OS
-          </div>
-          <h1 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, color: "white", letterSpacing: "-1px", lineHeight: 1.1, marginBottom: 16, fontFamily: "var(--font-outfit)" }}>
-            Welcome back, {userName}.<br/>
-            <span style={{ color: "var(--text-muted)" }}>Which agent do you need today?</span>
-          </h1>
-        </motion.div>
-
-        <div className="agents-grid">
-          {AGENTS.map((agent) => (
-            <motion.div key={agent.id} variants={item}>
-              <TiltCard intensity={5} style={{ height: "100%" }}>
-                <Link href={agent.link} style={{ textDecoration: "none", display: "block", height: "100%" }}>
-                  <div className="glass-card-premium" style={{
-                    padding: 36, height: "100%", display: "flex", flexDirection: "column", transition: "all 0.4s var(--ease-premium)",
-                    background: "rgba(255,255,255,0.02)", borderRadius: 32, border: "1px solid rgba(255,255,255,0.05)"
-                  }} onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                    e.currentTarget.style.borderColor = `${agent.color}40`;
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                  }} onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.02)";
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}>
-                    <div style={{
-                      width: 64, height: 64, borderRadius: 20, background: `${agent.color}15`, border: `1px solid ${agent.color}30`,
-                      display: "flex", alignItems: "center", justifyContent: "center", color: agent.color, marginBottom: 28,
-                      boxShadow: `0 12px 24px ${agent.color}20`
-                    }}>
-                      {React.cloneElement(agent.icon as any, { size: 32 })}
-                    </div>
-                    <h3 style={{ fontSize: 22, fontWeight: 900, marginBottom: 10, color: "white", fontFamily: "var(--font-outfit)", letterSpacing: "-0.5px" }}>{agent.title}</h3>
-                    <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 28, fontWeight: 500 }}>{agent.desc}</p>
-                    <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 900, color: agent.color, textTransform: "uppercase", letterSpacing: 1.5 }}>
-                      Initialize Agent <ArrowRight size={16} />
-                    </div>
-                  </div>
-                </Link>
-              </TiltCard>
-            </motion.div>
-          ))}
+    <motion.div
+      initial="hidden" animate="show" variants={container}
+      style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 80 }}
+    >
+      {/* ── Header ── */}
+      <motion.div variants={item} style={{ marginBottom: 48, marginTop: 8 }}>
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 8,
+          padding: "6px 14px", borderRadius: 20,
+          background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.18)",
+          color: "#A78BFA", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em",
+          textTransform: "uppercase", marginBottom: 18,
+        }}>
+          <Activity size={13} />
+          Intelligent Career Infrastructure
         </div>
+
+        <h1 style={{
+          fontSize: "clamp(30px, 5vw, 46px)", fontWeight: 900, color: "white",
+          letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 14,
+          fontFamily: "var(--font-outfit)",
+        }}>
+          Welcome back, {userName}.<br />
+          <span style={{ color: "rgba(255,255,255,0.3)" }}>Choose your agent.</span>
+        </h1>
+
+        <p style={{ fontSize: 15, color: "rgba(255,255,255,0.4)", maxWidth: 500, lineHeight: 1.6 }}>
+          Every agent works with real data only. No fake scores, no demo content.
+          If a data source is missing, you&apos;ll see a clear prompt to connect it.
+        </p>
+      </motion.div>
+
+      {/* ── Hub Cards ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {HUBS.map((hub) => {
+          const isOpen = openHub === hub.id;
+          const HubIcon = hub.icon;
+
+          return (
+            <motion.div key={hub.id} variants={item}>
+              {/* Hub Header Card */}
+              <div
+                onClick={() => setOpenHub(isOpen ? null : hub.id)}
+                style={{
+                  padding: "28px 32px", borderRadius: isOpen ? "24px 24px 0 0" : 24,
+                  background: isOpen ? hub.gradient : "rgba(255,255,255,0.02)",
+                  border: `1px solid ${isOpen ? hub.border : "rgba(255,255,255,0.06)"}`,
+                  borderBottom: isOpen ? "none" : undefined,
+                  cursor: "pointer", transition: "all 0.3s ease",
+                  display: "flex", alignItems: "center", gap: 20,
+                  userSelect: "none",
+                }}
+                onMouseEnter={e => {
+                  if (!isOpen) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                    e.currentTarget.style.borderColor = hub.border;
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isOpen) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                  }
+                }}
+              >
+                {/* Icon */}
+                <div style={{
+                  width: 56, height: 56, borderRadius: 18, flexShrink: 0,
+                  background: `${hub.color}15`, border: `1px solid ${hub.color}30`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: `0 8px 24px ${hub.color}20`,
+                }}>
+                  <HubIcon size={28} color={hub.color} />
+                </div>
+
+                {/* Text */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 900, color: "white", marginBottom: 4, fontFamily: "var(--font-outfit)" }}>
+                    {hub.title}
+                  </h2>
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>
+                    {hub.tagline}
+                  </p>
+                </div>
+
+                {/* Meta */}
+                <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>
+                    {hub.agents.length} agents
+                  </span>
+                  <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
+                    <ChevronDown size={20} color="rgba(255,255,255,0.4)" />
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Expanded Sub-Agents Grid */}
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25 }}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                      gap: 1,
+                      background: hub.border,
+                      borderRadius: "0 0 24px 24px",
+                      overflow: "hidden",
+                      border: `1px solid ${hub.border}`,
+                      borderTop: "none",
+                    }}
+                  >
+                    {hub.agents.map((agent) => {
+                      const AgentIcon = agent.icon;
+                      return (
+                        <Link key={agent.id} href={agent.link} style={{ textDecoration: "none" }}>
+                          <div
+                            style={{
+                              padding: "24px 28px", background: "rgba(10,10,12,0.95)",
+                              transition: "all 0.2s ease", cursor: "pointer",
+                              height: "100%", display: "flex", flexDirection: "column", gap: 14,
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = `${agent.color}08`; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "rgba(10,10,12,0.95)"; }}
+                          >
+                            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                              <div style={{
+                                width: 42, height: 42, borderRadius: 14,
+                                background: `${agent.color}12`, border: `1px solid ${agent.color}25`,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                              }}>
+                                <AgentIcon size={20} color={agent.color} />
+                              </div>
+                              <AgentBadge variant={agent.badge} />
+                            </div>
+
+                            <div>
+                              <h3 style={{ fontSize: 15, fontWeight: 800, color: "white", marginBottom: 6 }}>
+                                {agent.title}
+                              </h3>
+                              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
+                                {agent.desc}
+                              </p>
+                            </div>
+
+                            <div style={{
+                              marginTop: "auto", display: "flex", alignItems: "center", gap: 6,
+                              fontSize: 12, fontWeight: 700, color: agent.color,
+                              textTransform: "uppercase", letterSpacing: "0.06em",
+                            }}>
+                              Launch Agent <ArrowRight size={13} />
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
       </div>
 
-      <style>{`
-        .agents-grid { 
-          display: grid; 
-          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
-          gap: 24px; 
-        }
-
-        @media (max-width: 768px) {
-          .agents-grid { grid-template-columns: 1fr; gap: 16px; }
-        }
-
-        .glass-card-premium {
-          background: rgba(255, 255, 255, 0.02);
-          backdrop-filter: blur(24px) saturate(200%);
-          -webkit-backdrop-filter: blur(24px) saturate(200%);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-      `}</style>
+      {/* ── Bottom Tip ── */}
+      <motion.div variants={item} style={{
+        marginTop: 40, padding: "16px 24px", borderRadius: 16,
+        background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)",
+        display: "flex", alignItems: "center", gap: 12,
+      }}>
+        <Zap size={16} color="#F59E0B" />
+        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>
+          <strong style={{ color: "rgba(255,255,255,0.6)" }}>Real-data only platform.</strong>{" "}
+          Agents display empty states when no verified data is available — never fake content.
+        </p>
+        <Link href="/dashboard/progress-tracker" style={{
+          marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "#8B5CF6",
+          textDecoration: "none", display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+        }}>
+          View Progress <ChevronRight size={13} />
+        </Link>
+      </motion.div>
     </motion.div>
   );
 }
