@@ -97,12 +97,16 @@ async def set_user_type(
         
         # Auto-create profile if doesn't exist
         profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
-        # Set roles based on student year
+        if not profile:
+            profile = Profile(user_id=current_user.id, current_role="Student")
+            db.add(profile)
+            db.flush()  # flush so profile gets an id without full commit
+
+        # Set roles based on student year (only if profile already had data)
         if profile.student_year:
             profile.current_role = f"{profile.student_year} Student"
         else:
             profile.current_role = "Student"
-            db.add(profile)
             
         db.commit()
         db.refresh(current_user)
