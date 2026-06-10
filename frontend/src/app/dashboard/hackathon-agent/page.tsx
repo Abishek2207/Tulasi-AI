@@ -26,7 +26,7 @@ export default function HackathonAgentPage() {
       setError(res.error);
     } else if (res.data && res.data.length > 0) {
       // Validate: reject entries with no title or registration URL
-      const valid = (res.data as Hackathon[]).filter(h => h.title?.trim() && h.registration_url?.trim());
+      const valid = (res.data as Hackathon[]).filter(h => h.title?.trim() && String(h.registration_url ?? "").trim());
       setHackathons(valid);
       setLastSynced(new Date().toISOString());
     }
@@ -140,7 +140,7 @@ export default function HackathonAgentPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
                     <Globe size={11} />
                     Source: {h.source}
-                    {h.fetched_at && ` · ${new Date(h.fetched_at).toLocaleDateString()}`}
+                    {h.fetched_at && ` · ${new Date(String(h.fetched_at)).toLocaleDateString()}`}
                   </div>
                 )}
               </div>
@@ -152,7 +152,7 @@ export default function HackathonAgentPage() {
               )}
 
               {h.registration_url && (
-                <a href={h.registration_url} target="_blank" rel="noopener noreferrer" style={{
+                <a href={String(h.registration_url)} target="_blank" rel="noopener noreferrer" style={{
                   padding: "10px 0", borderRadius: 12, background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.25)",
                   color: "#FB923C", fontWeight: 700, fontSize: 13, textDecoration: "none",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background 0.2s",

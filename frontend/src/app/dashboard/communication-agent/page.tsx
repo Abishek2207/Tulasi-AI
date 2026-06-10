@@ -64,27 +64,36 @@ Respond ONLY with a valid JSON object in this exact format:
   "overall": "one sentence overall verdict"
 }`;
 
-    const res = await chatApi.send(prompt, "communication_feedback");
+    try {
+      const res = await chatApi.send(prompt, "communication_feedback");
 
-    if (res.error || !res.data) {
-      setError(res.error || "Could not get feedback. Please try again.");
-    } else {
-      try {
-        const raw = typeof res.data === "string" ? res.data : JSON.stringify(res.data);
-        const match = raw.match(/\{[\s\S]*\}/);
-        if (match) {
-          const parsed: Feedback = JSON.parse(match[0]);
-          setFeedback(parsed);
-          setHistory(prev => [
-            { prompt: activePrompt.text.slice(0, 50) + "…", score: parsed.confidence },
-            ...prev.slice(0, 4),
-          ]);
-        } else {
+      // chatApi.send returns {response, session_id, model_used} — check for response field
+      const rawText: string =
+        (res as any)?.data?.response ??
+        (res as any)?.response ??
+        (typeof res === "string" ? res : "");
+
+      if (!rawText) {
+        setError("Could not get feedback. Please try again.");
+      } else {
+        try {
+          const match = rawText.match(/\{[\s\S]*\}/);
+          if (match) {
+            const parsed: Feedback = JSON.parse(match[0]);
+            setFeedback(parsed);
+            setHistory(prev => [
+              { prompt: activePrompt.text.slice(0, 50) + "…", score: parsed.confidence },
+              ...prev.slice(0, 4),
+            ]);
+          } else {
+            setError("Could not parse AI feedback. Try again.");
+          }
+        } catch {
           setError("Could not parse AI feedback. Try again.");
         }
-      } catch {
-        setError("Could not parse AI feedback. Try again.");
       }
+    } catch (err: any) {
+      setError(err?.message || "Could not get feedback. Please try again.");
     }
 
     setLoading(false);
