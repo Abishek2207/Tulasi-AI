@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 /**
  * TulasiLogo — single source of truth for the Tulasi AI logo.
@@ -52,14 +51,13 @@ export function TulasiLogo({
         scale: [1, 1.05, 1],
       } : {}}
     >
-      <Image
-        src="/logo.png"
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo.jpg"
         alt="Tulasi AI Logo"
         width={size}
         height={size}
-        className="object-contain animate-pulse-subtle"
-        style={{ borderRadius: "12px" }}
-        priority
+        style={{ width: size, height: size, objectFit: "contain", display: "block", borderRadius: "10px" }}
       />
     </motion.div>
   );
