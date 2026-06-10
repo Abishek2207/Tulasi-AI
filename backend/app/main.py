@@ -192,6 +192,7 @@ async def log_requests(request: Request, call_next):
 # ── Routers (Lazy-Loaded to speed up cold starts) ────────────────────────
 from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, feed, mentor, follow, profile
 from app.api import roadmap_career, streak_api, notifications_api, certifications_api, local_rag_api
+from app.api import agents_api, opportunities_api, portfolio_api
 
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
@@ -236,6 +237,11 @@ app.include_router(rag.router,            prefix="/api/rag",            tags=["K
 app.include_router(local_rag_api.router,  prefix="/api/rag",            tags=["Personalized RAG"])
 app.include_router(daily_challenge.router, prefix="/api/daily-challenge", tags=["ORBIT DAILY"])
 
+# New Production Routers
+app.include_router(agents_api.router,       prefix="/api/agents",        tags=["Specialized Agents"])
+app.include_router(opportunities_api.router, prefix="/api/opportunities", tags=["Opportunities Discovery"])
+app.include_router(portfolio_api.router,     prefix="/api/portfolio",     tags=["Portfolio Agent"])
+
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────
 from app.api import ws as ws_router
 from app.websockets import signaling
@@ -278,7 +284,7 @@ def docs_redirect():
     return RedirectResponse(url="/api/docs")
 
 
-# ── Health Check ───────────────────────────────────────────────────
+# ── Health Check & Integration Status ────────────────────────────────
 @app.get("/api/health")
 @app.get("/health")
 @app.get("/api/status")
@@ -286,6 +292,8 @@ def health():
     uptime = int(time.time() - _START_TIME)
     from app.core.database import engine
     from sqlalchemy import text
+    import os
+    
     db_status = "connected"
     db_detail = "Ready"
     try:
@@ -300,13 +308,23 @@ def health():
         db_detail = f"Unreachable: {str(e)}"
         print(f"❌ Database Health Check Failed: {e}")
 
+    # Check external integrations
+    integrations = {
+        "ai": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")),
+        "github": True, # Public API now used without token
+        "jobs": True, # Uses Free RemoteOK, optional Adzuna/Jooble
+        "hackathons": True, # Uses Free Devpost RSS
+        "database": db_status == "connected"
+    }
+
     return {
         "status": "ok" if db_status == "connected" else "error",
         "api": "Tulasi AI Backend v3.1.2",
         "db": db_status,
         "db_detail": db_detail,
         "uptime_seconds": uptime,
-        "environment": "production" if "render" in str(engine.url) else "development" if engine else "error-state"
+        "environment": "production" if "render" in str(engine.url) else "development" if engine else "error-state",
+        "integrations": integrations
     }
 
 
@@ -341,13 +359,17 @@ def debug_rag():
 # ── AI Key Debug Endpoint ──────────────────────────────────────────
 @app.get("/api/debug/ai-env")
 def debug_ai_env():
-    """Diagnostic: checks which AI API keys are currently set (values masked)."""
+    """Diagnostic: checks which API keys are currently set (values masked)."""
     import os
     keys = {
+        "OPENAI_API_KEY": bool(os.getenv("OPENAI_API_KEY")),
         "GOOGLE_API_KEY": bool(os.getenv("GOOGLE_API_KEY")),
         "GEMINI_API_KEY": bool(os.getenv("GEMINI_API_KEY")),
         "OPENROUTER_API_KEY": bool(os.getenv("OPENROUTER_API_KEY")),
         "GROQ_API_KEY": bool(os.getenv("GROQ_API_KEY")),
+        "GITHUB_TOKEN": bool(os.getenv("GITHUB_TOKEN")),
+        "ADZUNA_APP_ID": bool(os.getenv("ADZUNA_APP_ID")),
+        "JOOBLE_API_KEY": bool(os.getenv("JOOBLE_API_KEY")),
     }
     return {"ai_env_vars": keys, "any_key_set": any(keys.values())}
 
