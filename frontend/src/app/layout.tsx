@@ -58,9 +58,9 @@ export const metadata: Metadata = {
     creator: "@_.abi22._",
   },
   icons: {
-    icon: "/images/logo.png",
-    shortcut: "/images/logo-transparent.png",
-    apple: "/images/logo.png",
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
   authors: [{ name: "Abishek R", url: "https://www.linkedin.com/in/abishek-r" }],
   creator: "Abishek R",
@@ -108,7 +108,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 "name": "Tulasi AI Labs",
                 "alternateName": ["TulasiAI", "Tulasi AI", "Tulasi-AI"],
                 "url": "https://www.tulasiai.in",
-                "logo": "https://www.tulasiai.in/images/logo.png",
+                "logo": "https://www.tulasiai.in/logo.png",
                 "founder": {
                   "@id": "https://www.tulasiai.in/#founder"
                 },

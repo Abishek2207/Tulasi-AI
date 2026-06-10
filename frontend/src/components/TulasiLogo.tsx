@@ -53,7 +53,7 @@ export function TulasiLogo({
       } : {}}
     >
       <Image
-        src="/images/logo.png"
+        src="/logo.png"
         alt="Tulasi AI Logo"
         width={size}
         height={size}
