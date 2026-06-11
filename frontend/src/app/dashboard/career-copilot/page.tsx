@@ -1,35 +1,44 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { motion } from "framer-motion";
-import { Briefcase, Target, Upload, CheckCircle, BrainCircuit, ShieldAlert, Check, ChevronRight, CheckSquare, FileText, ArrowRight, BookOpen, Clock } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { BrainCircuit, Briefcase, Target, Map, CheckCircle, ChevronRight, CheckSquare, Clock, ArrowRight, Zap, GraduationCap, Building2 } from "lucide-react";
+import { useSession } from "@/hooks/useSession";
+import { intelligenceApi } from "@/lib/api";
+import toast from "react-hot-toast";
 
-interface AnalysisResult {
-  score: number;
-  readiness: number;
-  levelAnalysis: string;
-  strongAreas: string[];
-  weakAreas: string[];
-  actionPlan: { day: string; task: string }[];
-  projects: { title: string; desc: string }[];
-  interviewPrep: string[];
+interface CareerPath {
+  id: string;
+  title: string;
+  tagline: string;
+  color: string;
+  timeline_months: number;
+  difficulty: string;
+  milestones: { month: number; goal: string; resources: string[] }[];
+  key_skills: string[];
+  companies: string[];
+  job_readiness_pct: number;
+}
+
+interface GPSResult {
+  paths: CareerPath[];
+  recommendation: string;
+  founder_note: string;
 }
 
 export default function CareerCopilotPage() {
+  const { data: session } = useSession();
   const [phase, setPhase] = useState<"input" | "loading" | "dashboard">("input");
   
   // Form State
-  const [currentRole, setCurrentRole] = useState("");
+  const [year, setYear] = useState("3rd_year");
   const [goalRole, setGoalRole] = useState("");
-  const [goalCompany, setGoalCompany] = useState("");
-  const [experience, setExperience] = useState("");
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   // Result State
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [result, setResult] = useState<GPSResult | null>(null);
+  const [activePathId, setActivePathId] = useState<string>("");
 
   const handleAddSkill = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && skillInput.trim()) {
@@ -46,38 +55,29 @@ export default function CareerCopilotPage() {
   };
 
   const analyzeProfile = async () => {
-    if (!currentRole || !goalRole || !goalCompany || !experience || skills.length === 0) return;
+    if (!goalRole) {
+      toast.error("Please enter a target role.");
+      return;
+    }
+    if (!session?.token) {
+      toast.error("Please log in to generate career paths.");
+      return;
+    }
     
     setPhase("loading");
     
-    // Simulate AI Processing API Call
-    await new Promise(r => setTimeout(r, 2500));
-    
-    setResult({
-      score: 72,
-      readiness: 65,
-      levelAnalysis: `You are currently positioned as a strong ${currentRole} with solid foundational skills. To reach the ${goalRole} level at ${goalCompany}, you need to bridge the gap in distributed systems, scalability, and advanced system design. Your ${experience} of experience provides a good base, but the target role expects more architectural ownership.`,
-      strongAreas: skills.slice(0, 3).length > 0 ? skills.slice(0, 3) : ["Problem Solving", "Core Programming", "Team Collaboration"],
-      weakAreas: ["System Design", "Scalability", "Cloud Architecture (AWS/GCP)", "Advanced Algorithms"],
-      actionPlan: [
-        { day: "Days 1-7", task: "Master foundational System Design concepts (CAP Theorem, Load Balancing, Caching)." },
-        { day: "Days 8-14", task: "Complete a deep dive into Cloud Architecture and deploy a sample microservice." },
-        { day: "Days 15-21", task: "Solve 20 Medium/Hard LeetCode graphs and dynamic programming questions." },
-        { day: "Days 22-30", task: "Do 3 mock interviews focusing heavily on System Design and Behavioral STAR method." }
-      ],
-      projects: [
-        { title: "Distributed Key-Value Store", desc: "Build a highly available KV store using Raft consensus algorithm. This hits the core requirements for distributed systems." },
-        { title: "High-Throughput Message Queue", desc: "Implement an in-memory message broker similar to Kafka to demonstrate understanding of pub-sub and throughput." }
-      ],
-      interviewPrep: [
-        `${goalCompany} emphasizes Leadership Principles/Culture Fit. Prepare 5 solid STAR stories.`,
-        `Focus on High-Level Design (HLD). Be ready to draw architecture diagrams on a whiteboard.`,
-        `Expect at least one hard algorithmic round focusing on optimization (time/space complexity).`
-      ]
-    });
-    
-    setPhase("dashboard");
+    try {
+        const res = await intelligenceApi.getCareerGPS(year, goalRole, skills.join(", "));
+        setResult(res);
+        setActivePathId(res.recommendation || res.paths[0]?.id);
+        setPhase("dashboard");
+    } catch (err: any) {
+        toast.error(err.message || "Failed to generate Career GPS");
+        setPhase("input");
+    }
   };
+
+  const activePath = result?.paths.find(p => p.id === activePathId) || result?.paths[0];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 60 }}>
@@ -87,38 +87,31 @@ export default function CareerCopilotPage() {
           <BrainCircuit size={26} color="white" />
         </div>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: "white", letterSpacing: "-0.5px", fontFamily: "var(--font-outfit)" }}>Career Copilot</h1>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", fontWeight: 500, marginTop: 2 }}>AI-driven career profiling and action planning</p>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: "white", letterSpacing: "-0.5px", fontFamily: "var(--font-outfit)" }}>Career GPS</h1>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", fontWeight: 500, marginTop: 2 }}>AI-driven career profiling and strategic roadmaps</p>
         </div>
       </div>
 
       {phase === "input" && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 700, margin: "0 auto" }}>
           <div style={{ padding: 32, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 24 }}>Profile Setup</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 24 }}>Setup Your GPS</h2>
             
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Current Role</label>
-                <input value={currentRole} onChange={e => setCurrentRole(e.target.value)} placeholder="e.g. SDE-1, Student"
-                  style={{ width: "100%", padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none" }} />
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Current Stage</label>
+                <select value={year} onChange={e => setYear(e.target.value)}
+                  style={{ width: "100%", padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none" }}>
+                    <option value="1st_year" style={{color: "black"}}>1st Year</option>
+                    <option value="2nd_year" style={{color: "black"}}>2nd Year</option>
+                    <option value="3rd_year" style={{color: "black"}}>3rd Year</option>
+                    <option value="4th_year" style={{color: "black"}}>4th Year</option>
+                    <option value="fresher" style={{color: "black"}}>Fresher / Graduate</option>
+                </select>
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Experience Level</label>
-                <input value={experience} onChange={e => setExperience(e.target.value)} placeholder="e.g. 2 Years, Fresher"
-                  style={{ width: "100%", padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none" }} />
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Goal Role</label>
-                <input value={goalRole} onChange={e => setGoalRole(e.target.value)} placeholder="e.g. Senior SDE, Product Manager"
-                  style={{ width: "100%", padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Goal Company</label>
-                <input value={goalCompany} onChange={e => setGoalCompany(e.target.value)} placeholder="e.g. Google, Stripe, Startups"
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Target Role *</label>
+                <input value={goalRole} onChange={e => setGoalRole(e.target.value)} placeholder="e.g. AI Engineer, Product Manager"
                   style={{ width: "100%", padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none" }} />
               </div>
             </div>
@@ -136,19 +129,11 @@ export default function CareerCopilotPage() {
               </div>
             </div>
 
-            <div style={{ marginBottom: 28 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Resume (Optional)</label>
-              <div onClick={() => fileRef.current?.click()} style={{ border: "2px dashed rgba(255,255,255,0.12)", borderRadius: 16, padding: "24px", textAlign: "center", cursor: "pointer", background: file ? "rgba(16,185,129,0.04)" : "transparent" }}>
-                <input ref={fileRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={e => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
-                {file ? <CheckCircle size={28} color="#10B981" style={{ margin: "0 auto 8px" }} /> : <Upload size={28} color="rgba(255,255,255,0.3)" style={{ margin: "0 auto 8px" }} />}
-                <div style={{ fontSize: 14, fontWeight: 600, color: file ? "#10B981" : "rgba(255,255,255,0.6)" }}>{file ? file.name : "Click to upload PDF"}</div>
-              </div>
-            </div>
-
-            <button onClick={analyzeProfile} disabled={!currentRole || !goalRole || !goalCompany || !experience || skills.length === 0}
-              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #8B5CF6, #6D28D9)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 12px 24px rgba(139,92,246,0.3)", opacity: (!currentRole || !goalRole || !goalCompany || !experience || skills.length === 0) ? 0.5 : 1 }}>
-              <BrainCircuit size={20} /> Generate Career Analysis
+            <button onClick={analyzeProfile} disabled={!goalRole || !session?.token}
+              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #8B5CF6, #6D28D9)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: (!goalRole || !session?.token) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: (!goalRole || !session?.token) ? "none" : "0 12px 24px rgba(139,92,246,0.3)", opacity: (!goalRole || !session?.token) ? 0.5 : 1 }}>
+              <Map size={20} /> Generate Career Paths
             </button>
+            {!session?.token && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to use Career GPS.</p>}
           </div>
         </motion.div>
       )}
@@ -158,115 +143,111 @@ export default function CareerCopilotPage() {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} style={{ marginBottom: 24 }}>
             <div style={{ width: 64, height: 64, borderRadius: "50%", border: "4px solid rgba(139,92,246,0.2)", borderTopColor: "#8B5CF6" }} />
           </motion.div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>Analyzing Career Profile...</h2>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Mapping your skills against {goalCompany}'s requirements for {goalRole}</p>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>Calculating Trajectories...</h2>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Mapping your skills against industry standards for {goalRole}</p>
         </div>
       )}
 
-      {phase === "dashboard" && result && (
+      {phase === "dashboard" && result && activePath && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          {/* Top Metrics Row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", gap: 20, marginBottom: 20 }}>
-            {/* Score */}
-            <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#8B5CF6", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12 }}>Career Score</div>
-              <div style={{ fontSize: 64, fontWeight: 900, color: "white", lineHeight: 1 }}>{result.score}</div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 600, marginTop: 4 }}>out of 100</div>
-            </div>
-
-            {/* Readiness */}
-            <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#10B981", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12 }}>Job Readiness</div>
-              <div style={{ fontSize: 64, fontWeight: 900, color: "white", lineHeight: 1 }}>{result.readiness}%</div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 600, marginTop: 4 }}>For {goalRole} at {goalCompany}</div>
-            </div>
-
-            {/* Level Analysis */}
-            <div style={{ padding: 28, borderRadius: 24, background: "linear-gradient(135deg, rgba(139,92,246,0.05), rgba(255,255,255,0.01))", border: "1px solid rgba(139,92,246,0.15)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                <Target size={18} color="#8B5CF6" />
-                <span style={{ fontSize: 14, fontWeight: 800, color: "white" }}>Current vs Goal Level</span>
-              </div>
-              <p style={{ fontSize: 15, color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>{result.levelAnalysis}</p>
-            </div>
+          
+          {/* Path Selector */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+            {result.paths.map(path => {
+                const isActive = activePathId === path.id;
+                const isRecommended = result.recommendation === path.id;
+                return (
+                    <div key={path.id} onClick={() => setActivePathId(path.id)} style={{
+                        padding: "20px", borderRadius: "20px", cursor: "pointer", transition: "all 0.2s",
+                        background: isActive ? `${path.color}15` : "rgba(255,255,255,0.02)",
+                        border: `1px solid ${isActive ? path.color : "rgba(255,255,255,0.06)"}`,
+                        position: "relative"
+                    }}>
+                        {isRecommended && (
+                            <div style={{ position: "absolute", top: -10, right: 20, background: path.color, color: "white", fontSize: 10, fontWeight: 800, padding: "4px 8px", borderRadius: 8, textTransform: "uppercase" }}>Recommended</div>
+                        )}
+                        <h3 style={{ fontSize: 16, fontWeight: 800, color: isActive ? "white" : "rgba(255,255,255,0.7)", marginBottom: 4 }}>{path.title}</h3>
+                        <div style={{ fontSize: 12, color: isActive ? path.color : "rgba(255,255,255,0.4)", fontWeight: 600, display: "flex", gap: 12, alignItems: "center" }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={12}/> {path.timeline_months} months</span>
+                            <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Zap size={12}/> {path.difficulty}</span>
+                        </div>
+                    </div>
+                )
+            })}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
-            {/* Skill Gap */}
-            <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 20 }}>Skill Gap Analysis</h3>
-              
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#10B981", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}><Check size={14} /> Strong Areas</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {result.strongAreas.map(s => <span key={s} style={{ padding: "6px 12px", borderRadius: 10, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", color: "#10B981", fontSize: 12, fontWeight: 600 }}>{s}</span>)}
-                </div>
-              </div>
-
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#F43F5E", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}><ShieldAlert size={14} /> Areas to Improve (Weaknesses)</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {result.weakAreas.map(s => <span key={s} style={{ padding: "6px 12px", borderRadius: 10, background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.2)", color: "#F43F5E", fontSize: 12, fontWeight: 600 }}>{s}</span>)}
-                </div>
-              </div>
-            </div>
-
-            {/* Projects & Interview */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", flex: 1 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}><Briefcase size={16} color="#06B6D4" /> Recommended Projects</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {result.projects.map((p, i) => (
-                    <div key={i}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "white", marginBottom: 4 }}>{p.title}</div>
-                      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>{p.desc}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 24 }}>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                {/* Timeline / Milestones */}
+                <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "white", display: "flex", alignItems: "center", gap: 8 }}><Map size={18} color={activePath.color} /> Execution Roadmap</h3>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: activePath.color, background: `${activePath.color}15`, padding: "4px 12px", borderRadius: 12 }}>{activePath.tagline}</span>
                     </div>
-                  ))}
+
+                    <div style={{ position: "relative" }}>
+                        <div style={{ position: "absolute", left: 15, top: 10, bottom: 10, width: 2, background: "rgba(255,255,255,0.05)" }} />
+                        {activePath.milestones.map((step, i) => (
+                        <div key={i} style={{ display: "flex", gap: 20, marginBottom: i !== activePath.milestones.length - 1 ? 24 : 0, position: "relative", zIndex: 1 }}>
+                            <div style={{ width: 32, height: 32, borderRadius: "50%", background: activePath.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 0 }}>
+                                <span style={{ fontSize: 12, fontWeight: 900, color: "white" }}>{i + 1}</span>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 12, fontWeight: 800, color: activePath.color, marginBottom: 4, textTransform: "uppercase" }}>Month {step.month}</div>
+                                <div style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 8 }}>{step.goal}</div>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                    {step.resources.map(res => (
+                                        <span key={res} style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: 6 }}>{res}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-             {/* Action Plan */}
-             <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}><CheckSquare size={16} color="#8B5CF6" /> Next 30-Day Action Plan</h3>
-              <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", left: 11, top: 10, bottom: 10, width: 2, background: "rgba(255,255,255,0.05)" }} />
-                {result.actionPlan.map((step, i) => (
-                  <div key={i} style={{ display: "flex", gap: 16, marginBottom: i !== result.actionPlan.length - 1 ? 20 : 0, position: "relative", zIndex: 1 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#8B5CF6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                      <span style={{ fontSize: 10, fontWeight: 900, color: "white" }}>{i + 1}</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: "#8B5CF6", marginBottom: 4 }}>{step.day}</div>
-                      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{step.task}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                {/* Founder Note */}
+                <div style={{ padding: 24, borderRadius: 20, background: "linear-gradient(to right, rgba(139,92,246,0.1), rgba(255,255,255,0.02))", borderLeft: "4px solid #8B5CF6" }}>
+                    <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", fontStyle: "italic", lineHeight: 1.6 }}>"{result.founder_note}"</p>
+                </div>
             </div>
 
-            {/* Interview Prep */}
-            <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", alignSelf: "start" }}>
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}><FileText size={16} color="#F59E0B" /> {goalCompany} Interview Prep</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {result.interviewPrep.map((prep, i) => (
-                  <div key={i} style={{ display: "flex", gap: 12, padding: "14px", background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)" }}>
-                    <ChevronRight size={16} color="#F59E0B" style={{ flexShrink: 0, marginTop: 2 }} />
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{prep}</span>
-                  </div>
-                ))}
-              </div>
-              <button style={{ width: "100%", padding: "14px", borderRadius: 12, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#F59E0B", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
-                Launch Interview Agent <ArrowRight size={14} />
-              </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                {/* Job Readiness */}
+                <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: activePath.color, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12 }}>Target Job Readiness</div>
+                    <div style={{ fontSize: 64, fontWeight: 900, color: "white", lineHeight: 1 }}>{activePath.job_readiness_pct}%</div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 600, marginTop: 4 }}>End of Timeline Projection</div>
+                </div>
+
+                {/* Key Skills */}
+                <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 800, color: "white", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}><Target size={16} color={activePath.color} /> Core Technologies</h3>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {activePath.key_skills.map(s => <span key={s} style={{ padding: "6px 12px", borderRadius: 10, background: `${activePath.color}15`, border: `1px solid ${activePath.color}30`, color: activePath.color, fontSize: 12, fontWeight: 600 }}>{s}</span>)}
+                    </div>
+                </div>
+
+                {/* Target Companies */}
+                <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 800, color: "white", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}><Building2 size={16} color={activePath.color} /> Target Companies</h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {activePath.companies.map((c, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 10 }}>
+                                <Briefcase size={14} color="rgba(255,255,255,0.5)" />
+                                <span style={{ fontSize: 13, color: "white", fontWeight: 600 }}>{c}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
+
           </div>
           
           <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
             <button onClick={() => setPhase("input")} style={{ padding: "12px 24px", borderRadius: 12, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
-              Recalculate Profile
+              Reset & Recalculate
             </button>
           </div>
         </motion.div>
