@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 /**
  * TulasiLogo — single source of truth for the Tulasi AI logo.
@@ -25,13 +26,14 @@ export function TulasiLogo({
   splash?: boolean;
   style?: React.CSSProperties;
 }) {
+  const [imageFailed, setImageFailed] = useState(false);
   const glowColor = isFounder
     ? "radial-gradient(circle at center, rgba(245,158,11,0.5) 0%, rgba(217,119,6,0.35) 35%, rgba(180,83,9,0.2) 65%, transparent 100%)"
     : "radial-gradient(circle at center, rgba(0,229,160,0.4) 0%, rgba(0,200,255,0.3) 30%, rgba(168,85,247,0.2) 65%, transparent 100%)";
 
   const effectiveBadge = isFounder ? "FOUNDER" : badge;
 
-  const LogoIcon = () => (
+  const renderLogoIcon = () => (
     <motion.div
       style={{
         width: size,
@@ -51,21 +53,45 @@ export function TulasiLogo({
         scale: [1, 1.05, 1],
       } : {}}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logo.png"
-        alt="Tulasi AI Logo"
-        width={size}
-        height={size}
-        style={{
-          width: size,
-          height: size,
-          objectFit: "contain",
-          display: "block",
-          borderRadius: "10px",
-          flexShrink: 0,
-        }}
-      />
+      {imageFailed ? (
+        <span
+          aria-label="Tulasi AI Logo"
+          role="img"
+          style={{
+            alignItems: "center",
+            background: "linear-gradient(135deg, #00E5A0, #00C8FF 55%, #A855F7)",
+            borderRadius: "10px",
+            color: "#07110f",
+            display: "flex",
+            fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
+            fontSize: size * 0.62,
+            fontWeight: 950,
+            height: size,
+            justifyContent: "center",
+            lineHeight: 1,
+            width: size,
+          }}
+        >
+          T
+        </span>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/logo.png?v=20260611"
+          alt="Tulasi AI Logo"
+          width={size}
+          height={size}
+          onError={() => setImageFailed(true)}
+          style={{
+            width: size,
+            height: size,
+            objectFit: "contain",
+            display: "block",
+            borderRadius: "10px",
+            flexShrink: 0,
+          }}
+        />
+      )}
     </motion.div>
   );
 
@@ -113,7 +139,7 @@ export function TulasiLogo({
             animate={{ rotate: 360 }}
             transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
           />
-          <LogoIcon />
+          {renderLogoIcon()}
         </div>
         
         <motion.div
@@ -159,7 +185,7 @@ export function TulasiLogo({
             }}
           />
         )}
-        <LogoIcon />
+        {renderLogoIcon()}
       </div>
 
       {showText && (
