@@ -38,15 +38,15 @@ export default function DSAAgentPage() {
   const hasProfile = user?.is_onboarded;
 
   useEffect(() => {
-    if (hasProfile && session?.token) {
+    if (hasProfile && session?.user?.accessToken) {
         fetchData();
     }
-  }, [hasProfile, session?.token]);
+  }, [hasProfile, session?.user?.accessToken]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-        const res = await codeApi.problems(undefined, undefined, undefined, session?.token);
+        const res = await codeApi.problems(undefined, undefined, undefined, session?.user?.accessToken);
         
         // Pick top 3 problems as "daily"
         if (res.problems) {
@@ -65,7 +65,7 @@ export default function DSAAgentPage() {
   };
 
   const markProblemSolved = async (id: string) => {
-    if (!session?.token) return;
+    if (!session?.user?.accessToken) return;
     
     // Optimistic UI update
     setSolved(prev => {
@@ -75,7 +75,7 @@ export default function DSAAgentPage() {
     });
 
     try {
-        const res = await codeApi.markSolved(id, session.token);
+        const res = await codeApi.markSolved(id, session.user.accessToken);
         if (res.newly_solved) {
             setTotalDone(prev => prev + 1);
             toast.success(`You earned ${res.xp_earned} XP!`);

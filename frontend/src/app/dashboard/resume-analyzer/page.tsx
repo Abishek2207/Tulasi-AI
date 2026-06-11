@@ -26,7 +26,7 @@ export default function ResumeAnalyzerPage() {
 
   const analyze = async () => {
     if (!resumeText || !targetRole) return;
-    if (!session?.token) {
+    if (!session?.user?.accessToken) {
         toast.error("Please log in to analyze your resume.");
         return;
     }
@@ -40,7 +40,7 @@ export default function ResumeAnalyzerPage() {
             mode: "Standard",
             document_type: "Resume"
         };
-        const res = await resumeApi.improve(payload, session.token);
+        const res = await resumeApi.improve(payload, session.user.accessToken);
         
         if (res) {
             setResult(res);
@@ -95,11 +95,11 @@ export default function ResumeAnalyzerPage() {
                   style={{ width: "100%", height: 250, padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none", resize: "none", fontFamily: "inherit", lineHeight: 1.6 }} />
             </div>
 
-            <button onClick={analyze} disabled={!resumeText || !targetRole || !session?.token}
-              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #3B82F6, #2563EB)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: (!resumeText || !targetRole || !session?.token) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: (!resumeText || !targetRole || !session?.token) ? 0.5 : 1, boxShadow: (!resumeText || !targetRole || !session?.token) ? "none" : "0 12px 24px rgba(59,130,246,0.3)" }}>
+            <button onClick={analyze} disabled={!resumeText || !targetRole || !session?.user?.accessToken}
+              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #3B82F6, #2563EB)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: (!resumeText || !targetRole || !session?.user?.accessToken) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: (!resumeText || !targetRole || !session?.user?.accessToken) ? 0.5 : 1, boxShadow: (!resumeText || !targetRole || !session?.user?.accessToken) ? "none" : "0 12px 24px rgba(59,130,246,0.3)" }}>
               <Zap size={20} /> Analyze Resume
             </button>
-            {!session?.token && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to analyze your resume.</p>}
+            {!session?.user?.accessToken && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to analyze your resume.</p>}
           </div>
         </motion.div>
       )}

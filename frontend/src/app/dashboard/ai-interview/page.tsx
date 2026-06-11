@@ -87,13 +87,13 @@ export default function AIInterviewPage() {
 
   const startInterview = async () => {
     if (!interviewType) return;
-    if (!session?.token) {
+    if (!session?.user?.accessToken) {
         toast.error("Please log in to start the interview.");
         return;
     }
     setPhase("evaluating");
     try {
-        const res = await interviewApi.start(role, company, interviewType, session.token);
+        const res = await interviewApi.start(role, company, interviewType, session.user.accessToken);
         setSessionId(res.session_id);
         setCurrentQuestionStr(res.question);
         setTotalQ(res.total_questions);
@@ -109,11 +109,11 @@ export default function AIInterviewPage() {
   };
 
   const submitAnswer = async () => {
-    if (!answer.trim() || !session?.token) return;
+    if (!answer.trim() || !session?.user?.accessToken) return;
     setPhase("evaluating");
     
     try {
-        const res = await interviewApi.answer(answer, sessionId, session.token) as any;
+        const res = await interviewApi.answer(answer, sessionId, session.user.accessToken) as any;
         
         // res.eval contains the per-question evaluation
         if (res.eval) {
@@ -209,11 +209,11 @@ export default function AIInterviewPage() {
               </div>
             )}
 
-            <button onClick={startInterview} disabled={!interviewType || !session?.token}
-              style={{ width: "100%", padding: "16px", borderRadius: 16, background: interviewType ? "linear-gradient(135deg, #F43F5E, #BE123C)" : "rgba(255,255,255,0.05)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: interviewType ? "pointer" : "not-allowed", opacity: (!interviewType || !session?.token) ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: interviewType ? "0 14px 28px rgba(244,63,94,0.3)" : "none", transition: "all 0.3s" }}>
+            <button onClick={startInterview} disabled={!interviewType || !session?.user?.accessToken}
+              style={{ width: "100%", padding: "16px", borderRadius: 16, background: interviewType ? "linear-gradient(135deg, #F43F5E, #BE123C)" : "rgba(255,255,255,0.05)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: interviewType ? "pointer" : "not-allowed", opacity: (!interviewType || !session?.user?.accessToken) ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: interviewType ? "0 14px 28px rgba(244,63,94,0.3)" : "none", transition: "all 0.3s" }}>
               <Mic size={20} /> Start Interview
             </button>
-            {!session?.token && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to start an interview.</p>}
+            {!session?.user?.accessToken && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to start an interview.</p>}
           </div>
         </motion.div>
       )}

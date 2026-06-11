@@ -45,7 +45,7 @@ export default function PersonalizedRoadmapPage() {
 
   const generate = async () => {
     if (!goal) return;
-    if (!session?.token) {
+    if (!session?.user?.accessToken) {
       toast.error("Please log in to generate a roadmap.");
       return;
     }
@@ -56,10 +56,10 @@ export default function PersonalizedRoadmapPage() {
       const selectedLabel = GOALS.find(g => g.id === goal)?.label || goal;
       const fullGoal = `${level} level ${selectedLabel} in ${timeline}`;
       
-      const res = await roadmapApi.generate(fullGoal, session.token);
+      const res = await roadmapApi.generate(fullGoal, session.user.accessToken);
       if (res && res.roadmap) {
         setRoadmap(res.roadmap as any);
-        if (res.roadmap.milestones && res.roadmap.milestones.length > 0) {
+        if (res.roadmap.milestones && Array.isArray(res.roadmap.milestones) && res.roadmap.milestones.length > 0) {
             setExpandedPhase(res.roadmap.milestones[0].phase);
         }
         setPhase("dashboard");
@@ -126,11 +126,11 @@ export default function PersonalizedRoadmapPage() {
               </div>
             </div>
 
-            <button onClick={generate} disabled={!goal || !session?.token}
-              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: (!goal || !session?.token) ? 0.5 : 1, boxShadow: (!goal || !session?.token) ? "none" : "0 14px 28px rgba(16,185,129,0.3)" }}>
+            <button onClick={generate} disabled={!goal || !session?.user?.accessToken}
+              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: (!goal || !session?.user?.accessToken) ? 0.5 : 1, boxShadow: (!goal || !session?.user?.accessToken) ? "none" : "0 14px 28px rgba(16,185,129,0.3)" }}>
               <Sparkles size={20} /> Generate Personalized Roadmap
             </button>
-            {!session?.token && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to generate roadmaps.</p>}
+            {!session?.user?.accessToken && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to generate roadmaps.</p>}
           </div>
         </motion.div>
       )}
