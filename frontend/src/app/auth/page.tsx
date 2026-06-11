@@ -154,7 +154,7 @@ export default function AuthPage() {
           
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 32 }}>
             <div style={{ width: 64, height: 64, borderRadius: 20, background: "rgba(6,182,212,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, border: "1px solid rgba(6,182,212,0.2)", boxShadow: "0 8px 16px rgba(6,182,212,0.2)" }}>
-              <TulasiLogo size={36} splash glow />
+              <TulasiLogo size={36} glow />
             </div>
             <h1 style={{ fontSize: 26, fontWeight: 800, color: "white", marginBottom: 8, textAlign: "center", letterSpacing: "-0.5px" }}>
               {isLogin ? "Welcome back" : "Create an account"}
