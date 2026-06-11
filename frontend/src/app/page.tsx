@@ -66,7 +66,7 @@ function BrandText({ size = 40 }: { size?: number }) {
         >
           Tulasi<span style={{ color: "var(--brand-primary)" }}>AI</span>
         </motion.span>
-        <span style={{ fontSize: size * 0.22, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 2.5, textTransform: "uppercase", marginTop: 2 }}>Orbit</span>
+        <span style={{ fontSize: size * 0.22, fontWeight: 900, color: "var(--text-muted)", letterSpacing: 2.5, textTransform: "uppercase", marginTop: 2 }}>V1</span>
       </div>
     </div>
   );
