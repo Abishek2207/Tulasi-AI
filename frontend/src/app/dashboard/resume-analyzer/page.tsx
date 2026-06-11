@@ -1,92 +1,57 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { motion } from "framer-motion";
-import { FileText, Upload, CheckCircle, XCircle, AlertCircle, Sparkles, Zap, ShieldCheck, Target, Download, PenTool, LayoutTemplate, Briefcase } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, CheckCircle, AlertCircle, Sparkles, Zap, ShieldCheck, Target, Download, PenTool, Briefcase } from "lucide-react";
+import { resumeApi } from "@/lib/api";
+import { useSession } from "@/hooks/useSession";
+import toast from "react-hot-toast";
 
-interface ResumeAnalysis {
-  atsScore: number;
-  faangReadiness: number;
-  roleMatch: number;
-  problems: {
-    formatting: string[];
-    weakSections: string[];
-    projectQuality: string[];
-  };
-  keywords: {
-    missing: string[];
-    relevant: string[];
-  };
-  suggestions: {
-    improvements: string[];
-    missingProjects: string[];
-  };
-  bulletRewrites: {
-    original: string;
-    improved: string;
-  }[];
+interface BackendAnalysis {
+  ats_score: number;
+  readability_score: number;
+  keyword_match_percent: number;
+  feedback: string[];
+  missing_keywords: string[];
+  improved_resume: string;
 }
 
 export default function ResumeAnalyzerPage() {
+  const { data: session } = useSession();
   const [phase, setPhase] = useState<"upload" | "loading" | "results">("upload");
-  const [file, setFile] = useState<File | null>(null);
-  const [dragging, setDragging] = useState(false);
+  const [resumeText, setResumeText] = useState("");
   const [targetRole, setTargetRole] = useState("");
-  const [targetCompany, setTargetCompany] = useState("");
-  const [result, setResult] = useState<ResumeAnalysis | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped && dropped.type === "application/pdf") setFile(dropped);
-  };
+  const [jobDescription, setJobDescription] = useState("");
+  const [result, setResult] = useState<BackendAnalysis | null>(null);
 
   const analyze = async () => {
-    if (!file || !targetRole) return;
+    if (!resumeText || !targetRole) return;
+    if (!session?.token) {
+        toast.error("Please log in to analyze your resume.");
+        return;
+    }
+    
     setPhase("loading");
     
-    // Simulate AI Processing
-    await new Promise(r => setTimeout(r, 2500));
-    
-    setResult({
-      atsScore: 74,
-      faangReadiness: 62,
-      roleMatch: 81,
-      problems: {
-        formatting: ["Inconsistent bullet point indentation", "Uses a multi-column layout which breaks ATS parsers"],
-        weakSections: ["Professional Summary is too generic", "Education section takes up too much space for your experience level"],
-        projectQuality: ["Projects lack quantifiable metrics (e.g., 'improved performance by X%')", "Uses too many basic tutorials (e.g., 'To-Do App')"],
-      },
-      keywords: {
-        missing: ["Docker", "Kubernetes", "Microservices", "System Design", "AWS"],
-        relevant: ["React", "Node.js", "TypeScript", "REST APIs", "PostgreSQL"],
-      },
-      suggestions: {
-        improvements: [
-          "Convert your multi-column template into a single-column ATS-friendly template.",
-          "Move Education below Experience since you have >1 year of work experience.",
-          "Add concrete impact numbers to your top 2 projects."
-        ],
-        missingProjects: [
-          "Build a highly concurrent distributed system to demonstrate scalability.",
-          "Deploy an application using Docker and AWS to hit missing cloud keywords."
-        ]
-      },
-      bulletRewrites: [
-        {
-          original: "Built a backend API for a web application using Node.js.",
-          improved: "Architected a RESTful API using Node.js and Express, supporting 10k+ daily requests and reducing data retrieval latency by 40%."
-        },
-        {
-          original: "Worked on fixing bugs and improving the database.",
-          improved: "Optimized PostgreSQL queries through indexing and query refactoring, improving database read speeds by 3x across core application flows."
+    try {
+        const payload = {
+            resume_text: resumeText,
+            job_description: jobDescription || `Role: ${targetRole}`,
+            mode: "Standard",
+            document_type: "Resume"
+        };
+        const res = await resumeApi.improve(payload, session.token);
+        
+        if (res) {
+            setResult(res);
+            setPhase("results");
+        } else {
+            throw new Error("Empty response from server");
         }
-      ]
-    });
-    
-    setPhase("results");
+    } catch (err: any) {
+        toast.error(err.message || "Failed to analyze resume");
+        setPhase("upload");
+    }
   };
 
   const getScoreColor = (score: number) => score >= 80 ? "#10B981" : score >= 65 ? "#F59E0B" : "#F43F5E";
@@ -100,50 +65,41 @@ export default function ResumeAnalyzerPage() {
         </div>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: "white", letterSpacing: "-0.5px", fontFamily: "var(--font-outfit)" }}>AI Resume Analyzer</h1>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", fontWeight: 500, marginTop: 2 }}>Deep ATS parsing, FAANG readiness, and bullet rewrites</p>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", fontWeight: 500, marginTop: 2 }}>Deep ATS parsing, readiness scoring, and bullet rewrites</p>
         </div>
       </div>
 
       {phase === "upload" && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 700, margin: "0 auto" }}>
           <div style={{ padding: 32, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 24 }}>Upload for Deep Analysis</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 24 }}>Paste Resume & Target Details</h2>
             
             {/* Target Role Inputs */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20, marginBottom: 24 }}>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Target Role *</label>
-                <input value={targetRole} onChange={e => setTargetRole(e.target.value)} placeholder="e.g. Backend Engineer"
+                <input value={targetRole} onChange={e => setTargetRole(e.target.value)} placeholder="e.g. Backend Engineer at Stripe"
                   style={{ width: "100%", padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none" }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Target Company (Optional)</label>
-                <input value={targetCompany} onChange={e => setTargetCompany(e.target.value)} placeholder="e.g. Meta, Amazon"
-                  style={{ width: "100%", padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none" }} />
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Job Description (Optional)</label>
+                <textarea value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="Paste the job description for a tailored analysis..."
+                  style={{ width: "100%", height: 100, padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none", resize: "none", fontFamily: "inherit" }} />
               </div>
             </div>
 
-            {/* Drop Zone */}
-            <div
-              onDragOver={e => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileRef.current?.click()}
-              style={{ border: `2px dashed ${dragging ? "#3B82F6" : file ? "#10B981" : "rgba(255,255,255,0.12)"}`, borderRadius: 20, padding: "40px 24px", textAlign: "center", cursor: "pointer", background: dragging ? "rgba(59,130,246,0.06)" : file ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.02)", transition: "all 0.2s", marginBottom: 24 }}>
-              <input ref={fileRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={e => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
-              <div style={{ width: 64, height: 64, borderRadius: 20, background: file ? "rgba(16,185,129,0.1)" : "rgba(59,130,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-                {file ? <CheckCircle size={32} color="#10B981" /> : <Upload size={32} color="#3B82F6" />}
-              </div>
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: file ? "#10B981" : "white", marginBottom: 4 }}>
-                {file ? file.name : "Drop your PDF Resume here"}
-              </h3>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{file ? `${(file.size / 1024).toFixed(0)} KB` : "Max 5MB. PDF formats only."}</p>
+            {/* Resume Text Input */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Resume Content *</label>
+              <textarea value={resumeText} onChange={e => setResumeText(e.target.value)} placeholder="Paste your entire resume text here..."
+                  style={{ width: "100%", height: 250, padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, outline: "none", resize: "none", fontFamily: "inherit", lineHeight: 1.6 }} />
             </div>
 
-            <button onClick={analyze} disabled={!file || !targetRole}
-              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #3B82F6, #2563EB)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: (!file || !targetRole) ? 0.5 : 1, boxShadow: (!file || !targetRole) ? "none" : "0 12px 24px rgba(59,130,246,0.3)" }}>
+            <button onClick={analyze} disabled={!resumeText || !targetRole || !session?.token}
+              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #3B82F6, #2563EB)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: (!resumeText || !targetRole || !session?.token) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: (!resumeText || !targetRole || !session?.token) ? 0.5 : 1, boxShadow: (!resumeText || !targetRole || !session?.token) ? "none" : "0 12px 24px rgba(59,130,246,0.3)" }}>
               <Zap size={20} /> Analyze Resume
             </button>
+            {!session?.token && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to analyze your resume.</p>}
           </div>
         </motion.div>
       )}
@@ -154,7 +110,7 @@ export default function ResumeAnalyzerPage() {
             <div style={{ width: 64, height: 64, borderRadius: "50%", border: "4px solid rgba(59,130,246,0.2)", borderTopColor: "#3B82F6" }} />
           </motion.div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>Scanning Resume...</h2>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Checking ATS parsability, FAANG requirements, and keyword matches.</p>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Checking ATS parsability, keyword matches, and building improvement plan.</p>
         </div>
       )}
 
@@ -163,9 +119,9 @@ export default function ResumeAnalyzerPage() {
           {/* Top Metrics Row */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 24 }}>
             {[
-              { label: "Overall ATS Score", value: result.atsScore, icon: <FileText size={18} color={getScoreColor(result.atsScore)} /> },
-              { label: "FAANG Readiness", value: result.faangReadiness, icon: <ShieldCheck size={18} color={getScoreColor(result.faangReadiness)} /> },
-              { label: "Role Match", value: result.roleMatch, icon: <Target size={18} color={getScoreColor(result.roleMatch)} /> },
+              { label: "Overall ATS Score", value: result.ats_score, icon: <FileText size={18} color={getScoreColor(result.ats_score)} /> },
+              { label: "Readability Score", value: result.readability_score, icon: <ShieldCheck size={18} color={getScoreColor(result.readability_score)} /> },
+              { label: "Keyword Match", value: result.keyword_match_percent, icon: <Target size={18} color={getScoreColor(result.keyword_match_percent)} /> },
             ].map((metric, i) => (
               <div key={i} style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: `1px solid ${getScoreColor(metric.value)}30`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -180,93 +136,63 @@ export default function ResumeAnalyzerPage() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
-            {/* Deep Audit / Problems Found */}
+            {/* Deep Audit / Feedback */}
             <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <h3 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-                <AlertCircle size={20} color="#F43F5E" /> Deep Audit: Problems Found
+                <AlertCircle size={20} color="#F59E0B" /> AI Feedback & Suggestions
               </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Formatting & ATS</div>
-                  {result.problems.formatting.map((p, i) => <div key={i} style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 4, display: "flex", gap: 8 }}><span style={{ color: "#F43F5E" }}>•</span> {p}</div>)}
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Weak Sections</div>
-                  {result.problems.weakSections.map((p, i) => <div key={i} style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 4, display: "flex", gap: 8 }}><span style={{ color: "#F59E0B" }}>•</span> {p}</div>)}
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Project Quality</div>
-                  {result.problems.projectQuality.map((p, i) => <div key={i} style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 4, display: "flex", gap: 8 }}><span style={{ color: "#8B5CF6" }}>•</span> {p}</div>)}
-                </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {result.feedback?.map((p, i) => (
+                    <div key={i} style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 4, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <span style={{ color: "#F59E0B", marginTop: 2 }}>•</span> 
+                        <span style={{ lineHeight: 1.5 }}>{p}</span>
+                    </div>
+                ))}
+                {(!result.feedback || result.feedback.length === 0) && (
+                    <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>No critical feedback found. Your resume structure looks solid.</div>
+                )}
               </div>
             </div>
 
             {/* Keyword Relevance & Missing */}
             <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <h3 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-                <Target size={20} color="#10B981" /> Keyword & Skill Relevance
+                <Target size={20} color="#10B981" /> Keyword Analysis
               </h3>
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase" }}>Relevant Skills Found</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {result.keywords.relevant.map(k => <span key={k} style={{ padding: "6px 12px", borderRadius: 10, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", color: "#10B981", fontSize: 12, fontWeight: 700 }}>{k}</span>)}
-                </div>
-              </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase" }}>Critical Missing Keywords</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase" }}>Missing Keywords for Target Role</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {result.keywords.missing.map(k => <span key={k} style={{ padding: "6px 12px", borderRadius: 10, background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.2)", color: "#F43F5E", fontSize: 12, fontWeight: 700 }}>{k}</span>)}
+                  {result.missing_keywords?.map(k => <span key={k} style={{ padding: "6px 12px", borderRadius: 10, background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.2)", color: "#F43F5E", fontSize: 12, fontWeight: 700 }}>{k}</span>)}
+                  {(!result.missing_keywords || result.missing_keywords.length === 0) && (
+                    <span style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Great! You hit all major keywords.</span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
-            {/* AI Bullet Point Rewriter */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20, marginBottom: 24 }}>
+            {/* AI Bullet Point Rewriter / Improved Resume */}
             <div style={{ padding: 28, borderRadius: 24, background: "linear-gradient(135deg, rgba(59,130,246,0.05), rgba(255,255,255,0.01))", border: "1px solid rgba(59,130,246,0.2)" }}>
               <h3 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-                <PenTool size={20} color="#3B82F6" /> AI Bullet Rewriter
+                <PenTool size={20} color="#3B82F6" /> Improved Version
               </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {result.bulletRewrites.map((rewrite, i) => (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ padding: 12, borderRadius: 12, background: "rgba(244,63,94,0.05)", border: "1px solid rgba(244,63,94,0.1)", position: "relative" }}>
-                      <span style={{ position: "absolute", top: -8, left: 12, background: "#1E293B", padding: "0 6px", fontSize: 10, color: "#F43F5E", fontWeight: 800, borderRadius: 4 }}>BEFORE</span>
-                      <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{rewrite.original}</p>
-                    </div>
-                    <div style={{ padding: 12, borderRadius: 12, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", position: "relative" }}>
-                      <span style={{ position: "absolute", top: -8, left: 12, background: "#1E293B", padding: "0 6px", fontSize: 10, color: "#10B981", fontWeight: 800, borderRadius: 4 }}>AFTER</span>
-                      <p style={{ fontSize: 14, color: "white", fontWeight: 500 }}>{rewrite.improved}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Improvement Suggestions & Projects */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                  <LayoutTemplate size={16} color="#8B5CF6" /> Structural Improvements
-                </h3>
-                {result.suggestions.improvements.map((s, i) => <div key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 8, display: "flex", gap: 8 }}><span style={{ color: "#8B5CF6", fontWeight: 900 }}>{i + 1}.</span> {s}</div>)}
-              </div>
-
-              <div style={{ padding: 24, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", flex: 1 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                  <Briefcase size={16} color="#F59E0B" /> Suggested Missing Projects
-                </h3>
-                {result.suggestions.missingProjects.map((s, i) => <div key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 8, display: "flex", gap: 8 }}><Sparkles size={14} color="#F59E0B" style={{ flexShrink: 0, marginTop: 2 }} /> {s}</div>)}
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 20 }}>Based on our analysis, here is an optimized rewrite of your resume content:</p>
+              
+              <div style={{ padding: 20, borderRadius: 12, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <pre style={{ whiteSpace: "pre-wrap", fontSize: 14, color: "rgba(255,255,255,0.9)", fontFamily: "inherit", lineHeight: 1.6 }}>
+                      {result.improved_resume}
+                  </pre>
               </div>
             </div>
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 32 }}>
             <button onClick={() => setPhase("upload")} style={{ padding: "12px 24px", borderRadius: 12, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
-              Upload New Resume
+              Analyze Another Resume
             </button>
             <button style={{ padding: "14px 28px", borderRadius: 16, background: "white", color: "#0A0A0F", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
-              <Download size={18} /> Download Improved Resume
+              <Sparkles size={18} /> Re-Generate AI Version
             </button>
           </div>
         </motion.div>
