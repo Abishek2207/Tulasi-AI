@@ -59,7 +59,7 @@ export default function CareerCopilotPage() {
       toast.error("Please enter a target role.");
       return;
     }
-    if (!session?.token) {
+    if (!session?.user?.accessToken) {
       toast.error("Please log in to generate career paths.");
       return;
     }
@@ -129,11 +129,11 @@ export default function CareerCopilotPage() {
               </div>
             </div>
 
-            <button onClick={analyzeProfile} disabled={!goalRole || !session?.token}
-              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #8B5CF6, #6D28D9)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: (!goalRole || !session?.token) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: (!goalRole || !session?.token) ? "none" : "0 12px 24px rgba(139,92,246,0.3)", opacity: (!goalRole || !session?.token) ? 0.5 : 1 }}>
+            <button onClick={analyzeProfile} disabled={!goalRole || !session?.user?.accessToken}
+              style={{ width: "100%", padding: "16px", borderRadius: 16, background: "linear-gradient(135deg, #8B5CF6, #6D28D9)", color: "white", fontWeight: 900, fontSize: 16, border: "none", cursor: (!goalRole || !session?.user?.accessToken) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: (!goalRole || !session?.user?.accessToken) ? "none" : "0 12px 24px rgba(139,92,246,0.3)", opacity: (!goalRole || !session?.user?.accessToken) ? 0.5 : 1 }}>
               <Map size={20} /> Generate Career Paths
             </button>
-            {!session?.token && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to use Career GPS.</p>}
+            {!session?.user?.accessToken && <p style={{ textAlign: "center", color: "#F87171", fontSize: 13, marginTop: 12 }}>You must be logged in to use Career GPS.</p>}
           </div>
         </motion.div>
       )}
