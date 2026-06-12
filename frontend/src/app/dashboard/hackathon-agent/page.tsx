@@ -24,11 +24,14 @@ export default function HackathonAgentPage() {
     const res = await hackathonsApi.list();
     if (res.error) {
       setError(res.error);
-    } else if (res.data && res.data.length > 0) {
-      // Validate: reject entries with no title or registration URL
-      const valid = (res.data as Hackathon[]).filter(h => h.title?.trim() && String(h.registration_url ?? "").trim());
-      setHackathons(valid);
-      setLastSynced(new Date().toISOString());
+    } else {
+      const payload: any = res.data;
+      const arr = Array.isArray(payload) ? payload : (payload?.data || []);
+      if (arr.length > 0) {
+        const valid = (arr as Hackathon[]).filter(h => h.title?.trim() && String(h.registration_url ?? "").trim());
+        setHackathons(valid);
+        setLastSynced(new Date().toISOString());
+      }
     }
     setLoading(false);
   };

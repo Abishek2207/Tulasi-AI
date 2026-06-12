@@ -29,11 +29,14 @@ export default function JobMatchPage() {
     const res = await jobsApi.list(skills ? { skills } : undefined);
     if (res.error) {
       setError(res.error);
-    } else if (res.data && res.data.length > 0) {
-      // Validate: reject jobs without a title or company
-      const valid = (res.data as JobListing[]).filter(j => j.title?.trim() && j.company?.trim());
-      setJobs(valid);
-      setLastSynced(new Date().toISOString());
+    } else {
+      const payload: any = res.data;
+      const arr = Array.isArray(payload) ? payload : (payload?.data || []);
+      if (arr.length > 0) {
+        const valid = (arr as JobListing[]).filter(j => j.title?.trim() && j.company?.trim());
+        setJobs(valid);
+        setLastSynced(new Date().toISOString());
+      }
     }
     setLoading(false);
   };
