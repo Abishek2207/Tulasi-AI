@@ -7,7 +7,7 @@ import { signOut, useSession } from "@/hooks/useSession";
 import { motion, AnimatePresence } from "framer-motion";
 import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Search, Command, Zap, LogOut, User, ChevronDown, Camera } from "lucide-react";
+import { Menu, X, Search, Command, Zap, LogOut, User, ChevronDown, Camera, RefreshCw } from "lucide-react";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { useRouter } from "next/navigation";
 import { TulasiLogo } from "@/components/TulasiLogo";
@@ -289,6 +289,23 @@ export default function TopBar() {
                     >
                       <User size={15} style={{ opacity: 0.6 }} />
                       View Profile
+                    </button>
+
+                    <button
+                      onClick={() => { setDropdownOpen(false); router.push("/dashboard?select=true"); }}
+                      style={{
+                        width: "100%", display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 12px", borderRadius: 9,
+                        background: "transparent", border: "none",
+                        color: "var(--text-secondary)", fontSize: 13, fontWeight: 500,
+                        cursor: "pointer", textAlign: "left",
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <RefreshCw size={15} style={{ opacity: 0.6 }} />
+                      Switch Workspace
                     </button>
 
                     <button
