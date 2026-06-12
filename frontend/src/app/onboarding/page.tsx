@@ -21,8 +21,9 @@ export default function OnboardingPage() {
   const isLoaded = status !== "loading";
   const router = useRouter();
   
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState<"STUDENT" | "PROFESSIONAL" | null>(null);
   
     
   // Student Data
@@ -57,8 +58,8 @@ export default function OnboardingPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
       const token = localStorage.getItem("token") || "";
 
-      // 1. Set User Type to STUDENT
-      const typeRes = await fetch(`${apiUrl}/api/profile/set-user-type?user_type=STUDENT`, {
+      // 1. Set User Type to userType (STUDENT or PROFESSIONAL)
+      const typeRes = await fetch(`${apiUrl}/api/profile/set-user-type?user_type=${userType || "STUDENT"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
       });
@@ -130,8 +131,36 @@ export default function OnboardingPage() {
           <AnimatePresence mode="wait">
             
 
+            {/* STEP 0: CHOOSE PATH */}
+            {step === 0 && (
+              <motion.div key="path-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} style={{ textAlign: "center" }}>
+                <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Welcome to TulasiAI</h2>
+                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>Tell us who you are so we can personalize your experience.</p>
+                
+                <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
+                  <button onClick={() => { setUserType("STUDENT"); setStep(1); }}
+                    style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(139,92,246,0.3)", padding: "32px 24px", borderRadius: 16, cursor: "pointer", transition: "0.2s" }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(139,92,246,0.1)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>🎓</div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: "white", marginBottom: 4 }}>Student</h3>
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>I am in college preparing for jobs</p>
+                  </button>
+
+                  <button onClick={() => { setUserType("PROFESSIONAL"); setStep(3); }}
+                    style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(16,185,129,0.3)", padding: "32px 24px", borderRadius: 16, cursor: "pointer", transition: "0.2s" }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(16,185,129,0.1)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>💼</div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: "white", marginBottom: 4 }}>Working Professional</h3>
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>I am already working and want to upskill</p>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
             {/* STUDENT FLOW */}
-            {step === 1 && (
+            {step === 1 && userType === "STUDENT" && (
               <motion.div key="student-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 10 }}>
                 <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Student Profile</h2>
                 <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>We'll build your AI roadmap based on this data.</p>
@@ -199,8 +228,50 @@ export default function OnboardingPage() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 32 }}>
+                  <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer", marginTop: 32 }}>Back</button>
                   <button onClick={() => setStep(2)} disabled={!studentYear || !targetRole || !dailyAvailableTime || loading}
-                    style={{ background: (!studentYear || !targetRole || !dailyAvailableTime || loading) ? "rgba(255,255,255,0.1)" : "#6366f1", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!studentYear || !targetRole || !dailyAvailableTime || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                    style={{ background: (!studentYear || !targetRole || !dailyAvailableTime || loading) ? "rgba(255,255,255,0.1)" : "#6366f1", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!studentYear || !targetRole || !dailyAvailableTime || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8, marginTop: 32 }}>
+                    Name Your Mentor <ArrowRight size={20} />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* PROFESSIONAL FLOW */}
+            {step === 3 && userType === "PROFESSIONAL" && (
+              <motion.div key="professional-step" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 10 }}>
+                <h2 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-outfit)" }}>Professional Profile</h2>
+                <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 32 }}>We'll build your AI upskilling roadmap based on this data.</p>
+                
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 700 }}>Current Role</label>
+                    <input type="text" value={targetRole} onChange={(e) => setTargetRole(e.target.value)} placeholder="e.g. SDE-1"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 700 }}>Target Role / Goal</label>
+                    <input type="text" value={placementGoal} onChange={(e) => setPlacementGoal(e.target.value)} placeholder="e.g. SDE-2 at MAANG"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "12px", borderRadius: 10, outline: "none", fontSize: 14 }} />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ display: "block", color: "rgba(255,255,255,0.8)", marginBottom: 12, fontWeight: 600 }}>Daily Available Time for Upskilling</label>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    {["1 hour/day", "2 hours/day", "3 hours/day", "Custom"].map(time => (
+                      <button key={time} onClick={() => setDailyAvailableTime(time)}
+                        style={{ flex: 1, background: dailyAvailableTime === time ? "#10B981" : "rgba(255,255,255,0.05)", color: "white", border: "none", padding: "12px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "0.2s" }}>
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <button onClick={() => setStep(0)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer", marginTop: 32 }}>Back</button>
+                  <button onClick={() => setStep(2)} disabled={!targetRole || !dailyAvailableTime || loading}
+                    style={{ background: (!targetRole || !dailyAvailableTime || loading) ? "rgba(255,255,255,0.1)" : "#10B981", color: "white", border: "none", padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: (!targetRole || !dailyAvailableTime || loading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8, marginTop: 32 }}>
                     Name Your Mentor <ArrowRight size={20} />
                   </button>
                 </div>
@@ -224,7 +295,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <button onClick={() => setStep(1)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
+                  <button onClick={() => setStep(userType === "STUDENT" ? 1 : 3)} style={{ background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.1)", padding: "14px 24px", borderRadius: 10, fontSize: 15, cursor: "pointer" }}>Back</button>
                   <button onClick={handleFinish} disabled={!mentorName || loading}
                     style={{ background: (!mentorName || loading) ? "rgba(255,255,255,0.1)" : "white", color: "black", padding: "14px 40px", borderRadius: 10, fontSize: 16, fontWeight: 900, cursor: (!mentorName || loading) ? "not-allowed" : "pointer", boxShadow: "0 10px 20px rgba(0,0,0,0.3)" }}>
                     {loading ? "Initializing..." : "Launch Career Universe"}
