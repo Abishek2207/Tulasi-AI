@@ -198,11 +198,25 @@ export default function CareerCopilotPage() {
                                 <div style={{ fontSize: 12, fontWeight: 800, color: activePath.color, marginBottom: 4, textTransform: "uppercase" }}>Month {step.month}</div>
                                 <div style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 8 }}>{step.goal}</div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                    {step.resources.map(res => (
-                                        <Link href={`/dashboard/personalized-roadmap?topic=${encodeURIComponent(res)}`} key={res} style={{ textDecoration: "none" }}>
+                                    {step.resources.map(res => {
+                                      const getResourceHref = (r: string) => {
+                                        const lr = r.toLowerCase();
+                                        if (lr.includes("dsa") || lr.includes("data structure") || lr.includes("algorithm")) return "/dashboard/dsa-agent";
+                                        if (lr.includes("system design") || lr.includes("architecture")) return "/dashboard/system-design";
+                                        if (lr.includes("resume") || lr.includes("cv") || lr.includes("portfolio")) return "/dashboard/resume-analyzer";
+                                        if (lr.includes("interview") || lr.includes("mock")) return "/dashboard/mock-interview";
+                                        if (lr.includes("startup") || lr.includes("pitch")) return "/dashboard/startup-lab";
+                                        if (lr.includes("project") || lr.includes("code")) return "/dashboard/code-arena";
+                                        if (lr.includes("job") || lr.includes("internship")) return "/dashboard/job-internship-match";
+                                        if (lr.includes("prep") || lr.includes("plan")) return "/dashboard/prep-plan";
+                                        return `/dashboard/personalized-roadmap?topic=${encodeURIComponent(r)}`;
+                                      };
+                                      return (
+                                        <Link href={getResourceHref(res)} key={res} style={{ textDecoration: "none" }}>
                                           <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: 6, cursor: "pointer" }}>{res}</span>
                                         </Link>
-                                    ))}
+                                      );
+                                    })}
                                 </div>
                             </div>
                         </div>

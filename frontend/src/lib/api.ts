@@ -552,9 +552,14 @@ export interface JobListing {
 }
 
 export const internshipsApi = {
-  list: (params?: { skills?: string; location?: string }) => {
+  list: async (params?: { skills?: string; location?: string }) => {
     const qs = params ? "?" + new URLSearchParams(params as any).toString() : "";
-    return apiFetch<JobListing[]>(`/api/opportunities/jobs${qs}`);
+    const res = await apiFetch<any>(`/api/opportunities/jobs${qs}`);
+    // Handle the wrapper { success: true, data: [...] } from backend
+    if (res.data && res.data.data && Array.isArray(res.data.data)) {
+      return { data: res.data.data as JobListing[], error: res.error };
+    }
+    return { data: (res.data as JobListing[]) || [], error: res.error };
   },
   apply: (id: string, data: { resume_id?: string; cover_letter?: string }) =>
     apiFetch<any>(`/api/internships/${id}/apply`, { method: "POST", body: JSON.stringify(data) }),
