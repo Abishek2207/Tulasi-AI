@@ -30,11 +30,8 @@ export default function JobMatchPage() {
     if (res.error) {
       setError(res.error);
     } else if (res.data && res.data.length > 0) {
-      // Validate: reject fake companies
-      const valid = (res.data as JobListing[]).filter(j => {
-        const company = (j.company || "").toLowerCase().trim();
-        return j.title?.trim() && company && !PLACEHOLDER_COMPANIES.some(p => company.includes(p));
-      });
+      // Validate: reject jobs without a title or company
+      const valid = (res.data as JobListing[]).filter(j => j.title?.trim() && j.company?.trim());
       setJobs(valid);
       setLastSynced(new Date().toISOString());
     }
@@ -85,8 +82,8 @@ export default function JobMatchPage() {
         {jobs.length > 0
           ? `${jobs.length} real opportunities fetched and matched to your skill profile.`
           : error
-            ? `Job API error: ${error}. Connect a live internship data source in your backend.`
-            : "No real-time job data connected yet."
+            ? `Job API error: ${error}. Using external sources like Remotive.`
+            : "Fetching live job data..."
         }
       </div>
 
@@ -99,12 +96,12 @@ export default function JobMatchPage() {
       ) : jobs.length === 0 ? (
         <EmptyState
           icon={error ? WifiOff : BriefcaseBusiness}
-          title={error ? "Job Data Source Not Connected" : "No Real-Time Data Connected Yet"}
+          title={error ? "Job Data Failed" : "No Real-Time Data Could Be Found"}
           description={error
-            ? "The backend job/internship API returned an error. Connect to Internshala, LinkedIn, or Wellfound APIs in your backend."
-            : "No live job listings are available. Connect a real internship/job data source to see matches here."}
-          ctaLabel="View Backend API Docs"
-          ctaHref={`${process.env.NEXT_PUBLIC_API_URL}/docs`}
+            ? "The backend job/internship API returned an error."
+            : "No live job listings matching your skills are currently available from our sources. Please try again later."}
+          ctaLabel="Update Profile Skills"
+          ctaHref={`/dashboard/profile`}
           accent="#06B6D4"
         />
       ) : (
