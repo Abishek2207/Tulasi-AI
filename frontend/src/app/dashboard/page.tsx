@@ -56,11 +56,12 @@ export default function DashboardRouter() {
       return;
     }
 
-    // Route users based on their selected user_type
-    if (userType === "student") {
-      router.replace("/dashboard/student");
-    } else {
+    // Route users based on their selected user_type (case-insensitive)
+    const typeStr = (userType || "").toLowerCase();
+    if (typeStr === "professional" || typeStr === "working professional") {
       router.replace("/dashboard/professional");
+    } else {
+      router.replace("/dashboard/student");
     }
   }, [user, status, router]);
 

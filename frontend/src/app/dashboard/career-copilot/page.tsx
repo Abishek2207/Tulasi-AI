@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { BrainCircuit, Briefcase, Target, Map, CheckCircle, ChevronRight, CheckSquare, Clock, ArrowRight, Zap, GraduationCap, Building2 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { intelligenceApi } from "@/lib/api";
