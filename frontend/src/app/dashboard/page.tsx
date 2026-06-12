@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import { motion } from "framer-motion";
@@ -14,6 +14,8 @@ export default function DashboardRouter() {
   const { data: session, status } = useSession();
   const user = session?.user;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const forceSelect = searchParams.get("select") === "true";
 
   useEffect(() => {
     if (status === "loading") return;
@@ -28,8 +30,19 @@ export default function DashboardRouter() {
 
     if (user && !user.is_onboarded) {
       router.replace("/onboarding");
+      return;
     }
-  }, [user, status, router]);
+
+    if (forceSelect) return; // Stay on selection screen if requested
+
+    // Route users based on their selected user_type (case-insensitive)
+    const typeStr = (userType || "").toLowerCase();
+    if (typeStr === "professional" || typeStr === "working professional") {
+      router.replace("/dashboard/professional");
+    } else {
+      router.replace("/dashboard/student");
+    }
+  }, [user, status, router, forceSelect]);
 
   if (status === "loading" || !user) {
     return (
