@@ -242,6 +242,9 @@ app.include_router(agents_api.router,       prefix="/api/agents",        tags=["
 app.include_router(opportunities_api.router, prefix="/api/opportunities", tags=["Opportunities Discovery"])
 app.include_router(portfolio_api.router,     prefix="/api/portfolio",     tags=["Portfolio Agent"])
 
+from app.api import professional_api
+app.include_router(professional_api.router,  prefix="/professional",      tags=["Professional Mode"])
+
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────
 from app.api import ws as ws_router
 from app.websockets import signaling

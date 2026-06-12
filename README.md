@@ -24,6 +24,12 @@ To gracefully kill both servers when you are done, simply double-click or run:
 
 ## 🔐 Environment Setup (Production Upgrade)
 
+### Professional Mode Configuration
+To run the agentic Professional Mode with real-time career intelligence:
+1. Ensure your `.env` contains `SERPAPI_API_KEY` for live job postings and skill demand analytics.
+2. Provide `QDRANT_URL` and `QDRANT_API_KEY` to enable vector storage for career risk RAG. (Can be run locally via `docker run -p 6333:6333 qdrant/qdrant` or via Qdrant Cloud).
+3. If no `SERPAPI_API_KEY` is present, the app will gracefully fall back to a `demo_mode` to ensure the platform doesn't crash, but it will not serve real-time market data.
+
 TulasiAI now uses a Free-First API architecture! No credit cards required.
 
 1. **Backend API Keys:**
