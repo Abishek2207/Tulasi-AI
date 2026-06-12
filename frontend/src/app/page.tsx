@@ -20,17 +20,17 @@ const Code2 = ({ size, color }: { size: number; color: string }) => (
 
 // ── Feature Data ────────────────────────────────────────────────
 const primaryFeatures = [
-  { id: "ai-tutor", title: "Autonomous AI Tutor", desc: "Context-aware mastery. Tulasi AI doesn't just answer; it architects your understanding with deep pedagogical memory.", icon: BrainCircuit, color: "#10B981", span: 2, bg: "rgba(16,185,129,0.05)" },
-  { id: "pdf-iq", title: "PDF Intelligence", desc: "Ingest textbooks and documentation. Query the source with zero-latency RAG.", icon: FileText, color: "#06B6D4", span: 1, bg: "rgba(6,182,212,0.05)" },
-  { id: "mock-sim", title: "Simulation Engine", desc: "High-fidelity mock interviews tailored to MAANG standard.", icon: Target, color: "#F43F5E", span: 1, bg: "rgba(244,63,94,0.05)" },
-  { id: "architect", title: "Career Architect", desc: "Dynamic roadmaps that evolve with your progress. From Hello World to Senior Architect.", icon: Map, color: "#8B5CF6", span: 2, bg: "rgba(139,92,246,0.05)" },
+  { id: "ai-tutor", title: "AI Learning Mentor", desc: "Understand concepts, revise topics, and learn with personalized explanations.", icon: BrainCircuit, color: "#10B981", span: 2, bg: "rgba(16,185,129,0.05)" },
+  { id: "pdf-iq", title: "Project Builder", desc: "Turn ideas into real projects with structured planning and guidance.", icon: FileText, color: "#06B6D4", span: 1, bg: "rgba(6,182,212,0.05)" },
+  { id: "mock-sim", title: "Interview Practice Hub", desc: "Prepare for technical, HR, behavioral, and system design interviews.", icon: Target, color: "#F43F5E", span: 1, bg: "rgba(244,63,94,0.05)" },
+  { id: "architect", title: "Professional Upskilling", desc: "Help working professionals adapt to AI tools, automation, and modern tech stacks.", icon: Map, color: "#8B5CF6", span: 2, bg: "rgba(139,92,246,0.05)" },
 ];
 
 const secondaryFeatures = [
-  { icon: Code, title: "Coding Arena", desc: "Real-time feedback on complex DS&A.", color: "#F59E0B" },
-  { icon: Award, title: "Verified Credentials", desc: "Earn proof-of-knowledge certificates.", color: "#10B981" },
-  { icon: Trophy, title: "Hackathon Nexus", desc: "The pulse of global competitions.", color: "#06B6D4" },
-  { icon: Users, title: "Study Clusters", desc: "Collaborative focus with Pomodoro sync.", color: "#F43F5E" },
+  { icon: Code, title: "DSA & Coding Lab", desc: "Practice coding problems with guided feedback and improvement plans.", color: "#F59E0B" },
+  { icon: Award, title: "Verified Skills", desc: "Earn proof-of-knowledge certificates.", color: "#10B981" },
+  { icon: Trophy, title: "Opportunity Discovery", desc: "Discover internships, jobs, hackathons, certifications, and career events.", color: "#06B6D4" },
+  { icon: Users, title: "Professional Growth", desc: "Help working professionals adapt to AI tools, automation, and modern tech stacks.", color: "#F43F5E" },
 ];
 
 const Zap = ({ size, color }: { size: number; color: string }) => (
@@ -40,10 +40,10 @@ const Zap = ({ size, color }: { size: number; color: string }) => (
 );
 
 const intelligencePillars = [
-  { title: "ADAPTIVE SYNTHESIS", desc: "Complex career data parsed into actionable intuition.", icon: BrainCircuit, color: "#8B5CF6" },
-  { title: "COGNITIVE MAPPING", desc: "Dynamic roadmaps that restructure in real-time.", icon: Map, color: "#06B6D4" },
-  { title: "SIMULATION FIDELITY", desc: "Sub-millisecond feedback on MAANG-grade sims.", icon: Target, color: "#F43F5E" },
-  { title: "GLOBAL NEXUS", desc: "Direct pipelines to frontier tech opportunities.", icon: Sparkles, color: "#10B981" },
+  { title: "SKILL INTELLIGENCE ENGINE", desc: "Complex career data parsed into actionable intuition.", icon: BrainCircuit, color: "#8B5CF6" },
+  { title: "PERSONALIZED CAREER ROADMAPS", desc: "Dynamic roadmaps that restructure in real-time.", icon: Map, color: "#06B6D4" },
+  { title: "INTERVIEW PRACTICE HUB", desc: "Sub-millisecond feedback on MAANG-grade sims.", icon: Target, color: "#F43F5E" },
+  { title: "OPPORTUNITY HUB", desc: "Direct pipelines to frontier tech opportunities.", icon: Sparkles, color: "#10B981" },
 ];
 
 // ── Shared Branding Component ────────────────────────────────────
@@ -234,7 +234,7 @@ function Hero() {
         <motion.div style={{ y, opacity, position: "absolute", zIndex: 10, textAlign: "center", width: "100%", top: isMobile ? "12%" : "15%" }}>
           <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
             className="hero-title" style={{ fontSize: "clamp(48px, 9vw, 110px)", lineHeight: 0.9, letterSpacing: "-0.04em" }}>
-            {["Architect", "Your", "Trajectory."].map((w, i) => (
+            {["Career", "Intelligence", "Platform."].map((w, i) => (
               <motion.span key={i} initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 100, damping: 12, delay: 0.2 + i * 0.1 }}
                 style={{ display: isMobile ? "block" : "inline-block", marginRight: isMobile ? 0 : "0.2em" }} className={i === 2 ? "gradient-text" : ""}>{w}
               </motion.span>
@@ -243,7 +243,7 @@ function Hero() {
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }}
             style={{ marginTop: 28, display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap", padding: "0 20px" }}>
-            {["NEURAL CORE", "PROPRIETARY RAG", "QUANTUM ANALYSIS"].map((tag, i) => (
+            {["AI CAREER INTELLIGENCE", "ADAPTIVE SKILL MAPPING", "PROFESSIONAL GROWTH"].map((tag, i) => (
               <span key={tag} style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2, color: "var(--text-muted)", padding: "8px 16px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, background: "rgba(255,255,255,0.02)" }}>
                 {tag}
               </span>
@@ -275,14 +275,13 @@ function Hero() {
         >
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} style={{ marginBottom: 28, position: "relative" }}>
             <span className="animate-shimmer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 30, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#FFF", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2.5 }}>
-              <Zap size={14} color="#0A84FF" /> TULASI AI INTELLIGENCE HUB
+              <Zap size={14} color="#0A84FF" /> TULASI AI CAREER PLATFORM
             </span>
           </motion.div>
 
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
             style={{ fontSize: "clamp(16px, 2.8vw, 22px)", color: "var(--text-secondary)", maxWidth: 780, margin: "0 auto 48px", lineHeight: 1.6, fontWeight: 500, padding: "0 4px" }}>
-            Tulasi AI is the high-fidelity workspace for world-class engineers.
-            Synthesize complexity into mastery with zero-latency career intelligence.
+            Learn faster, build stronger skills, prepare for real opportunities, and stay relevant in a technology-driven career world.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
@@ -290,13 +289,13 @@ function Hero() {
             <Link href="/auth" style={{ textDecoration: "none" }}>
               <motion.button whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="btn-primary"
                 style={{ padding: "20px 48px", fontSize: "clamp(16px, 2.2vw, 19px)", borderRadius: 18, fontWeight: 900, boxShadow: "0 20px 40px rgba(10, 132, 255, 0.2)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, position: "relative", overflow: "hidden" }}>
-                <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10 }}>INITIALIZE ACCESS <ArrowRight size={20} /></span>
+                <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10 }}>START YOUR CAREER JOURNEY <ArrowRight size={20} /></span>
                 <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.35 }} />
               </motion.button>
             </Link>
             <motion.a href="#reviews" className="animate-float" whileHover={{ scale: 1.02, y: -2 }}
               style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "20px 40px", borderRadius: 18, textDecoration: "none", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-primary)", fontWeight: 800, fontSize: "clamp(15px, 2vw, 17px)", boxSizing: "border-box" }}>
-              Verified Reviews
+              Explore Platform
             </motion.a>
           </motion.div>
         </motion.div>
@@ -304,13 +303,13 @@ function Hero() {
         {/* Floating background elements */}
         <div className="hide-mobile" style={{ position: "absolute", left: "8%", top: "35%", opacity: 0.4, zIndex: 5 }}>
           <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 6, repeat: Infinity }} style={{ padding: "16px 24px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}>
-            <div style={{ fontSize: 9, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 2 }}>ORBIT KNOWLEDGE GRAPH</div>
+            <div style={{ fontSize: 9, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 2 }}>CAREER ROADMAPS</div>
             <div style={{ fontSize: 14, fontWeight: 900, color: "white", marginTop: 4 }}>SYNCED</div>
           </motion.div>
         </div>
         <div className="hide-mobile" style={{ position: "absolute", right: "8%", top: "45%", opacity: 0.4, zIndex: 5 }}>
           <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 7, repeat: Infinity, delay: 1 }} style={{ padding: "16px 24px", borderRadius: 16, background: "rgba(10,132,255,0.05)", border: "1px solid rgba(10,132,255,0.15)" }}>
-            <div style={{ fontSize: 9, fontWeight: 900, color: "#0A84FF", letterSpacing: 2 }}>USER TRAJECTORY DATA</div>
+            <div style={{ fontSize: 9, fontWeight: 900, color: "#0A84FF", letterSpacing: 2 }}>SKILL INTELLIGENCE</div>
             <div style={{ fontSize: 14, fontWeight: 900, color: "white", marginTop: 4 }}>OPTIMIZED</div>
           </motion.div>
         </div>
@@ -323,10 +322,10 @@ function Hero() {
 // ── Neural Engine Core (Consolidated High-Fidelity) ───
 function NeuralEngineCore() {
   const steps = [
-    { label: "ADAPTIVE SYNTHESIS", desc: "Tulasi parses your raw career data into actionable intuition instantly.", icon: Cpu, color: "#8B5CF6" },
-    { label: "COGNITIVE MAPPING", desc: "Dynamic roadmaps that restructure based on your Tulasi skill profile.", icon: Target, color: "#06B6D4" },
-    { label: "SIMULATION FIDELITY", desc: "Sub-millisecond feedback on MAANG-grade interviews in the Tulasi Lab.", icon: Code, color: "#F43F5E" },
-    { label: "GLOBAL NEXUS", desc: "Direct pipelines connecting your verified Tulasi portfolio to frontier tech.", icon: Award, color: "#10B981" },
+    { label: "SKILL INTELLIGENCE ENGINE", desc: "Track your current skills, strengths, gaps, and growth areas.", icon: Cpu, color: "#8B5CF6" },
+    { label: "PERSONALIZED CAREER ROADMAPS", desc: "Get adaptive learning paths based on your goals, role, and experience level.", icon: Target, color: "#06B6D4" },
+    { label: "INTERVIEW PRACTICE HUB", desc: "Prepare for technical, HR, behavioral, and system design interviews.", icon: Code, color: "#F43F5E" },
+    { label: "OPPORTUNITY HUB", desc: "Discover internships, jobs, hackathons, certifications, and career events.", icon: Award, color: "#10B981" },
   ];
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto 80px", position: "relative", zIndex: 30, padding: "0 24px" }}>
@@ -357,10 +356,10 @@ function BentoFeatures() {
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 }}>
           <h2 style={{ fontSize: "clamp(28px, 5vw, 56px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-2px", marginBottom: 20 }}>
-            Engineered for <span className="gradient-text">Elite Engineers.</span>
+            Career Intelligence for <span className="gradient-text">Students and Professionals.</span>
           </h2>
           <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 2vw, 18px)", maxWidth: 640, margin: "0 auto", padding: "0 8px" }}>
-            Our mission is zero-to-one velocity. Every tool in the Tulasi ecosystem is optimized for deep mastery and career transition.
+            TulasiAI is an AI-powered career infrastructure platform that helps students and professionals learn faster, adapt to new technologies, prepare for opportunities, build projects, improve interviews, and grow continuously in their careers.
           </p>
         </motion.div>
 
@@ -529,10 +528,10 @@ function ReviewsSection() {
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 64 }}>
           <h2 style={{ fontSize: "clamp(28px, 5vw, 56px)", fontWeight: 900, fontFamily: "var(--font-outfit)", letterSpacing: "-2px", marginBottom: 20 }}>
-            What Engineers <span className="gradient-text">Actually Say.</span>
+            What Our Community <span className="gradient-text">Says.</span>
           </h2>
           <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 2vw, 18px)", maxWidth: 560, margin: "0 auto" }}>
-            Real feedback from real users. No fake testimonials, ever.
+            Real feedback from learners and professionals using TulasiAI to improve their career journey.
           </p>
         </motion.div>
 
@@ -660,21 +659,21 @@ function CTASection() {
         }}>
           <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
             <div style={{ fontSize: 12, fontWeight: 900, color: "var(--brand-primary)", letterSpacing: 4, marginBottom: 24, textTransform: "uppercase" }}>A New Standard</div>
-            <h2 style={{ fontSize: "clamp(36px, 7vw, 72px)", fontWeight: 900, marginBottom: 28, letterSpacing: "-0.04em", lineHeight: 1.1 }}>Ready to transform your <span className="gradient-text">Trajectory?</span></h2>
+            <h2 style={{ fontSize: "clamp(36px, 7vw, 72px)", fontWeight: 900, marginBottom: 28, letterSpacing: "-0.04em", lineHeight: 1.1 }}>Ready to Build Your Next <span className="gradient-text">Career Level?</span></h2>
             <p style={{ color: "var(--text-secondary)", fontSize: "clamp(18px, 2.5vw, 22px)", maxWidth: 700, margin: "0 auto 56px", lineHeight: 1.6, fontWeight: 500 }}>
-              Join the elite ecosystem of engineers operating at the frontier. Your personalized career engine is ready for initialization.
+              Whether you are preparing for your first internship, switching into tech, improving your current role, or aiming for better opportunities, TulasiAI helps you move with clarity.
             </p>
             <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap" }}>
               <Link href="/auth" style={{ textDecoration: "none" }}>
                 <motion.button whileHover={{ scale: 1.05, y: -4 }} whileTap={{ scale: 0.95 }} className="btn-primary" 
                   style={{ padding: "22px 56px", borderRadius: 22, fontSize: 18, fontWeight: 900, boxShadow: "0 25px 50px rgba(139,92,246,0.3)" }}>
-                  GET LIFETIME ACCESS
+                  EXPLORE TULASIAI
                 </motion.button>
               </Link>
               <Link href="/contact" style={{ textDecoration: "none" }}>
                 <motion.button whileHover={{ scale: 1.05, y: -4 }} whileTap={{ scale: 0.95 }} className="btn-ghost" 
                   style={{ padding: "22px 48px", borderRadius: 22, fontSize: 18, fontWeight: 900, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.03)" }}>
-                  Talk to an Expert
+                  Connect With Us
                 </motion.button>
               </Link>
             </div>
@@ -697,7 +696,7 @@ function Footer() {
           <div>
             <BrandText size={32} />
             <p style={{ color: "var(--text-secondary)", fontSize: 16, marginTop: 28, maxWidth: 360, lineHeight: 1.8 }}>
-              Tulasi AI is an autonomous intelligence platform meticulously designed to close the gap between theoretical knowledge and global career offers.
+              TulasiAI helps students, freshers, professionals, and career switchers learn, build, prepare, and grow through AI-powered career intelligence.
             </p>
             <div style={{ display: "flex", gap: 20, marginTop: 32 }}>
               {[
@@ -713,14 +712,14 @@ function Footer() {
           {/* CENTER: Product Links */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
             <div>
-              <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Ecosystem</h4>
+              <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Platform</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {[
-                  { name: "Neural Roadmaps", href: "#roadmaps" },
-                  { name: "Interview Lab", href: "/auth" },
-                  { name: "Project Nexus", href: "/auth" },
-                  { name: "DS&A Arena", href: "/auth" },
-                  { name: "Knowledge Base", href: "/blog" }
+                  { name: "Career Roadmaps", href: "#roadmaps" },
+                  { name: "Interview Practice", href: "/auth" },
+                  { name: "Project Builder", href: "/auth" },
+                  { name: "DSA & Coding Lab", href: "/auth" },
+                  { name: "Learning Library", href: "/blog" }
                 ].map(l => (
                   <Link key={l.name} href={l.href} style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 14, fontWeight: 600, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "white"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>{l.name}</Link>
                 ))}
@@ -731,7 +730,7 @@ function Footer() {
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {[
                   { name: "Documentation", href: "/about" },
-                  { name: "API Status", href: "https://tulasi-ai-hycl.onrender.com/api" },
+                  { name: "System Status", href: "https://tulasi-ai-hycl.onrender.com/api" },
                   { name: "Changelog", href: "/blog" },
                   { name: "Community", href: "https://instagram.com/_.abi22._" },
                   { name: "Support", href: "/contact" }
@@ -744,7 +743,7 @@ function Footer() {
 
           {/* RIGHT: Contact & Links */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right" }}>
-            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Secure Session</h4>
+            <h4 style={{ color: "white", fontWeight: 900, marginBottom: 24, fontSize: 12, textTransform: "uppercase", letterSpacing: 2.5 }}>Career Console</h4>
             <div style={{ background: "rgba(255,255,255,0.03)", padding: 24, borderRadius: 24, border: "1px solid rgba(255,255,255,0.08)", width: "100%", maxWidth: 300 }}>
               <p style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 16, textAlign: "left" }}>Receive occasional intelligence updates from our founder.</p>
               <div style={{ display: "flex", gap: 8 }}>
@@ -758,7 +757,7 @@ function Footer() {
         <div style={{ paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
-            <span style={{ color: "var(--text-secondary)", fontSize: 12, fontWeight: 800, letterSpacing: 0.5 }}>TULASI ENGINE v3.1.2 — ALL SYSTEMS STABLE</span>
+            <span style={{ color: "var(--text-secondary)", fontSize: 12, fontWeight: 800, letterSpacing: 0.5 }}>TULASI ENGINE v3.1.2 — Platform Running Smoothly</span>
           </div>
           <span style={{ color: "var(--text-muted)", fontSize: 14, fontWeight: 600, textAlign: "center" }}>
              Built with Precision by Abishek R • © 2026 Tulasi AI Labs. Zero-Knowledge Infrastructure Enabled.

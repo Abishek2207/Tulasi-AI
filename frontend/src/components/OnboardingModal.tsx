@@ -64,7 +64,7 @@ export function OnboardingModal() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail || "Onboarding synchronization failed. Our neural core might be under heavy load.");
+        throw new Error(errData.detail || "Onboarding synchronization failed. Our AI CAREER INTELLIGENCE might be under heavy load.");
       }
 
       const result = await res.json();
@@ -169,7 +169,7 @@ export function OnboardingModal() {
 
                 <button onClick={handleSubmit} disabled={loading || data.interest_areas.length === 0}
                   style={{ width: "100%", padding: "16px", borderRadius: 16, border: "none", background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", color: "white", fontWeight: 800, cursor: "pointer", fontSize: 16, marginBottom: 12 }}>
-                  {loading ? "Engaging Career Architect..." : "Architect My Future"}
+                  {loading ? "Engaging Professional Upskilling..." : "Architect My Future"}
                 </button>
                 {error && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}

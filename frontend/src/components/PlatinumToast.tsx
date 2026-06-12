@@ -5,7 +5,7 @@ import { Loader2, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function PlatinumToast({
-  message = "Awakening Neural Core...",
+  message = "Awakening AI CAREER INTELLIGENCE...",
   subtext = "Establishing high-performance link with cloud servers. Please hold.",
   show = false,
 }: {

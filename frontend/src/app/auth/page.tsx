@@ -115,7 +115,7 @@ export default function AuthPage() {
 
       window.dispatchEvent(new Event("tulasi-auth-change"));
       
-      toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
+      toast.success(isLogin ? "Continue Your Growth!" : "Account created successfully!");
       
       if (data.user?.role === "admin" || data.user?.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
         router.push("/admin");
@@ -157,7 +157,7 @@ export default function AuthPage() {
               <TulasiLogo size={36} glow />
             </div>
             <h1 style={{ fontSize: 26, fontWeight: 800, color: "white", marginBottom: 8, textAlign: "center", letterSpacing: "-0.5px" }}>
-              {isLogin ? "Welcome back" : "Create an account"}
+              {isLogin ? "Continue Your Growth" : "Create an account"}
             </h1>
             <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, textAlign: "center" }}>
               {isLogin ? "Enter your details to access your AI dashboard." : "Join the AI Career Operating System."}

@@ -173,7 +173,7 @@ export default function StudentDashboard() {
           letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 14,
           fontFamily: "var(--font-outfit)",
         }}>
-          Welcome back, {userName}.<br />
+          Continue Your Growth, {userName}.<br />
           <span style={{ color: "rgba(255,255,255,0.3)" }}>Choose your agent.</span>
         </h1>
 

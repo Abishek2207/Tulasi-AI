@@ -22,21 +22,19 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.tulasiai.in"),
   title: {
-    default: "TulasiAI | Personalized Career Intelligence Engine",
+    default: "TulasiAI | AI Career Intelligence Platform for Students & Professionals",
     template: "%s | TulasiAI",
   },
-  description: "Bridge the gap from theory to global offers. TulasiAI provides personalized mock interviews, neural skill mapping, and daily AI missions for engineers. Built by Abishek R, Founder & CEO of TulasiAI.",
+  description: "TulasiAI helps students, freshers, working professionals, and career switchers learn skills, prepare for interviews, build projects, discover opportunities, and grow with AI-powered career intelligence. Built by Abishek R, Founder & CEO of TulasiAI.",
   manifest: "/manifest.json",
   keywords: [
-    "AI career coach", "mock interview AI", "personalized roadmaps", "skill radar chart", 
-    "engineering career platform", "ATS resume builder", "technical interview prep",
-    "personalized learning AI", "career readiness score", "TulasiAI", "Tulasiai",
+    "TulasiAI", "AI career platform", "career intelligence", "student career platform", "professional upskilling", "AI learning mentor", "DSA practice", "interview preparation", "project guidance", "job preparation", "internship preparation", "career roadmap", "AI upskilling platform",  "TulasiAI", "Tulasiai",
     "Abishek R Founder of TulasiAI", "TulasiAI CEO Abishek R", 
     "Founder & CEO of TulasiAI", "Tulasi AI Labs Founder", "Abishek R"
   ],
   openGraph: {
-    title: "TulasiAI | Personalized Career Intelligence Engine",
-    description: "The autonomous career engine: Neural skill mapping, AI mock interviews, and personalized missions. Founded by Abishek R.",
+    title: "TulasiAI | AI Career Intelligence Platform for Students & Professionals",
+    description: "AI-powered career infrastructure for students, freshers, professionals, and career switchers. Founded by Abishek R.",
     type: "website",
     siteName: "TulasiAI",
     url: "https://www.tulasiai.in",
@@ -53,8 +51,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TulasiAI | Personalized Career Intelligence",
-    description: "Personalized AI engineering missions and career intelligence mapped to your skills. By TulasiAI CEO Abishek R.",
+    title: "TulasiAI | AI Career Intelligence Platform for Students & Professionals",
+    description: "AI-powered career infrastructure for students, freshers, professionals, and career switchers. By TulasiAI CEO Abishek R.",
     creator: "@_.abi22._",
   },
   icons: {

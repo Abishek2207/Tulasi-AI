@@ -21,7 +21,7 @@ export function DebugPanel() {
     checkToken();
     const tokenInterval = setInterval(checkToken, 2000);
 
-    // Check API Status
+    // Check System Status
     const checkApi = async () => {
       try {
                 const res = await fetch(`${API_URL}/api/health`, { 
@@ -94,7 +94,7 @@ export function DebugPanel() {
             <div style={{ padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 8, padding: 12 }}>
                 <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Activity size={12} /> API Status
+                  <Activity size={12} /> System Status
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: isApiOnline ? "#10B981" : "#F43F5E" }}>
                   {isApiOnline === null ? "..." : isApiOnline ? <><Wifi size={14} /> ONLINE</> : <><WifiOff size={14} /> OFFLINE</>}
