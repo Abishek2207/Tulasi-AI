@@ -56,8 +56,12 @@ export default function DashboardRouter() {
       return;
     }
 
-    // Always redirect all users to the student dashboard, as TulasiAI is now exclusively for students.
-    router.replace("/dashboard/student");
+    // Route users based on their selected user_type
+    if (userType === "student") {
+      router.replace("/dashboard/student");
+    } else {
+      router.replace("/dashboard/professional");
+    }
   }, [user, status, router]);
 
   return (
