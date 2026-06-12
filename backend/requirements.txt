@@ -51,4 +51,9 @@ eventlet==0.33.3
 
 # Invalidate cache for redeploy 3cryptography>=41.0.0
 
-
+# ── Professional Mode Agents ──────────────────────────────────────────
+langgraph>=0.2.0
+llama-index>=0.10.0
+qdrant-client>=1.7.0
+redis>=5.0.0
+celery>=5.3.0
