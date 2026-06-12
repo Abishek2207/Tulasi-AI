@@ -56,7 +56,7 @@ export function useWebSocket({
 
   const connect = useCallback(() => {
     shouldClose.current = false;
-    setStatus("connecting");
+    setTimeout(() => setStatus("connecting"), 0);
 
     const url = buildUrl();
     const ws = new WebSocket(url);
