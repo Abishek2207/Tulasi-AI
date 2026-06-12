@@ -35,6 +35,18 @@ export default function DashboardRouter() {
 
     if (forceSelect) return; // Stay on selection screen if requested
 
+    // Read user_type from session first, fallback to localStorage
+    let userType = user?.user_type;
+    if (!userType && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          userType = parsed?.user_type;
+        }
+      } catch {}
+    }
+
     // Route users based on their selected user_type (case-insensitive)
     const typeStr = (userType || "").toLowerCase();
     if (typeStr === "professional" || typeStr === "working professional") {
