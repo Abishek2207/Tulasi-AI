@@ -32,11 +32,11 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - favicon.ico and root brand assets
      * - images (images folder)
      * - auth/callback (OAuth callback)
      * - robots.txt, sitemap.xml, manifest.json, sw.js, workbox-*
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|images|auth/callback|robots.txt|sitemap.xml|manifest.json|sw.js|workbox-).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|logo\\.png|logo\\.jpe?g|apple-touch-icon\\.png|images|auth/callback|robots.txt|sitemap.xml|manifest.json|sw.js|workbox-).*)',
   ],
 };
