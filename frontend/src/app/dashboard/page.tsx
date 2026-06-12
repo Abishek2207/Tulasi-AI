@@ -14,56 +14,30 @@ export default function DashboardRouter() {
   const { data: session, status } = useSession();
   const user = session?.user;
   const router = useRouter();
-  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     if (status === "loading") return;
 
-    // Read user_type from session first, fallback to localStorage
-    let userType = user?.user_type;
-    if (!userType && typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("user");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          userType = parsed?.user_type;
-        }
-      } catch {}
-    }
-
-    setChecked(true);
-
     if (!user && status === "unauthenticated") {
-      // Check localStorage token before redirecting
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) {
         router.replace("/auth");
-        return;
       }
-      // Token exists but session not loaded yet — wait
       return;
     }
 
-    if (!user) return;
-
-    if (!user.is_onboarded) {
+    if (user && !user.is_onboarded) {
       router.replace("/onboarding");
-      return;
-    }
-
-    if (user.role === "admin" || user.email?.toLowerCase() === "abishekramamoorthy22@gmail.com") {
-      router.replace("/admin");
-      return;
-    }
-
-    // Route users based on their selected user_type (case-insensitive)
-    const typeStr = (userType || "").toLowerCase();
-    if (typeStr === "professional" || typeStr === "working professional") {
-      router.replace("/dashboard/professional");
-    } else {
-      router.replace("/dashboard/student");
     }
   }, [user, status, router]);
+
+  if (status === "loading" || !user) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#05070A", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <TulasiLogo size={64} glow splash />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -74,69 +48,97 @@ export default function DashboardRouter() {
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "column",
-        gap: 28,
+        gap: 40,
         position: "relative",
         overflow: "hidden",
+        padding: 24,
       }}
     >
       {/* Ambient glows */}
       <div style={{ position: "absolute", top: "20%", left: "20%", width: 400, height: 400, background: "radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: "20%", right: "20%", width: 400, height: 400, background: "radial-gradient(circle, rgba(168,85,247,0.07) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
 
-      {/* Animated logo */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
-      >
-        <TulasiLogo size={88} splash glow />
-      </motion.div>
-
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
+        transition={{ duration: 0.5 }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, zIndex: 10 }}
       >
-        <motion.span
-          style={{
-            fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
-            fontWeight: 900,
-            fontSize: 22,
-            background: "linear-gradient(135deg, #ffffff 0%, #00E5A0 55%, #A855F7 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            letterSpacing: "-0.03em",
-          }}
-        >
-          TulasiAI
-        </motion.span>
-        <motion.div
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-          style={{
-            color: "rgba(255,255,255,0.35)",
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-          }}
-        >
-          Initializing Neural Environment…
-        </motion.div>
+        <TulasiLogo size={64} glow />
+        <h1 style={{
+          fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
+          fontWeight: 800,
+          fontSize: 32,
+          color: "white",
+          marginTop: 16,
+          textAlign: "center"
+        }}>
+          Welcome back, {user.name?.split(" ")[0] || "Engineer"}
+        </h1>
+        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 16 }}>Select your workspace to continue</p>
       </motion.div>
 
-      {/* Progress bar */}
-      <div style={{ width: 180, height: 2, background: "rgba(255,255,255,0.05)", borderRadius: 4, overflow: "hidden", marginTop: 8 }}>
+      <div style={{ display: "flex", gap: 24, zIndex: 10, flexWrap: "wrap", justifyContent: "center" }}>
         <motion.div
-          style={{ height: "100%", background: "linear-gradient(90deg, transparent, #00E5A0, #A855F7, transparent)" }}
-          animate={{ x: ["-100%", "200%"] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </div>
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          onClick={() => router.push("/dashboard/student")}
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(139,92,246,0.3)",
+            padding: "40px 32px",
+            borderRadius: 24,
+            cursor: "pointer",
+            width: 280,
+            textAlign: "center",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(139,92,246,0.1)";
+            e.currentTarget.style.transform = "translateY(-4px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+            e.currentTarget.style.transform = "translateY(0px)";
+          }}
+        >
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🎓</div>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: "white", marginBottom: 8 }}>Student Hub</h3>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>Access your college roadmap, AI mentors, and internship matching.</p>
+        </motion.div>
 
-      <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }` }} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          onClick={() => router.push("/dashboard/professional")}
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(16,185,129,0.3)",
+            padding: "40px 32px",
+            borderRadius: 24,
+            cursor: "pointer",
+            width: 280,
+            textAlign: "center",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(16,185,129,0.1)";
+            e.currentTarget.style.transform = "translateY(-4px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+            e.currentTarget.style.transform = "translateY(0px)";
+          }}
+        >
+          <div style={{ fontSize: 48, marginBottom: 16 }}>💼</div>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: "white", marginBottom: 8 }}>Professional Hub</h3>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>Access your upskilling modules, interview prep, and career growth tools.</p>
+        </motion.div>
+      </div>
     </div>
   );
 }
