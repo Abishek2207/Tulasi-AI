@@ -181,6 +181,20 @@ export default function StudentDashboard() {
           Every agent works with real data only. No fake scores, no demo content.
           If a data source is missing, you&apos;ll see a clear prompt to connect it.
         </p>
+
+        {(!session?.user?.is_pro) && (
+          <Link href="/dashboard/billing" style={{ textDecoration: "none" }}>
+            <div style={{
+              marginTop: 24, padding: "12px 20px", borderRadius: 14, display: "inline-flex", alignItems: "center", gap: 10,
+              background: "linear-gradient(135deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05))",
+              border: "1px solid rgba(234,179,8,0.3)", color: "#FBBF24", fontWeight: 700, fontSize: 14,
+              boxShadow: "0 8px 24px rgba(234,179,8,0.15)", cursor: "pointer", transition: "transform 0.2s"
+            }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Sparkles size={16} /> Upgrade to Pro</span>
+              <span style={{ opacity: 0.6, fontSize: 13, fontWeight: 500 }}>Unlock real-time data & unlimited interviews</span>
+            </div>
+          </Link>
+        )}
       </motion.div>
 
       {/* ── Hub Cards ── */}

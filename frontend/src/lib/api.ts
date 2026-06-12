@@ -253,8 +253,11 @@ async function request<T>(
 
     if (!res.ok) {
       if (res.status === 401) {
-        if (isBrowser && !window.location.pathname.startsWith("/auth")) {
-          window.location.href = "/auth";
+        if (isBrowser) {
+          localStorage.removeItem("token");
+          if (!window.location.pathname.startsWith("/auth")) {
+            window.location.href = "/auth";
+          }
         }
         throw new Error("Session expired. Please log in again.");
       }

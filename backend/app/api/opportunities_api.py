@@ -19,15 +19,12 @@ def get_jobs(skills: Optional[str] = None, location: Optional[str] = None, curre
     # 1. Free API: RemoteOK
     try:
         remoteok_url = "https://remoteok.com/api"
-        # Be polite, RemoteOK requires a User-Agent
         headers = {"User-Agent": "TulasiAI-JobFinder"}
         resp = requests.get(remoteok_url, headers=headers, timeout=5)
         if resp.status_code == 200:
             data = resp.json()
-            # RemoteOK returns a legal dict as first element, skip it
-            for item in data[1:11]:  # Limit to 10
+            for item in data[1:6]:
                 if "company" in item and "position" in item:
-                    # Basic filtering if requested
                     if skills and skills.lower() not in item["position"].lower() and skills.lower() not in str(item.get("tags", [])).lower():
                         continue
                     jobs.append({
@@ -45,6 +42,29 @@ def get_jobs(skills: Optional[str] = None, location: Optional[str] = None, curre
     except Exception as e:
         print(f"RemoteOK fetch failed: {e}")
 
+    # 1.5 Free API: Remotive
+    try:
+        remotive_url = "https://remotive.com/api/remote-jobs?limit=15"
+        if skills:
+            remotive_url += f"&search={skills}"
+        resp = requests.get(remotive_url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            for item in data.get("jobs", [])[:10]:
+                jobs.append({
+                    "id": str(item.get("id", "")),
+                    "title": item.get("title", ""),
+                    "company": item.get("company_name", "Unknown"),
+                    "location": item.get("candidate_required_location", "Remote"),
+                    "source": "Remotive",
+                    "source_name": "Remotive",
+                    "apply_link": item.get("url", ""),
+                    "posted_date": item.get("publication_date", datetime.now(timezone.utc).isoformat()),
+                    "fetched_at": datetime.now(timezone.utc).isoformat(),
+                    "verified_status": True
+                })
+    except Exception as e:
+        print(f"Remotive fetch failed: {e}")
     # 2. Adzuna (Optional)
     app_id = os.getenv("ADZUNA_APP_ID")
     app_key = os.getenv("ADZUNA_APP_KEY")

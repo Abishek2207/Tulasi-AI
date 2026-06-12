@@ -101,6 +101,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 from fastapi.exceptions import RequestValidationError, HTTPException
+from fastapi.encoders import jsonable_encoder
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -108,12 +109,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"} if origin in ALLOW_ORIGINS else {}
     return JSONResponse(
         status_code=400,
-        content={
+        content=jsonable_encoder({
             "success": False,
             "error": "Bad Request",
             "detail": exc.errors(),
             "message": "Validation failed. Check your request payload.",
-        },
+        }),
         headers=headers
     )
 

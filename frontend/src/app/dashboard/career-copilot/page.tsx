@@ -198,7 +198,9 @@ export default function CareerCopilotPage() {
                                 <div style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 8 }}>{step.goal}</div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                     {step.resources.map(res => (
-                                        <span key={res} style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: 6 }}>{res}</span>
+                                        <Link href={`/dashboard/personalized-roadmap?topic=${encodeURIComponent(res)}`} key={res} style={{ textDecoration: "none" }}>
+                                          <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: 6, cursor: "pointer" }}>{res}</span>
+                                        </Link>
                                     ))}
                                 </div>
                             </div>
