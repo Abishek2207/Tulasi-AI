@@ -47,13 +47,9 @@ export default function DashboardRouter() {
       } catch {}
     }
 
-    // Route users based on their selected user_type (case-insensitive)
-    const typeStr = (userType || "").toLowerCase();
-    if (typeStr === "professional" || typeStr === "working professional") {
-      router.replace("/dashboard/professional");
-    } else {
-      router.replace("/dashboard/student");
-    }
+    // We no longer auto-redirect here. 
+    // The user requested: "login pananthuku aprm 2 keaknum" 
+    // This ensures they always see the Student vs Professional selection screen.
   }, [user, status, router, forceSelect]);
 
   if (status === "loading" || !user) {
