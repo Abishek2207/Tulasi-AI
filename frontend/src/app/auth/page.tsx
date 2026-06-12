@@ -208,9 +208,9 @@ export default function AuthPage() {
 
             {isLogin && (
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <a href="#" style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#06B6D4"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.5)"}>
+                <button type="button" onClick={handleForgotPassword} style={{ padding: 0, background: "transparent", border: "none", fontSize: 13, color: "rgba(255,255,255,0.5)", fontWeight: 500, transition: "color 0.2s", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color="#06B6D4"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.5)"}>
                   Forgot password?
-                </a>
+                </button>
               </div>
             )}
 
