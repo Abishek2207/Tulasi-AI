@@ -146,11 +146,35 @@ def list_internships(
     type: Optional[str] = Query(None, description="Paid | Unpaid | Free"),
     mode: Optional[str] = Query(None, description="Online | Offline | Hybrid"),
     state: Optional[str] = Query(None, description="India state filter"),
-    location: Optional[str] = Query(None, description="City/District filter"),
-    current_user: User = Depends(get_current_user),
+    location: Optional[str] = Query(None, description="City/District filter")
 ):
     """Return internships with optional filters. Falls back to seed data if DB empty."""
     data = INTERNSHIP_SEED_DATA[:]
+    
+    # Add real live internships from Remotive API
+    import requests
+    try:
+        remotive_url = "https://remotive.com/api/remote-jobs?search=intern"
+        resp = requests.get(remotive_url, timeout=5)
+        if resp.status_code == 200:
+            rem_data = resp.json()
+            for item in rem_data.get("jobs", [])[:15]:
+                data.insert(0, {
+                    "title": item.get("title", "Software Intern"),
+                    "company": item.get("company_name", "Unknown"),
+                    "domain": "Software/Tech",
+                    "type": "Paid",
+                    "mode": "Online",
+                    "state": "All India",
+                    "location": item.get("candidate_required_location", "Remote"),
+                    "stipend": "Paid (Check Link)",
+                    "duration": "Flexible",
+                    "description": "Live opening fetched from Remotive API.",
+                    "apply_link": item.get("url", ""),
+                    "deadline": "Rolling"
+                })
+    except Exception as e:
+        print(f"Remotive internship fetch failed: {e}")
 
     if domain and domain != "All":
         data = [i for i in data if domain.lower() in i["domain"].lower()]
@@ -167,14 +191,14 @@ def list_internships(
 
 
 @router.get("/domains")
-def get_domains(current_user: User = Depends(get_current_user)):
+def get_domains():
     """Return list of available internship domains."""
     domains = sorted(list({i["domain"] for i in INTERNSHIP_SEED_DATA}))
     return {"domains": domains}
 
 
 @router.get("/states")
-def get_states(current_user: User = Depends(get_current_user)):
+def get_states():
     """Return India states and districts for location filtering."""
     return {"states": INDIA_STATES, "districts": INDIA_DISTRICTS}
 
