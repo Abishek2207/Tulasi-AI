@@ -13,7 +13,7 @@ from sqlmodel import Session
 router = APIRouter()
 
 @router.get("/jobs")
-def get_jobs(skills: Optional[str] = None, location: Optional[str] = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+def get_jobs(skills: Optional[str] = None, location: Optional[str] = None, db: Session = Depends(get_session)):
     jobs = []
     
     # 1. Free API: RemoteOK
@@ -123,7 +123,7 @@ def get_jobs(skills: Optional[str] = None, location: Optional[str] = None, curre
 
 
 @router.get("/hackathons")
-def get_hackathons(current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
+def get_hackathons(db: Session = Depends(get_session)):
     hackathons = []
     
     # 1. Fetch from Database (Seeded Real Data)
