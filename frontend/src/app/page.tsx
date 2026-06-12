@@ -755,10 +755,7 @@ function Footer() {
         </div>
 
         <div style={{ paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981" }} />
-            <span style={{ color: "var(--text-secondary)", fontSize: 12, fontWeight: 800, letterSpacing: 0.5 }}>TULASI ENGINE v3.1.2 — Platform Running Smoothly</span>
-          </div>
+
           <span style={{ color: "var(--text-muted)", fontSize: 14, fontWeight: 600, textAlign: "center" }}>
              Built with Precision by Abishek R • © 2026 Tulasi AI Labs. Zero-Knowledge Infrastructure Enabled.
           </span>
