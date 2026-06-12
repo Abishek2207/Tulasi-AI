@@ -181,7 +181,12 @@ def init_db():
                 'ALTER TABLE hackathon ADD COLUMN registration_deadline VARCHAR;',
                 'ALTER TABLE hackathon ADD COLUMN domains VARCHAR;',
                 'ALTER TABLE hackathon ADD COLUMN currency VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN location VARCHAR;'
+                'ALTER TABLE hackathon ADD COLUMN location VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN source_name VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN source_url VARCHAR;',
+                'ALTER TABLE hackathon ADD COLUMN fetched_at TIMESTAMP;',
+                'ALTER TABLE hackathon ADD COLUMN raw_payload TEXT;',
+                'ALTER TABLE hackathon ADD COLUMN verified_status VARCHAR;'
             ]
             for query in migration_queries:
                 try:
