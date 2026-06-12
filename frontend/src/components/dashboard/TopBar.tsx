@@ -5,7 +5,6 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 import { RootState } from "@/store";
 import { signOut, useSession } from "@/hooks/useSession";
 import { motion, AnimatePresence } from "framer-motion";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Search, Command, Zap, LogOut, User, ChevronDown, Camera } from "lucide-react";
@@ -220,9 +219,8 @@ export default function TopBar() {
             </motion.button>
           )}
 
-          {/* Theme toggle */}
+          {/* Notifications */}
           <NotificationCenter />
-          <ThemeToggle />
 
           {/* Avatar Dropdown — clicking name/avatar opens menu, NOT logout directly */}
           <div style={{ position: "relative" }} ref={dropdownRef}>
