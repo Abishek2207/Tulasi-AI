@@ -13,7 +13,7 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket,
   FileText, CreditCard, TrendingUp, Bell,
-  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness
+  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase
 } from "lucide-react";
 
 type NavItem = {
@@ -23,7 +23,7 @@ type NavItem = {
   badge?: string;
 };
 
-const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
+const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "AI Core Agents",
     items: [
@@ -48,6 +48,28 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   },
 ];
 
+const PROFESSIONAL_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
+  {
+    label: "Professional Core",
+    items: [
+      { icon: LayoutDashboard,    name: "Dashboard",           href: "/dashboard/professional" },
+      { icon: LayoutTemplate,     name: "System Design",       href: "/dashboard/system-design" },
+      { icon: Code2,              name: "Code Review",         href: "/dashboard/code-review" },
+      { icon: TrendingUp,         name: "Promotion Strategy",  href: "/dashboard/promotion-strategist" },
+      { icon: MessageSquare,      name: "Leadership Coach",    href: "/dashboard/leadership-coach" },
+      { icon: BriefcaseBusiness,  name: "Senior Job Match",    href: "/dashboard/senior-job-match" },
+      { icon: Briefcase,          name: "Offer Negotiator",    href: "/dashboard/offer-negotiator" },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { icon: Bell,        name: "Notifications", href: "/dashboard/notifications" },
+      { icon: CreditCard,  name: "Billing & Pro", href: "/dashboard/billing" },
+    ],
+  },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -59,6 +81,28 @@ export default function Sidebar() {
       dispatch(toggleSidebar());
     }
   };
+
+  let userType = currentUser?.user_type;
+  if (!userType && typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        userType = parsed?.user_type;
+      }
+    } catch {}
+  }
+  
+  const typeStr = (userType || "").toLowerCase();
+  let isProfessional = typeStr === "professional" || typeStr === "working professional";
+
+  const professionalPaths = ['/dashboard/professional', '/dashboard/system-design', '/dashboard/code-review', '/dashboard/promotion-strategist', '/dashboard/leadership-coach', '/dashboard/senior-job-match', '/dashboard/offer-negotiator'];
+  const studentPaths = ['/dashboard/student', '/dashboard/career-copilot', '/dashboard/resume-analyzer', '/dashboard/personalized-roadmap', '/dashboard/ai-interview', '/dashboard/project-builder', '/dashboard/job-internship-match', '/dashboard/hackathon-agent', '/dashboard/portfolio-builder', '/dashboard/progress-tracker'];
+
+  if (professionalPaths.some(p => pathname.startsWith(p))) isProfessional = true;
+  if (studentPaths.some(p => pathname.startsWith(p))) isProfessional = false;
+
+  const currentNav = isProfessional ? PROFESSIONAL_NAV_SECTIONS : STUDENT_NAV_SECTIONS;
 
   return (
     <div style={{
@@ -95,7 +139,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav style={{ flex: 1, overflowY: "auto", padding: "12px 10px", scrollbarWidth: "none" }}>
-        {NAV_SECTIONS.map(section => (
+        {currentNav.map(section => (
           <div key={section.label} style={{ marginBottom: 24 }}>
             <div style={{
               fontSize: 9, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase",
@@ -104,7 +148,7 @@ export default function Sidebar() {
               {section.label}
             </div>
             {section.items.map((item: NavItem) => {
-              const active = pathname === item.href || (item.href !== "/dashboard/student" && pathname.startsWith(item.href));
+              const active = pathname === item.href || (item.href !== "/dashboard/student" && item.href !== "/dashboard/professional" && pathname.startsWith(item.href));
               return (
                 <motion.div key={item.href} whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
                   <Link href={item.href}
