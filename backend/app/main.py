@@ -35,7 +35,7 @@ ALLOW_ORIGINS = [
     "http://127.0.0.1:3001",
     "https://tulasiai.in",
     "https://tulasi-ai.vercel.app",
-    "https://tulasi-ai-hycl.onrender.com",
+    "https://tulasi-ai-soda.onrender.com",
     "https://tulasiai.in",
     "https://www.tulasiai.in",
 ]
@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI):
     async def keep_awake():
         import httpx
         import asyncio
-        url = "https://tulasi-ai-hycl.onrender.com/api/ping"
+        url = "https://tulasi-ai-soda.onrender.com/api/ping"
         while True:
             await asyncio.sleep(300)  # Ping every 5 mins — prevents 15-min Render sleep
             try:

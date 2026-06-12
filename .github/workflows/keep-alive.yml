@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Backend Health Endpoint
-        run: curl -sSf https://tulasi-ai-hycl.onrender.com/api/health || echo "Failed to ping backend"
+        run: curl -sSf https://tulasi-ai-soda.onrender.com/api/health || echo "Failed to ping backend"

@@ -65,7 +65,7 @@ If you want to use your Local Backend (`http://127.0.0.1:8000`), simply add this
 ```env
 NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
 ```
-To reconnect back to the live Production Cloud API (`https://tulasi-ai-hycl.onrender.com`), simply delete that line.
+To reconnect back to the live Production Cloud API (`https://tulasi-ai-soda.onrender.com`), simply delete that line.
 
 ## 🛠 Manual Setup Instructions
 

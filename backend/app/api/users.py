@@ -217,7 +217,7 @@ async def upload_avatar(
         f.write(contents)
 
     # Build the public URL — served by FastAPI's StaticFiles mount at /data
-    base_url = os.getenv("API_BASE_URL", "https://tulasi-ai-hycl.onrender.com")
+    base_url = os.getenv("API_BASE_URL", "https://tulasi-ai-soda.onrender.com")
     avatar_url = f"{base_url}/data/avatars/{filename}"
 
     # Persist to DB immediately
