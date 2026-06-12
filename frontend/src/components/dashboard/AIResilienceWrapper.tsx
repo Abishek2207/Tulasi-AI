@@ -24,7 +24,7 @@ export function AIResilienceWrapper({
   result,
   onRetry,
   children,
-  title = "Intelligence Hub",
+  title = "AI Career Platform",
   subtitle = "Scanning market data...",
   icon,
   fallbackIcon = "🧠",

@@ -83,7 +83,7 @@ export function ConnectionStatus() {
       {/* Show the Platinum Toast if api mapping fails signifying a cold start */}
       <PlatinumToast 
         show={apiOnline === false} 
-        message="Awakening Neural Core..."
+        message="Awakening AI CAREER INTELLIGENCE..."
         subtext="Establishing high-performance link with cloud servers. This takes ~30s on cold boot."
       />
     </motion.div>
