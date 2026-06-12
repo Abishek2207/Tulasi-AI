@@ -289,8 +289,15 @@ function Hero() {
             <Link href="/auth" style={{ textDecoration: "none" }}>
               <motion.button whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} className="btn-primary"
                 style={{ padding: "20px 48px", fontSize: "clamp(16px, 2.2vw, 19px)", borderRadius: 18, fontWeight: 900, boxShadow: "0 20px 40px rgba(10, 132, 255, 0.2)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, position: "relative", overflow: "hidden" }}>
-                <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10 }}>START YOUR CAREER JOURNEY <ArrowRight size={20} /></span>
+                <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10 }}>STUDENT MODE <ArrowRight size={20} /></span>
                 <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.35 }} />
+              </motion.button>
+            </Link>
+            <Link href="/professional/onboarding" style={{ textDecoration: "none" }}>
+              <motion.button whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}
+                style={{ padding: "20px 48px", fontSize: "clamp(16px, 2.2vw, 19px)", borderRadius: 18, fontWeight: 900, background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.4)", color: "#10B981", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, position: "relative", overflow: "hidden" }}>
+                <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10 }}>PROFESSIONAL MODE <ArrowRight size={20} /></span>
+                <div className="animate-shimmer" style={{ position: "absolute", inset: 0, opacity: 0.15 }} />
               </motion.button>
             </Link>
             <motion.a href="#reviews" className="animate-float" whileHover={{ scale: 1.02, y: -2 }}
