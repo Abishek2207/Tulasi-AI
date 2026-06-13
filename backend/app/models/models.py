@@ -15,6 +15,7 @@ class AuthProviderEnum(str, enum.Enum):
 
 class UserTypeEnum(str, enum.Enum):
     STUDENT = "STUDENT"
+    PROFESSIONAL = "PROFESSIONAL"
 
 class SenderEnum(str, enum.Enum):
     USER = "USER"
