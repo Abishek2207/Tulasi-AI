@@ -10,7 +10,6 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { XPNotificationSystem } from "@/components/XPNotification";
-import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
 import { KeepAlive } from "@/components/KeepAlive";
 import { BackendWarmup } from "@/components/BackendWarmup";
@@ -171,7 +170,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Suspense fallback={null}>
             {children}
             <XPNotificationSystem />
-            <OnboardingTour />
             <CommandPalette />
             <KeepAlive />
 
