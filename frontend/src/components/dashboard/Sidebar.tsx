@@ -13,7 +13,7 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket,
   FileText, CreditCard, TrendingUp, Bell,
-  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase
+  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2
 } from "lucide-react";
 
 type NavItem = {
@@ -30,6 +30,7 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: LayoutDashboard,    name: "Dashboard",         href: "/dashboard/student" },
       { icon: MessageSquare,      name: "Career Copilot",    href: "/dashboard/career-copilot" },
       { icon: FileText,           name: "Resume Analyzer",   href: "/dashboard/resume-analyzer" },
+      { icon: Wand2,              name: "Resume Builder",    href: "/dashboard/resume-builder" },
       { icon: Map,                name: "Roadmap Agent",     href: "/dashboard/personalized-roadmap" },
       { icon: Target,             name: "AI Interviewer",    href: "/dashboard/ai-interview" },
       { icon: FolderKanban,       name: "Project Builder",   href: "/dashboard/project-builder" },

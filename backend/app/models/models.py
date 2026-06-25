@@ -602,3 +602,77 @@ class ApiSource(SQLModel, table=True):
     last_sync: Optional[datetime] = None
     error_message: Optional[str] = None
 
+# ── SaaS Platform Models ──────────────────────────────────────────────
+
+class SubscriptionPlan(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True) # Student, Professional, Enterprise
+    price: int
+    ai_requests_limit: int
+    resume_downloads_limit: int
+    features_json: str = "[]"
+    is_active: bool = True
+
+class UserSubscription(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    plan_id: int = Field(foreign_key="subscriptionplan.id", index=True)
+    status: str = "active" # active, cancelled, expired
+    start_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    end_date: Optional[datetime] = None
+    razorpay_subscription_id: Optional[str] = None
+    
+class Payment(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    amount: float
+    currency: str = "INR"
+    status: str = "pending" # success, failed, pending
+    razorpay_payment_id: Optional[str] = None
+    razorpay_order_id: Optional[str] = None
+    razorpay_signature: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Coupon(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    code: str = Field(unique=True, index=True)
+    discount_percent: int = 50
+    target_plan: str = "Student" # specific plan name or "All"
+    usage_limit: int = 1
+    current_usage: int = 0
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CouponRedemption(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    coupon_id: int = Field(foreign_key="coupon.id", index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    redeemed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ATSReport(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    resume_id: int = Field(foreign_key="savedresume.id", index=True)
+    overall_score: int
+    keyword_match_score: int
+    skills_score: int
+    experience_score: int
+    formatting_score: int
+    missing_keywords_json: str = "[]"
+    skill_gap_analysis: str = ""
+    improvement_suggestions_json: str = "[]"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UsageLog(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    action_type: str # ai_request, resume_download, ats_analysis
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    details: Optional[str] = None
+
+class AdminLog(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    admin_id: int = Field(foreign_key="user.id", index=True)
+    action: str
+    target_user_id: Optional[int] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

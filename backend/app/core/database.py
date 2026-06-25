@@ -147,7 +147,9 @@ def init_db():
         UserBadge, Reward, StudyRoomMessage, SavedStartupIdea, Group, GroupMember,
         ChatMessage, ChatSession, Certificate, PersistentInterviewSession,
         Internship, PrepPlan, Announcement, InviteCode, DailyChallenge,
-        DailyChallengeSubmission, MentorInsight
+        DailyChallengeSubmission, MentorInsight,
+        SubscriptionPlan, UserSubscription, Payment, Coupon, CouponRedemption,
+        ATSReport, UsageLog, AdminLog
     )
     
     max_retries = 3
