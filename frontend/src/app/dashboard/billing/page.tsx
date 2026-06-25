@@ -171,6 +171,12 @@ export default function BillingPage() {
   const formatCard = (v: string) => v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
   const formatExpiry = (v: string) => v.replace(/\D/g, "").slice(0, 4).replace(/^(.{2})/, "$1/");
 
+  const displayPlans = plans.length === 0 ? [
+    { id: 1, name: "Student", price: 99, ai_requests_limit: 10, resume_downloads_limit: 5, features_json: '["Basic ATS Analysis","5 Resume Builds/mo","Mock Interviews (10/mo)","Career Roadmap Access"]' },
+    { id: 2, name: "Professional", price: 249, ai_requests_limit: 50, resume_downloads_limit: 20, features_json: '["Advanced ATS Analysis","20 Resume Builds/mo","Unlimited Mock Interviews","Priority AI Access","LinkedIn Optimizer"]' },
+    { id: 3, name: "Enterprise", price: 999, ai_requests_limit: 1000, resume_downloads_limit: 1000, features_json: '["Unlimited ATS","Unlimited Resumes","Dedicated API Access","Team Workspace","Custom Branding"]' },
+  ] as Plan[] : plans;
+
   if (loadingData) return (
     <div style={{ display: "flex", minHeight: "60vh", alignItems: "center", justifyContent: "center" }}>
       <Loader2 size={36} color="#8B5CF6" className="animate-spin" />
@@ -218,14 +224,7 @@ export default function BillingPage() {
 
       {/* Plan Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, marginBottom: 48 }}>
-        {plans.length === 0 ? (
-          // Fallback hardcoded plans if API is unavailable
-          [
-            { id: 1, name: "Student", price: 99, ai_requests_limit: 10, resume_downloads_limit: 5, features_json: '["Basic ATS Analysis","5 Resume Builds/mo","Mock Interviews (10/mo)","Career Roadmap Access"]' },
-            { id: 2, name: "Professional", price: 249, ai_requests_limit: 50, resume_downloads_limit: 20, features_json: '["Advanced ATS Analysis","20 Resume Builds/mo","Unlimited Mock Interviews","Priority AI Access","LinkedIn Optimizer"]' },
-            { id: 3, name: "Enterprise", price: 999, ai_requests_limit: 1000, resume_downloads_limit: 1000, features_json: '["Unlimited ATS","Unlimited Resumes","Dedicated API Access","Team Workspace","Custom Branding"]' },
-          ] as Plan[]
-        : plans).map((plan, i) => {
+        {displayPlans.map((plan, i) => {
           const color = PLAN_COLORS[plan.name] || "#8B5CF6";
           const icon = PLAN_ICONS[plan.name] || "🚀";
           const isCurrentPlan = mySubscription?.plan?.name === plan.name;
