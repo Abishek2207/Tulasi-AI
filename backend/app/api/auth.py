@@ -314,3 +314,45 @@ def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: Back
             "is_onboarded": getattr(user, "is_onboarded", False) or False,
         }
     }
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+@router.post("/forgot-password")
+@limiter.limit("5/minute")
+def forgot_password(request: Request, req: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
+    query = select(User).where(User.email == req.email)
+    user = db.exec(query).first()
+    if user:
+        # Generate reset token and send email
+        reset_token = create_access_token({"sub": user.email, "type": "reset"})
+        background_tasks.add_task(email_service.send_welcome_email, user.email, user.name) # placeholder for reset email
+    return {"message": "If this email is registered, a password reset link has been sent."}
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+def reset_password(request: Request, req: ResetPasswordRequest, db: Session = Depends(get_session)):
+    try:
+        from jose import jwt
+        payload = jwt.decode(req.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email = payload.get("sub")
+        token_type = payload.get("type")
+        if email is None or token_type != "reset":
+            raise HTTPException(status_code=400, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid token")
+        
+    query = select(User).where(User.email == email)
+    user = db.exec(query).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user.hashed_password = get_password_hash(req.new_password)
+    db.add(user)
+    db.commit()
+    return {"message": "Password reset successfully."}

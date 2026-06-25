@@ -710,6 +710,19 @@ export const certificateApi = {
 
 // ─── Resume Builder ──────────────────────────────────────────────────────────
 
+export const atsApi = {
+  build: (data: any, token: string) =>
+    request<{ message: string; resume_id: number; ats_score: number }>("/api/ats/build", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token),
+  analyze: (data: { resume_id: number, target_job_description: string }, token: string) =>
+    request<{ message: string; report_id: number; score: number }>("/api/ats/analyze", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token)
+};
+
 export const resumeApi = {
   improve: (data: { resume_text: string, job_description: string, mode: string, document_type: string }, token: string) =>
     request<{ ats_score: number; readability_score: number; keyword_match_percent: number; feedback: string[]; missing_keywords: string[]; improved_resume: string }>("/api/resume/improve", {
@@ -856,6 +869,51 @@ export const paymentApi = {
       "/api/payment/simulate",
       { method: "POST" }
     ),
+};
+
+// ─── SaaS Subscriptions ─────────────────────────────────────────────────────
+
+export const subscriptionsApi = {
+  /** Get all available subscription plans */
+  getPlans: () => request<any[]>("/api/subscriptions/plans"),
+
+  /** Get current user's active subscription and daily usage */
+  getMySubscription: () => request<{
+    has_subscription: boolean;
+    is_pro: boolean;
+    plan: { name: string; price: number; ai_requests_limit: number } | null;
+    subscription_status: string;
+    ai_usage_today: number;
+    started_at: string | null;
+    ends_at: string | null;
+  }>("/api/subscriptions/my-subscription"),
+
+  /** Validate and apply a coupon code */
+  applyCoupon: (code: string, plan_name: string) =>
+    request<{ original_price: number; discounted_price: number; discount_percent: number }>(
+      "/api/subscriptions/apply-coupon",
+      { method: "POST", body: JSON.stringify({ code, plan_name }) }
+    ),
+
+  /** Create a checkout order */
+  checkout: (plan_id: number, coupon_code?: string) =>
+    request<{ order_id: string; amount: number; currency: string; name: string; key: string }>(
+      "/api/payments/checkout",
+      { method: "POST", body: JSON.stringify({ plan_id, coupon_code }) }
+    ),
+
+  /** Verify payment and activate subscription */
+  verifyPayment: (data: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+    plan_id: number;
+    coupon_code?: string;
+  }) =>
+    request<{ message: string }>("/api/payments/verify", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // ─── Reviews ─────────────────────────────────────────────────────────────────

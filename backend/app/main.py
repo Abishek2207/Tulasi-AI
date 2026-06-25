@@ -194,6 +194,7 @@ async def log_requests(request: Request, call_next):
 from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, feed, mentor, follow, profile
 from app.api import roadmap_career, streak_api, notifications_api, certifications_api, local_rag_api
 from app.api import agents_api, opportunities_api, portfolio_api
+from app.api import subscriptions, payments, ats_engine
 
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
@@ -219,6 +220,9 @@ app.include_router(users.router,        prefix="/api/users",        tags=["Users
 app.include_router(follow.router,       prefix="/api/follow",       tags=["Follow System"])
 app.include_router(profile.router,      prefix="/api/profile",      tags=["Profile"])
 app.include_router(notifications_api.router, prefix="/api/notifications", tags=["Notifications"])
+app.include_router(subscriptions.router, prefix="/api/subscriptions", tags=["Subscriptions"])
+app.include_router(payments.router,     prefix="/api/payments",     tags=["Payments SaaS"])
+app.include_router(ats_engine.router,   prefix="/api/ats",          tags=["ATS Engine"])
 
 # Social, Feed and Mentor integration
 app.include_router(feed.router,         prefix="/api/feed",         tags=["Idea Feed"])
