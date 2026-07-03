@@ -77,7 +77,7 @@ export function TulasiLogo({
         </span>
       ) : (
         <Image
-          src="/logo.png?v=20260611"
+          src="/logo.png"
           alt="Tulasi AI Logo"
           width={size}
           height={size}
