@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import Image from "next/image";
 
 /**
  * TulasiLogo — single source of truth for the Tulasi AI logo.
@@ -75,8 +76,7 @@ export function TulasiLogo({
           T
         </span>
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src="/logo.png?v=20260611"
           alt="Tulasi AI Logo"
           width={size}

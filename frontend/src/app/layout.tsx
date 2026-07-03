@@ -14,9 +14,9 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { KeepAlive } from "@/components/KeepAlive";
 import { BackendWarmup } from "@/components/BackendWarmup";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.tulasiai.in"),
