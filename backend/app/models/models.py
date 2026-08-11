@@ -703,3 +703,22 @@ class AdminLog(SQLModel, table=True):
     action: str
     target_user_id: Optional[int] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+# ── Career Intelligence AI Roadmap ────────────────────────────────────────────
+
+class CareerIntelligenceRoadmap(SQLModel, table=True):
+    """Stores the AI-generated personalized roadmap for a user."""
+    __tablename__ = "careerintelligenceroadmap"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", unique=True, index=True)
+
+    roadmap_data: Optional[str] = Field(default="{}")  # JSON string stored as text
+    estimated_months_to_goal: Optional[int] = None
+    readiness_score: int = 0
+
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+

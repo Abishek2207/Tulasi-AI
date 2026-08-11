@@ -9,7 +9,8 @@ from app.models.models import (
     SavedResume, Review, PersistentInterviewSession,
     Internship, PrepPlan, Announcement, InviteCode,
     DailyChallenge, DailyChallengeSubmission, UserFollow,
-    Idea, IdeaLike, IdeaComment, MentorInsight, SenderEnum
+    Idea, IdeaLike, IdeaComment, MentorInsight, SenderEnum,
+    CareerIntelligenceProfile, CareerIntelligenceRoadmap
 )
 
 # Legacy aliases for backward compatibility if needed by other modules
