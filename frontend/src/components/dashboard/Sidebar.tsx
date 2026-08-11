@@ -13,7 +13,7 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket,
   FileText, CreditCard, TrendingUp, Bell,
-  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2
+  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2, Brain
 } from "lucide-react";
 
 type NavItem = {
@@ -38,6 +38,7 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: Rocket,             name: "Hackathon Agent",   href: "/dashboard/hackathon-agent" },
       { icon: LayoutTemplate,     name: "Portfolio Builder", href: "/dashboard/portfolio-builder" },
       { icon: TrendingUp,         name: "Progress Tracker",  href: "/dashboard/progress-tracker" },
+      { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
     ],
   },
   {
@@ -60,6 +61,7 @@ const PROFESSIONAL_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: MessageSquare,      name: "Leadership Coach",    href: "/dashboard/leadership-coach" },
       { icon: BriefcaseBusiness,  name: "Senior Job Match",    href: "/dashboard/senior-job-match" },
       { icon: Briefcase,          name: "Offer Negotiator",    href: "/dashboard/offer-negotiator" },
+      { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
     ],
   },
   {

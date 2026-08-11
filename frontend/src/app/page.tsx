@@ -7,7 +7,7 @@ import { TulasiLogo } from "@/components/TulasiLogo";
 import {
   FileText, Target, Map, Code, Award, Trophy, Users,
   Sparkles, ArrowRight, Layout, BrainCircuit, Cpu, Menu, X,
-  Phone, Mail, Instagram
+  Phone, Mail
 } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { reviewsApi, ReviewItem } from "@/lib/api";
@@ -187,8 +187,10 @@ function Hero() {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const check = debounce(() => setIsMobile(window.innerWidth < 768), 100);
     setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", check, { passive: true });
@@ -215,7 +217,7 @@ function Hero() {
           
           {/* Advanced Neural Background Nodes */}
           <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: -1 }}>
-             {[...Array(20)].map((_, i) => (
+             {mounted && [...Array(20)].map((_, i) => (
                <motion.div 
                  key={i}
                  initial={{ opacity: 0 }}
