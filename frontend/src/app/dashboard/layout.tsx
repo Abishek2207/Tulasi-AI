@@ -19,6 +19,7 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { PageTransition } from "@/components/PageTransition";
 import { UsernameModal } from "@/components/UsernameModal";
+import { CareerIntelligenceOnboardingCheck } from "@/components/dashboard/CareerIntelligenceOnboardingCheck";
 
 /** Safe hook — avoids SSR crash and only fires on real resize events. */
 function useIsDesktop() {
@@ -160,6 +161,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <XPNotificationSystem />
       <OnboardingModal />
       <AIManagerInsightOverlay />
+      <CareerIntelligenceOnboardingCheck />
       
       {user && !user.username && (
         <UsernameModal isOpen={true} onSuccess={(newUsername) => {

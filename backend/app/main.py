@@ -194,7 +194,7 @@ async def log_requests(request: Request, call_next):
 from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, feed, mentor, follow, profile
 from app.api import roadmap_career, streak_api, notifications_api, certifications_api, local_rag_api
 from app.api import agents_api, opportunities_api, portfolio_api
-from app.api import subscriptions, payments, ats_engine
+from app.api import subscriptions, payments, ats_engine, career_intelligence
 
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
@@ -249,6 +249,9 @@ app.include_router(portfolio_api.router,     prefix="/api/portfolio",     tags=[
 
 from app.api import professional_api
 app.include_router(professional_api.router,  prefix="/professional",      tags=["Professional Mode"])
+
+# New Career Intelligence API
+app.include_router(career_intelligence.router, prefix="/api/v1", tags=["Career Intelligence"])
 
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────
 from app.api import ws as ws_router

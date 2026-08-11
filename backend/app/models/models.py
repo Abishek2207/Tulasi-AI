@@ -69,6 +69,7 @@ class User(SQLModel, table=True):
     # Relationships
     resumes: List["SavedResume"] = Relationship(back_populates="user")
     profile: Optional["Profile"] = Relationship(back_populates="user")
+    career_intelligence_profile: Optional["CareerIntelligenceProfile"] = Relationship(back_populates="user")
 
 class Profile(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
@@ -111,6 +112,32 @@ class Profile(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     user: Optional["User"] = Relationship(back_populates="profile")
+
+class CareerIntelligenceProfile(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    user_id: int = Field(foreign_key="user.id", unique=True, nullable=False)
+    career_stage: str # 'student' or 'professional'
+    full_name: str
+    institution: Optional[str] = None
+    degree: Optional[str] = None
+    graduation_year: Optional[int] = None
+    field: Optional[str] = None
+    current_role: Optional[str] = None
+    target_role: Optional[str] = None
+    company: Optional[str] = None
+    experience_years: Optional[int] = None
+    experience_level: Optional[str] = None
+    current_skills: Optional[str] = None
+    current_salary: Optional[str] = None
+    target_salary: Optional[str] = None
+    career_goal: Optional[str] = None
+    daily_time_minutes: int
+    learning_days: str 
+    onboarding_completed: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    user: Optional["User"] = Relationship(back_populates="career_intelligence_profile")
 
 class RoadmapItem(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
