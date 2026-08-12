@@ -57,7 +57,7 @@ export default function CareerIntelligencePage() {
 
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
-  const authHeaders = () => {
+  const authHeaders = (): Record<string, string> => {
     const token = (session as any)?.backendToken;
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
