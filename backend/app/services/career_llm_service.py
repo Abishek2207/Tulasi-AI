@@ -90,53 +90,7 @@ Respond ONLY with raw, valid JSON.
 
         except Exception as e:
             print(f"[CareerLLMService] Roadmap generation failed: {e}")
-            # Graceful fallback so the UI always gets something
-            return {
-                "overview": f"Focus on building strong foundations for your goal of becoming a {user_profile.get('target_role', 'professional')}.",
-                "estimated_months_to_goal": 6,
-                "readiness_score": 20,
-                "milestones": [
-                    {
-                        "title": "Foundation Building",
-                        "description": "Master the core fundamentals of your field.",
-                        "duration": "2 months",
-                        "focus_skills": ["Core Concepts", "Problem Solving"],
-                        "status": "pending",
-                    },
-                    {
-                        "title": "Project Development",
-                        "description": "Build 2-3 portfolio-worthy projects to demonstrate your skills.",
-                        "duration": "2 months",
-                        "focus_skills": ["Practical Implementation", "Portfolio Building"],
-                        "status": "pending",
-                    },
-                    {
-                        "title": "Interview Preparation",
-                        "description": "Practice DSA, system design, and behavioural rounds.",
-                        "duration": "2 months",
-                        "focus_skills": ["DSA", "Communication", "Mock Interviews"],
-                        "status": "pending",
-                    },
-                ],
-                "recommended_projects": [
-                    {
-                        "title": "Personal Portfolio Website",
-                        "description": "Build a stunning portfolio to showcase your projects and skills.",
-                        "difficulty": "Beginner",
-                    },
-                    {
-                        "title": "Full-Stack Application",
-                        "description": "Create a complete web app with authentication, database, and API.",
-                        "difficulty": "Intermediate",
-                    },
-                ],
-                "daily_habits": [
-                    "Code for at least 1 hour every day",
-                    "Read tech articles or documentation for 30 minutes",
-                    "Solve 1 DSA problem on LeetCode",
-                    "Review and reflect on progress before bed",
-                ],
-            }
-
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=f"Failed to generate AI roadmap. Ensure valid Gemini API key is configured. Error: {str(e)}")
 
 career_llm_service = CareerLLMService()
