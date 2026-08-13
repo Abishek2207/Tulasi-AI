@@ -61,10 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     
     if (status === "authenticated") {
-      if (user && !user.is_onboarded) {
-        router.replace("/onboarding");
-        return;
-      }
+      // Only redirect admins — do not force non-onboarded users away from all features
       if (user?.role === "admin") {
         router.push("/admin");
       }

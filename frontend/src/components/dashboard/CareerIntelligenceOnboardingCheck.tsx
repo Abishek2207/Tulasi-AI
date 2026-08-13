@@ -9,8 +9,9 @@ export function CareerIntelligenceOnboardingCheck() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Avoid running on the onboarding page itself or non-dashboard pages
-    if (!pathname.startsWith("/dashboard") || pathname.includes("/career-intelligence/onboarding")) {
+    // ONLY redirect to CI onboarding when user is explicitly visiting the career-intelligence page
+    // Do NOT run this check on ALL dashboard pages — that breaks every other feature
+    if (!pathname.startsWith("/dashboard/career-intelligence") || pathname.includes("/career-intelligence/onboarding")) {
       setChecking(false);
       return;
     }
