@@ -23,7 +23,17 @@ const nextConfig = {
     return [
       {
         source: '/dashboard/roadmap',
-        destination: '/dashboard/roadmaps',
+        destination: '/dashboard/personalized-roadmap',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/roadmaps',
+        destination: '/dashboard/personalized-roadmap',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/dsa',
+        destination: '/dashboard/dsa-agent',
         permanent: true,
       },
     ];
