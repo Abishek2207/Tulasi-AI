@@ -35,13 +35,13 @@ export default function DSAAgentPage() {
   const [totalDone, setTotalDone] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const hasProfile = user?.is_onboarded;
+  const hasProfile = !!user;
 
   useEffect(() => {
-    if (hasProfile && session?.user?.accessToken) {
+    if (session?.user?.accessToken) {
         fetchData();
     }
-  }, [hasProfile, session?.user?.accessToken]);
+  }, [session?.user?.accessToken]);
 
   const fetchData = async () => {
     setLoading(true);

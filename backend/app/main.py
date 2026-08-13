@@ -345,6 +345,23 @@ def ping():
     return {"ping": "pong", "uptime_seconds": int(time.time() - _START_TIME)}
 
 
+@app.get("/api/health/db")
+def health_db():
+    """Strict database health check — returns 200 ONLY when DB is genuinely reachable."""
+    from app.core.database import engine
+    from sqlalchemy import text
+    from fastapi import HTTPException
+    if engine is None:
+        raise HTTPException(status_code=503, detail="Database engine is None. Check DATABASE_URL env var.")
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "connected", "message": "Database is healthy."}
+    except Exception as e:
+        print(f"❌ /api/health/db check failed: {e}")
+        raise HTTPException(status_code=503, detail=f"Database unreachable: {str(e)}")
+
+
 @app.get("/api/debug/db")
 def debug_db():
     from app.core.database import engine

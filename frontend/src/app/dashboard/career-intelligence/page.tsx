@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import {
   Sparkles, Target, Clock, TrendingUp, ChevronRight,
