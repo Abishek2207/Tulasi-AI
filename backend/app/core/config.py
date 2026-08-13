@@ -13,10 +13,16 @@ class Settings(BaseSettings):
 
     @property
     def normalized_database_url(self) -> str:
-        """SQLAlchemy requires postgresql:// instead of postgres://"""
+        """SQLAlchemy requires postgresql:// instead of postgres://.
+        Supabase also requires sslmode=require for external connections."""
         url = self.DATABASE_URL
+        # Fix Heroku/Supabase shorthand URL scheme
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
+        # Add SSL for any non-SQLite PostgreSQL connection
+        if url.startswith("postgresql://") and "sslmode" not in url:
+            separator = "&" if "?" in url else "?"
+            url = f"{url}{separator}sslmode=require"
         return url
 
     # AI Keys — support both GOOGLE_API_KEY and GEMINI_API_KEY (alias)
