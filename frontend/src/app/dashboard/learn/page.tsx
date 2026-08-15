@@ -129,9 +129,7 @@ export default function LearnModePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{
-              display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: 20
-            }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-5"
           >
             {sections.map((section, idx) => (
               <div key={idx} style={{

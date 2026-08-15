@@ -109,7 +109,7 @@ Respond ONLY with a valid JSON object in this exact format (ensure strings are e
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ maxWidth: 960, margin: "0 auto", paddingBottom: 80 }}>
       <Header />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "start" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
         {/* Left — Practice Area */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           
@@ -171,7 +171,7 @@ Respond ONLY with a valid JSON object in this exact format (ensure strings are e
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: "#10B981", marginBottom: 6, textTransform: "uppercase" }}>Time & Space Complexity</div>
                     <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{feedback.time_complexity}</div>

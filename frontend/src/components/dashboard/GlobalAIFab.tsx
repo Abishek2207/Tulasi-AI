@@ -3,7 +3,11 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
-import { AssistantSidebar } from "./AssistantSidebar";
+import dynamic from "next/dynamic";
+
+const AssistantSidebar = dynamic(() => import("./AssistantSidebar").then(mod => mod.AssistantSidebar), {
+  ssr: false,
+});
 
 export function GlobalAIFab() {
   const [isOpen, setIsOpen] = useState(false);
