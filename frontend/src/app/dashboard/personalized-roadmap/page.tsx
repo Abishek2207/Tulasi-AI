@@ -91,7 +91,7 @@ export default function PersonalizedRoadmapPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 700, margin: "0 auto" }}>
           <div style={{ padding: 32, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 16 }}>Select Career Goal</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginBottom: 28 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-7">
               {GOALS.map(g => (
                 <button key={g.id} onClick={() => setGoal(g.id)}
                   style={{ padding: "14px", borderRadius: 16, border: `2px solid ${goal === g.id ? "#10B981" : "rgba(255,255,255,0.08)"}`, background: goal === g.id ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s" }}>
@@ -101,7 +101,7 @@ export default function PersonalizedRoadmapPage() {
               ))}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 28 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-7">
               <div>
                 <h2 style={{ fontSize: 14, fontWeight: 800, color: "white", marginBottom: 12 }}>Current Skill Level</h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

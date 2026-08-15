@@ -75,9 +75,33 @@ export default function ProjectBuilderPage() {
   const generate = async () => {
     if (!role) return;
     setPhase("loading");
-    await new Promise(r => setTimeout(r, 2500));
-    setBlueprint(MOCK_BLUEPRINT);
-    setPhase("output");
+    
+    try {
+      const response = await fetch("http://localhost:8000/api/project-builder/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token") || ""}` // Assuming token is in localStorage, replace with your auth method if different
+        },
+        body: JSON.stringify({ role, level })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate project");
+      }
+
+      const data = await response.json();
+      if (data.success && data.blueprint) {
+        setBlueprint(data.blueprint);
+      } else {
+        setBlueprint(MOCK_BLUEPRINT); // Fallback if API fails to return expected structure
+      }
+    } catch (error) {
+      console.error("Error generating project:", error);
+      setBlueprint(MOCK_BLUEPRINT); // Fallback on network error
+    } finally {
+      setPhase("output");
+    }
   };
 
   const selectedRole = ROLES.find(r => r.id === role);
