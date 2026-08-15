@@ -171,6 +171,16 @@ app.add_middleware(
 # Compress large JSON responses (Hackathons, Reviews, Feed)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+# ── Security Hardening (Phase 15) ──────────────────────────────────
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+    return response
+
 
 # ── Request Logger (helps debugging) ───────────────────────────────
 @app.middleware("http")
@@ -190,12 +200,31 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-# ── Routers (Lazy-Loaded to speed up cold starts) ────────────────────────
 from app.api import auth, chat, interview, roadmap, hackathons, code, certificates, admin, messages, startup, activity, resume, study, groups, stripe, payment, reviews, users, pdf, next_action, internships, system_design, prep_plan, rag, daily_challenge, feed, mentor, follow, profile
-from app.api import roadmap_career, streak_api, notifications_api, certifications_api, local_rag_api
+from app.api import roadmap_career, streak_api, notifications_api, certifications_api, local_rag_api, industry_api
 from app.api import agents_api, opportunities_api, portfolio_api
-from app.api import subscriptions, payments, ats_engine, career_intelligence
+from app.api import (
+    users, 
+    career_intelligence,
+    daily_learning,
+    practice,
+    learn,
+    subscriptions, 
+    payments, 
+    ats_engine
+)
 
+app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
+app.include_router(career_intelligence.router, prefix="/api/v1/career-intelligence", tags=["Career Intelligence"])
+app.include_router(daily_learning.router, prefix="/api/v1/daily-learning", tags=["Daily Learning"])
+app.include_router(practice.router, prefix="/api/v1/practice", tags=["Practice Engine"])
+app.include_router(learn.router, prefix="/api/v1/learn", tags=["Learn Mode"])
+from app.api import research
+app.include_router(research.router, prefix="/api/v1/research", tags=["Deep Research"])
+from app.api import certifications
+app.include_router(certifications.router, prefix="/api/v1/certifications", tags=["Certifications"])
+from app.api import focus
+app.include_router(focus.router, prefix="/api/v1/focus", tags=["Focus System"])
 app.include_router(auth.router,         prefix="/api/auth",         tags=["Authentication"])
 app.include_router(chat.router,         prefix="/api/chat",         tags=["AI Chat"])
 app.include_router(interview.router,    prefix="/api/interview",    tags=["Mock Interview"])
@@ -227,7 +256,7 @@ app.include_router(ats_engine.router,   prefix="/api/ats",          tags=["ATS E
 # Social, Feed and Mentor integration
 app.include_router(feed.router,         prefix="/api/feed",         tags=["Idea Feed"])
 app.include_router(mentor.router,       prefix="/api/mentor",       tags=["AI Mentor"])
-
+app.include_router(industry_api.router, prefix="/api/v1/industry",  tags=["Industry Intelligence"])
 
 # Super Intelligence Layer (V2 Overwrite)
 from app.api import intelligence_v2
@@ -252,6 +281,9 @@ app.include_router(professional_api.router,  prefix="/professional",      tags=[
 
 # New Career Intelligence API
 app.include_router(career_intelligence.router, prefix="/api/v1", tags=["Career Intelligence"])
+
+from app.api import daily_learning
+app.include_router(daily_learning.router, prefix="/api/v1", tags=["Daily Learning"])
 
 # ── WebSocket Router (Standard Legacy Support) ──────────────────────
 from app.api import ws as ws_router

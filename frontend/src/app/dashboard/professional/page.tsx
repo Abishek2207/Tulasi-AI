@@ -11,9 +11,9 @@ import {
   Rocket, BriefcaseBusiness, LayoutTemplate, TrendingUp,
   ClipboardList, Sparkles, ArrowRight, Zap, Activity,
 } from "lucide-react";
+import { DailyLearningWidget } from "@/components/dashboard/DailyLearningWidget";
 
 // ─── Hub & Agent Definitions ────────────────────────────────────────────────
-
 const HUBS = [
   {
     id: "upskill",
@@ -159,6 +159,11 @@ export default function ProfessionalDashboard() {
             </div>
           </Link>
         )}
+      </motion.div>
+
+      {/* ── Daily Adaptive Learning Widget ── */}
+      <motion.div variants={item}>
+        <DailyLearningWidget />
       </motion.div>
 
       {/* ── Hub Cards ── */}

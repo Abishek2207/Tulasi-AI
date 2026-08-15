@@ -32,6 +32,7 @@ class User(SQLModel, table=True):
     avatar: Optional[str] = None
     role: str = "student"
     provider: str = "email"
+    preferred_model: str = "gemini" # gemini, groq, openrouter, ollama
     invite_code: Optional[str] = None
     referred_by: Optional[str] = None
     streak: int = 0
@@ -162,6 +163,7 @@ class UserCertification(SQLModel, table=True):
     estimated_time: str
     external_url: str
     status: str = "Recommended" # Recommended | Started | Completed
+    study_path_json: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Notification(SQLModel, table=True):
@@ -172,6 +174,26 @@ class Notification(SQLModel, table=True):
     category: str # AI Skills | Certifications | Placement | Job Switch | Package Growth | Roadmap Reminder
     is_read: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class FocusSession(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    topic: str
+    duration_minutes: int
+    status: str = "active" # active | completed | interrupted
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class IndustryUpdate(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    role_context: str
+    title: str
+    summary: str
+    impact_level: str # High | Medium | Low
+    source_tech: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 
 
 class ChatSession(SQLModel, table=True):
@@ -721,4 +743,99 @@ class CareerIntelligenceRoadmap(SQLModel, table=True):
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+# ── Phase 3: Adaptive Daily Learning Engine ──────────────────────────────────
+
+class LearningPlan(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    title: str
+    target_role: str
+    status: str = "active" # active, completed, paused
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DailyTask(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    learning_plan_id: Optional[int] = Field(default=None, foreign_key="learningplan.id")
+    date_assigned: str = Field(index=True) # YYYY-MM-DD
+    title: str
+    description: str
+    task_type: str = "learn" # learn, practice, revision
+    estimated_minutes: int
+    status: str = "pending" # pending, completed, incomplete, skipped
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TaskCompletion(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    task_id: int = Field(foreign_key="dailytask.id", index=True)
+    user_id: int = Field(foreign_key="user.id")
+    completed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    time_spent_minutes: int = 0
+    difficulty_rating: int = 3 # 1-5
+    notes: Optional[str] = None
+    was_adapted: bool = False # true if this was an adapted/shortened task
+
+class LearningSession(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    task_id: Optional[int] = Field(default=None, foreign_key="dailytask.id")
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ended_at: Optional[datetime] = None
+    duration_minutes: int = 0
+    status: str = "active" # active, completed, abandoned
+
+# ── Phase 4: Question/Adaptive Practice Engine ────────────────────────────────
+
+class Question(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    topic: str = Field(index=True)
+    content: str
+    difficulty: int = 3 # 1-5 (1=easiest, 5=hardest)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class QuestionAttempt(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    question_id: int = Field(foreign_key="question.id", index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    user_answer: str
+    ai_score: int = 0 # 1-100 or 1-5
+    ai_feedback: str
+    attempted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class LearningMemory(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    topic: str = Field(index=True)
+    mastery_level: int = 1 # 1-5
+    attempts_count: int = 0
+    correct_count: int = 0
+    wrong_count: int = 0
+    last_practiced_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ── Phase 5: PDF + RAG Engine ────────────────────────────────────────────────
+
+class Document(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    title: str
+    filename: str
+    file_path: str
+    file_size_bytes: int
+    page_count: int = 0
+    analysis_result: Optional[str] = None # JSON containing suggested topics, etc.
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DocumentChunk(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    document_id: int = Field(foreign_key="document.id", index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    page_number: int
+    chunk_index: int
+    content: str
+    # Note: embeddings themselves are stored in FAISS, not here in the RDBMS.
 

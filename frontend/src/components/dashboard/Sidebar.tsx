@@ -13,7 +13,7 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket,
   FileText, CreditCard, TrendingUp, Bell,
-  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2, Brain
+  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2, Brain, Award, Shield
 } from "lucide-react";
 
 type NavItem = {
@@ -38,6 +38,8 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: Rocket,             name: "Hackathon Agent",   href: "/dashboard/hackathon-agent" },
       { icon: LayoutTemplate,     name: "Portfolio Builder", href: "/dashboard/portfolio-builder" },
       { icon: TrendingUp,         name: "Progress Tracker",  href: "/dashboard/progress-tracker" },
+      { icon: Award,              name: "Certifications",    href: "/dashboard/certifications", badge: "AI" },
+      { icon: Target,             name: "Focus System",      href: "/dashboard/focus", badge: "AI" },
       { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
     ],
   },
@@ -45,6 +47,7 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Account",
     items: [
       { icon: Bell,        name: "Notifications", href: "/dashboard/notifications" },
+      { icon: Shield,      name: "Privacy Center",href: "/dashboard/privacy" },
       { icon: CreditCard,  name: "Billing & Pro", href: "/dashboard/billing" },
     ],
   },
@@ -61,6 +64,8 @@ const PROFESSIONAL_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: MessageSquare,      name: "Leadership Coach",    href: "/dashboard/leadership-coach" },
       { icon: BriefcaseBusiness,  name: "Senior Job Match",    href: "/dashboard/senior-job-match" },
       { icon: Briefcase,          name: "Offer Negotiator",    href: "/dashboard/offer-negotiator" },
+      { icon: Award,              name: "Certifications",      href: "/dashboard/certifications", badge: "AI" },
+      { icon: Target,             name: "Focus System",        href: "/dashboard/focus", badge: "AI" },
       { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
     ],
   },
@@ -68,6 +73,7 @@ const PROFESSIONAL_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Account",
     items: [
       { icon: Bell,        name: "Notifications", href: "/dashboard/notifications" },
+      { icon: Shield,      name: "Privacy Center",href: "/dashboard/privacy" },
       { icon: CreditCard,  name: "Billing & Pro", href: "/dashboard/billing" },
     ],
   },
@@ -155,6 +161,7 @@ export default function Sidebar() {
               return (
                 <motion.div key={item.href} whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
                   <Link href={item.href}
+                    aria-label={`Navigate to ${item.name}`}
                     onClick={handleLinkClick}
                     style={{
                       display: "flex", alignItems: "center", gap: 10,
