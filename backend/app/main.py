@@ -282,6 +282,9 @@ app.include_router(professional_api.router,  prefix="/professional",      tags=[
 # New Career Intelligence API
 app.include_router(career_intelligence.router, prefix="/api/v1", tags=["Career Intelligence"])
 
+from app.api import project_builder
+app.include_router(project_builder.router, prefix="/api/project-builder", tags=["Project Builder"])
+
 from app.api import daily_learning
 app.include_router(daily_learning.router, prefix="/api/v1", tags=["Daily Learning"])
 
