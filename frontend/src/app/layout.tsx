@@ -13,6 +13,7 @@ import { XPNotificationSystem } from "@/components/XPNotification";
 import { CommandPalette } from "@/components/CommandPalette";
 import { KeepAlive } from "@/components/KeepAlive";
 import { BackendWarmup } from "@/components/BackendWarmup";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
@@ -167,6 +168,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               },
             }}
           />
+          <ErrorBoundary>
           <Suspense fallback={null}>
             {children}
             <XPNotificationSystem />
@@ -178,6 +180,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Analytics />
             <SpeedInsights />
           </Suspense>
+          </ErrorBoundary>
         </Providers>
       </body>
     </html>

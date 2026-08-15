@@ -275,3 +275,17 @@ async def remove_avatar_bg(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Image processing failed: {str(e)}")
 
+class PreferredModelRequest(BaseModel):
+    model: str
+
+@router.post("/preferences/model")
+def set_preferred_model(
+    req: PreferredModelRequest,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    current_user.preferred_model = req.model
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return {"status": "success", "preferred_model": current_user.preferred_model}

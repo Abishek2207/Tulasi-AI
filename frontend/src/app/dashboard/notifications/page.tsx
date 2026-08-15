@@ -60,7 +60,9 @@ const DEFAULT_NOTIFS: Notification[] = [
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>(DEFAULT_NOTIFS);
+  const [industryFeed, setIndustryFeed] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingIndustry, setLoadingIndustry] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
@@ -77,6 +79,18 @@ export default function NotificationsPage() {
       })
       .catch(() => null)
       .finally(() => setLoading(false));
+
+    fetch(`${API}/api/v1/industry/feed`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.industry_feed) {
+          setIndustryFeed(d.industry_feed);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setLoadingIndustry(false));
   }, []);
 
   const markAllRead = () => {
@@ -90,7 +104,7 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 60 }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 60 }}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
@@ -132,8 +146,12 @@ export default function NotificationsPage() {
         )}
       </motion.div>
 
-      {/* Notifications List */}
-      <AnimatePresence>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
+        
+        {/* Left Column: Personal Notifications */}
+        <div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "white" }}>Your Alerts</h2>
+          <AnimatePresence>
         {loading ? (
           // Skeleton loaders
           [1, 2, 3].map((i) => (
@@ -226,6 +244,55 @@ export default function NotificationsPage() {
           ))
         )}
       </AnimatePresence>
+      </div>
+
+      {/* Right Column: Industry Feed */}
+      <div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "white", display: "flex", alignItems: "center", gap: 8 }}>
+          <BrainCircuit size={20} color="#3b82f6" /> 
+          Industry Intelligence Feed
+        </h2>
+        
+        {loadingIndustry ? (
+          [1, 2].map((i) => (
+            <motion.div key={`ind-${i}`} initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 1.4 }} style={{ height: 120, borderRadius: 16, marginBottom: 16, background: "rgba(59, 130, 246, 0.05)", border: "1px solid rgba(59, 130, 246, 0.1)" }} />
+          ))
+        ) : industryFeed.length === 0 ? (
+          <div style={{ padding: 24, textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: 16 }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>No industry updates available for your profile yet.</p>
+          </div>
+        ) : (
+          industryFeed.map((update, i) => (
+            <motion.div
+              key={update.id || i}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              style={{
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: 16,
+                padding: 20,
+                marginBottom: 16,
+                position: "relative"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#3b82f6", background: "rgba(59, 130, 246, 0.1)", padding: "4px 10px", borderRadius: 12 }}>
+                  {update.source_tech}
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: update.impact_level === "High" ? "#f43f5e" : "#fbbf24" }}>
+                  {update.impact_level} Impact
+                </span>
+              </div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 8 }}>{update.title}</h3>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, margin: 0 }}>{update.summary}</p>
+            </motion.div>
+          ))
+        )}
+      </div>
+      
+      </div>
     </div>
   );
 }

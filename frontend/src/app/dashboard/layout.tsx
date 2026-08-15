@@ -20,6 +20,7 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { PageTransition } from "@/components/PageTransition";
 import { UsernameModal } from "@/components/UsernameModal";
 import { CareerIntelligenceOnboardingCheck } from "@/components/dashboard/CareerIntelligenceOnboardingCheck";
+import { GlobalAIFab } from "@/components/dashboard/GlobalAIFab";
 
 /** Safe hook — avoids SSR crash and only fires on real resize events. */
 function useIsDesktop() {
@@ -173,6 +174,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           window.dispatchEvent(new Event("tulasi-auth-change"));
         }} />
       )}
+      
+      <GlobalAIFab />
     </div>
   );
 }
