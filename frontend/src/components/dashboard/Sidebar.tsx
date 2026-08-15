@@ -12,7 +12,7 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 
 import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket,
-  FileText, CreditCard, TrendingUp, Bell,
+  FileText, CreditCard, TrendingUp, Bell, BookOpen,
   CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2, Brain, Award, Shield
 } from "lucide-react";
 
@@ -41,6 +41,7 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: Award,              name: "Certifications",    href: "/dashboard/certifications", badge: "AI" },
       { icon: Target,             name: "Focus System",      href: "/dashboard/focus", badge: "AI" },
       { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
+      { icon: BookOpen,           name: "Daily Learning",    href: "/dashboard/daily-learning", badge: "AI" },
     ],
   },
   {
@@ -106,7 +107,7 @@ export default function Sidebar() {
   let isProfessional = typeStr === "professional" || typeStr === "working professional";
 
   const professionalPaths = ['/dashboard/professional', '/dashboard/system-design', '/dashboard/code-review', '/dashboard/promotion-strategist', '/dashboard/leadership-coach', '/dashboard/senior-job-match', '/dashboard/offer-negotiator'];
-  const studentPaths = ['/dashboard/student', '/dashboard/career-copilot', '/dashboard/resume-analyzer', '/dashboard/personalized-roadmap', '/dashboard/ai-interview', '/dashboard/project-builder', '/dashboard/job-internship-match', '/dashboard/hackathon-agent', '/dashboard/portfolio-builder', '/dashboard/progress-tracker'];
+  const studentPaths = ['/dashboard/student', '/dashboard/career-copilot', '/dashboard/resume-analyzer', '/dashboard/personalized-roadmap', '/dashboard/ai-interview', '/dashboard/project-builder', '/dashboard/job-internship-match', '/dashboard/hackathon-agent', '/dashboard/portfolio-builder', '/dashboard/progress-tracker', '/dashboard/daily-learning'];
 
   if (professionalPaths.some(p => pathname.startsWith(p))) isProfessional = true;
   if (studentPaths.some(p => pathname.startsWith(p))) isProfessional = false;

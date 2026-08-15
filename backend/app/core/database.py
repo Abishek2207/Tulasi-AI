@@ -15,15 +15,12 @@ try:
         pool_timeout=30
     )
 except Exception as e:
-    print(f"⚠️  WARNING: Database engine creation failed: {e}")
-    engine = None
+    print(f"⚠️  CRITICAL: Database engine creation failed: {e}")
+    raise RuntimeError(f"Database engine creation failed: {e}")
 
 
 def sync_user_schema(engine):
     """Safely adds missing columns to the 'user' table on startup."""
-    if engine is None:
-        return
-        
     from sqlalchemy import inspect, text
     inspector = inspect(engine)
     existing_columns = [c['name'] for c in inspector.get_columns("user")]
@@ -78,9 +75,6 @@ def sync_user_schema(engine):
 
 def sync_profile_schema(engine):
     """Safely adds missing columns to the 'profile' table on startup."""
-    if engine is None:
-        return
-        
     from sqlalchemy import inspect, text
     inspector = inspect(engine)
     
@@ -130,10 +124,6 @@ def sync_profile_schema(engine):
         print(f"⚠️  Manual profile schema sync failed: {e}")
 
 def init_db():
-    if engine is None:
-        print("⚠️  Skipping DB init: No engine available.")
-        return
-
     import time
     from sqlalchemy import text
     from sqlalchemy.exc import OperationalError, SQLAlchemyError
@@ -313,9 +303,6 @@ def seed_essential_data(engine):
         print("✅ Essential data seeded.")
 
 def get_session():
-    if engine is None:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=503, detail="Database engine initialization failed. Check connection.")
     try:
         with Session(engine) as session:
             yield session

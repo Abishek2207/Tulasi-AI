@@ -215,8 +215,7 @@ from app.api import (
 )
 
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
-app.include_router(career_intelligence.router, prefix="/api/v1/career-intelligence", tags=["Career Intelligence"])
-app.include_router(daily_learning.router, prefix="/api/v1/daily-learning", tags=["Daily Learning"])
+
 app.include_router(practice.router, prefix="/api/v1/practice", tags=["Practice Engine"])
 app.include_router(learn.router, prefix="/api/v1/learn", tags=["Learn Mode"])
 from app.api import research
@@ -343,12 +342,8 @@ def health():
     db_status = "connected"
     db_detail = "Ready"
     try:
-        if engine:
-            with engine.connect() as conn:
-                conn.execute(text("SELECT 1"))
-        else:
-            db_status = "unreachable"
-            db_detail = "Engine is None (check DATABASE_URL)"
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
     except Exception as e:
         db_status = "error"
         db_detail = f"Unreachable: {str(e)}"
@@ -385,9 +380,6 @@ def health_db():
     """Strict database health check — returns 200 ONLY when DB is genuinely reachable."""
     from app.core.database import engine
     from sqlalchemy import text
-    from fastapi import HTTPException
-    if engine is None:
-        raise HTTPException(status_code=503, detail="Database engine is None. Check DATABASE_URL env var.")
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
