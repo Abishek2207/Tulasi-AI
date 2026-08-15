@@ -142,7 +142,7 @@ export default function DocumentsDashboard() {
           </div>
         </motion.div>
       ) : (
-        <motion.div variants={item} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+        <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Analysis Side */}
           <div style={{
             background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)",

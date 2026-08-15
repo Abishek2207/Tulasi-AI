@@ -171,7 +171,7 @@ export default function AIInterviewPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div style={{ padding: 32, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 20 }}>Choose Interview Type</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14, marginBottom: 32 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               {INTERVIEW_TYPES.map(type => (
                 <button key={type.id} onClick={() => setInterviewType(type.id)}
                   style={{ padding: "18px", borderRadius: 18, border: `2px solid ${interviewType === type.id ? type.color : "rgba(255,255,255,0.08)"}`, background: interviewType === type.id ? `${type.color}15` : "rgba(255,255,255,0.02)", cursor: "pointer", textAlign: "left", transition: "all 0.2s" }}>
@@ -337,7 +337,7 @@ export default function AIInterviewPage() {
           </div>
 
           {/* Trait Scores */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             {[
               { label: "Confidence", val: report.avg_confidence * 10 },
               { label: "Tech Depth", val: report.avg_depth * 10 },
@@ -353,7 +353,7 @@ export default function AIInterviewPage() {
             ))}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             {/* Strengths */}
             <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
