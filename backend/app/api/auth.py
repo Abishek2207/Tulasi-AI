@@ -228,93 +228,97 @@ class OAuthLoginRequest(BaseModel):
 @limiter.limit("30/minute")
 def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
     """Auto-register or login OAuth users (Google/GitHub) and return a JWT token."""
-    query = select(User).where(User.email == req.email)
-    result = db.exec(query)
-    user = result.first()
-
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-    is_admin = req.email.lower() in admin_emails
-    needs_commit = False
-
-    if not user:
-        # Auto-register the oauth user
-        user = User(
-            email=req.email,
-            hashed_password=None,  # No password for OAuth users
-            name=req.name or req.email.split("@")[0],
-            avatar=req.avatar,
-            role="admin" if is_admin else "student",
-            provider=req.provider,
-            invite_code=uuid.uuid4().hex[:8].upper(),
-        )
-        
-        # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
-        if req.invite_code:
-            query = select(User).where(User.invite_code == req.invite_code)
-            referer = db.exec(query).first()
-            if referer:
-                referer.xp = (referer.xp or 0) + 500
-                user.xp = 500
-                user.referred_by = referer.invite_code
-                db.add(referer)
-                
-                # Check 10 referrals for Pro
-                total_referral_count = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
-                if len(total_referral_count) >= 9:
-                    referer.is_pro = True
-                    db.add(referer)
-        # ─────────────────────────────────────────────────────────────
-        db.add(user)
-        needs_commit = True
-    else:
-        # ── IDENTITY SYNC: Harden existing user metadata ──────────────
-        # Update name if changed
-        if req.name and user.name != req.name:
-            user.name = req.name
-            needs_commit = True
+    try:
+        query = select(User).where(User.email == req.email)
+        result = db.exec(query)
+        user = result.first()
+    
+        admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
+        is_admin = req.email.lower() in admin_emails
+        needs_commit = False
+    
+        if not user:
+            # Auto-register the oauth user
+            user = User(
+                email=req.email,
+                hashed_password=None,  # No password for OAuth users
+                name=req.name or req.email.split("@")[0],
+                avatar=req.avatar,
+                role="admin" if is_admin else "student",
+                provider=req.provider,
+                invite_code=uuid.uuid4().hex[:8].upper(),
+            )
             
-        # Update avatar if changed
-        if req.avatar and user.avatar != req.avatar:
-            user.avatar = req.avatar
+            # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
+            if req.invite_code:
+                query = select(User).where(User.invite_code == req.invite_code)
+                referer = db.exec(query).first()
+                if referer:
+                    referer.xp = (referer.xp or 0) + 500
+                    user.xp = 500
+                    user.referred_by = referer.invite_code
+                    db.add(referer)
+                    
+                    # Check 10 referrals for Pro
+                    total_referral_count = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
+                    if len(total_referral_count) >= 9:
+                        referer.is_pro = True
+                        db.add(referer)
+            # ─────────────────────────────────────────────────────────────
+            db.add(user)
             needs_commit = True
-
-        # Update admin role if needed (security hardening)
-        if is_admin and user.role != "admin":
-            user.role = "admin"
-            needs_commit = True
-        
-        # Ensure provider is recorded
-        if not user.provider or user.provider == "email":
-            user.provider = req.provider
-            needs_commit = True
-
-    if needs_commit:
-        db.commit()
-        db.refresh(user)
-
-    # Streak and last activity are now handled centrally by log_activity_internal below.
-
-    # ── 🔓 Log Activity In Background ──────────────────────────────
-    background_tasks.add_task(background_log_login, user.id, "user_login", f"Logged in via {req.provider.capitalize()}")
-    # ─────────────────────────────────────────────────────────────
-
-    token = create_access_token({"sub": user.email})
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "username": user.username,
-            "role": user.role,
-            "invite_code": user.invite_code,
-            "is_pro": True,
-            "chats_today": 0,
-            "user_type": getattr(user, "user_type", "student") or "student",
-            "is_onboarded": getattr(user, "is_onboarded", False) or False,
+        else:
+            # ── IDENTITY SYNC: Harden existing user metadata ──────────────
+            # Update name if changed
+            if req.name and user.name != req.name:
+                user.name = req.name
+                needs_commit = True
+                
+            # Update avatar if changed
+            if req.avatar and user.avatar != req.avatar:
+                user.avatar = req.avatar
+                needs_commit = True
+    
+            # Update admin role if needed (security hardening)
+            if is_admin and user.role != "admin":
+                user.role = "admin"
+                needs_commit = True
+            
+            # Ensure provider is recorded
+            if not user.provider or user.provider == "email":
+                user.provider = req.provider
+                needs_commit = True
+    
+        if needs_commit:
+            db.commit()
+            db.refresh(user)
+    
+        # Streak and last activity are now handled centrally by log_activity_internal below.
+    
+        # ── 🔓 Log Activity In Background ──────────────────────────────
+        background_tasks.add_task(background_log_login, user.id, "user_login", f"Logged in via {req.provider.capitalize()}")
+        # ─────────────────────────────────────────────────────────────
+    
+        token = create_access_token({"sub": user.email})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "username": user.username,
+                "role": user.role,
+                "invite_code": user.invite_code,
+                "is_pro": True,
+                "chats_today": 0,
+                "user_type": getattr(user, "user_type", "student") or "student",
+                "is_onboarded": getattr(user, "is_onboarded", False) or False,
+            }
         }
-    }
+    except Exception as e:
+        print(f"OAuth DB error: {e}")
+        raise HTTPException(status_code=503, detail=f"Database temporarily unavailable: {str(e)}")
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -386,7 +390,11 @@ def request_otp(request: Request, req: RequestOTPRequest, background_tasks: Back
     
     background_tasks.add_task(email_service.send_otp_email, email_clean, code)
     
-    return {"message": "OTP sent to your email."}
+    msg = "Verification code sent to your email!"
+    if not email_service.is_configured:
+        msg = f"DEV MODE: Verification code is {code}"
+    
+    return {"message": msg}
 
 
 class VerifyOTPRequest(BaseModel):

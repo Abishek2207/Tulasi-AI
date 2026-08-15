@@ -102,9 +102,9 @@ export default function AuthPage() {
     }
     setLoading(true);
     try {
-      await authApi.requestOtp(email);
+      const data = await authApi.requestOtp(email);
       setShowOtp(true);
-      toast.success("Verification code sent to your email!");
+      toast.success(data.message || "Verification code sent to your email!", { duration: data.message?.includes("DEV") ? 10000 : 4000 });
     } catch (err: any) {
       toast.error(err.message || "Failed to send OTP.");
     } finally {
@@ -236,16 +236,11 @@ export default function AuthPage() {
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
             <button onClick={handleGoogleLogin} disabled={!!oAuthLoading}
               style={{ padding: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading ? "not-allowed" : "pointer" }}>
               {oAuthLoading === "google" ? <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> : <img src="https://authjs.dev/img/providers/google.svg" width={18} height={18} alt="Google" />}
-              Google
-            </button>
-            <button onClick={handleGithubLogin} disabled={!!oAuthLoading}
-              style={{ padding: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "white", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: oAuthLoading ? "not-allowed" : "pointer" }}>
-              {oAuthLoading === "github" ? <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> : <Github size={18} />}
-              GitHub
+              Continue with Google
             </button>
           </div>
 
