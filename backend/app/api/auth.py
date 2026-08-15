@@ -4,12 +4,13 @@ from sqlmodel import Session, select
 from pydantic import BaseModel
 from typing import Optional
 import uuid
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
+import random
 
 from app.core.database import get_session, engine
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.config import settings
-from app.models.models import User
+from app.models.models import User, OTPCode
 from app.api.activity import log_activity_internal
 from app.api.deps import get_current_user, get_admin_user, get_user_from_token, oauth2_scheme
 from app.core.rate_limit import limiter
@@ -356,3 +357,109 @@ def reset_password(request: Request, req: ResetPasswordRequest, db: Session = De
     db.add(user)
     db.commit()
     return {"message": "Password reset successfully."}
+
+
+class RequestOTPRequest(BaseModel):
+    email: str
+
+@router.post("/request-otp")
+@limiter.limit("5/minute")
+def request_otp(request: Request, req: RequestOTPRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
+    email_clean = req.email.strip().lower()
+    
+    # Generate 6-digit code
+    code = f"{random.randint(100000, 999999)}"
+    
+    # Check if user exists. We will allow OTP for both existing users and new ones.
+    # We will just send the code. Registration/Login happens upon verification.
+    
+    # Invalidate previous OTPs for this email
+    existing_otps = db.exec(select(OTPCode).where(OTPCode.email == email_clean)).all()
+    for otp in existing_otps:
+        db.delete(otp)
+    
+    # Store new OTP
+    expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+    new_otp = OTPCode(email=email_clean, code=code, expires_at=expires)
+    db.add(new_otp)
+    db.commit()
+    
+    background_tasks.add_task(email_service.send_otp_email, email_clean, code)
+    
+    return {"message": "OTP sent to your email."}
+
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    code: str
+    name: Optional[str] = None # For registration
+
+@router.post("/verify-otp")
+@limiter.limit("10/minute")
+def verify_otp(request: Request, req: VerifyOTPRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
+    email_clean = req.email.strip().lower()
+    
+    otp_record = db.exec(select(OTPCode).where(OTPCode.email == email_clean).where(OTPCode.code == req.code)).first()
+    
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+        
+    if otp_record.expires_at < datetime.now(timezone.utc):
+        db.delete(otp_record)
+        db.commit()
+        raise HTTPException(status_code=400, detail="OTP expired")
+        
+    # Valid OTP! 
+    db.delete(otp_record)
+    
+    user = db.exec(select(User).where(User.email == email_clean)).first()
+    
+    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
+    is_admin = email_clean in admin_emails
+    
+    needs_commit = False
+    
+    if not user:
+        # Create user
+        user = User(
+            email=email_clean,
+            name=req.name or email_clean.split("@")[0],
+            role="admin" if is_admin else "student",
+            invite_code=uuid.uuid4().hex[:8].upper(),
+            provider="email",
+            is_pro=True
+        )
+        db.add(user)
+        needs_commit = True
+        
+        # Log & send welcome
+        background_tasks.add_task(email_service.send_welcome_email, user.email, user.name)
+        log_activity_internal(user, db, "user_register", f"Signed up for Tulasi AI")
+    else:
+        # Auto-elevate if admin
+        if is_admin and user.role != "admin":
+            user.role = "admin"
+            needs_commit = True
+    
+    if needs_commit:
+        db.commit()
+        db.refresh(user)
+
+    background_tasks.add_task(background_log_login, user.id, "user_login", "Logged in via Email OTP")
+    
+    token = create_access_token({"sub": user.email})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "username": user.username,
+            "role": user.role,
+            "invite_code": user.invite_code, "is_pro": True, "chats_today": 0,
+            "user_type": getattr(user, "user_type", "student") or "student",
+            "is_onboarded": getattr(user, "is_onboarded", False) or False,
+        }
+    }
+

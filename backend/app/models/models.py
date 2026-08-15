@@ -21,6 +21,13 @@ class SenderEnum(str, enum.Enum):
     USER = "USER"
     AI = "AI"
 
+class OTPCode(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    email: str = Field(index=True)
+    code: str
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     username: Optional[str] = Field(default=None, unique=True, index=True)

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from app.core.database import get_session
 from app.api.deps import get_current_user
 from app.models.models import User, UserCertification, CareerIntelligenceProfile
-from app.core.ai_router import get_ai_response
+from app.core.ai_router import get_ai_response, resilient_ai_response
 from app.api.activity import log_activity_internal
 
 router = APIRouter()
@@ -72,37 +72,28 @@ Example output format:
   }}
 ]
 """
-    try:
-        raw = get_ai_response(prompt)
-        match = re.search(r'\[.*\]', raw, re.DOTALL)
-        if match:
-            certs = json.loads(match.group(0))
-            return certs
-        else:
-            return json.loads(raw)
-    except Exception as e:
-        print(f"Error generating certification recommendations: {e}")
-        # Fallback to standard
-        return [
-            {
-                "title": "AWS Certified Cloud Practitioner",
-                "provider": "AWS",
-                "skill_category": "Cloud Computing",
-                "difficulty": "Beginner",
-                "estimated_time": "3 weeks",
-                "external_url": "https://aws.amazon.com/certification/certified-cloud-practitioner/",
-                "reason": "Great starting point for cloud fundamentals."
-            },
-            {
-                "title": "Microsoft Certified: Azure Fundamentals",
-                "provider": "Microsoft",
-                "skill_category": "Cloud Computing",
-                "difficulty": "Beginner",
-                "estimated_time": "2 weeks",
-                "external_url": "https://learn.microsoft.com/en-us/credentials/certifications/azure-fundamentals/",
-                "reason": "Covers core cloud concepts on the Azure platform."
-            }
-        ]
+    fallback_certs = [
+        {
+            "title": "AWS Certified Cloud Practitioner",
+            "provider": "AWS",
+            "skill_category": "Cloud Computing",
+            "difficulty": "Beginner",
+            "estimated_time": "3 weeks",
+            "external_url": "https://aws.amazon.com/certification/certified-cloud-practitioner/",
+            "reason": "Great starting point for cloud fundamentals."
+        },
+        {
+            "title": "Microsoft Certified: Azure Fundamentals",
+            "provider": "Microsoft",
+            "skill_category": "Cloud Computing",
+            "difficulty": "Beginner",
+            "estimated_time": "2 weeks",
+            "external_url": "https://learn.microsoft.com/en-us/credentials/certifications/azure-fundamentals/",
+            "reason": "Covers core cloud concepts on the Azure platform."
+        }
+    ]
+    
+    return resilient_ai_response(prompt, fallback=fallback_certs, is_json=True)
 
 @router.post("/start")
 def start_certification(
@@ -133,20 +124,14 @@ Return ONLY strict JSON with this exact structure:
   "tips": ["Tip 1", "Tip 2"]
 }}
 """
-    study_path = "{}"
-    try:
-        raw = get_ai_response(prompt)
-        match = re.search(r'\{.*\}', raw, re.DOTALL)
-        if match:
-            study_path = match.group(0)
-            # validate JSON
-            json.loads(study_path)
-    except Exception as e:
-        print(f"Error generating study path: {e}")
-        study_path = json.dumps({
-            "weeks": [{"week": 1, "focus": "Fundamentals", "tasks": ["Read official guide", "Take a practice test"]}],
-            "tips": ["Consistency is key."]
-        })
+    fallback_study = {
+        "weeks": [{"week": 1, "focus": "Fundamentals", "tasks": ["Read official guide", "Take a practice test"]}],
+        "tips": ["Consistency is key."]
+    }
+    
+    # We want a string returned for study_path_json
+    study_dict = resilient_ai_response(prompt, fallback=fallback_study, is_json=True)
+    study_path = json.dumps(study_dict)
 
     cert = UserCertification(
         user_id=current_user.id,
