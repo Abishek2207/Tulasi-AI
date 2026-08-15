@@ -46,6 +46,13 @@ export default function AuthPage() {
 
   const handleGoogleLogin = async () => {
     if (oAuthLoading) return;
+    
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    if (!supabaseUrl || supabaseUrl.includes("localhost:54321") || supabaseUrl.includes("dummy")) {
+      toast.error("Google authentication is not configured. Set a real NEXT_PUBLIC_SUPABASE_URL.");
+      return;
+    }
+    
     setOAuthLoading("google");
     try {
       const { error } = await supabase.auth.signInWithOAuth({

@@ -388,13 +388,17 @@ def request_otp(request: Request, req: RequestOTPRequest, background_tasks: Back
     db.add(new_otp)
     db.commit()
     
+    if not email_service.is_configured:
+        db.delete(new_otp)
+        db.commit()
+        raise HTTPException(
+            status_code=501, 
+            detail="Email delivery is not configured in this environment. Set RESEND_API_KEY to enable email verification."
+        )
+        
     background_tasks.add_task(email_service.send_otp_email, email_clean, code)
     
-    msg = "Verification code sent to your email!"
-    if not email_service.is_configured:
-        msg = f"DEV MODE: Verification code is {code}"
-    
-    return {"message": msg}
+    return {"message": "Verification code sent to your email!"}
 
 
 class VerifyOTPRequest(BaseModel):

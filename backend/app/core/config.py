@@ -9,13 +9,21 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days to match NextAuth
 
     # Database
-    DATABASE_URL: str = "sqlite:///./tulasi_ai.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./ai_platform.db")
 
     @property
     def normalized_database_url(self) -> str:
         """SQLAlchemy requires postgresql:// instead of postgres://.
         Supabase also requires sslmode=require for external connections."""
         url = self.DATABASE_URL
+        # Fix relative SQLite path to absolute project root path
+        if url.startswith("sqlite:///./"):
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            db_name = url.replace("sqlite:///./", "")
+            # Ensure windows paths use forward slashes for sqlite url
+            abs_db_path = os.path.join(project_root, db_name).replace("\\", "/")
+            url = f"sqlite:///{abs_db_path}"
+            
         # Fix Heroku/Supabase shorthand URL scheme
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)

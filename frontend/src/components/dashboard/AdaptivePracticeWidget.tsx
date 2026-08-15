@@ -7,7 +7,7 @@ import {
   XCircle, Zap, TrendingUp, TrendingDown,
   Loader2, Sparkles, BookOpen
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 
 interface Question {
   id: number;
