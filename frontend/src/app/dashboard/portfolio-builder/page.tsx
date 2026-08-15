@@ -9,6 +9,9 @@ import {
   Link2, Star, Zap, Layers, Download, Copy, ChevronDown,
   Monitor, Smartphone, X, Plus
 } from "lucide-react";
+import toast from "react-hot-toast";
+import { useSession } from "@/hooks/useSession";
+import { portfolioApi } from "@/lib/api";
 
 // ─── TYPES ─────────────────────────────────────────────────────────────────
 interface Project {
@@ -322,6 +325,7 @@ function generateCode(data: PortfolioData, accent: string): string {
 type Step = "input" | "generating" | "preview" | "code";
 
 export default function PortfolioBuilderPage() {
+  const { data: session } = useSession();
   const [step, setStep] = useState<Step>("input");
   const [template, setTemplate] = useState("dark-pro");
   const [inputMethod, setInputMethod] = useState<"manual" | "upload">("manual");
@@ -348,13 +352,39 @@ export default function PortfolioBuilderPage() {
   ];
 
   const generate = async () => {
+    if (!session?.user?.accessToken) return toast.error("Please login to generate a portfolio.");
+    
     setStep("generating");
-    for (let i = 0; i < GENERATION_STAGES.length; i++) {
-      setGenerationStage(i);
+    
+    // Start visual loading loop
+    let isDone = false;
+    const progressLoop = async () => {
+      let stage = 0;
+      while (!isDone && stage < GENERATION_STAGES.length - 1) {
+        setGenerationStage(stage);
+        await new Promise(r => setTimeout(r, 1200));
+        stage++;
+      }
+      if (!isDone) setGenerationStage(GENERATION_STAGES.length - 1);
+    };
+    
+    progressLoop();
+    
+    try {
+      const res = await portfolioApi.generate(portfolio, session.user.accessToken);
+      if (res.portfolio) {
+        setPortfolio(res.portfolio);
+      }
+      isDone = true;
+      setGenerationStage(GENERATION_STAGES.length - 1);
       await new Promise(r => setTimeout(r, 500));
+      setStep("preview");
+      toast.success("Portfolio generated successfully!");
+    } catch (err: any) {
+      isDone = true;
+      toast.error(err.message || "Failed to generate portfolio");
+      setStep("input");
     }
-    await new Promise(r => setTimeout(r, 400));
-    setStep("preview");
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {

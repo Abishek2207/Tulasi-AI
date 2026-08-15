@@ -471,6 +471,18 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     }),
 
+  requestOtp: (email: string) =>
+    request<{ message: string }>("/api/auth/request-otp", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  verifyOtp: (email: string, code: string, name?: string) =>
+    request<{ access_token: string; user: User }>("/api/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, code, name }),
+    }),
+
   me: (token: string) =>
     request<User & { invite_code: string }>("/api/auth/me", {}, token),
 
@@ -763,6 +775,11 @@ export const agentsApi = {
 export const portfolioApi = {
   getGithub: (username: string) => 
     apiFetch<any>(`/api/portfolio/github?username=${encodeURIComponent(username)}`),
+  generate: (data: any, token: string) =>
+    request<{ portfolio: any }>("/api/portfolio/generate", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token),
 };
 
 export const activityApi = {

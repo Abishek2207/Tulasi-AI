@@ -27,7 +27,8 @@ function getPasswordStrength(pwd: string) {
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [showOtp, setShowOtp] = useState(false);
   const [name, setName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -93,17 +94,33 @@ export default function AuthPage() {
       toast.error("Unexpected reset error. Please try again.");
     }
   };
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) {
+      toast.error("Enter your email");
+      return;
+    }
     setLoading(true);
-
     try {
-      let data;
-      if (isLogin) {
-        data = await authApi.login(email, password);
-      } else {
-        data = await authApi.register(email, password, name, inviteCode);
-      }
+      await authApi.requestOtp(email);
+      setShowOtp(true);
+      toast.success("Verification code sent to your email!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send OTP.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode.trim()) {
+      toast.error("Enter the verification code");
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await authApi.verifyOtp(email, otpCode, name || undefined);
 
       if (data.access_token) {
         localStorage.setItem("token", data.access_token);
@@ -115,7 +132,7 @@ export default function AuthPage() {
 
       window.dispatchEvent(new Event("tulasi-auth-change"));
       
-      toast.success(isLogin ? "Continue Your Growth!" : "Account created successfully!");
+      toast.success("Authentication successful!");
       
       if (data.user?.role === "admin" || data.user?.email.toLowerCase() === "abishekramamoorthy22@gmail.com") {
         router.push("/admin");
@@ -125,7 +142,7 @@ export default function AuthPage() {
         router.push("/dashboard");
       }
     } catch (err: any) {
-      toast.error(err.message || "Authentication failed. Please check your credentials.");
+      toast.error(err.message || "Invalid OTP code.");
     } finally {
       setLoading(false);
     }
@@ -164,61 +181,54 @@ export default function AuthPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <AnimatePresence mode="popLayout">
-              {!isLogin && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ position: "relative" }}>
-                    <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)" }}><User size={18} /></div>
-                    <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Full Name" required 
-                      style={{ width: "100%", padding: "14px 16px 14px 44px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, color: "white", fontSize: 15, outline: "none", transition: "all 0.2s" }}
-                      onFocus={e => e.target.style.borderColor = "#06B6D4"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
-                  </div>
-                  <div style={{ position: "relative" }}>
-                    <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)" }}><KeyRound size={18} /></div>
-                    <input type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())} placeholder="Invite Code (Optional)" 
-                      style={{ width: "100%", padding: "14px 16px 14px 44px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, color: "white", fontSize: 15, outline: "none", transition: "all 0.2s", textTransform: "uppercase" }}
-                      onFocus={e => e.target.style.borderColor = "#06B6D4"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {!showOtp ? (
+            <form onSubmit={handleRequestOtp} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <AnimatePresence mode="popLayout">
+                {!isLogin && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    <div style={{ position: "relative" }}>
+                      <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)" }}><User size={18} /></div>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Full Name" required 
+                        style={{ width: "100%", padding: "14px 16px 14px 44px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, color: "white", fontSize: 15, outline: "none", transition: "all 0.2s" }}
+                        onFocus={e => e.target.style.borderColor = "#06B6D4"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)" }}><Mail size={18} /></div>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" required 
-                style={{ width: "100%", padding: "14px 16px 14px 44px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, color: "white", fontSize: 15, outline: "none", transition: "all 0.2s" }}
-                onFocus={e => e.target.style.borderColor = "#06B6D4"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
-            </div>
+              <div style={{ position: "relative" }}>
+                <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)" }}><Mail size={18} /></div>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" required 
+                  style={{ width: "100%", padding: "14px 16px 14px 44px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, color: "white", fontSize: 15, outline: "none", transition: "all 0.2s" }}
+                  onFocus={e => e.target.style.borderColor = "#06B6D4"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
+              </div>
 
-            <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)" }}><Lock size={18} /></div>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required 
-                style={{ width: "100%", padding: "14px 16px 14px 44px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, color: "white", fontSize: 15, outline: "none", transition: "all 0.2s" }}
-                onFocus={e => e.target.style.borderColor = "#06B6D4"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
-              
-              {!isLogin && password.length > 0 && (
-                <div style={{ marginTop: 8, display: "flex", gap: 4, height: 3 }}>
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} style={{ flex: 1, borderRadius: 2, background: i <= getPasswordStrength(password).score ? getPasswordStrength(password).color : "rgba(255,255,255,0.1)", transition: "background 0.3s ease" }} />
-                  ))}
-                </div>
-              )}
-            </div>
+              <button type="submit" disabled={loading}
+                style={{ width: "100%", padding: "16px", background: "linear-gradient(135deg, #06B6D4, #0891B2)", color: "white", fontWeight: 800, fontSize: 15, borderRadius: 14, border: "none", cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 8, boxShadow: "0 8px 16px rgba(6,182,212,0.25)", opacity: loading ? 0.7 : 1 }}>
+                {loading ? <div style={{ width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> : "Continue with Email"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ position: "relative" }}>
+                <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)" }}><KeyRound size={18} /></div>
+                <input type="text" value={otpCode} onChange={e => setOtpCode(e.target.value)} placeholder="Enter 6-digit OTP" required maxLength={6}
+                  style={{ width: "100%", padding: "14px 16px 14px 44px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, color: "white", fontSize: 15, outline: "none", transition: "all 0.2s", letterSpacing: "2px" }}
+                  onFocus={e => e.target.style.borderColor = "#06B6D4"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
+              </div>
 
-            {isLogin && (
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button type="button" onClick={handleForgotPassword} style={{ padding: 0, background: "transparent", border: "none", fontSize: 13, color: "rgba(255,255,255,0.5)", fontWeight: 500, transition: "color 0.2s", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color="#06B6D4"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.5)"}>
-                  Forgot password?
+              <button type="submit" disabled={loading}
+                style={{ width: "100%", padding: "16px", background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontWeight: 800, fontSize: 15, borderRadius: 14, border: "none", cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 8, boxShadow: "0 8px 16px rgba(16,185,129,0.25)", opacity: loading ? 0.7 : 1 }}>
+                {loading ? <div style={{ width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> : "Verify & Sign In"}
+              </button>
+
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
+                <button type="button" onClick={() => setShowOtp(false)} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 14 }}>
+                  Use a different email
                 </button>
               </div>
-            )}
-
-            <button type="submit" disabled={loading}
-              style={{ width: "100%", padding: "16px", background: "linear-gradient(135deg, #06B6D4, #0891B2)", color: "white", fontWeight: 800, fontSize: 15, borderRadius: 14, border: "none", cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 8, boxShadow: "0 8px 16px rgba(6,182,212,0.25)", opacity: loading ? 0.7 : 1 }}>
-              {loading ? <div style={{ width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> : (isLogin ? "Sign In" : "Create Account")}
-            </button>
-          </form>
+            </form>
+          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "24px 0" }}>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
