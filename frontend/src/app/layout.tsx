@@ -15,9 +15,9 @@ import { KeepAlive } from "@/components/KeepAlive";
 import { BackendWarmup } from "@/components/BackendWarmup";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap", preload: false });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap", preload: false });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap", preload: false });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.tulasiai.in"),

@@ -407,7 +407,8 @@ def chat(
             )
         except Exception as e2:
             print(f"❌ Direct AI fallback failed: {e2}")
-            response_text = _get_inline_fallback(req.message, tool)
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail="AI service is not configured or unavailable.")
 
     # ── Persist messages ──────────────────────────────────────────────────────
     db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
@@ -547,7 +548,8 @@ def chat_voice(
         )
     except Exception as e:
         print(f"⚠️ Voice AI fast call failed: {e}")
-        response_text = "Sorry, I couldn't process that right now. Please try again."
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="AI service is not configured or unavailable.")
 
     # Fire-and-forget DB persistence (background, non-blocking)
     try:
@@ -733,12 +735,10 @@ def chat_stream(
 
         except Exception as e:
             print(f"❌ [Stream] Error: {e}")
-            fallback = _get_inline_fallback(req.message, tool)
-            full_response = fallback
-            yield f"data: {json.dumps({'token': fallback, 'session_id': session_id, 'done': False})}\n\n"
-
-        # Always send done signal
-        yield f"data: {json.dumps({'token': '', 'session_id': session_id, 'done': True})}\n\n"
+            error_msg = "⚠️ Error: AI service is not configured or unavailable."
+            full_response = error_msg
+            yield f"data: {json.dumps({'token': error_msg, 'session_id': session_id, 'done': True})}\n\n"
+            return
 
         # Persist to DB with a fresh session
         try:

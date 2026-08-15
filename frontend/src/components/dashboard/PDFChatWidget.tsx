@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Loader2, BookOpen, Quote } from "lucide-react";
+import { documentsApi } from "@/lib/api";
 
 interface PDFChatWidgetProps {
   documentId: number;
@@ -11,7 +12,7 @@ interface PDFChatWidgetProps {
 interface Message {
   role: "user" | "ai";
   content: string;
-  citations?: { page: number; content: string }[];
+  citations?: string[];
 }
 
 export function PDFChatWidget({ documentId }: PDFChatWidgetProps) {
@@ -31,27 +32,15 @@ export function PDFChatWidget({ documentId }: PDFChatWidgetProps) {
     setLoading(true);
     
     try {
-      const res = await fetch("/api/rag/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          document_id: documentId,
-          message: userMsg
-        })
-      });
+      const res = await documentsApi.ask(userMsg, 5, "");
       
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(prev => [...prev, { 
-          role: "ai", 
-          content: data.answer,
-          citations: data.citations
-        }]);
-      } else {
-        setMessages(prev => [...prev, { role: "ai", content: "Sorry, I encountered an error." }]);
-      }
+      setMessages(prev => [...prev, { 
+        role: "ai", 
+        content: res.answer,
+        citations: res.citations
+      }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: "ai", content: "Network error." }]);
+      setMessages(prev => [...prev, { role: "ai", content: "Network error or no API response." }]);
     } finally {
       setLoading(false);
     }
@@ -133,9 +122,8 @@ export function PDFChatWidget({ documentId }: PDFChatWidgetProps) {
                       color: "rgba(255,255,255,0.6)"
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, color: "#818CF8", fontWeight: 500 }}>
-                        <Quote size={12} /> Page {cit.page}
+                        <Quote size={12} /> {cit}
                       </div>
-                      <div style={{ fontStyle: "italic" }}>"{cit.content.substring(0, 80)}..."</div>
                     </div>
                   ))}
                 </div>

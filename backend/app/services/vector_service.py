@@ -26,7 +26,7 @@ class VectorService:
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if api_key:
             try:
-                import google.generativeai as genai
+                from google import genai as google_genai
                 genai.configure(api_key=api_key)
                 result = genai.embed_content(
                     model="models/gemini-embedding-001",
@@ -62,7 +62,7 @@ class VectorService:
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if api_key:
             try:
-                import google.generativeai as genai
+                from google import genai as google_genai
                 genai.configure(api_key=api_key)
                 result = genai.embed_content(
                     model="models/gemini-embedding-001",
@@ -192,3 +192,4 @@ class VectorService:
             print(f"⚠️ Intelligence update failed: {e}")
 
 vector_service = VectorService()
+

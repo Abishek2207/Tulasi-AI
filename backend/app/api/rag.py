@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Backgro
 from sqlmodel import Session, select
 from typing import List, Optional
 from pydantic import BaseModel
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 from app.core.database import get_session
 from app.api.auth import get_current_user
@@ -247,3 +247,5 @@ def chat_document(
     citations = [{"page": c.page_number, "content": c.content[:100]} for c in relevant_chunks]
     
     return ChatResponse(answer=res, citations=citations)
+
+

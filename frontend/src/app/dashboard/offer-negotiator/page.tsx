@@ -63,7 +63,7 @@ Respond ONLY with a valid JSON object in this exact format:
 }`;
 
     try {
-      const res = await chatApi.send(prompt, "negotiation_feedback");
+      const res = await chatApi.send(prompt, undefined, "negotiation_feedback");
       const rawText: string = (res as any)?.data?.response ?? (res as any)?.response ?? (typeof res === "string" ? res : "");
 
       if (!rawText) {

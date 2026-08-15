@@ -56,7 +56,7 @@ Respond ONLY with a valid JSON object in this exact format (ensure strings are e
 }`;
 
     try {
-      const res = await chatApi.send(prompt, "code_review_feedback");
+      const res = await chatApi.send(prompt, undefined, "code_review_feedback");
       const rawText: string = (res as any)?.data?.response ?? (res as any)?.response ?? (typeof res === "string" ? res : "");
 
       if (!rawText) {

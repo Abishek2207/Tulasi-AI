@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Activity, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { AdaptivePracticeWidget } from "@/components/dashboard/AdaptivePracticeWidget";
 
 export default function PracticeDashboard() {
@@ -51,7 +52,9 @@ export default function PracticeDashboard() {
 
       {/* ── Widget ── */}
       <motion.div variants={item}>
-        <AdaptivePracticeWidget />
+        <WidgetErrorBoundary fallbackMessage="Failed to load Adaptive Practice Engine">
+          <AdaptivePracticeWidget />
+        </WidgetErrorBoundary>
       </motion.div>
       
     </motion.div>

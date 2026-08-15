@@ -41,8 +41,9 @@ export default function GeneralChatPage() {
       const res = await chatApi.send(textToSend, "general_assistant");
       const answer = (res as any)?.data?.response || (res as any)?.response || (typeof res === "string" ? res : "I'm sorry, I couldn't process that.");
       setMessages(prev => [...prev, { role: "ai", content: answer }]);
-    } catch (err) {
-      setMessages(prev => [...prev, { role: "ai", content: "Sorry, I encountered a network error. Please try again." }]);
+    } catch (err: any) {
+      const errorMessage = err?.message || "Sorry, I encountered a network error. Please try again.";
+      setMessages(prev => [...prev, { role: "ai", content: `⚠️ ${errorMessage}` }]);
     } finally {
       setLoading(false);
     }

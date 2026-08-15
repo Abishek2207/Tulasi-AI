@@ -13,7 +13,7 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket,
   FileText, CreditCard, TrendingUp, Bell, BookOpen,
-  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2, Brain, Award, Shield
+  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2, Brain, Award, Shield, Globe2
 } from "lucide-react";
 
 type NavItem = {
@@ -42,6 +42,8 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: Target,             name: "Focus System",      href: "/dashboard/focus", badge: "AI" },
       { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
       { icon: BookOpen,           name: "Daily Learning",    href: "/dashboard/daily-learning", badge: "AI" },
+      { icon: Brain,              name: "Neural Doc Lab",    href: "/dashboard/documents", badge: "New" },
+      { icon: Globe2,             name: "Orbit HUB",         href: "/dashboard/groups", badge: "Live" },
     ],
   },
   {
@@ -68,6 +70,8 @@ const PROFESSIONAL_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: Award,              name: "Certifications",      href: "/dashboard/certifications", badge: "AI" },
       { icon: Target,             name: "Focus System",        href: "/dashboard/focus", badge: "AI" },
       { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
+      { icon: Brain,              name: "Neural Doc Lab",      href: "/dashboard/documents", badge: "New" },
+      { icon: Globe2,             name: "Orbit HUB",           href: "/dashboard/groups", badge: "Live" },
     ],
   },
   {
@@ -106,8 +110,8 @@ export default function Sidebar() {
   const typeStr = (userType || "").toLowerCase();
   let isProfessional = typeStr === "professional" || typeStr === "working professional";
 
-  const professionalPaths = ['/dashboard/professional', '/dashboard/system-design', '/dashboard/code-review', '/dashboard/promotion-strategist', '/dashboard/leadership-coach', '/dashboard/senior-job-match', '/dashboard/offer-negotiator'];
-  const studentPaths = ['/dashboard/student', '/dashboard/career-copilot', '/dashboard/resume-analyzer', '/dashboard/personalized-roadmap', '/dashboard/ai-interview', '/dashboard/project-builder', '/dashboard/job-internship-match', '/dashboard/hackathon-agent', '/dashboard/portfolio-builder', '/dashboard/progress-tracker', '/dashboard/daily-learning'];
+  const professionalPaths = ['/dashboard/professional', '/dashboard/system-design', '/dashboard/code-review', '/dashboard/promotion-strategist', '/dashboard/leadership-coach', '/dashboard/senior-job-match', '/dashboard/offer-negotiator', '/dashboard/groups', '/dashboard/documents'];
+  const studentPaths = ['/dashboard/student', '/dashboard/career-copilot', '/dashboard/resume-analyzer', '/dashboard/personalized-roadmap', '/dashboard/ai-interview', '/dashboard/project-builder', '/dashboard/job-internship-match', '/dashboard/hackathon-agent', '/dashboard/portfolio-builder', '/dashboard/progress-tracker', '/dashboard/daily-learning', '/dashboard/groups', '/dashboard/documents'];
 
   if (professionalPaths.some(p => pathname.startsWith(p))) isProfessional = true;
   if (studentPaths.some(p => pathname.startsWith(p))) isProfessional = false;

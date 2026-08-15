@@ -48,8 +48,7 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-    is_admin = req.email.lower() in admin_emails
+    is_admin = req.email.lower() in settings.admin_emails
     user = User(
         email=req.email,
         hashed_password=get_password_hash(req.password),
@@ -157,8 +156,7 @@ def login(request: Request, req: LoginRequest, background_tasks: BackgroundTasks
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
     needs_commit = False
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-    if user.email.lower() in admin_emails and user.role != "admin":
+    if user.email.lower() in settings.admin_emails and user.role != "admin":
         user.role = "admin"
         db.add(user)
         needs_commit = True
@@ -233,8 +231,7 @@ def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: Back
         result = db.exec(query)
         user = result.first()
     
-        admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-        is_admin = req.email.lower() in admin_emails
+        is_admin = req.email.lower() in settings.admin_emails
         needs_commit = False
     
         if not user:
@@ -426,8 +423,7 @@ def verify_otp(request: Request, req: VerifyOTPRequest, background_tasks: Backgr
     
     user = db.exec(select(User).where(User.email == email_clean)).first()
     
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-    is_admin = email_clean in admin_emails
+    is_admin = email_clean in settings.admin_emails
     
     needs_commit = False
     

@@ -137,7 +137,7 @@ def get_daily_mission(
     Suggests areas of improvement across coding, system design, and theory.
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai as google_genai
     import json
     
     intelligence = json.loads(current_user.user_intelligence_profile or "{}")
@@ -214,7 +214,7 @@ def get_strategic_plan(
     Generates a Year-Wise Strategic Blueprint.
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai as google_genai
     import json
 
     intelligence = json.loads(current_user.user_intelligence_profile or "{}")
@@ -276,7 +276,7 @@ def get_daily_routine(
     Optimizes for the user's specific role, technical gaps, and intensity level.
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai as google_genai
     import json
     
     intelligence = json.loads(current_user.user_intelligence_profile or "{}")
@@ -362,3 +362,4 @@ def _get_readiness_label(score: int) -> str:
     if score >= 50: return "Skilled Aspirant"
     if score >= 25: return "Learning Engine"
     return "Foundation Track"
+

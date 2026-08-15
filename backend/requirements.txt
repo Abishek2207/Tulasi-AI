@@ -5,7 +5,7 @@ gunicorn==21.2.0
 python-multipart==0.0.12
 
 # ── AI / Gemini (reverted to stable google-generativeai) ───────────
-google-generativeai>=0.7.2
+google-genai>=2.0.0
 
 # ── LangChain + RAG ─────────────────────────────────────────────────
 langchain>=0.3.0
@@ -36,7 +36,7 @@ psutil==5.9.8
 # razorpay==1.4.2  ← NOT required; payment.py uses requests directly to avoid pkg_resources issues
 
 # ── PDF ───────────────────────────────────────────────────────────────
-PyPDF2==3.0.1
+pypdf>=6.0.0
 
 # ── Rate Limiting ─────────────────────────────────────────────────────
 slowapi==0.1.9
@@ -58,3 +58,4 @@ qdrant-client>=1.7.0
 redis>=5.0.0
 celery>=5.3.0
 feedparser>=6.0.10
+gunicorn==21.2.0

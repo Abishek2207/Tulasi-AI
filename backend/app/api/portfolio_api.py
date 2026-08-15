@@ -1,6 +1,6 @@
 import os
 import requests
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from typing import List
 from datetime import datetime, timezone
 
@@ -130,4 +130,95 @@ async def generate_portfolio(data: PortfolioInput, current_user: User = Depends(
     except Exception as e:
         # Fallback if AI fails to return strict JSON
         raise HTTPException(status_code=500, detail="Failed to parse AI response into JSON format.")
+
+
+@router.post("/generate-from-file")
+async def generate_portfolio_from_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    from app.core.ai_client import HybridAIClient
+    import io
+    
+    text = ""
+    try:
+        content = await file.read()
+        filename = file.filename.lower()
+        if filename.endswith(".pdf"):
+            import pypdf
+            pdf_reader = pypdf.PdfReader(io.BytesIO(content))
+            for page in pdf_reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text += extracted + "\n"
+        else:
+            # Fallback to plain text decoding
+            text = content.decode("utf-8", errors="ignore")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
+
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract text from the provided file.")
+
+    ai = HybridAIClient()
+    
+    prompt = f"""
+    You are an expert technical recruiter and portfolio copywriter.
+    I have provided a candidate's resume text below. Your job is to transform this into a highly professional, compelling, and ATS-friendly portfolio dataset.
+    
+    Resume Text:
+    {text}
+    
+    Please generate a robust portfolio including:
+    1. Their full name, a strong professional title, and a short catchy tagline.
+    2. A polished, professional version of their bio.
+    3. Exactly 6 relevant technical skills based on their resume.
+    4. Exactly 2 highly impressive, realistic projects extracted from or inspired by their resume (include tech stack, description, and an achievement).
+    5. Exactly 1-2 realistic professional experience entries extracted from the resume.
+    6. Exactly 1 relevant achievement/certification.
+    7. Any contact information you can find (email, location, linkedin, github, phone). Leave as empty string if not found.
+    
+    Return the result EXCLUSIVELY as a JSON object matching this schema exactly (do NOT wrap in markdown):
+    {{
+      "name": "...",
+      "title": "...",
+      "tagline": "...",
+      "email": "...",
+      "phone": "...",
+      "location": "...",
+      "github": "...",
+      "linkedin": "...",
+      "website": "",
+      "bio": "...",
+      "skills": ["skill1", "skill2", "skill3", "skill4", "skill5", "skill6"],
+      "projects": [
+         {{ "id": "p1", "name": "...", "description": "...", "tech": ["t1", "t2"], "github": "", "live": "", "achievement": "..." }}
+      ],
+      "experience": [
+         {{ "id": "e1", "company": "...", "role": "...", "duration": "...", "points": ["...", "..."] }}
+      ],
+      "achievements": [
+         {{ "id": "a1", "title": "...", "issuer": "...", "year": "..." }}
+      ]
+    }}
+    """
+    
+    response_text = await ai.get_response(
+        prompt, 
+        system_prompt="You are a strict JSON API. Output only valid JSON.",
+        preferred_model="gemini-2.5-flash"
+    )
+    
+    import json
+    try:
+        cleaned = response_text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned.split("```json")[1]
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0]
+        result = json.loads(cleaned.strip())
+        return {"portfolio": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to parse AI response into JSON format.")
+
 
