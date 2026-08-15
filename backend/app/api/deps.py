@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session, select, func
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 from app.core.database import get_session
 from app.core.security import decode_token
@@ -26,7 +26,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     # Best-effort last_seen update — do NOT commit here (causes SQLite write-lock under load)
     try:
-        user.last_seen = datetime.utcnow()
+        user.last_seen = datetime.now(timezone.utc)
         db.add(user)
         # Commit happens at end of request lifecycle, not here
     except Exception:
@@ -82,7 +82,7 @@ def require_quota(action_type: str, limit: int = 10):
             return current_user
 
         # Count usage for today
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         count = db.exec(
             select(func.count(UsageLog.id)).where(
                 UsageLog.user_id == current_user.id,

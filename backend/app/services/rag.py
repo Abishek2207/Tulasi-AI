@@ -1,7 +1,7 @@
 import os
 import json
 import numpy as np
-import google.generativeai as genai
+from google import genai as google_genai
 from typing import List, Dict, Any
 
 from app.core.config import settings
@@ -83,3 +83,4 @@ class RAGEvaluator:
             return []
 
 rag_evaluator = RAGEvaluator()
+

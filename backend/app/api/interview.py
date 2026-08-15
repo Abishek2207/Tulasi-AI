@@ -73,7 +73,7 @@ class _RAGEvaluator:
         if self._ready:
             return
         import os, numpy as np
-        import google.generativeai as genai
+        from google import genai as google_genai
 
         dataset_path = os.path.join(
             os.path.dirname(__file__), "..", "..", "data", "rag_interview.json"
@@ -90,7 +90,7 @@ class _RAGEvaluator:
             self._ready = True
             return
 
-        import google.generativeai as genai
+        from google import genai as google_genai
         genai.configure(api_key=settings.effective_gemini_key)
         texts = [
             f"Question: {item.get('question', '')}\nIdeal Answer: {item.get('ideal_answer', '')}"
@@ -110,7 +110,7 @@ class _RAGEvaluator:
             return []
         try:
             import numpy as np
-            import google.generativeai as genai
+            from google import genai as google_genai
             
             if settings.effective_gemini_key:
                 genai.configure(api_key=settings.effective_gemini_key)
@@ -593,3 +593,4 @@ Do not break character. Keep it professional. Do not repeat previous questions."
     except Exception as e:
         db.rollback()
         raise HTTPException(500, f"Database Error saving next question: {str(e)}")
+

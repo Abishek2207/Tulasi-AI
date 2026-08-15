@@ -6,9 +6,9 @@ Tulasi AI — Public Reviews API
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_session
 from app.api.deps import get_current_user
@@ -30,6 +30,8 @@ class ReviewCreate(BaseModel):
 
 
 class ReviewOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     email: Optional[str] = None
@@ -39,17 +41,15 @@ class ReviewOut(BaseModel):
     is_approved: bool = False
     created_at: datetime
 
-    @validator("created_at", pre=True)
+    @field_validator("created_at", mode="before")
+    @classmethod
     def parse_datetime(cls, v):
         if isinstance(v, str):
             try:
                 return datetime.fromisoformat(v.replace("Z", "+00:00"))
             except ValueError:
-                return datetime.utcnow()
+                return datetime.now(timezone.utc)
         return v
-
-    class Config:
-        from_attributes = True  # Pydantic v2 (replaces orm_mode)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

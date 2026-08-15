@@ -7,6 +7,14 @@ const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV === "development";
 import toast from "react-hot-toast";
 
+export class AppError extends Error {
+  constructor(public message: string, public status: number, public code?: string) {
+    super(message);
+    this.name = "AppError";
+  }
+}
+
+
 // ─── Types ─────────────────────────────────────────────────────────
 export interface Stats {
   total_users: number; active_24h: number; active_today: number;
@@ -226,9 +234,13 @@ async function request<T>(
 ): Promise<T> {
   const token = resolveToken();
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+  
+  if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -259,7 +271,7 @@ async function request<T>(
             window.location.href = "/auth";
           }
         }
-        throw new Error("Session expired. Please log in again.");
+        throw new AppError("Session expired. Please log in again.", 401);
       }
       
       let backendMsg = res.statusText;
@@ -274,9 +286,9 @@ async function request<T>(
         }
       } catch (e) {}
       
-      if (res.status === 400) throw new Error(`Invalid Request: ${backendMsg}`);
-      if (res.status >= 500) throw new Error(`Server Error (503): ${backendMsg}`);
-      throw new Error(backendMsg || `Request failed: ${res.status}`);
+      if (res.status === 400) throw new AppError(`Invalid Request: ${backendMsg}`, 400);
+      if (res.status >= 500) throw new AppError(`Server Error: ${backendMsg}`, res.status);
+      throw new AppError(backendMsg || `Request failed: ${res.status}`, res.status);
     }
     const data = await res.json();
     
@@ -306,11 +318,11 @@ async function request<T>(
     const msg = error.message || "Network Error";
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ERR_NAME_NOT_RESOLVED") || msg.includes("ECONNREFUSED")) {
       const isLocal = API_URL.includes("localhost") || API_URL.includes("127.0.0.1");
-      throw new Error(isLocal 
-        ? `Backend unreachable at ${API_URL}. Ensure your FastAPI server is running (npm run backend).`
-        : "Backend unreachable. Check your internet connection or Render status.");
+      throw new AppError(isLocal 
+        ? `Backend unreachable at ${API_URL}. Ensure your FastAPI server is running.`
+        : "Backend unreachable. Check your internet connection or Render status.", 0);
     }
-    throw new Error(msg);
+    throw new AppError(msg, 500);
   }
 }
 
@@ -652,7 +664,41 @@ export const hackathonsApi = {
     apiFetch<any>(`/api/hackathons/${id}/register`, { method: "POST", body: JSON.stringify({ team_id: teamId }) }),
 };
 
-// ─── Study Rooms ─────────────────────────────────────────────────────────────
+// ─── Study Rooms & Groups (Orbit HUB) ──────────────────────────────────────────
+export const groupsApi = {
+  list: (token?: string) =>
+    request<{ groups: { id: number; name: string; description: string; join_code: string; created_by: number; created_at: string; member_count: number }[] }>("/api/groups", {}, token),
+  create: (data: { name: string; description?: string }, token: string) =>
+    request<any>("/api/groups/create", { method: "POST", body: JSON.stringify(data) }, token),
+  join: (join_code: string, token: string) =>
+    request<any>("/api/groups/join", { method: "POST", body: JSON.stringify({ join_code }) }, token),
+  messages: (groupId: number, token?: string, limit = 50) =>
+    request<{ group_id: number; messages: { id: number; user_id: number; user_name: string; content: string; is_encrypted: boolean; created_at: string }[] }>(`/api/groups/${groupId}/messages?limit=${limit}`, {}, token),
+  sendMessage: (groupId: number, content: string, token: string) =>
+    request<any>(`/api/groups/${groupId}/messages`, { method: "POST", body: JSON.stringify({ content }) }, token),
+};
+
+// ─── Neural Document Lab ──────────────────────────────────────────────────
+export const documentsApi = {
+  upload: async (file: File, token: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const res = await fetch(`${baseUrl}/api/pdf/upload`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      },
+      body: formData
+    });
+    if (!res.ok) throw new Error("Upload failed");
+    return res.json();
+  },
+  status: (token: string) => request<any>("/api/pdf/status", {}, token),
+  ask: (question: string, top_k: number, token: string) => 
+    request<any>("/api/pdf/ask", { method: "POST", body: JSON.stringify({ question, top_k }) }, token),
+  clear: (token: string) => request<any>("/api/pdf/clear", { method: "DELETE" }, token),
+};
 
 export const studyApi = {
   rooms: () => request<{ rooms: StudyRoom[] }>("/api/study/rooms"),
@@ -779,6 +825,11 @@ export const portfolioApi = {
     request<{ portfolio: any }>("/api/portfolio/generate", {
       method: "POST",
       body: JSON.stringify(data),
+    }, token),
+  generateFromFile: (formData: FormData, token: string) =>
+    request<{ portfolio: any }>("/api/portfolio/generate-from-file", {
+      method: "POST",
+      body: formData,
     }, token),
 };
 

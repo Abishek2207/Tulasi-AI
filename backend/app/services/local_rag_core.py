@@ -4,7 +4,7 @@ import numpy as np
 import json
 import httpx
 from typing import List, Dict, Any
-import google.generativeai as genai
+from google import genai as google_genai
 from app.core.config import settings
 
 # Global dictionary to store models safely and load on-demand
@@ -108,9 +108,8 @@ class LocalRAGService:
     def _query_gemini(self, prompt: str) -> str:
         """Fallback to Google Gemini"""
         # Initialize generative API if needed
-        genai.configure(api_key=settings.effective_gemini_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
-        response = model.generate_content(prompt)
+        client = google_genai.Client(api_key=settings.effective_gemini_key)
+        response = client.models.generate_content(model="gemini-2.0-flash-lite", contents=prompt)
         return response.text
 
     async def generate_answer(self, user_id: str, query: str) -> Dict[str, Any]:
@@ -156,3 +155,4 @@ class LocalRAGService:
         }
 
 local_rag_service = LocalRAGService()
+

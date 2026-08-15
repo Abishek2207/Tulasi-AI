@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 
 class Settings(BaseSettings):
@@ -49,15 +49,17 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "")
 
     # Admin
-    ADMIN_EMAIL: str = "abishekramamoorthy22@gmail.com"
+    ADMIN_EMAILS_RAW: str = os.getenv("ADMIN_EMAILS", "abishekramamoorthy22@gmail.com,abishek2207@gmail.com")
+
+    @property
+    def admin_emails(self) -> list[str]:
+        return [email.strip().lower() for email in self.ADMIN_EMAILS_RAW.split(",") if email.strip()]
 
     @property
     def effective_gemini_key(self) -> str:
         """Returns whichever Gemini API key is set (GOOGLE_API_KEY takes priority)."""
         return self.GOOGLE_API_KEY or self.GEMINI_API_KEY
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"
+    model_config = SettingsConfigDict(env_file=[".env", "../.env"], extra="allow")
 
 settings = Settings()
