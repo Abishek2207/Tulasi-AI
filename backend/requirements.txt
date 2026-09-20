@@ -34,7 +34,7 @@ requests==2.31.0
 httpx>=0.28.1
 psutil==5.9.8
 # razorpay payments: handled via direct HTTP calls to api.razorpay.com using requests (below)
-# razorpay==1.4.2  ← NOT required; payment.py uses requests directly to avoid pkg_resources issues
+razorpay==1.4.2
 
 # ── PDF ───────────────────────────────────────────────────────────────
 pypdf>=6.0.0
@@ -60,3 +60,4 @@ redis>=5.0.0
 celery>=5.3.0
 feedparser>=6.0.10
 gunicorn==21.2.0
+
