@@ -2,9 +2,8 @@ import os
 import json
 import time
 import httpx
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
-import google.generativeai as genai
+from google import genai as google_genai
+from google.genai import types as genai_types
 from typing import List, Dict, Optional, Generator, Union
 from app.core.config import settings
 
@@ -109,24 +108,38 @@ class HybridAIClient:
         if not gemini_key:
             raise AIClientError("Gemini API key is missing.")
 
-        genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel(
-            model_name=model_name,
+        client = google_genai.Client(api_key=gemini_key)
+
+        # Convert our internal history format to google.genai Content objects
+        genai_contents = []
+        for item in contents:
+            role = item.get("role", "user")
+            parts = item.get("parts", [])
+            genai_parts = [genai_types.Part.from_text(text=p["text"]) for p in parts if "text" in p]
+            genai_contents.append(genai_types.Content(role=role, parts=genai_parts))
+
+        config = genai_types.GenerateContentConfig(
             system_instruction=system_instruction,
         )
 
         if stream:
-            response_stream = model.generate_content(contents, stream=True)
-
             def gen():
+                response_stream = client.models.generate_content_stream(
+                    model=model_name,
+                    contents=genai_contents,
+                    config=config,
+                )
                 for chunk in response_stream:
-                    if hasattr(chunk, "text") and chunk.text:
+                    if chunk.text:
                         yield chunk.text
-
             return gen()
         else:
-            response = model.generate_content(contents, stream=False)
-            if response and hasattr(response, "text") and response.text:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=genai_contents,
+                config=config,
+            )
+            if response and response.text:
                 return response.text
             return "No response generated."
 

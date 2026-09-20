@@ -16,7 +16,7 @@ import { API_URL, adminApi, Stats, AdminUser, Review, Activity, LeaderboardEntry
   RetentionData, HeatmapData, LiveUsers,
 } from "@/lib/api";
 
-type Tab = "overview" | "metrics" | "users" | "reviews" | "activity" | "leaderboard" | "code" | "chat" | "hackathons" | "revenue" | "health" | "tools" | "internships";
+type Tab = "overview" | "metrics" | "users" | "reviews" | "activity" | "leaderboard" | "code" | "chat" | "hackathons" | "revenue" | "health" | "tools" | "internships" | "market";
 
 const fmt = (d?: string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 const fmtDT = (d?: string | null) => d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -41,6 +41,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "tools",       label: "Admin Tools",    icon: "🛠️" },
   { id: "internships", label: "Internships",    icon: "💼" },
   { id: "health",      label: "System Health",  icon: "🩺" },
+  { id: "market",      label: "Market Intelligence",  icon: "🌐" },
 ];
 
 const rankColor = (r: number) => r === 1 ? "#FFD700" : r === 2 ? "#C0C0C0" : r === 3 ? "#CD7F32" : r <= 10 ? "#8B5CF6" : "var(--text-muted)";
@@ -137,6 +138,15 @@ export default function AdminPage() {
   const [protocolDepth, setProtocolDepth] = useState("Deep");
   const [protocolResult, setProtocolResult] = useState<{ topic: string; report: string; generated_at: string } | null>(null);
   const [protocolLoading, setProtocolLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth");
@@ -148,7 +158,7 @@ export default function AdminPage() {
       const [u, r, s, a, lb, ca, cha, hk, an, rev] = await Promise.allSettled([
         adminApi.users(), adminApi.reviews(), adminApi.stats(), adminApi.activity(),
         adminApi.leaderboard(), adminApi.code(), adminApi.chat(), adminApi.hackathons(),
-        adminApi.analytics(), adminApi.revenue(),
+        adminApi.analytics(), adminApi.revenue(), adminApi.marketStats(),
       ]);
       if (u.status === "fulfilled") setUsers(u.value.users);
       if (r.status === "fulfilled") setReviews(r.value.reviews);
@@ -367,12 +377,26 @@ export default function AdminPage() {
       <div style={{ position: "absolute", bottom: "-20%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 60%)", filter: "blur(120px)", zIndex: 0, pointerEvents: "none" }} />
 
       {/* ── SIDEBAR ── */}
-      <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.4 }}
-        style={{ width: 260, background: "rgba(5,5,12,0.6)", backdropFilter: "blur(24px)", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", padding: "32px 0", flexShrink: 0, position: "sticky", top: 0, height: "100vh", zIndex: 10 }}>
-        <div style={{ padding: "0 20px 24px", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
-          <TulasiLogo size={28} showText />
-          <div style={{ marginTop: 8, fontSize: 10, color: "#F43F5E", fontWeight: 800, letterSpacing: 2, padding: "4px 10px", background: "rgba(244,63,94,0.1)", borderRadius: 6, display: "inline-block", border: "1px solid rgba(244,63,94,0.2)" }}>🔒 ADMIN PANEL</div>
-        </div>
+      {isMobile && (
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ position: "fixed", top: 16, right: 16, zIndex: 100, background: "rgba(139,92,246,0.2)", border: "1px solid rgba(139,92,246,0.4)", borderRadius: 8, padding: 8, color: "white", cursor: "pointer", backdropFilter: "blur(10px)" }}>
+          ☰ Menu
+        </button>
+      )}
+      
+      <AnimatePresence>
+        {(!isMobile || mobileMenuOpen) && (
+          <motion.div initial={{ x: -260, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -260, opacity: 0 }} transition={{ duration: 0.3 }}
+            style={{ 
+              width: 260, background: "rgba(5,5,12,0.9)", backdropFilter: "blur(24px)", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", padding: "32px 0", flexShrink: 0, 
+              position: isMobile ? "fixed" : "sticky", top: 0, left: 0, bottom: 0, height: "100vh", zIndex: 50 
+            }}>
+            <div style={{ padding: "0 20px 24px", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <TulasiLogo size={28} showText />
+                {isMobile && <button onClick={() => setMobileMenuOpen(false)} style={{ background: "transparent", border: "none", color: "white", fontSize: 20 }}>×</button>}
+              </div>
+              <div style={{ marginTop: 8, fontSize: 10, color: "#F43F5E", fontWeight: 800, letterSpacing: 2, padding: "4px 10px", background: "rgba(244,63,94,0.1)", borderRadius: 6, display: "inline-block", border: "1px solid rgba(244,63,94,0.2)" }}>🔒 ADMIN PANEL</div>
+            </div>
 
         {TABS.map((t, i) => (
           <motion.button key={t.id} onClick={() => setTab(t.id)}
@@ -405,9 +429,11 @@ export default function AdminPage() {
           </button>
         </div>
       </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── MAIN ── */}
-      <div style={{ flex: 1, minWidth: 0, height: "100vh", overflowY: "auto", position: "relative", zIndex: 10 }}>
+      <div style={{ flex: 1, minWidth: 0, height: "100vh", overflowY: "auto", position: "relative", zIndex: 10, paddingTop: isMobile ? 60 : 0 }}>
         <div className="card-padding" style={{ position: "relative" }}>
         <AnimatePresence mode="wait">
 

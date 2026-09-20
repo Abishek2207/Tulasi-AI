@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
+import { careerIntelligenceApi, professionalApi } from "@/lib/api";
 import {
   Sparkles, Target, Clock, TrendingUp, ChevronRight,
   CheckCircle2, Circle, Zap, BookOpen, Code2, Star,
@@ -50,6 +51,8 @@ export default function CareerIntelligencePage() {
   const router = useRouter();
 
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
+  const [marketTrends, setMarketTrends] = useState<any>(null);
+  const [riskAnalysis, setRiskAnalysis] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -66,22 +69,34 @@ export default function CareerIntelligencePage() {
     if (session) fetchData();
   }, [session]);
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [profileRes, roadmapRes] = await Promise.all([
-        fetch(`${backendUrl}/api/v1/career-intelligence/profile`, { headers: authHeaders() }),
-        fetch(`${backendUrl}/api/v1/career-intelligence/roadmap`, { headers: authHeaders() }),
+      const [profileRes, roadmapRes] = await Promise.allSettled([
+        careerIntelligenceApi.getProfile(token),
+        careerIntelligenceApi.getRoadmap(token),
       ]);
 
-      if (profileRes.ok) setProfile(await profileRes.json());
-      else if (profileRes.status === 404) {
+      if (profileRes.status === "fulfilled" && profileRes.value) {
+        setProfile(profileRes.value);
+      } else if (profileRes.status === "rejected" || !profileRes.value) {
         router.push("/dashboard/career-intelligence/onboarding");
         return;
       }
 
-      if (roadmapRes.ok) setRoadmap(await roadmapRes.json());
+      if (roadmapRes.status === "fulfilled" && roadmapRes.value) {
+        setRoadmap(roadmapRes.value);
+      }
+      const payload = { current_role: profileRes.status === "fulfilled" && profileRes.value ? profileRes.value.target_role : "Engineer", experience_years: 3, current_skills: [] };
+      const [marketRes, riskRes] = await Promise.allSettled([
+        professionalApi.getMarketTrends(payload, token),
+        professionalApi.getRiskAnalysis(payload, token)
+      ]);
+      if (marketRes.status === "fulfilled" && marketRes.value) setMarketTrends(marketRes.value);
+      if (riskRes.status === "fulfilled" && riskRes.value) setRiskAnalysis(riskRes.value);
     } catch (e) {
       setError("Failed to connect to the backend. Make sure it's running.");
     } finally {
@@ -93,12 +108,8 @@ export default function CareerIntelligencePage() {
     setGenerating(true);
     setError(null);
     try {
-      const res = await fetch(`${backendUrl}/api/v1/career-intelligence/generate`, {
-        method: "POST",
-        headers: authHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await careerIntelligenceApi.generate({}, token);
+      if (data && data.data) {
         setRoadmap({ roadmap_data: data.data, estimated_months_to_goal: data.data.estimated_months_to_goal, readiness_score: data.data.readiness_score, updated_at: new Date().toISOString() });
       } else {
         setError("Failed to generate roadmap. Please try again.");

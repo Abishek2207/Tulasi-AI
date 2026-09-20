@@ -1,7 +1,7 @@
 import os
 import json
 import numpy as np
-import google.generativeai as genai
+from google import genai as google_genai
 
 FAISS_INDEX_DIR = os.path.join(os.path.dirname(__file__), '../../../../database/faiss')
 _GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
@@ -90,4 +90,5 @@ class SimpleVectorStoreManager:
         return [item["text"] for score, item in scored[:top_k]]
 
 vector_store_manager = SimpleVectorStoreManager()
+
 

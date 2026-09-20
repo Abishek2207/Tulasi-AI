@@ -4,12 +4,13 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { AgentBadge } from "@/components/ui/AgentBadge";
-import { chatApi } from "@/lib/api";
+import { codeReviewApi } from "@/lib/api";
 import {
   Code, Send, RefreshCw, ChevronRight, CheckCircle2,
   TrendingUp, Lock, TerminalSquare
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import toast from "react-hot-toast";
 
 interface Feedback {
   time_complexity: string;
@@ -34,46 +35,21 @@ export default function CodeReviewPage() {
 
   const handleSubmit = async () => {
     if (!answer.trim() || loading) return;
+    if (!session?.user?.accessToken) {
+        toast.error("Please login to use Code Review");
+        return;
+    }
     setLoading(true);
     setFeedback(null);
     setError(null);
 
-    const prompt = `You are a strict but helpful Senior Staff Engineer doing a code review.
-
-The user has submitted this code snippet for review:
-\`\`\`
-${answer}
-\`\`\`
-
-Analyze the code for performance, security vulnerabilities, and code quality.
-Respond ONLY with a valid JSON object in this exact format (ensure strings are escaped properly):
-{
-  "time_complexity": "brief analysis of Big-O time and space complexity",
-  "security": "brief analysis of security or edge case vulnerabilities",
-  "score": <number 0-100 representing code quality>,
-  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
-  "refactored_code": "a brief clean version of the code"
-}`;
-
     try {
-      const res = await chatApi.send(prompt, "code_review_feedback");
-      const rawText: string = (res as any)?.data?.response ?? (res as any)?.response ?? (typeof res === "string" ? res : "");
-
-      if (!rawText) {
-        setError("Could not get feedback. Please try again.");
+      const parsed = await codeReviewApi.evaluate(answer, session.user.accessToken);
+      if (parsed && typeof parsed.score === "number") {
+          setFeedback(parsed);
+          setHistory(prev => [{ snippet: answer.slice(0, 30) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
       } else {
-        try {
-          const match = rawText.match(/\{[\s\S]*\}/);
-          if (match) {
-            const parsed: Feedback = JSON.parse(match[0]);
-            setFeedback(parsed);
-            setHistory(prev => [{ snippet: answer.slice(0, 30) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
-          } else {
-            setError("Could not parse AI feedback. Try again.");
-          }
-        } catch {
-          setError("Could not parse AI feedback. Try again.");
-        }
+          setError("Could not get a valid response from the server.");
       }
     } catch (err: any) {
       setError(err?.message || "Could not get feedback. Please try again.");
@@ -109,7 +85,7 @@ Respond ONLY with a valid JSON object in this exact format (ensure strings are e
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ maxWidth: 960, margin: "0 auto", paddingBottom: 80 }}>
       <Header />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "start" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
         {/* Left — Practice Area */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           
@@ -171,7 +147,7 @@ Respond ONLY with a valid JSON object in this exact format (ensure strings are e
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: "#10B981", marginBottom: 6, textTransform: "uppercase" }}>Time & Space Complexity</div>
                     <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{feedback.time_complexity}</div>

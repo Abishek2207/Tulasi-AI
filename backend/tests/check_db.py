@@ -11,3 +11,5 @@ with e.connect() as c:
 
     res2 = c.execute(text('SELECT id, email, preferred_model FROM "user" LIMIT 3'.replace('"', '"')))
     print("USERS:", res2.fetchall())
+
+

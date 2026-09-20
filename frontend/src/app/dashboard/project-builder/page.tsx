@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Hammer, Sparkles, ChevronRight, Code2, Database, Cloud, Layout, PlayCircle, Network, Layers, Mic, FileText, CheckCircle, BrainCircuit } from "lucide-react";
+import { Hammer, Sparkles, Server, Terminal, Database, Cloud, ChevronRight, Github, Target, Layers, Mic, FileText, CheckCircle, BrainCircuit, Code2, Network, PlayCircle } from "lucide-react";
+import { useSession } from "@/hooks/useSession";
+import { projectBuilderApi } from "@/lib/api";
+import toast from "react-hot-toast";
 
 const ROLES = [
-  { id: "frontend", label: "Frontend Engineer", icon: <Layout size={18} />, color: "#EC4899" },
-  { id: "backend", label: "Backend Engineer", icon: <Database size={18} />, color: "#10B981" },
-  { id: "fullstack", label: "Full Stack Engineer", icon: <Code2 size={18} />, color: "#3B82F6" },
-  { id: "data", label: "Data Engineer", icon: <Network size={18} />, color: "#F59E0B" },
-  { id: "ml", label: "Machine Learning Engineer", icon: <BrainCircuit size={18} />, color: "#8B5CF6" },
-  { id: "devops", label: "DevOps / SRE", icon: <Cloud size={18} />, color: "#06B6D4" },
+  { id: "frontend", label: "Frontend Engineer", icon: <Terminal size={18} />, color: "#3B82F6" },
+  { id: "backend", label: "Backend Engineer", icon: <Server size={18} />, color: "#10B981" },
+  { id: "fullstack", label: "Full Stack Engineer", icon: <Layers size={18} />, color: "#8B5CF6" },
+  { id: "data", label: "Data Engineer", icon: <Database size={18} />, color: "#F59E0B" },
+  { id: "devops", label: "DevOps / SRE", icon: <Cloud size={18} />, color: "#EC4899" },
 ];
 
-const SKILL_LEVELS = ["Intermediate", "Advanced", "Expert"];
+const SKILL_LEVELS = ["Intermediate", "Advanced", "Staff / Principal"];
 
 interface ProjectBlueprint {
   title: string;
@@ -31,12 +33,11 @@ interface ProjectBlueprint {
 const MOCK_BLUEPRINT: ProjectBlueprint = {
   title: "AuraStream: Distributed Event-Sourcing Metrics Aggregator",
   problem: "Most monitoring tools struggle to handle high-throughput burst traffic in microservices without dropping events. Scaling traditional relational databases for time-series event ingestion leads to severe latency bottlenecks and high infrastructure costs.",
-  pitch: "I built AuraStream, a distributed, high-throughput event aggregator capable of processing 10,000+ events per second. It uses a Kafka-based event-sourcing architecture to ingest data, buffers it via Redis, and persists to ClickHouse for lightning-fast time-series analytics, all visualizable through a real-time WebSocket dashboard.",
+  pitch: "I built AuraStream, a distributed, high-throughput event aggregator capable of processing 10,000+ events per second. It uses a Kafka-based event-sourcing architecture to ingest data, buffers it via Redis, and persists to ClickHouse for lightning-fast time-series analytics.",
   features: [
     "High-throughput ingestion pipeline using Apache Kafka to prevent dropped events during traffic spikes.",
     "Real-time event processing and buffering using Redis Streams and background workers.",
     "Time-series data persistence utilizing ClickHouse for sub-second analytical queries.",
-    "WebSocket-based React dashboard for live metrics visualization (e.g., P99 latency, request volume).",
     "Dockerized microservices architecture deployed on AWS ECS with automated CI/CD via GitHub Actions."
   ],
   stack: [
@@ -67,6 +68,7 @@ const MOCK_BLUEPRINT: ProjectBlueprint = {
 };
 
 export default function ProjectBuilderPage() {
+  const { data: session } = useSession();
   const [phase, setPhase] = useState<"input" | "loading" | "output">("input");
   const [role, setRole] = useState("");
   const [level, setLevel] = useState("Advanced");
@@ -74,10 +76,25 @@ export default function ProjectBuilderPage() {
 
   const generate = async () => {
     if (!role) return;
+    if (!session?.user?.accessToken) {
+        toast.error("Please login to generate a blueprint.");
+        return;
+    }
     setPhase("loading");
-    await new Promise(r => setTimeout(r, 2500));
-    setBlueprint(MOCK_BLUEPRINT);
-    setPhase("output");
+    
+    try {
+      const data = await projectBuilderApi.generate(role, level, session.user.accessToken);
+      if (data && data.blueprint) {
+        setBlueprint(data.blueprint);
+      } else {
+        setBlueprint(MOCK_BLUEPRINT); // Fallback
+      }
+    } catch (error) {
+      console.error("Error generating project:", error);
+      setBlueprint(MOCK_BLUEPRINT); // Fallback on network error
+    } finally {
+      setPhase("output");
+    }
   };
 
   const selectedRole = ROLES.find(r => r.id === role);

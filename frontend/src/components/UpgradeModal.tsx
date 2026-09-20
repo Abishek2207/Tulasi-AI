@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, Zap, Shield, Clock, Award, PartyPopper } from "lucide-react";
-import { paymentApi } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { X, CheckCircle, Zap, Shield, Clock } from "lucide-react";
+import { stripeApi } from "@/lib/api";
 import toast from "react-hot-toast";
-import { useSession } from "@/hooks/useSession";
-import confetti from "canvas-confetti";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -17,77 +14,21 @@ interface UpgradeModalProps {
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const [loading, setLoading] = useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
-  const router = useRouter();
-  const { data: session, update } = useSession();
-
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if ((window as any).Razorpay) return resolve(true);
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
 
   const handleUpgrade = async () => {
     setLoading(true);
     try {
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) throw new Error("Could not load payment gateway.");
-
-      const order = await paymentApi.createOrder();
-
-      const options = {
-        key: order.key_id,
-        amount: order.amount,
-        currency: order.currency,
-        name: "Tulasi AI",
-        description: "Tulasi Pro - Monthly Subscription",
-        order_id: order.order_id,
-        handler: async function (response: any) {
-          toast.loading("Verifying transaction securely...", { id: "verify" });
-          try {
-            const result = await paymentApi.verifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-            if (result.success) {
-              toast.success("Payment successful! You are now a Pro member.", { id: "verify", icon: <PartyPopper color="#10B981" size={18} /> });
-              
-              // REVENUE SUCCESS CELEBRATION
-              confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#7C3AED', '#06B6D4', '#10B981'] });
-              
-              await update(); // refresh NextAuth session
-              onClose();
-              router.refresh(); // force server components to re-read Pro status if any
-            }
-          } catch (err: any) {
-      const error = err as Error;
-            toast.error(error.message || "Payment verification failed", { id: "verify" });
-          }
-        },
-        prefill: {
-          name: session?.user?.name || "User",
-          email: session?.user?.email || "",
-        },
-        theme: {
-          color: "#7C3AED",
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on("payment.failed", function (response: any) {
-        toast.error(`Payment failed: ${response.error.description}`);
-      });
-      rzp.open();
-
+      toast.loading("Redirecting to Stripe...", { id: "checkout" });
+      const res = await stripeApi.createCheckoutSession();
+      if (res && res.checkout_url) {
+        toast.dismiss("checkout");
+        window.location.href = res.checkout_url;
+      } else {
+        throw new Error("No checkout URL returned from server.");
+      }
     } catch (err: any) {
       const error = err as Error;
-      toast.error(error.message || "Failed to initiate checkout");
-    } finally {
+      toast.error(error.message || "Failed to initiate Stripe checkout", { id: "checkout" });
       setLoading(false);
     }
   };
@@ -153,11 +94,11 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
             <button onClick={handleUpgrade} disabled={loading} style={{ width: "100%", padding: "16px 24px", background: "linear-gradient(135deg, #7C3AED, #06B6D4)", color: "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, transition: "all 0.2s", boxShadow: "0 10px 20px rgba(124, 58, 237, 0.3)", position: "relative", overflow: "hidden" }}>
               <motion.div animate={{ x: ["-100%", "200%"] }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "50%", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)", transform: "skewX(-20deg)" }} />
-              {loading ? "Connecting securely..." : (billingCycle === "yearly" ? "Upgrade Now for ₹1999/yr" : "Upgrade Now for ₹249/mo")}
+              {loading ? "Redirecting to Stripe..." : (billingCycle === "yearly" ? "Upgrade Now for ₹1999/yr" : "Upgrade Now for ₹249/mo")}
             </button>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
               <Shield size={14} color="var(--text-muted)" />
-              <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted)", margin: 0 }}>256-bit encrypted payments by Razorpay</p>
+              <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted)", margin: 0 }}>Secure Payments via Stripe</p>
             </div>
           </div>
         </motion.div>

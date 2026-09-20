@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlmodel import Session
-import PyPDF2
+import pypdf
 import io
 from datetime import datetime
 
@@ -24,7 +24,7 @@ async def upload_pdf(
 
     try:
         content = await file.read()
-        pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
+        pdf_reader = pypdf.PdfReader(io.BytesIO(content))
         text = ""
         for page in pdf_reader.pages:
             text += page.extract_text() + "\n"
@@ -121,7 +121,7 @@ USER QUESTION: {req.question}
 Provide a detailed, accurate answer with citations where applicable."""
 
         # 3. Call Gemini 1.5 Flash for maximum speed
-        import os, google.generativeai as genai
+        import os; from google import genai as google_genai
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
             return {"answer": "Gemini API key not configured. Please contact the administrator.", "citations": []}
@@ -145,4 +145,8 @@ Provide a detailed, accurate answer with citations where applicable."""
         import traceback
         print(f"❌ Document Ask Error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Neural engine error: {str(e)}")
+
+
+
+
 

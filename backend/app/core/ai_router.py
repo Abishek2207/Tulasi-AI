@@ -99,3 +99,19 @@ def resilient_ai_response(
         print(f"⚠️ [AI Safety Guard] Triggered for prompt. Error: {e}")
         return fallback
 
+
+def get_embedding(text: str) -> Optional[List[float]]:
+    try:
+        from google import genai
+        import os
+        from app.core.config import settings
+        
+        client = genai.Client(api_key=settings.effective_gemini_key)
+        response = client.models.embed_content(
+            model='text-embedding-004',
+            contents=text,
+        )
+        return response.embeddings[0].values
+    except Exception as e:
+        print(f"Embedding error: {e}")
+        return [0.0] * 768

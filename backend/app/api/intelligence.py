@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
-from typing import List, Dict
+from pydantic import BaseModel
+from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 
 from app.core.database import get_session
@@ -79,7 +80,7 @@ def get_career_readiness(
     technical depth, and industry-standard milestones.
     """
     import json
-    intelligence = json.loads(current_user.user_intelligence_profile or "{}")
+    intelligence = json.loads((current_user.profile.user_intelligence_profile if getattr(current_user, "profile", None) else "{}") or "{}")
     
     # Weights for AGI-level scoring
     # 1. Base Consistency (XP & Streaks) - 30%
@@ -91,17 +92,22 @@ def get_career_readiness(
     # 3. Career Velocity (Growth Rate) - 35%
     velocity = intelligence.get("career_velocity", 50)
     
+    # Role-Specific Empirical Gap Analysis
+    from app.services.intelligence_service import intelligence_service
+    target = ((current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "AI Engineer")
+    
+    gap_result = intelligence_service.get_user_skill_gap(db, current_user.id, target)
+    
+    # Override tech depth based on empirical readiness if possible
+    if not gap_result.get("error"):
+        tech_depth = int(gap_result.get("readiness_score", tech_depth))
+        gaps_list = gap_result.get("gaps", [])
+        gaps = [g["skill_name"] for g in gaps_list[:3]] if gaps_list else []
+    else:
+        gaps = intelligence.get("gaps", [])
+
     final_score = int((base_consistency * 0.3) + (tech_depth * 0.35) + (velocity * 0.35))
     final_score = min(100, final_score)
-    
-    # Role-Specific Gap Analysis
-    target = (current_user.target_role or "AI Engineer").lower()
-    gaps = intelligence.get("gaps", [])
-    if not gaps:
-        if "ai" in target:
-            gaps = ["Transformer Architectures", "Vector Embedding Optimization"]
-        else:
-            gaps = ["Distributed Systems", "High-Concurrency Backend Design"]
             
     # FAANG/Research Caliber Logic
     is_elite = final_score > 85 and tech_depth > 70
@@ -112,7 +118,7 @@ def get_career_readiness(
         "score": final_score,
         "label": readiness_label,
         "user_type": current_user.user_type,
-        "target_role": current_user.target_role or "AI Engineer",
+        "target_role": (current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "AI Engineer",
         "metrics": {
             "technical_depth": tech_depth,
             "career_velocity": velocity,
@@ -137,17 +143,17 @@ def get_daily_mission(
     Suggests areas of improvement across coding, system design, and theory.
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai as google_genai
     import json
     
-    intelligence = json.loads(current_user.user_intelligence_profile or "{}")
+    intelligence = json.loads((current_user.profile.user_intelligence_profile if getattr(current_user, "profile", None) else "{}") or "{}")
 
     prompt = f"""
     You are the Tulasi AI Career Architect. Generate a high-stakes engineering mission for today.
     
     User Context:
-    - Stage: {current_user.user_type} ({current_user.department})
-    - Target: {current_user.target_role}
+    - Stage: {current_user.user_type} ({(current_user.profile.department if getattr(current_user, "profile", None) else "")})
+    - Target: {(current_user.profile.target_role if getattr(current_user, "profile", None) else "")}
     - Technical Depth: {intelligence.get('technical_depth', 30)}/100
     - Strengths: {intelligence.get('strengths', [])}
     
@@ -176,6 +182,31 @@ def get_daily_mission(
     return resilient_ai_response(prompt, fallback=fallback)
 
 
+@router.get("/skill-gap")
+def get_skill_gap(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns the deterministic, DB-backed skill gap analysis for the user.
+    """
+    from app.services.intelligence_service import intelligence_service
+    
+    target_role = (current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "Software Engineer"
+    
+    result = intelligence_service.get_user_skill_gap(db, current_user.id, target_role)
+    
+    if result.get("error"):
+        return {
+            "target_role": target_role,
+            "readiness_score": 0,
+            "gaps": [],
+            "strong_skills": [],
+            "message": result.get("message")
+        }
+        
+    return result
+
 @router.get("/next-best-action")
 def get_next_best_action(
     db: Session = Depends(get_session),
@@ -183,22 +214,26 @@ def get_next_best_action(
 ):
     """
     The AGI-like Decision Engine. Suggests the single most impactful action the user can take 
-    at this exact moment to improve their career trajectory.
+    at this exact moment to improve their career trajectory based on empirical skill gaps.
     """
-    import json
-    intelligence = json.loads(current_user.user_intelligence_profile or "{}")
-    depth = intelligence.get("technical_depth", 30)
-    gaps = intelligence.get("gaps", [])
+    from app.services.intelligence_service import intelligence_service
     
-    # Heuristic-based logic for immediate feedback (AI-enhanced in future)
     if not current_user.is_onboarded:
         return {"action": "Complete Onboarding", "reason": "Align your neural profile with our career engines.", "link": "/dashboard/profile"}
+        
+    target_role = (current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "Software Engineer"
     
-    if depth < 40:
-        return {"action": "Strengthen Foundations", "reason": "Your technical depth is below industry baseline for FAANG.", "link": "/dashboard/chat?mode=learning_engine"}
+    # 1. Fetch empirical skill gap data
+    gap_analysis = intelligence_service.get_user_skill_gap(db, current_user.id, target_role)
     
-    if gaps:
-        return {"action": f"Bridge Gap: {gaps[0]}", "reason": "This is currently your most significant technical blind spot.", "link": "/dashboard/chat?mode=doubt"}
+    if not gap_analysis.get("error") and gap_analysis.get("top_priority"):
+        top_gap = gap_analysis["top_priority"]
+        skill_name = top_gap["skill_name"]
+        return {
+            "action": f"Bridge Gap: {skill_name}",
+            "reason": f"This is your most critical missing requirement for {target_role} (Importance: {top_gap['importance']*100}%).",
+            "link": "/dashboard/chat?mode=doubt"
+        }
     
     return {"action": "Simulate System Design", "reason": "You are ready for mid-senior architectural challenges.", "link": "/dashboard/system-design"}
 
@@ -214,10 +249,10 @@ def get_strategic_plan(
     Generates a Year-Wise Strategic Blueprint.
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai as google_genai
     import json
 
-    intelligence = json.loads(current_user.user_intelligence_profile or "{}")
+    intelligence = json.loads((current_user.profile.user_intelligence_profile if getattr(current_user, "profile", None) else "{}") or "{}")
     
     # Retrieve RAG context for deeper personalization
     rag_context = ""
@@ -232,7 +267,7 @@ def get_strategic_plan(
     
     User Profile:
     - Stage: {current_user.user_type}
-    - Role Target: {current_user.target_role}
+    - Role Target: {(current_user.profile.target_role if getattr(current_user, "profile", None) else "")}
     - Technical Depth: {intelligence.get('technical_depth', 30)}
     - Gaps: {intelligence.get('gaps', [])}
     
@@ -276,15 +311,15 @@ def get_daily_routine(
     Optimizes for the user's specific role, technical gaps, and intensity level.
     """
     from app.core.config import settings
-    import google.generativeai as genai
+    from google import genai as google_genai
     import json
     
-    intelligence = json.loads(current_user.user_intelligence_profile or "{}")
+    intelligence = json.loads((current_user.profile.user_intelligence_profile if getattr(current_user, "profile", None) else "{}") or "{}")
     
     prompt = f"""
     You are the Tulasi AI Personalized Learning Optimizer. 
     Task: Generate a high-performance daily learning routine for a {current_user.user_type}.
-    Role Target: {current_user.target_role or "Full-Stack Developer"}
+    Role Target: {(current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "Full-Stack Developer"}
     Strengths: {intelligence.get('strengths', [])[:3]}
     Gaps: {intelligence.get('gaps', [])[:3]}
 
@@ -337,7 +372,7 @@ def chat_with_mentor(
 
     system_instr = f"""
     You are the Tulasi AI Neural Strategist & Career Mentor.
-    User Profile: {current_user.name}, Role: {current_user.target_role or "Full-Stack Developer"}, Level: {current_user.level}
+    User Profile: {current_user.name}, Role: {(current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "Full-Stack Developer"}, Level: {current_user.level}
     
     Your goal is to provide world-class career guidance.
     If an image is shared: Analyze it (e.g., Code snippet, Resume, System Diagram) and provide feedback.
@@ -362,3 +397,4 @@ def _get_readiness_label(score: int) -> str:
     if score >= 50: return "Skilled Aspirant"
     if score >= 25: return "Learning Engine"
     return "Foundation Track"
+

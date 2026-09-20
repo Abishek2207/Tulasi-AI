@@ -4,12 +4,13 @@ from sqlmodel import Session, select
 from pydantic import BaseModel
 from typing import Optional
 import uuid
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
+import random
 
 from app.core.database import get_session, engine
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.config import settings
-from app.models.models import User
+from app.models.models import User, OTPCode
 from app.api.activity import log_activity_internal
 from app.api.deps import get_current_user, get_admin_user, get_user_from_token, oauth2_scheme
 from app.core.rate_limit import limiter
@@ -47,8 +48,7 @@ def register(request: Request, req: RegisterRequest, background_tasks: Backgroun
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-    is_admin = req.email.lower() in admin_emails
+    is_admin = req.email.lower() in settings.admin_emails
     user = User(
         email=req.email,
         hashed_password=get_password_hash(req.password),
@@ -141,23 +141,31 @@ def login(request: Request, req: LoginRequest, background_tasks: BackgroundTasks
     if not req.email or not req.password:
         raise HTTPException(status_code=400, detail="Email and password are required")
         
-    query = select(User).where(User.email == req.email)
+    email_or_id = req.email.strip()
+    
     try:
-        result = db.exec(query)
-        user = result.first()
+        if email_or_id.upper().startswith("TUL-"):
+            from app.models.models import Subscription
+            sub = db.exec(select(Subscription).where(Subscription.membership_id == email_or_id.upper())).first()
+            if not sub:
+                raise HTTPException(status_code=401, detail="Invalid Member ID or password")
+            user = db.exec(select(User).where(User.id == sub.user_id)).first()
+        else:
+            query = select(User).where(User.email == email_or_id.lower())
+            result = db.exec(query)
+            user = result.first()
     except Exception as e:
         print(f"Login DB error: {e}")
         raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Invalid email/ID or password")
 
     # Streak and last activity are now handled centrally by log_activity_internal below.
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
     needs_commit = False
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-    if user.email.lower() in admin_emails and user.role != "admin":
+    if user.email and user.email.lower() in settings.admin_emails and user.role != "admin":
         user.role = "admin"
         db.add(user)
         needs_commit = True
@@ -194,8 +202,8 @@ def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "name": current_user.name,
         "username": current_user.username,
-        "bio": current_user.bio or "",
-        "skills": current_user.skills or "",
+        "bio": (current_user.profile.bio if getattr(current_user, "profile", None) else "") or "",
+        "skills": (current_user.profile.current_skills if getattr(current_user, "profile", None) else "") or "",
         "role": current_user.role,
         "avatar": current_user.avatar,
         "streak": current_user.streak,
@@ -208,9 +216,9 @@ def get_me(current_user: User = Depends(get_current_user)):
         "pro_expiry_date": "Unlimited Lifetime Access",
         "user_type": getattr(current_user, "user_type", "student") or "student",
         "is_onboarded": getattr(current_user, "is_onboarded", False) or False,
-        "department": current_user.department,
-        "target_role": current_user.target_role,
-        "interest_areas": current_user.interest_areas,
+        "department": (current_user.profile.department if getattr(current_user, "profile", None) else ""),
+        "target_role": (current_user.profile.target_role if getattr(current_user, "profile", None) else ""),
+        "interest_areas": (current_user.profile.interest_areas if getattr(current_user, "profile", None) else ""),
     }
 
 
@@ -227,93 +235,96 @@ class OAuthLoginRequest(BaseModel):
 @limiter.limit("30/minute")
 def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
     """Auto-register or login OAuth users (Google/GitHub) and return a JWT token."""
-    query = select(User).where(User.email == req.email)
-    result = db.exec(query)
-    user = result.first()
-
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
-    is_admin = req.email.lower() in admin_emails
-    needs_commit = False
-
-    if not user:
-        # Auto-register the oauth user
-        user = User(
-            email=req.email,
-            hashed_password=None,  # No password for OAuth users
-            name=req.name or req.email.split("@")[0],
-            avatar=req.avatar,
-            role="admin" if is_admin else "student",
-            provider=req.provider,
-            invite_code=uuid.uuid4().hex[:8].upper(),
-        )
-        
-        # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
-        if req.invite_code:
-            query = select(User).where(User.invite_code == req.invite_code)
-            referer = db.exec(query).first()
-            if referer:
-                referer.xp = (referer.xp or 0) + 500
-                user.xp = 500
-                user.referred_by = referer.invite_code
-                db.add(referer)
-                
-                # Check 10 referrals for Pro
-                total_referral_count = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
-                if len(total_referral_count) >= 9:
-                    referer.is_pro = True
-                    db.add(referer)
-        # ─────────────────────────────────────────────────────────────
-        db.add(user)
-        needs_commit = True
-    else:
-        # ── IDENTITY SYNC: Harden existing user metadata ──────────────
-        # Update name if changed
-        if req.name and user.name != req.name:
-            user.name = req.name
-            needs_commit = True
+    try:
+        query = select(User).where(User.email == req.email)
+        result = db.exec(query)
+        user = result.first()
+    
+        is_admin = req.email.lower() in settings.admin_emails
+        needs_commit = False
+    
+        if not user:
+            # Auto-register the oauth user
+            user = User(
+                email=req.email,
+                hashed_password=None,  # No password for OAuth users
+                name=req.name or req.email.split("@")[0],
+                avatar=req.avatar,
+                role="admin" if is_admin else "student",
+                provider=req.provider,
+                invite_code=uuid.uuid4().hex[:8].upper(),
+            )
             
-        # Update avatar if changed
-        if req.avatar and user.avatar != req.avatar:
-            user.avatar = req.avatar
+            # ── REFERRAL REWARD SYSTEM ───────────────────────────────────
+            if req.invite_code:
+                query = select(User).where(User.invite_code == req.invite_code)
+                referer = db.exec(query).first()
+                if referer:
+                    referer.xp = (referer.xp or 0) + 500
+                    user.xp = 500
+                    user.referred_by = referer.invite_code
+                    db.add(referer)
+                    
+                    # Check 10 referrals for Pro
+                    total_referral_count = db.exec(select(User).where(User.referred_by == referer.invite_code)).all()
+                    if len(total_referral_count) >= 9:
+                        referer.is_pro = True
+                        db.add(referer)
+            # ─────────────────────────────────────────────────────────────
+            db.add(user)
             needs_commit = True
-
-        # Update admin role if needed (security hardening)
-        if is_admin and user.role != "admin":
-            user.role = "admin"
-            needs_commit = True
-        
-        # Ensure provider is recorded
-        if not user.provider or user.provider == "email":
-            user.provider = req.provider
-            needs_commit = True
-
-    if needs_commit:
-        db.commit()
-        db.refresh(user)
-
-    # Streak and last activity are now handled centrally by log_activity_internal below.
-
-    # ── 🔓 Log Activity In Background ──────────────────────────────
-    background_tasks.add_task(background_log_login, user.id, "user_login", f"Logged in via {req.provider.capitalize()}")
-    # ─────────────────────────────────────────────────────────────
-
-    token = create_access_token({"sub": user.email})
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "username": user.username,
-            "role": user.role,
-            "invite_code": user.invite_code,
-            "is_pro": True,
-            "chats_today": 0,
-            "user_type": getattr(user, "user_type", "student") or "student",
-            "is_onboarded": getattr(user, "is_onboarded", False) or False,
+        else:
+            # ── IDENTITY SYNC: Harden existing user metadata ──────────────
+            # Update name if changed
+            if req.name and user.name != req.name:
+                user.name = req.name
+                needs_commit = True
+                
+            # Update avatar if changed
+            if req.avatar and user.avatar != req.avatar:
+                user.avatar = req.avatar
+                needs_commit = True
+    
+            # Update admin role if needed (security hardening)
+            if is_admin and user.role != "admin":
+                user.role = "admin"
+                needs_commit = True
+            
+            # Ensure provider is recorded
+            if not user.provider or user.provider == "email":
+                user.provider = req.provider
+                needs_commit = True
+    
+        if needs_commit:
+            db.commit()
+            db.refresh(user)
+    
+        # Streak and last activity are now handled centrally by log_activity_internal below.
+    
+        # ── 🔓 Log Activity In Background ──────────────────────────────
+        background_tasks.add_task(background_log_login, user.id, "user_login", f"Logged in via {req.provider.capitalize()}")
+        # ─────────────────────────────────────────────────────────────
+    
+        token = create_access_token({"sub": user.email})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "username": user.username,
+                "role": user.role,
+                "invite_code": user.invite_code,
+                "is_pro": True,
+                "chats_today": 0,
+                "user_type": getattr(user, "user_type", "student") or "student",
+                "is_onboarded": getattr(user, "is_onboarded", False) or False,
+            }
         }
-    }
+    except Exception as e:
+        print(f"OAuth DB error: {e}")
+        raise HTTPException(status_code=503, detail=f"Database temporarily unavailable: {str(e)}")
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -356,3 +367,116 @@ def reset_password(request: Request, req: ResetPasswordRequest, db: Session = De
     db.add(user)
     db.commit()
     return {"message": "Password reset successfully."}
+
+
+class RequestOTPRequest(BaseModel):
+    email: str
+
+@router.post("/request-otp")
+@limiter.limit("5/minute")
+def request_otp(request: Request, req: RequestOTPRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
+    email_clean = req.email.strip().lower()
+    
+    # Generate 6-digit code
+    code = f"{random.randint(100000, 999999)}"
+    
+    # Check if user exists. We will allow OTP for both existing users and new ones.
+    # We will just send the code. Registration/Login happens upon verification.
+    
+    # Invalidate previous OTPs for this email
+    existing_otps = db.exec(select(OTPCode).where(OTPCode.email == email_clean)).all()
+    for otp in existing_otps:
+        db.delete(otp)
+    
+    # Store new OTP
+    expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+    new_otp = OTPCode(email=email_clean, code=code, expires_at=expires)
+    db.add(new_otp)
+    db.commit()
+    
+    if not email_service.is_configured:
+        db.delete(new_otp)
+        db.commit()
+        raise HTTPException(
+            status_code=501, 
+            detail="Email delivery is not configured in this environment. Set RESEND_API_KEY to enable email verification."
+        )
+        
+    background_tasks.add_task(email_service.send_otp_email, email_clean, code)
+    
+    return {"message": "Verification code sent to your email!"}
+
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    code: str
+    name: Optional[str] = None # For registration
+
+@router.post("/verify-otp")
+@limiter.limit("10/minute")
+def verify_otp(request: Request, req: VerifyOTPRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
+    email_clean = req.email.strip().lower()
+    
+    otp_record = db.exec(select(OTPCode).where(OTPCode.email == email_clean).where(OTPCode.code == req.code)).first()
+    
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+        
+    if otp_record.expires_at < datetime.now(timezone.utc):
+        db.delete(otp_record)
+        db.commit()
+        raise HTTPException(status_code=400, detail="OTP expired")
+        
+    # Valid OTP! 
+    db.delete(otp_record)
+    
+    user = db.exec(select(User).where(User.email == email_clean)).first()
+    
+    is_admin = email_clean in settings.admin_emails
+    
+    needs_commit = False
+    
+    if not user:
+        # Create user
+        user = User(
+            email=email_clean,
+            name=req.name or email_clean.split("@")[0],
+            role="admin" if is_admin else "student",
+            invite_code=uuid.uuid4().hex[:8].upper(),
+            provider="email",
+            is_pro=True
+        )
+        db.add(user)
+        needs_commit = True
+        
+        # Log & send welcome
+        background_tasks.add_task(email_service.send_welcome_email, user.email, user.name)
+        log_activity_internal(user, db, "user_register", f"Signed up for Tulasi AI")
+    else:
+        # Auto-elevate if admin
+        if is_admin and user.role != "admin":
+            user.role = "admin"
+            needs_commit = True
+    
+    if needs_commit:
+        db.commit()
+        db.refresh(user)
+
+    background_tasks.add_task(background_log_login, user.id, "user_login", "Logged in via Email OTP")
+    
+    token = create_access_token({"sub": user.email})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "username": user.username,
+            "role": user.role,
+            "invite_code": user.invite_code, "is_pro": True, "chats_today": 0,
+            "user_type": getattr(user, "user_type", "student") or "student",
+            "is_onboarded": getattr(user, "is_onboarded", False) or False,
+        }
+    }
+

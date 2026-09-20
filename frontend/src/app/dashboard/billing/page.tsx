@@ -1,404 +1,315 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
+import { subscriptionsApi, SubscriptionStatus, PaymentRecord } from "@/lib/api";
+import { CheckCircle, Loader2, ArrowRight, XCircle, RefreshCw, AlertCircle, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { CheckCircle, CreditCard, Loader2, Lock, ShieldCheck, X, Zap, Crown, Sparkles, Tag } from "lucide-react";
-import { API_URL } from "@/lib/api";
 
-// ─── Types ─────────────────────────────────────────────────────────────────
-interface Plan {
-  id: number;
-  name: string;
-  price: number;
-  ai_requests_limit: number;
-  resume_downloads_limit: number;
-  features_json: string;
-}
+export default function SubscriptionPage() {
+  const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  const [subStatus, setSubStatus] = useState<SubscriptionStatus | null>(null);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  
+  const justSubscribed = searchParams.get("success") === "true";
 
-interface MySubscription {
-  has_subscription: boolean;
-  is_pro: boolean;
-  plan: { name: string; price: number; ai_requests_limit: number } | null;
-  subscription_status: string;
-  ai_usage_today: number;
-  started_at: string | null;
-  ends_at: string | null;
-}
-
-// ─── Helper ─────────────────────────────────────────────────────────────────
-const PLAN_ICONS: Record<string, string> = { Student: "🎓", Professional: "💼", Enterprise: "🏢" };
-const PLAN_COLORS: Record<string, string> = { Student: "#8B5CF6", Professional: "#10B981", Enterprise: "#F59E0B" };
-
-const feats = (json: string): string[] => {
-  try { return JSON.parse(json); } catch { return []; }
-};
-
-export default function BillingPage() {
-  const { data: session } = useSession();
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [mySubscription, setMySubscription] = useState<MySubscription | null>(null);
-  const [loadingData, setLoadingData] = useState(true);
-
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [paymentState, setPaymentState] = useState<"idle" | "processing" | "success">("idle");
-
-  // Card inputs
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [name, setName] = useState("");
-
-  // Coupon
-  const [couponCode, setCouponCode] = useState("");
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [couponDiscount, setCouponDiscount] = useState<{ original_price: number; discounted_price: number; discount_percent: number } | null>(null);
-
-  // Load plans and subscription on mount
   useEffect(() => {
-    const fetchData = async () => {
-      setLoadingData(true);
-      try {
-        const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" };
-        const [plansRes, subRes] = await Promise.allSettled([
-          fetch(`${API_URL}/api/subscriptions/plans`, { headers }),
-          fetch(`${API_URL}/api/subscriptions/my-subscription`, { headers }),
-        ]);
-
-        if (plansRes.status === "fulfilled" && plansRes.value.ok) {
-          const data = await plansRes.value.json();
-          setPlans(Array.isArray(data) ? data : []);
-        }
-        if (subRes.status === "fulfilled" && subRes.value.ok) {
-          setMySubscription(await subRes.value.json());
-        }
-      } catch (e) {
-        console.error("Billing data load failed", e);
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    if (token) fetchData();
-    else setLoadingData(false);
-  }, [token]);
-
-  const handleApplyCoupon = async () => {
-    if (!couponCode || !selectedPlan) return;
-    setCouponLoading(true);
-    setCouponDiscount(null);
-    try {
-      const res = await fetch(`${API_URL}/api/subscriptions/apply-coupon`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponCode, plan_name: selectedPlan.name }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Invalid coupon");
-      setCouponDiscount(data);
-      toast.success(`${data.discount_percent}% discount applied!`);
-    } catch (e: any) {
-      toast.error(e.message || "Coupon invalid");
-    } finally {
-      setCouponLoading(false);
+    if (status === "authenticated") {
+      fetchSubscriptionData();
     }
-  };
+  }, [status]);
 
-  const openModal = (plan: Plan) => {
-    setSelectedPlan(plan);
-    setCouponCode("");
-    setCouponDiscount(null);
-    setPaymentState("idle");
-    setShowModal(true);
-  };
-
-  const finalAmount = couponDiscount ? couponDiscount.discounted_price : selectedPlan?.price ?? 0;
-
-  const processPayment = async () => {
-    if (!cardNumber || !expiry || !cvv || !name) {
-      toast.error("Please fill all card details.");
-      return;
+  useEffect(() => {
+    if (justSubscribed) {
+      toast.success("Welcome to TulasiAI! 🎉 Your membership is active.");
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
-    setPaymentState("processing");
-    await new Promise(r => setTimeout(r, 2200));
+  }, [justSubscribed]);
 
+  const fetchSubscriptionData = async () => {
     try {
-      // Step 1: create checkout order
-      const orderRes = await fetch(`${API_URL}/api/payments/checkout`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_id: selectedPlan!.id, coupon_code: couponCode || undefined }),
-      });
-      const orderData = await orderRes.json();
-      if (!orderRes.ok) throw new Error(orderData.detail || "Checkout failed");
-
-      // Step 2: simulate verify
-      const verifyRes = await fetch(`${API_URL}/api/payments/verify`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          razorpay_payment_id: `pay_${Date.now()}`,
-          razorpay_order_id: orderData.order_id,
-          razorpay_signature: "simulated_sig",
-          plan_id: selectedPlan!.id,
-          coupon_code: couponCode || undefined,
-        }),
-      });
-      const verifyData = await verifyRes.json();
-      if (!verifyRes.ok) throw new Error(verifyData.detail || "Payment verification failed");
-
-      setPaymentState("success");
-      toast.success(`🎉 ${selectedPlan?.name} Plan activated!`);
-
-      import("canvas-confetti").then(c => {
-        c.default({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: ["#8B5CF6", "#10B981", "#F59E0B"] });
-      }).catch(() => {});
-
-      // Refresh subscription data after 2.5s
-      setTimeout(() => {
-        setShowModal(false);
-        setMySubscription(s => s ? { ...s, has_subscription: true, subscription_status: "active", plan: { name: selectedPlan!.name, price: selectedPlan!.price, ai_requests_limit: selectedPlan!.ai_requests_limit } } : s);
-      }, 2500);
+      setLoading(true);
+      const [subData, historyData] = await Promise.all([
+        subscriptionsApi.getMySubscription(),
+        subscriptionsApi.getPaymentHistory(),
+      ]);
+      setSubStatus(subData);
+      setPaymentHistory(historyData);
     } catch (err: any) {
-      toast.error(err.message || "Payment failed");
-      setPaymentState("idle");
+      toast.error(err.message || "Failed to load subscription details.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatCard = (v: string) => v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
-  const formatExpiry = (v: string) => v.replace(/\D/g, "").slice(0, 4).replace(/^(.{2})/, "$1/");
+  const copyMemberId = () => {
+    if (subStatus?.membership_id) {
+      navigator.clipboard.writeText(subStatus.membership_id);
+      toast.success("Member ID copied to clipboard!");
+    }
+  };
 
-  const displayPlans = plans.length === 0 ? [
-    { id: 1, name: "Student", price: 99, ai_requests_limit: 10, resume_downloads_limit: 5, features_json: '["Basic ATS Analysis","5 Resume Builds/mo","Mock Interviews (10/mo)","Career Roadmap Access"]' },
-    { id: 2, name: "Professional", price: 249, ai_requests_limit: 50, resume_downloads_limit: 20, features_json: '["Advanced ATS Analysis","20 Resume Builds/mo","Unlimited Mock Interviews","Priority AI Access","LinkedIn Optimizer"]' },
-    { id: 3, name: "Enterprise", price: 999, ai_requests_limit: 1000, resume_downloads_limit: 1000, features_json: '["Unlimited ATS","Unlimited Resumes","Dedicated API Access","Team Workspace","Custom Branding"]' },
-  ] as Plan[] : plans;
+  const handleCancelSubscription = async () => {
+    try {
+      setCancelLoading(true);
+      const res = await subscriptionsApi.cancelSubscription(true);
+      toast.success(res.message);
+      setShowCancelModal(false);
+      fetchSubscriptionData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to cancel subscription.");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
 
-  if (loadingData) return (
-    <div style={{ display: "flex", minHeight: "60vh", alignItems: "center", justifyContent: "center" }}>
-      <Loader2 size={36} color="#8B5CF6" className="animate-spin" />
-    </div>
-  );
+  if (loading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+        <Loader2 className="animate-spin" size={32} color="#06B6D4" />
+      </div>
+    );
+  }
+
+  const isActive = subStatus?.subscription_status === "active";
+  const isAuthenticated = subStatus?.subscription_status === "authenticated";
+  const isPastDue = subStatus?.subscription_status === "past_due" || subStatus?.subscription_status === "halted";
+  const isCancelled = subStatus?.subscription_status === "cancelled" || subStatus?.subscription_status === "expired";
+  const isPending = subStatus?.subscription_status === "pending";
+
+  const hasMembership = isActive || isAuthenticated;
+  
+  const statusBadge = () => {
+    if (isActive) return (
+      <span style={{ background: "rgba(16,185,129,0.1)", color: "#10B981", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+        <CheckCircle size={14} /> ACTIVE
+      </span>
+    );
+    if (isAuthenticated) return (
+      <span style={{ background: "rgba(245,158,11,0.1)", color: "#F59E0B", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+        <AlertCircle size={14} /> AUTHENTICATING
+      </span>
+    );
+    if (isPastDue) return (
+      <span style={{ background: "rgba(239,68,68,0.1)", color: "#EF4444", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+        <XCircle size={14} /> PAST DUE
+      </span>
+    );
+    if (isCancelled) return (
+      <span style={{ background: "rgba(107,114,128,0.1)", color: "#9CA3AF", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+        <XCircle size={14} /> {subStatus?.subscription_status.toUpperCase()}
+      </span>
+    );
+    return null;
+  };
+
+  const leftBorderColor = isActive ? "#10B981" : isAuthenticated ? "#F59E0B" : isPastDue ? "#EF4444" : "#6B7280";
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 20px", paddingBottom: 80 }}>
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 48 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, fontFamily: "var(--font-outfit)", marginBottom: 8 }}>
-          Subscription & Billing
-        </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: 15 }}>
-          Manage your plan and unlock the full power of TulasiAI.
-        </p>
-      </motion.div>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 20px" }}>
+      <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>My Membership</h1>
+      <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: 40 }}>Manage your TulasiAI career operating system membership.</p>
 
-      {/* Current Status Banner */}
-      {mySubscription && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-          className="glass-card" style={{ padding: 24, marginBottom: 40, display: "flex", alignItems: "center", gap: 20, borderLeft: `4px solid ${mySubscription.has_subscription ? "#10B981" : "rgba(255,255,255,0.1)"}`, flexWrap: "wrap" }}>
-          <div style={{ width: 48, height: 48, borderRadius: 14, background: mySubscription.has_subscription ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${mySubscription.has_subscription ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
-            {mySubscription.has_subscription ? "👑" : "🆓"}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: "white", marginBottom: 4 }}>
-              {mySubscription.plan ? `${mySubscription.plan.name} Plan` : "Free Plan"}
-              {mySubscription.has_subscription && <span style={{ marginLeft: 10, fontSize: 11, background: "rgba(16,185,129,0.15)", color: "#10B981", border: "1px solid rgba(16,185,129,0.3)", padding: "2px 10px", borderRadius: 20, fontWeight: 700 }}>ACTIVE</span>}
+      {/* TULASIAI MEMBERSHIP CARD */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 24, padding: 32, position: "relative", overflow: "hidden", marginBottom: 40 }}
+      >
+        <div style={{ position: "absolute", top: 0, left: 0, width: 4, height: "100%", background: (hasMembership || isPastDue || isCancelled) ? leftBorderColor : "transparent" }} />
+        
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <h2 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>TULASIAI MEMBERSHIP</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 24, fontWeight: 700 }}>
+                {subStatus?.plan?.name || "Free"}
+              </span>
+              {statusBadge()}
             </div>
-            <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              {mySubscription.plan
-                ? `${mySubscription.plan.ai_requests_limit} AI requests/day · ${mySubscription.ai_usage_today} used today`
-                : "Limited to free features · Upgrade to unlock everything"}
-            </div>
           </div>
-          {mySubscription.ends_at && (
+
+          {subStatus?.plan?.price && (
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 2 }}>Renews</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{new Date(mySubscription.ends_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
+              <div style={{ fontSize: 24, fontWeight: 700 }}>₹{subStatus.plan.price}</div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>/ month</div>
             </div>
           )}
+        </div>
+
+        {subStatus?.membership_id && (
+          <div style={{ background: "rgba(0,0,0,0.2)", padding: 20, borderRadius: 16, border: "1px dashed rgba(255,255,255,0.1)", marginBottom: 32, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Member ID</div>
+              <div style={{ fontSize: 20, fontWeight: 600, fontFamily: "monospace", color: "#06B6D4" }}>
+                {subStatus.membership_id}
+              </div>
+            </div>
+            <button onClick={copyMemberId} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "white", padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontSize: 14 }}>
+              Copy
+            </button>
+          </div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 32 }}>
+          {subStatus?.started_at && (
+            <div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Started At</div>
+              <div style={{ fontSize: 14, fontWeight: 500 }}>
+                {new Date(subStatus.started_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+              </div>
+            </div>
+          )}
+          
+          {(subStatus?.next_billing_at || subStatus?.ends_at) && (
+            <div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>
+                {subStatus?.auto_renew ? "Next Billing Date" : "Access Until"}
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 500 }}>
+                {new Date(subStatus.auto_renew ? subStatus.next_billing_at! : subStatus.ends_at!).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+              </div>
+            </div>
+          )}
+          
+          {subStatus?.provider_payment_method && (
+            <div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Payment Method</div>
+              <div style={{ fontSize: 14, fontWeight: 500, textTransform: "uppercase" }}>
+                {subStatus.provider_payment_method}
+              </div>
+            </div>
+          )}
+
+          {(hasMembership || isPastDue) && (
+            <div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>AutoPay</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: subStatus?.auto_renew ? "#10B981" : "#9CA3AF", display: "flex", alignItems: "center", gap: 6 }}>
+                <RefreshCw size={14} /> {subStatus?.auto_renew ? "ON" : "OFF"}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {isAuthenticated && (
+          <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: 16, fontSize: 14, color: "#F59E0B", display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <AlertCircle size={20} />
+            <div>
+              <strong>Payment Pending Confirmation</strong>
+              <div style={{ fontSize: 13, marginTop: 4, color: "rgba(245,158,11,0.8)" }}>Your mandate is approved. We are waiting for the final confirmation from the payment provider. This usually takes a few minutes.</div>
+            </div>
+          </div>
+        )}
+
+        {!hasMembership && !isPastDue && !isPending && (
+          <div style={{ background: "rgba(255,255,255,0.05)", padding: 24, borderRadius: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Unlock Premium Features</div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Upgrade to Student or Professional to access AI tools.</div>
+            </div>
+            <button onClick={() => router.push("/pricing")} style={{ background: "#06B6D4", color: "white", padding: "10px 20px", borderRadius: 8, border: "none", fontWeight: 600, cursor: "pointer" }}>
+              View Plans
+            </button>
+          </div>
+        )}
+
+        {(hasMembership || isPastDue) && subStatus?.auto_renew && (
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 24, marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+            <button 
+              onClick={() => setShowCancelModal(true)}
+              style={{ background: "none", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s" }}
+              onMouseOver={e => e.currentTarget.style.background = "rgba(239,68,68,0.1)"}
+              onMouseOut={e => e.currentTarget.style.background = "none"}
+            >
+              <Trash2 size={16} /> Cancel Subscription
+            </button>
+          </div>
+        )}
+      </motion.div>
+
+      {/* PAYMENT HISTORY */}
+      {paymentHistory.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Payment History</h2>
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, textAlign: "left" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}>
+                  <th style={{ padding: "16px 20px", fontWeight: 500 }}>Date</th>
+                  <th style={{ padding: "16px 20px", fontWeight: 500 }}>Amount</th>
+                  <th style={{ padding: "16px 20px", fontWeight: 500 }}>Method</th>
+                  <th style={{ padding: "16px 20px", fontWeight: 500, textAlign: "right" }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentHistory.map((payment, i) => (
+                  <tr key={payment.id} style={{ borderBottom: i !== paymentHistory.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                    <td style={{ padding: "16px 20px", color: "rgba(255,255,255,0.8)" }}>
+                      {new Date(payment.paid_at || payment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </td>
+                    <td style={{ padding: "16px 20px", fontWeight: 600 }}>
+                      ₹{payment.amount}
+                    </td>
+                    <td style={{ padding: "16px 20px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>
+                      {payment.payment_method || "—"}
+                    </td>
+                    <td style={{ padding: "16px 20px", textAlign: "right" }}>
+                      <span style={{ 
+                        background: payment.status === "paid" ? "rgba(16,185,129,0.1)" : payment.status === "failed" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)", 
+                        color: payment.status === "paid" ? "#10B981" : payment.status === "failed" ? "#EF4444" : "#F59E0B", 
+                        padding: "4px 10px", borderRadius: 16, fontSize: 11, fontWeight: 700 
+                      }}>
+                        {payment.status.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </motion.div>
       )}
 
-      {/* Plan Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, marginBottom: 48 }}>
-        {displayPlans.map((plan, i) => {
-          const color = PLAN_COLORS[plan.name] || "#8B5CF6";
-          const icon = PLAN_ICONS[plan.name] || "🚀";
-          const isCurrentPlan = mySubscription?.plan?.name === plan.name;
-          const isPro = plan.name === "Professional";
-
-          return (
-            <motion.div key={plan.id}
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-              whileHover={{ y: -4, scale: 1.01 }}
-              className="glass-card"
-              style={{ padding: 32, position: "relative", borderTop: `3px solid ${color}`, display: "flex", flexDirection: "column" }}>
-
-              {isPro && <div style={{ position: "absolute", top: -12, right: 20, background: `linear-gradient(135deg, ${color}, #8B5CF6)`, color: "white", padding: "4px 14px", borderRadius: 20, fontSize: 11, fontWeight: 800, letterSpacing: 1 }}>MOST POPULAR</div>}
-
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: `${color}15`, border: `1px solid ${color}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>{icon}</div>
-                <div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: "white" }}>{plan.name}</h3>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>Per month</div>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 24 }}>
-                <span style={{ fontSize: 42, fontWeight: 900, color: "white" }}>₹{plan.price}</span>
-                <span style={{ fontSize: 14, color: "var(--text-muted)", marginLeft: 6 }}>/mo</span>
-              </div>
-
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-                {feats(plan.features_json).map((f, j) => (
-                  <li key={j} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.8)" }}>
-                    <CheckCircle size={14} color={color} style={{ flexShrink: 0 }} /> {f}
-                  </li>
-                ))}
-                <li style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.8)" }}>
-                  <CheckCircle size={14} color={color} style={{ flexShrink: 0 }} /> {plan.ai_requests_limit} AI requests/day
-                </li>
-              </ul>
-
-              <button
-                onClick={() => !isCurrentPlan && openModal(plan)}
-                disabled={isCurrentPlan}
-                style={{
-                  width: "100%", padding: "14px", borderRadius: 12, border: "none", cursor: isCurrentPlan ? "default" : "pointer", fontWeight: 800, fontSize: 14, transition: "all 0.2s",
-                  background: isCurrentPlan ? "rgba(255,255,255,0.06)" : `linear-gradient(135deg, ${color}, ${color}cc)`,
-                  color: isCurrentPlan ? "var(--text-muted)" : "white",
-                  boxShadow: isCurrentPlan ? "none" : `0 8px 24px ${color}40`,
-                }}
-              >
-                {isCurrentPlan ? "✓ Current Plan" : `Upgrade to ${plan.name}`}
-              </button>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* Trust Badges */}
-      <div style={{ display: "flex", gap: 32, flexWrap: "wrap", justifyContent: "center", opacity: 0.5 }}>
-        {["🔒 256-bit SSL Encryption", "✅ Cancel Anytime", "💳 Powered by Razorpay", "🔄 Instant Activation"].map(b => (
-          <span key={b} style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>{b}</span>
-        ))}
-      </div>
-
-      {/* Payment Modal */}
+      {/* Cancel Modal */}
       <AnimatePresence>
-        {showModal && selectedPlan && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        {showCancelModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92, y: 24 }}
-              style={{ background: "linear-gradient(145deg, #13141A, #0D0E14)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 28, padding: 36, width: "100%", maxWidth: 460, position: "relative", boxShadow: "0 32px 80px rgba(0,0,0,0.8)" }}
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 24, padding: 32, maxWidth: 400, width: "100%" }}
             >
-              <button onClick={() => setShowModal(false)} style={{ position: "absolute", top: 20, right: 20, background: "rgba(255,255,255,0.06)", border: "none", borderRadius: "50%", width: 32, height: 32, color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <X size={16} />
-              </button>
-
-              {paymentState === "idle" && (
-                <>
-                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: `linear-gradient(135deg, ${PLAN_COLORS[selectedPlan.name] || "#8B5CF6"}, #8B5CF6)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Lock size={20} color="white" />
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize: 18, fontWeight: 800, color: "white" }}>Secure Checkout</h3>
-                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>TulasiAI · Powered by Razorpay</p>
-                    </div>
-                  </div>
-
-                  {/* Order Summary */}
-                  <div style={{ padding: 16, background: "rgba(255,255,255,0.03)", borderRadius: 14, marginBottom: 20, border: "1px solid rgba(255,255,255,0.05)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>{selectedPlan.name} Plan (1 month)</span>
-                      <span style={{ color: "white", fontWeight: 700 }}>₹{selectedPlan.price}</span>
-                    </div>
-                    {couponDiscount && (
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                        <span style={{ color: "#10B981", fontSize: 13 }}>Coupon discount ({couponDiscount.discount_percent}%)</span>
-                        <span style={{ color: "#10B981", fontWeight: 700 }}>−₹{(selectedPlan.price - couponDiscount.discounted_price).toFixed(0)}</span>
-                      </div>
-                    )}
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 10, display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "white", fontWeight: 800, fontSize: 15 }}>Total</span>
-                      <span style={{ color: "white", fontWeight: 900, fontSize: 17 }}>₹{finalAmount.toFixed(0)}</span>
-                    </div>
-                  </div>
-
-                  {/* Coupon Input */}
-                  <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                    <div style={{ position: "relative", flex: 1 }}>
-                      <Tag size={14} color="rgba(255,255,255,0.3)" style={{ position: "absolute", left: 12, top: 11 }} />
-                      <input value={couponCode} onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponDiscount(null); }} placeholder="Coupon code"
-                        style={{ width: "100%", padding: "10px 10px 10px 32px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "white", fontSize: 13, outline: "none", fontFamily: "monospace" }} />
-                    </div>
-                    <button onClick={handleApplyCoupon} disabled={couponLoading || !couponCode}
-                      style={{ padding: "10px 16px", borderRadius: 10, background: couponDiscount ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: couponDiscount ? "#10B981" : "white", fontSize: 13, cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>
-                      {couponLoading ? <Loader2 size={14} className="animate-spin" /> : couponDiscount ? "✓ Applied" : "Apply"}
-                    </button>
-                  </div>
-
-                  {/* Card Details */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-                    <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Name on Card</label>
-                      <input value={name} onChange={e => setName(e.target.value)} placeholder="Your Full Name"
-                        style={{ width: "100%", padding: "11px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "white", fontSize: 14, outline: "none" }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Card Number</label>
-                      <div style={{ position: "relative" }}>
-                        <CreditCard size={16} color="rgba(255,255,255,0.3)" style={{ position: "absolute", left: 12, top: 12 }} />
-                        <input value={cardNumber} onChange={e => setCardNumber(formatCard(e.target.value))} placeholder="0000 0000 0000 0000"
-                          style={{ width: "100%", padding: "11px 14px 11px 36px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "white", fontSize: 14, outline: "none", fontFamily: "monospace" }} />
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Expiry</label>
-                        <input value={expiry} onChange={e => setExpiry(formatExpiry(e.target.value))} placeholder="MM/YY"
-                          style={{ width: "100%", padding: "11px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "white", fontSize: 14, outline: "none", textAlign: "center", fontFamily: "monospace" }} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>CVV</label>
-                        <input value={cvv} onChange={e => setCvv(e.target.value.replace(/\D/g,"").slice(0,4))} type="password" placeholder="•••"
-                          style={{ width: "100%", padding: "11px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "white", fontSize: 14, outline: "none", textAlign: "center", fontFamily: "monospace" }} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <motion.button whileTap={{ scale: 0.97 }} onClick={processPayment}
-                    style={{ width: "100%", padding: "15px", borderRadius: 14, background: `linear-gradient(135deg, ${PLAN_COLORS[selectedPlan.name] || "#8B5CF6"}, #8B5CF6)`, color: "white", fontWeight: 800, fontSize: 15, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 8px 24px rgba(139,92,246,0.4)" }}>
-                    <ShieldCheck size={18} /> Pay ₹{finalAmount.toFixed(0)} Securely
-                  </motion.button>
-                  <p style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 12 }}>Demo mode — no real charges will be made.</p>
-                </>
-              )}
-
-              {paymentState === "processing" && (
-                <div style={{ padding: "48px 0", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                    style={{ width: 56, height: 56, border: "3px solid rgba(139,92,246,0.2)", borderTopColor: "#8B5CF6", borderRadius: "50%", marginBottom: 24 }} />
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: "white", marginBottom: 8 }}>Verifying Payment…</h3>
-                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center" }}>Activating your subscription. Please wait.</p>
+              <div style={{ textAlign: "center", marginBottom: 24 }}>
+                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <AlertCircle size={24} color="#EF4444" />
                 </div>
-              )}
-
-              {paymentState === "success" && (
-                <div style={{ padding: "48px 0", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", bounce: 0.6 }}>
-                    <CheckCircle size={72} color="#10B981" style={{ marginBottom: 20 }} />
-                  </motion.div>
-                  <h3 style={{ fontSize: 22, fontWeight: 900, color: "white", marginBottom: 8 }}>Payment Successful!</h3>
-                  <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center" }}>
-                    Welcome to TulasiAI {selectedPlan.name}! Your plan is now active.
-                  </p>
-                </div>
-              )}
+                <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Cancel Subscription?</h2>
+                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>
+                  You will lose access to premium AI features at the end of your current billing cycle. AutoPay will be turned off.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  disabled={cancelLoading}
+                  style={{ flex: 1, padding: "12px", borderRadius: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+                >
+                  Keep It
+                </button>
+                <button
+                  onClick={handleCancelSubscription}
+                  disabled={cancelLoading}
+                  style={{ flex: 1, padding: "12px", borderRadius: 12, background: "#EF4444", color: "white", fontSize: 14, fontWeight: 600, border: "none", cursor: cancelLoading ? "not-allowed" : "pointer", opacity: cancelLoading ? 0.7 : 1, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}
+                >
+                  {cancelLoading ? <Loader2 size={16} className="animate-spin" /> : "Yes, Cancel"}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

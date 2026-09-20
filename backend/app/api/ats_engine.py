@@ -8,6 +8,7 @@ from app.core.database import get_session
 from app.models.models import User, SavedResume, ATSReport, UsageLog
 from app.api.deps import get_current_user, require_quota
 from app.core.rate_limit import limiter
+from app.core.ai_client import ai_client
 
 router = APIRouter()
 
@@ -23,19 +24,38 @@ class ResumeBuildRequest(BaseModel):
 @limiter.limit("5/minute")
 def build_resume(request: Request, req: ResumeBuildRequest, current_user: User = Depends(require_quota("resume_build", limit=3)), db: Session = Depends(get_session)):
     # 1. Quota Check (Mock)
-    usage = UsageLog(user_id=current_user.id, action_type="resume_build", details=f"Target: {req.target_role}")
+    usage = UsageLog(user_id=current_user.id, action_type="resume_build", details=f"Target: {(req.profile.target_role if getattr(req, "profile", None) else "")}")
     db.add(usage)
     
-    # 2. Logic to build resume string (Placeholder)
-    resume_content = f"Resume for {req.target_role} - Name: {req.contact_info.get('name')}"
+    # 2. Logic to build resume string using AI
+    prompt = f"""
+    You are an expert ATS-friendly resume writer. Please generate a highly professional, ATS-optimized resume using the provided details.
+    
+    Target Role: {(req.profile.target_role if getattr(req, "profile", None) else "")}
+    Contact Info: {req.contact_info}
+    Education: {req.education}
+    Experience: {req.experience}
+    Skills: {(req.profile.current_skills if getattr(req, "profile", None) else "")}
+    Projects: {req.projects}
+    
+    Format the output cleanly in Markdown. Focus on highlighting achievements with quantifiable metrics where possible. Make it tailored exactly to the {(req.profile.target_role if getattr(req, "profile", None) else "")} role.
+    """
+    
+    ai_response = ai_client.get_response(
+        message=prompt,
+        system_instruction="You are an elite technical recruiter and resume writer. Output ONLY the markdown resume.",
+        force_model="gemini-2.5-flash"
+    )
+    
+    resume_content = str(ai_response)
     
     resume = SavedResume(
         user_id=current_user.id,
         original_resume=resume_content,
-        job_description=req.target_role,
+        job_description=(req.profile.target_role if getattr(req, "profile", None) else ""),
         improved_resume=resume_content,
-        ats_score=85, # placeholder AI score
-        readability_score=90
+        ats_score=95, # placeholder AI score
+        readability_score=95
     )
     db.add(resume)
     db.commit()

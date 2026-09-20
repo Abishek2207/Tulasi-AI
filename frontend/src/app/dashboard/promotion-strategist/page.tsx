@@ -4,12 +4,13 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { AgentBadge } from "@/components/ui/AgentBadge";
-import { chatApi } from "@/lib/api";
+import { careerCoachApi } from "@/lib/api";
 import {
   TrendingUp, Send, RefreshCw, ChevronRight, CheckCircle2,
   Lock, ArrowUpRight
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import toast from "react-hot-toast";
 
 const PROMPTS = [
   { id: "impact",     category: "Impact Doc",  text: "Draft an impact summary for a major API refactor that reduced latency by 40%." },
@@ -19,8 +20,8 @@ const PROMPTS = [
 ];
 
 interface Feedback {
-  effectiveness: string;
-  tone: string;
+  impact: string;
+  scope: string;
   score: number; // 0-100
   suggestions: string[];
   verdict: string;
@@ -41,46 +42,21 @@ export default function PromotionStrategistPage() {
 
   const handleSubmit = async () => {
     if (!answer.trim() || loading) return;
+    if (!session?.user?.accessToken) {
+        toast.error("Please login to use this tool");
+        return;
+    }
     setLoading(true);
     setFeedback(null);
     setError(null);
 
-    const prompt = `You are an expert Career Coach and Promotion Strategist for Software Engineers.
-
-The user is working on this promotion scenario: "${activePrompt.text}"
-
-Their draft/proposal is:
-"${answer}"
-
-Analyze the draft for career effectiveness, corporate tone, and impact visibility.
-Respond ONLY with a valid JSON object in this exact format:
-{
-  "effectiveness": "brief assessment of how well this demonstrates next-level impact",
-  "tone": "brief assessment of the corporate tone (e.g. confident vs arrogant)",
-  "score": <number 0-100 representing promotion readiness of this draft>,
-  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
-  "verdict": "one sentence overall assessment"
-}`;
-
     try {
-      const res = await chatApi.send(prompt, "promotion_feedback");
-      const rawText: string = (res as any)?.data?.response ?? (res as any)?.response ?? (typeof res === "string" ? res : "");
-
-      if (!rawText) {
-        setError("Could not get feedback. Please try again.");
+      const parsed = await careerCoachApi.evaluate("promotion", activePrompt.text, answer, session.user.accessToken);
+      if (parsed && typeof parsed.score === "number") {
+          setFeedback(parsed);
+          setHistory(prev => [{ prompt: activePrompt.text.slice(0, 40) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
       } else {
-        try {
-          const match = rawText.match(/\{[\s\S]*\}/);
-          if (match) {
-            const parsed: Feedback = JSON.parse(match[0]);
-            setFeedback(parsed);
-            setHistory(prev => [{ prompt: activePrompt.text.slice(0, 40) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
-          } else {
-            setError("Could not parse AI feedback. Try again.");
-          }
-        } catch {
-          setError("Could not parse AI feedback. Try again.");
-        }
+          setError("Could not get a valid response from the server.");
       }
     } catch (err: any) {
       setError(err?.message || "Could not get feedback. Please try again.");
@@ -194,12 +170,12 @@ Respond ONLY with a valid JSON object in this exact format:
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: "#10B981", marginBottom: 6, textTransform: "uppercase" }}>Effectiveness</div>
-                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{feedback.effectiveness}</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "#10B981", marginBottom: 6, textTransform: "uppercase" }}>Impact</div>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{feedback.impact}</div>
                   </div>
                   <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)" }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: "#A78BFA", marginBottom: 6, textTransform: "uppercase" }}>Corporate Tone</div>
-                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{feedback.tone}</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "#A78BFA", marginBottom: 6, textTransform: "uppercase" }}>Scope</div>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{feedback.scope}</div>
                   </div>
                 </div>
 
