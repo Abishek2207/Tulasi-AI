@@ -120,11 +120,11 @@ def recommend_hackathons(
     current_user: User = Depends(get_current_user),
 ):
     """Simple AI recommendation based on user skills."""
-    if not current_user.skills:
+    if not (current_user.profile.current_skills if getattr(current_user, "profile", None) else ""):
         return {"recommendations": []}
     
     from app.models.models import HackathonApplication
-    skills = [s.strip().lower() for s in current_user.skills.split(",")]
+    skills = [s.strip().lower() for s in (current_user.profile.current_skills if getattr(current_user, "profile", None) else "").split(",")]
     
     # Get all active hackathons
     all_h = session.exec(select(Hackathon).where(Hackathon.is_active == True)).all()

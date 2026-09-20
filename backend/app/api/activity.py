@@ -3,7 +3,7 @@ from sqlmodel import Session, select, func
 import sqlmodel
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 import time
 
 from app.core.database import get_session
@@ -129,7 +129,7 @@ def _update_progress(user_id: int, category: str, db: Session):
         prog.completed_items = completed
         prog.total_items = total
         prog.progress_pct = pct
-        prog.updated_at = datetime.utcnow()
+        prog.updated_at = datetime.now(timezone.utc)
         db.add(prog)
     else:
         new_prog = UserProgress(
@@ -351,10 +351,10 @@ def get_analytics(
     current_user: User = Depends(get_current_user)
 ):
     """Return time-series data for the last 30 days of activity."""
-    from datetime import datetime, timedelta
+    from datetime import datetime, timezone, timedelta
     
     # Get logs from the last 30 days
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     
     logs = db.exec(
         select(ActivityLog).where(
@@ -368,7 +368,7 @@ def get_analytics(
     
     # Pre-fill last 30 days with 0s to ensure a continuous chart
     for i in range(29, -1, -1):
-        day = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+        day = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d")
         daily_stats[day] = {"date": day, "xp": 0, "problems": 0, "interviews": 0, "videos": 0}
         
     for log in logs:

@@ -275,7 +275,7 @@ export default function TopBar() {
                   {/* Menu items */}
                   <div style={{ padding: "6px" }}>
                     <button
-                      onClick={() => { setDropdownOpen(false); router.push("/dashboard/profile"); }}
+                      onClick={() => { setDropdownOpen(false); router.push("/dashboard/settings"); }}
                       style={{
                         width: "100%", display: "flex", alignItems: "center", gap: 10,
                         padding: "10px 12px", borderRadius: 9,

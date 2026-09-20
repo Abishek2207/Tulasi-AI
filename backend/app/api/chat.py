@@ -878,3 +878,4 @@ def get_user_sessions(
         })
 
     return {"sessions": sessions}
+

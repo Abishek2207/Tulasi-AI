@@ -228,6 +228,24 @@ class EmailService:
         """
         self.send_email(to_email, f"🎉 You earned {xp_earned} XP for inviting {invited_name}!", _wrap_template(body))
 
+    def send_otp_email(self, to_email: str, code: str):
+        body = f"""
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#ffffff;">
+          Your Verification Code
+        </h1>
+        <p style="color:#9ca3af;font-size:15px;line-height:1.7;margin:16px 0;">
+          Here is your OTP code to log in to Tulasi AI. It will expire in 10 minutes.
+        </p>
+        <div style="background:#0d1117;border:1px solid #10b98144;border-radius:12px;padding:24px;
+                    margin:24px 0;text-align:center;">
+          <p style="margin:0;font-size:40px;font-weight:900;letter-spacing:10px;color:#10b981;">{code}</p>
+        </div>
+        <p style="color:#6b7280;font-size:13px;text-align:center;margin:0;">
+          If you did not request this code, you can safely ignore this email.
+        </p>
+        """
+        self.send_email(to_email, f"Tulasi AI Login Code: {code}", _wrap_template(body))
+
 
 # Singleton Instance
 email_service = EmailService()

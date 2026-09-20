@@ -3,20 +3,35 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
+  "installCommand": "npm ci",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://tulasi-ai-hycl.onrender.com",
-    "NEXTAUTH_URL": "https://tulasiai.vercel.app"
+    "NEXT_PUBLIC_API_URL": "https://tulasi-ai-soda.onrender.com",
+    "NEXTAUTH_URL": "https://www.tulasiai.in"
   },
   "crons": [
     {
       "path": "/api/cron",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/keep-alive",
+      "schedule": "*/14 * * * *"
     }
   ],
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    },
+    {
       "source": "/api/(.*)",
       "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Authorization, Content-Type" }

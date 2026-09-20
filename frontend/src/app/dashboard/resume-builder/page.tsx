@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FileText, Loader2, Wand2, Download, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -11,6 +11,14 @@ export default function ResumeBuilderPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<"form" | "success">("form");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Form State
   const [contact, setContact] = useState({ name: "", email: "", phone: "", linkedin: "" });
@@ -92,7 +100,7 @@ export default function ResumeBuilderPage() {
           
           <div style={{ marginBottom: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 12 }}>1. Basics</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
               <input placeholder="Full Name *" value={contact.name} onChange={e => setContact({...contact, name: e.target.value})} style={{ padding: 12, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "white", outline: "none" }} />
               <input placeholder="Target Role *" value={targetRole} onChange={e => setTargetRole(e.target.value)} style={{ padding: 12, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "white", outline: "none" }} />
               <input placeholder="Email Address" value={contact.email} onChange={e => setContact({...contact, email: e.target.value})} style={{ padding: 12, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "white", outline: "none" }} />
@@ -105,7 +113,7 @@ export default function ResumeBuilderPage() {
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 12 }}>2. Experience</h3>
             {experience.map((exp, i) => (
               <div key={i} style={{ background: "rgba(255,255,255,0.02)", padding: 16, borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)", marginBottom: 12 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
                   <input placeholder="Company" value={exp.company} onChange={e => updateExp(i, "company", e.target.value)} style={{ padding: 10, background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white", outline: "none" }} />
                   <input placeholder="Role" value={exp.role} onChange={e => updateExp(i, "role", e.target.value)} style={{ padding: 10, background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white", outline: "none" }} />
                 </div>
@@ -120,7 +128,7 @@ export default function ResumeBuilderPage() {
           <div style={{ marginBottom: 32 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 12 }}>3. Education</h3>
             {education.map((edu, i) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div key={i} style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
                 <input placeholder="Institution" value={edu.institution} onChange={e => updateEdu(i, "institution", e.target.value)} style={{ padding: 10, background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white", outline: "none" }} />
                 <input placeholder="Degree" value={edu.degree} onChange={e => updateEdu(i, "degree", e.target.value)} style={{ padding: 10, background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white", outline: "none" }} />
                 <div style={{ display: "flex", gap: 8 }}>
@@ -152,8 +160,8 @@ export default function ResumeBuilderPage() {
             <div style={{ fontSize: 48, fontWeight: 900, color: "#10B981" }}>{resultScore}%</div>
           </div>
 
-          <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-            <button onClick={() => toast.success("Downloading PDF...")} style={{ padding: "14px 28px", borderRadius: 12, background: "linear-gradient(135deg, #3B82F6, #2563EB)", color: "white", fontWeight: 700, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexDirection: isMobile ? "column" : "row" }}>
+            <button onClick={() => toast.success("Downloading PDF...")} style={{ padding: "14px 28px", borderRadius: 12, background: "linear-gradient(135deg, #3B82F6, #2563EB)", color: "white", fontWeight: 700, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Download size={18} /> Download PDF
             </button>
             <button onClick={() => setPhase("form")} style={{ padding: "14px 28px", borderRadius: 12, background: "rgba(255,255,255,0.05)", color: "white", fontWeight: 700, border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}>

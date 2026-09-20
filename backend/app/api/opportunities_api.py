@@ -1,132 +1,98 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from typing import Optional, List
 from datetime import datetime, timezone
 import requests
-import feedparser
 
 from app.api.deps import get_current_user
-from app.models.models import User
+from app.models.models import User, Job, UserJobMatch
 from app.core.database import get_session
-from sqlmodel import Session
+from app.services.matching_service import MatchingService
+from app.services.job_ingestion_service import JobIngestionService
+from sqlmodel import Session, select
+from sqlalchemy.orm import selectinload
 
 router = APIRouter()
 
-@router.get("/jobs")
-def get_jobs(skills: Optional[str] = None, location: Optional[str] = None, db: Session = Depends(get_session)):
-    jobs = []
-    
-    # 1. Free API: RemoteOK
-    try:
-        remoteok_url = "https://remoteok.com/api"
-        headers = {"User-Agent": "TulasiAI-JobFinder"}
-        resp = requests.get(remoteok_url, headers=headers, timeout=5)
-        if resp.status_code == 200:
-            data = resp.json()
-            for item in data[1:6]:
-                if "company" in item and "position" in item:
-                    if skills and skills.lower() not in item["position"].lower() and skills.lower() not in str(item.get("tags", [])).lower():
-                        continue
-                    jobs.append({
-                        "id": str(item.get("id", "")),
-                        "title": item["position"],
-                        "company": item["company"],
-                        "location": item.get("location", "Remote"),
-                        "source": "RemoteOK",
-                        "source_name": "RemoteOK",
-                        "apply_link": item.get("url", ""),
-                        "posted_date": item.get("date", datetime.now(timezone.utc).isoformat()),
-                        "fetched_at": datetime.now(timezone.utc).isoformat(),
-                        "verified_status": True
-                    })
-    except Exception as e:
-        print(f"RemoteOK fetch failed: {e}")
-
-    # 1.5 Free API: Remotive
-    try:
-        remotive_url = "https://remotive.com/api/remote-jobs?limit=15"
-        if skills:
-            remotive_url += f"&search={skills}"
-        resp = requests.get(remotive_url, timeout=5)
-        if resp.status_code == 200:
-            data = resp.json()
-            for item in data.get("jobs", [])[:10]:
-                jobs.append({
-                    "id": str(item.get("id", "")),
-                    "title": item.get("title", ""),
-                    "company": item.get("company_name", "Unknown"),
-                    "location": item.get("candidate_required_location", "Remote"),
-                    "source": "Remotive",
-                    "source_name": "Remotive",
-                    "apply_link": item.get("url", ""),
-                    "posted_date": item.get("publication_date", datetime.now(timezone.utc).isoformat()),
-                    "fetched_at": datetime.now(timezone.utc).isoformat(),
-                    "verified_status": True
-                })
-    except Exception as e:
-        print(f"Remotive fetch failed: {e}")
-    # 2. Adzuna (Optional)
-    app_id = os.getenv("ADZUNA_APP_ID")
-    app_key = os.getenv("ADZUNA_APP_KEY")
-    if app_id and app_key:
+def background_ingest_and_match(user_id: int):
+    from app.core.database import engine
+    with Session(engine) as db:
+        raw_jobs = []
         try:
-            adzuna_url = f"https://api.adzuna.com/v1/api/jobs/us/search/1?app_id={app_id}&app_key={app_key}&results_per_page=10"
-            if skills:
-                adzuna_url += f"&what={skills}"
-            if location:
-                adzuna_url += f"&where={location}"
-            resp = requests.get(adzuna_url, timeout=5)
+            resp = requests.get("https://remotive.com/api/remote-jobs?limit=30", timeout=5)
             if resp.status_code == 200:
                 data = resp.json()
-                for item in data.get("results", []):
-                    jobs.append({
-                        "id": str(item.get("id", "")),
-                        "title": item.get("title"),
-                        "company": item.get("company", {}).get("display_name", "Unknown"),
-                        "location": item.get("location", {}).get("display_name", "Unknown"),
-                        "source": "Adzuna",
-                        "source_name": "Adzuna",
-                        "apply_link": item.get("redirect_url", ""),
-                        "posted_date": item.get("created", datetime.now(timezone.utc).isoformat()),
-                        "fetched_at": datetime.now(timezone.utc).isoformat(),
-                        "verified_status": True
+                for item in data.get("jobs", []):
+                    raw_jobs.append({
+                        "title": item.get("title", ""),
+                        "company": item.get("company_name", "Unknown"),
+                        "location": item.get("candidate_required_location", "Remote"),
+                        "source": "Remotive",
+                        "application_url": item.get("url", ""),
+                        "description": item.get("description", "")[:5000] # truncate
                     })
-        except Exception as e:
-            print(f"Adzuna fetch failed: {e}")
+        except Exception:
+            pass
             
-    # 3. Jooble (Optional)
-    jooble_key = os.getenv("JOOBLE_API_KEY")
-    if jooble_key:
-        try:
-            jooble_url = f"https://jooble.org/api/{jooble_key}"
-            payload = {"keywords": skills or "software engineer", "location": location or ""}
-            resp = requests.post(jooble_url, json=payload, timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                for item in data.get("jobs", [])[:10]:
-                    jobs.append({
-                        "id": str(item.get("id", "")),
-                        "title": item.get("title"),
-                        "company": item.get("company", "Unknown"),
-                        "location": item.get("location", "Unknown"),
-                        "source": "Jooble",
-                        "source_name": "Jooble",
-                        "apply_link": item.get("link", ""),
-                        "posted_date": item.get("updated", datetime.now(timezone.utc).isoformat()),
-                        "fetched_at": datetime.now(timezone.utc).isoformat(),
-                        "verified_status": True
-                    })
-        except Exception as e:
-            print(f"Jooble fetch failed: {e}")
+        if raw_jobs:
+            JobIngestionService.process_jobs(db, raw_jobs)
+        
+        MatchingService.calculate_matches_for_user(db, user_id)
 
-    return {"success": True, "data": jobs}
+@router.get("/jobs")
+def get_jobs(
+    skills: Optional[str] = None, 
+    location: Optional[str] = None, 
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+    background_tasks: BackgroundTasks = None
+):
+    if background_tasks:
+        background_tasks.add_task(background_ingest_and_match, current_user.id)
+        
+    matches_exist = db.exec(select(UserJobMatch).where(UserJobMatch.user_id == current_user.id).limit(1)).first()
+    if not matches_exist:
+        MatchingService.calculate_matches_for_user(db, current_user.id)
+        
+    statement = select(UserJobMatch).where(UserJobMatch.user_id == current_user.id).order_by(UserJobMatch.total_match_score.desc()).limit(20)
+    matches = db.exec(statement).all()
+    
+    results = []
+    for m in matches:
+        job = db.get(Job, m.job_id)
+        if not job: continue
+        
+        if skills and skills.lower() not in job.title.lower() and skills.lower() not in (job.description or "").lower():
+            continue
+        if location and location.lower() not in (job.location or "").lower():
+            continue
+            
+        results.append({
+            "id": str(job.id),
+            "title": job.title,
+            "company": job.company,
+            "location": job.location or "Remote",
+            "source": job.source,
+            "source_name": job.source,
+            "apply_link": job.application_url or job.source_url or "",
+            "posted_date": job.posted_at or job.fetched_at.isoformat(),
+            "fetched_at": job.fetched_at.isoformat(),
+            "verified_status": True,
+            "match_score": round(m.total_match_score * 100, 1),
+            "semantic_score": round(m.semantic_score * 100, 1),
+            "skill_gap_score": round(m.skill_gap_score * 100, 1)
+        })
+        
+    if not results:
+        return {"success": True, "data": []}
+
+    return {"success": True, "data": results}
 
 
 @router.get("/hackathons")
 def get_hackathons(db: Session = Depends(get_session)):
     hackathons = []
     
-    # 1. Fetch from Database (Seeded Real Data)
     from app.models.models import Hackathon
     from sqlmodel import select
     db_hackathons = db.exec(select(Hackathon).where(Hackathon.is_active == True)).all()
@@ -148,13 +114,11 @@ def get_hackathons(db: Session = Depends(get_session)):
             "verified_status": True
         })
         
-    # 2. Try fetching Live Hackathons (HackClub API as example)
     try:
         resp = requests.get("https://hackathons.hackclub.com/api/events/all", timeout=5)
         if resp.status_code == 200:
             data = resp.json()
             for item in data[:15]:
-                # Only include upcoming/active
                 hackathons.append({
                     "id": str(item.get("id", item.get("name"))),
                     "title": item.get("name", "Hackathon"),

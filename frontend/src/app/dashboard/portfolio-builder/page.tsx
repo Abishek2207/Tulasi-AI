@@ -9,6 +9,9 @@ import {
   Link2, Star, Zap, Layers, Download, Copy, ChevronDown,
   Monitor, Smartphone, X, Plus
 } from "lucide-react";
+import toast from "react-hot-toast";
+import { useSession } from "@/hooks/useSession";
+import { portfolioApi } from "@/lib/api";
 
 // ─── TYPES ─────────────────────────────────────────────────────────────────
 interface Project {
@@ -322,6 +325,7 @@ function generateCode(data: PortfolioData, accent: string): string {
 type Step = "input" | "generating" | "preview" | "code";
 
 export default function PortfolioBuilderPage() {
+  const { data: session } = useSession();
   const [step, setStep] = useState<Step>("input");
   const [template, setTemplate] = useState("dark-pro");
   const [inputMethod, setInputMethod] = useState<"manual" | "upload">("manual");
@@ -348,13 +352,47 @@ export default function PortfolioBuilderPage() {
   ];
 
   const generate = async () => {
+    if (!session?.user?.accessToken) return toast.error("Please login to generate a portfolio.");
+    
     setStep("generating");
-    for (let i = 0; i < GENERATION_STAGES.length; i++) {
-      setGenerationStage(i);
+    
+    // Start visual loading loop
+    let isDone = false;
+    const progressLoop = async () => {
+      let stage = 0;
+      while (!isDone && stage < GENERATION_STAGES.length - 1) {
+        setGenerationStage(stage);
+        await new Promise(r => setTimeout(r, 1200));
+        stage++;
+      }
+      if (!isDone) setGenerationStage(GENERATION_STAGES.length - 1);
+    };
+    
+    progressLoop();
+    
+    try {
+      let res;
+      if (inputMethod === "upload" && uploadedFile) {
+        const formData = new FormData();
+        formData.append("file", uploadedFile);
+        res = await portfolioApi.generateFromFile(formData, session.user.accessToken);
+      } else {
+        res = await portfolioApi.generate(portfolio, session.user.accessToken);
+      }
+      
+      if (res.portfolio) {
+        setPortfolio(res.portfolio);
+      }
+      isDone = true;
+      setGenerationStage(GENERATION_STAGES.length - 1);
       await new Promise(r => setTimeout(r, 500));
+      setStep("preview");
+      toast.success("Portfolio generated successfully!");
+    } catch (err: any) {
+      isDone = true;
+      toast.error(err.message || "Failed to generate portfolio");
+      setStep("input");
     }
-    await new Promise(r => setTimeout(r, 400));
-    setStep("preview");
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -524,9 +562,9 @@ export default function PortfolioBuilderPage() {
             {/* Generate Button */}
             <div style={{ marginTop: 24 }}>
               <button onClick={generate}
-                disabled={!portfolio.name || !portfolio.title}
-                className={portfolio.name && portfolio.title ? "hover-lift" : ""}
-                style={{ width: "100%", padding: "20px", borderRadius: 18, background: portfolio.name && portfolio.title ? "linear-gradient(135deg, #EC4899, #BE185D)" : "rgba(255,255,255,0.04)", color: "white", fontWeight: 900, fontSize: 17, border: "none", cursor: portfolio.name && portfolio.title ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, opacity: !portfolio.name || !portfolio.title ? 0.5 : 1, boxShadow: portfolio.name && portfolio.title ? "0 16px 32px rgba(236,72,153,0.3)" : "none", transition: "all 0.3s" }}>
+                disabled={(inputMethod === "manual" && (!portfolio.name || !portfolio.title)) || (inputMethod === "upload" && !uploadedFile)}
+                className={((inputMethod === "manual" && portfolio.name && portfolio.title) || (inputMethod === "upload" && uploadedFile)) ? "hover-lift" : ""}
+                style={{ width: "100%", padding: "20px", borderRadius: 18, background: ((inputMethod === "manual" && portfolio.name && portfolio.title) || (inputMethod === "upload" && uploadedFile)) ? "linear-gradient(135deg, #EC4899, #BE185D)" : "rgba(255,255,255,0.04)", color: "white", fontWeight: 900, fontSize: 17, border: "none", cursor: ((inputMethod === "manual" && portfolio.name && portfolio.title) || (inputMethod === "upload" && uploadedFile)) ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, opacity: ((inputMethod === "manual" && portfolio.name && portfolio.title) || (inputMethod === "upload" && uploadedFile)) ? 1 : 0.5, boxShadow: ((inputMethod === "manual" && portfolio.name && portfolio.title) || (inputMethod === "upload" && uploadedFile)) ? "0 16px 32px rgba(236,72,153,0.3)" : "none", transition: "all 0.3s" }}>
                 <Sparkles size={22} /> Generate Premium Portfolio
               </button>
             </div>

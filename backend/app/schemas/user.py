@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List, Any
 from datetime import datetime
 from app.models.models import UserTypeEnum
@@ -53,8 +53,7 @@ class ProfileResponse(ProfileBase):
     user_id: int
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserBase(BaseModel):
@@ -81,8 +80,7 @@ class UserResponse(UserBase):
     user_type: Optional[str] = None
     profile: Optional[ProfileResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):

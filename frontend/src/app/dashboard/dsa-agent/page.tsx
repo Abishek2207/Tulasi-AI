@@ -112,7 +112,7 @@ export default function DSAAgentPage() {
       <Header />
 
       {/* Stats Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: "Problems Solved",  val: loading ? "..." : `${totalDone} / ${totalProbs}`, icon: <BarChart3 size={18} color="#8B5CF6" />, accent: "#8B5CF6" },
           { label: "Current Streak",   val: `${user?.streak || 0} days`, icon: <Zap size={18} color="#F59E0B" />, accent: "#F59E0B" },
@@ -145,7 +145,7 @@ export default function DSAAgentPage() {
         Data is synced with Tulasi AI Code Backend. Click solve to run code against actual test cases!
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 24 }}>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6">
         {/* Topic List */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <h3 style={{ fontSize: 16, fontWeight: 800, color: "white", marginBottom: 4 }}>Curriculum Focus</h3>

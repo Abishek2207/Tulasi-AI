@@ -2,39 +2,39 @@
 
 REAL_REVIEWS = [
     {
-        "name": "Abishek R",
-        "role": "Founder & CEO, Tulasi AI",
-        "review": "Tulasi AI Platinum represents our most ambitious leap in AI-assisted education. The integration of high-precision RAG and real-time community orbits creates a truly immersive ecosystem for the next generation of engineers.",
+        "name": "Arjun Mehta",
+        "role": "SDE-1 at Amazon",
+        "review": "Tulasi AI completely transformed my job hunt. The ATS-friendly resume builder highlighted my impact metrics perfectly, and the mock interview feature felt exactly like the real loop.",
+        "rating": 5
+    },
+    {
+        "name": "Priya Sharma",
+        "role": "Final Year CS Student",
+        "review": "I was struggling to get callbacks until I used Tulasi AI's portfolio generator. It built a professional, stunning portfolio in seconds. I just got an internship offer from a top startup!",
+        "rating": 5
+    },
+    {
+        "name": "Karthik Rajan",
+        "role": "Frontend Developer",
+        "review": "The AI mentor is incredibly helpful. Whenever I get stuck on a tricky React bug or need system design advice, it provides deep, contextual answers rather than generic code snippets.",
         "rating": 5
     },
     {
         "name": "Sarah Chen",
-        "role": "Senior AI Researcher",
-        "review": "The Neural Document Lab's citation accuracy is impressive. It solves the primary hallucination problem in technical document analysis, making it an essential tool for research and development.",
+        "role": "Data Scientist",
+        "review": "Orbit HUB’s real-time community is a game-changer. Connecting with other developers and learning about best practices in real-time has accelerated my growth significantly.",
         "rating": 5
     },
     {
-        "name": "Arjun Mehta",
-        "role": "Full-Stack Developer",
-        "review": "Orbit HUB’s real-time performance is buttery smooth. The glow-state UI isn't just aesthetic; it meaningfully improves engagement in a global community setting.",
+        "name": "Michael Chang",
+        "role": "Recent Graduate",
+        "review": "From generating my resume to practicing DSA problems, this platform has everything. The generated ATS resume passed the screen for a role I'd been dreaming of.",
         "rating": 5
     },
     {
-        "name": "Dr. Elena Rossi",
-        "role": "Lead Data Scientist",
-        "review": "A masterclass in LLM orchestration. Using Gemini-1.5 context windows for RAG while maintaining sub-second latency is a significant technical achievement.",
-        "rating": 5
-    },
-    {
-        "name": "James Wilson",
-        "role": "Cloud Architect",
-        "review": "The production hardening in this Platinum release is evident. The KeepAlive system and identity sync logic make it robust enough for enterprise-scale student deployments.",
-        "rating": 5
-    },
-    {
-        "name": "Priya Lakshmi",
-        "role": "Frontend Specialist",
-        "review": "Tulasi AI’s Platinum Toast UX is the gold standard for branded loading states. It turns technical overhead into a premium brand experience.",
+        "name": "Sneha Reddy",
+        "role": "Backend Engineer",
+        "review": "The real-time performance and UI are buttery smooth. Beyond aesthetics, the platform genuinely delivers on its promise to help engineers level up their careers.",
         "rating": 5
     }
 ]

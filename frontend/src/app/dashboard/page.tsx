@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 /**
  * DashboardRouter — reads user_type from BOTH session AND localStorage
@@ -16,6 +17,15 @@ export default function DashboardRouter() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const forceSelect = searchParams.get("select") === "true";
+  const sessionId = searchParams.get("session_id");
+
+  useEffect(() => {
+    if (sessionId) {
+      toast.success("Payment successful! You are now a Pro member. 🎉", { duration: 5000 });
+      // Strip the session_id from URL so it doesn't fire again on refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [sessionId]);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -163,3 +173,4 @@ export default function DashboardRouter() {
     </div>
   );
 }
+

@@ -59,11 +59,11 @@ def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admi
     from datetime import date
     from sqlalchemy import text
     
-    total = db.exec(select(func.count(User.id))).one()
-    pro_users_count = db.exec(select(func.count(User.id)).where(User.is_pro == True)).one()
+    total = db.exec(select(func.count(User.id))).first() or 0
+    pro_users_count = db.exec(select(func.count(User.id)).where(User.is_pro == True)).first() or 0
     
     today_str = date.today().isoformat()
-    active_today = db.exec(select(func.count(User.id)).where(User.last_activity_date == today_str)).one()
+    active_today = db.exec(select(func.count(User.id)).where(User.last_activity_date == today_str)).first() or 0
     
     from app.api.internships import INTERNSHIP_SEED_DATA
     
@@ -72,9 +72,9 @@ def get_stats(db: Session = Depends(get_session), admin: User = Depends(get_admi
         "pro_users": pro_users_count,
         "active_today": active_today,
         "conversion_rate": round((pro_users_count / max(total, 1)) * 100, 1),
-        "total_reviews": db.exec(select(func.count(Review.id))).one(),
-        "total_submissions": db.exec(select(func.count(SolvedProblem.id))).one(),
-        "total_chat_messages": db.exec(select(func.count(ChatMessage.id))).one(),
+        "total_reviews": db.exec(select(func.count(Review.id))).first() or 0,
+        "total_submissions": db.exec(select(func.count(SolvedProblem.id))).first() or 0,
+        "total_chat_messages": db.exec(select(func.count(ChatMessage.id))).first() or 0,
         "total_internships": len(INTERNSHIP_SEED_DATA)
     }
 
@@ -117,8 +117,8 @@ def get_user_profile(user_id: int, db: Session = Depends(get_session), admin: Us
         .limit(20)
     ).all()
 
-    solved_count = db.exec(select(func.count(SolvedProblem.id)).where(SolvedProblem.user_id == user_id)).one()
-    chat_count = db.exec(select(func.count(ChatMessage.id)).where(ChatMessage.user_id == user_id)).one()
+    solved_count = db.exec(select(func.count(SolvedProblem.id)).where(SolvedProblem.user_id == user_id)).first() or 0
+    chat_count = db.exec(select(func.count(ChatMessage.id)).where(ChatMessage.user_id == user_id)).first() or 0
 
     return {
         "user": {
@@ -374,3 +374,32 @@ def export_users_csv(db: Session = Depends(get_session), admin: User = Depends(g
         writer.writerow([u.id, u.name, u.email, u.role, u.xp, u.level, u.created_at.strftime("%Y-%m-%d") if u.created_at else ""])
     output.seek(0)
     return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=tulasi_users.csv"})
+
+@router.get("/market-stats")
+async def get_market_stats(db: Session = Depends(get_session), current_user: User = Depends(get_admin_user)):
+    from app.models.models import Job, MarketSnapshot
+    from sqlmodel import select, func
+    
+    total_jobs = db.exec(select(func.count(Job.id))).one_or_none() or 0
+    total_snapshots = db.exec(select(func.count(MarketSnapshot.id))).one_or_none() or 0
+    
+    return {
+        "status": "ACTIVE",
+        "jobs_collected": total_jobs,
+        "market_snapshots": total_snapshots,
+        "message": "Real SerpApi integration active. Deduplication enabled."
+    }
+
+@router.post("/market-refresh")
+async def refresh_market_data(db: Session = Depends(get_session), current_user: User = Depends(get_admin_user)):
+    try:
+        from app.agents.market_intelligence import fetch_market_trends
+        # Trigger an orchestrated refresh for top roles
+        roles = ["Backend Engineer", "AI Engineer", "Frontend Engineer"]
+        results = {}
+        for role in roles:
+            results[role] = fetch_market_trends(current_role=role, target_role=role, location="Remote")
+            
+        return {"status": "SUCCESS", "results": results, "message": "Market data refreshed successfully."}
+    except Exception as e:
+        return {"status": "ERROR", "message": str(e)}

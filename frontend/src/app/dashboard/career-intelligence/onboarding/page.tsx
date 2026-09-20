@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { API_URL } from "@/lib/api";
+import { careerIntelligenceApi } from "@/lib/api";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
 
@@ -92,19 +92,7 @@ export default function CareerIntelligenceOnboarding() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/v1/career-intelligence/profile`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      });
-      
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || "Failed to create profile");
-      }
+      const dataResponse = await careerIntelligenceApi.createProfile(data, token || "");
       
       toast.success("Career Intelligence Profile created!");
       router.push("/dashboard");

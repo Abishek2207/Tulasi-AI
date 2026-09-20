@@ -1,139 +1,56 @@
 from sqlmodel import SQLModel, create_engine, Session, select
+from app.core.logger import logger
 Base = SQLModel
 from sqlalchemy.pool import QueuePool
 from app.core.config import settings
 
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+connect_args = {"check_same_thread": False} if is_sqlite else {}
 
 try:
+    engine_kwargs = {
+        "connect_args": connect_args
+    }
+    if not is_sqlite:
+        engine_kwargs.update({
+            "poolclass": QueuePool,
+            "pool_size": 10,
+            "max_overflow": 20,
+            "pool_timeout": 30
+        })
+
     engine = create_engine(
         settings.normalized_database_url, 
-        connect_args=connect_args,
-        poolclass=QueuePool,
-        pool_size=10,
-        max_overflow=20,
-        pool_timeout=30
+        **engine_kwargs
     )
 except Exception as e:
-    print(f"⚠️  WARNING: Database engine creation failed: {e}")
-    engine = None
+    logger.critical(f"Database engine creation failed: {e}")
+    raise RuntimeError(f"Database engine creation failed: {e}")
 
 
-def sync_user_schema(engine):
-    """Safely adds missing columns to the 'user' table on startup."""
-    if engine is None:
-        return
-        
-    from sqlalchemy import inspect, text
-    inspector = inspect(engine)
-    existing_columns = [c['name'] for c in inspector.get_columns("user")]
-    
-    # New columns added in Super Intelligence / Professional upgrades
-    new_columns = [
-        ("user_type", "VARCHAR DEFAULT 'student'"),
-        ("abuse_count", "INTEGER DEFAULT 0"),
-        ("is_onboarded", "BOOLEAN DEFAULT FALSE"),
-        ("department", "VARCHAR"),
-        ("target_role", "VARCHAR"),
-        ("target_companies", "VARCHAR"),
-        ("interest_areas", "VARCHAR"),
-        ("onboarding_step", "INTEGER DEFAULT 0"),
-        ("user_intelligence_profile", "TEXT DEFAULT '{}'"),
-        ("last_intelligence_update", "TIMESTAMP DEFAULT '2024-01-01 00:00:00'"),
-        ("behavioral_patterns", "TEXT DEFAULT '{}'"),
-        ("is_pro", "BOOLEAN DEFAULT TRUE"),
-        ("stripe_customer_id", "VARCHAR"),
-        ("stripe_subscription_id", "VARCHAR"),
-        ("chats_today", "INTEGER DEFAULT 0"),
-        ("last_reset_date", "VARCHAR"),
-        ("pro_expiry_date", "VARCHAR"),
-        ("username", "VARCHAR UNIQUE"), 
-        ("invite_code", "VARCHAR"),
-        ("provider", "VARCHAR DEFAULT 'email'"),
-        ("referred_by", "VARCHAR"),
-        ("streak", "INTEGER DEFAULT 0"),
-        ("longest_streak", "INTEGER DEFAULT 0"),
-        ("xp", "INTEGER DEFAULT 0"),
-        ("level", "INTEGER DEFAULT 1"),
-        ("last_activity_date", "VARCHAR"),
-        ("last_seen", "TIMESTAMP DEFAULT '2024-01-01 00:00:00'"),
-        ("is_private", "BOOLEAN DEFAULT FALSE"),
-    ]
-    
-    try:
-        with engine.begin() as conn:
-            for col_name, col_def in new_columns:
-                if col_name not in existing_columns:
-                    print(f"  - Syncing User Schema: Adding column '{col_name}'...")
-                    if "sqlite" in str(engine.url):
-                        base_def = col_def.split(" DEFAULT ")[0] if " DEFAULT " in col_def else col_def
-                        safe_def = base_def.replace("IF NOT EXISTS ", "").replace(" UNIQUE", "")
-                        query = f'ALTER TABLE "user" ADD COLUMN {col_name} {safe_def};'
-                    else:
-                        query = f'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS {col_name} {col_def};'
-                    conn.execute(text(query))
-            print("✅ User schema synchronized (Auto-Migration)")
-    except Exception as e:
-        print(f"⚠️  Manual schema sync failed: {e}")
+# Alembic now handles migrations.
 
-def sync_profile_schema(engine):
-    """Safely adds missing columns to the 'profile' table on startup."""
-    if engine is None:
-        return
-        
-    from sqlalchemy import inspect, text
-    inspector = inspect(engine)
-    
-    if not inspector.has_table("profile"):
-        return
-        
-    existing_columns = [c['name'] for c in inspector.get_columns("profile")]
-    
-    new_columns = [
-        ("student_year", "VARCHAR"),
-        ("student_goal", "VARCHAR"),
-        ("current_salary_range", "VARCHAR"),
-        ("target_salary_goal", "VARCHAR"),
-        ("daily_available_hours", "VARCHAR"),
-        ("available_days", "VARCHAR"),
-        ("placement_goal", "VARCHAR"),
-        ("preferred_companies", "VARCHAR"),
-        ("weak_areas", "VARCHAR"),
-        ("resume_status", "VARCHAR"),
-        ("existing_projects", "VARCHAR"),
-        ("current_package_range_prof", "VARCHAR"),
-        ("target_package", "VARCHAR"),
-        ("industry", "VARCHAR"),
-        ("career_goal", "VARCHAR"),
-        ("tools_used", "VARCHAR"),
-        ("ai_tools_known", "VARCHAR"),
-        ("college_name", "VARCHAR"),
-        ("degree", "VARCHAR"),
-        ("department", "VARCHAR"),
-        ("year_of_study", "VARCHAR"),
-        ("target_role", "VARCHAR"),
-        ("current_skills", "VARCHAR")
-    ]
-    
-    try:
-        with engine.begin() as conn:
-            for col_name, col_def in new_columns:
-                if col_name not in existing_columns:
-                    print(f"  - Syncing Profile Schema: Adding column '{col_name}'...")
-                    if "sqlite" in str(engine.url):
-                        query = f'ALTER TABLE profile ADD COLUMN {col_name} {col_def};'
-                    else:
-                        query = f'ALTER TABLE profile ADD COLUMN IF NOT EXISTS {col_name} {col_def};'
-                    conn.execute(text(query))
-            print("✅ Profile schema synchronized (Auto-Migration)")
-    except Exception as e:
-        print(f"⚠️  Manual profile schema sync failed: {e}")
+from sqlalchemy import event
+from sqlalchemy.orm import Session as SQLAlchemySession
+from sqlalchemy.sql import text
+
+@event.listens_for(SQLAlchemySession, "after_begin")
+def set_rls_context(session, transaction, connection):
+    """
+    Automatically inject the authenticated user's ID into the PostgreSQL transaction 
+    context so RLS policies can evaluate current_app_user().
+    Also drops BYPASSRLS privileges by assuming the authenticated role.
+    """
+    user_id = session.info.get("current_user_id")
+    if user_id is not None:
+        # Drop superuser/bypassrls privileges for this transaction
+        connection.execute(text("SET LOCAL ROLE authenticated"))
+        connection.execute(
+            text("SELECT set_config('app.current_user_id', :uid, true)"),
+            {"uid": str(user_id)}
+        )
 
 def init_db():
-    if engine is None:
-        print("⚠️  Skipping DB init: No engine available.")
-        return
-
     import time
     from sqlalchemy import text
     from sqlalchemy.exc import OperationalError, SQLAlchemyError
@@ -148,8 +65,11 @@ def init_db():
         ChatMessage, ChatSession, Certificate, PersistentInterviewSession,
         Internship, PrepPlan, Announcement, InviteCode, DailyChallenge,
         DailyChallengeSubmission, MentorInsight,
-        SubscriptionPlan, UserSubscription, Payment, Coupon, CouponRedemption,
-        ATSReport, UsageLog, AdminLog
+        Subscription, Payment, Coupon, CouponRedemption,
+        ATSReport, UsageLog, AdminLog, Goal, Skill, SkillAssessment,
+        SkillMastery, RevisionSchedule, DocumentTopic, Document, DocumentChunk,
+        LearningPlan, DailyTask, TaskCompletion, LearningSession,
+        FocusSession, IndustryUpdate, Job, MarketSnapshot, Profile, Notification
     )
     
     max_retries = 3
@@ -157,63 +77,36 @@ def init_db():
 
     for attempt in range(1, max_retries + 1):
         try:
-            print(f"🔄 Database Init: Attempt {attempt}/{max_retries}...")
+            logger.info(f"Database Init: Attempt {attempt}/{max_retries}...")
             
             # 1. Confirm connectivity
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-            print("✅ Database connection established.")
+            logger.info("Database connection established.")
 
             # 2. Create tables if they don't exist (Validates users, sessions, etc.)
-            SQLModel.metadata.create_all(engine)
-            print("✅ Required tables validated/created.")
+            # SQLModel.metadata.create_all(engine) removed.
+            # Alembic is exclusively authoritative for schema management.
+            logger.info("Database connection validated.")
             
-            # 3. Sync existing tables with new columns (Safe Migration Layer)
-            sync_user_schema(engine)
-            sync_profile_schema(engine)
-            
-            # Simple column migrations for other tables
-            migration_queries = [
-                'ALTER TABLE review ADD COLUMN email VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN event_mode VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN difficulty VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN team_size VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN start_date VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN end_date VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN registration_deadline VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN domains VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN currency VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN location VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN source_name VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN source_url VARCHAR;',
-                'ALTER TABLE hackathon ADD COLUMN fetched_at TIMESTAMP;',
-                'ALTER TABLE hackathon ADD COLUMN raw_payload TEXT;',
-                'ALTER TABLE hackathon ADD COLUMN verified_status VARCHAR;'
-            ]
-            for query in migration_queries:
-                try:
-                    with engine.begin() as conn:
-                        conn.execute(text(query))
-                except Exception:
-                    pass
-            
-            # 4. Seed essential data (Groups, Hackathons, Reviews)
+            # Alembic is now handling schema sync and migrations.
+            # 3. Seed essential data (Groups, Hackathons, Reviews)
             seed_essential_data(engine)
             
             # Success, exit the retry loop
-            print("🚀 Database is fully ready for incoming requests.")
+            logger.info("Database is fully ready for incoming requests.")
             break
             
         except (OperationalError, SQLAlchemyError) as e:
-            print(f"⚠️  Database connection/creation failed: {e}")
+            logger.error(f"Database connection/creation failed: {e}")
             if attempt < max_retries:
-                print(f"⏳ Retrying in {retry_delay} seconds...")
+                logger.warning(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
             else:
-                print("❌ Final Database Init Failure - Backend may reject logins.")
+                logger.critical("Final Database Init Failure - Backend may reject logins.")
                 return
         except Exception as e:
-            print(f"⚠️  Unexpected Database Init Warning: {e}")
+            logger.error(f"Unexpected Database Init Warning: {e}")
             break
 
 def seed_essential_data(engine):
@@ -295,7 +188,7 @@ def seed_essential_data(engine):
         if not db.exec(select(Idea)).first():
             system_user = db.exec(select(User).order_by(User.id.asc())).first()
             if system_user:
-                print("🌱 Seeding: Baseline Idea Feed...")
+                logger.info("Seeding: Baseline Idea Feed...")
                 welcome_ideas = [
                     "Welcome to Tulasi AI! The mission is to build a decentralized AGI social layer. Join the Global Community to get started. 🚀",
                     "Tulasi AI is now live on tulasiai.in! Build, Collaborate, and Conquer. #TulasiAI #AGI",
@@ -310,12 +203,9 @@ def seed_essential_data(engine):
                     db.add(idea)
                 db.commit()
 
-        print("✅ Essential data seeded.")
+        logger.info("Essential data seeded.")
 
 def get_session():
-    if engine is None:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=503, detail="Database engine initialization failed. Check connection.")
     try:
         with Session(engine) as session:
             yield session
@@ -329,7 +219,7 @@ def get_session():
             raise e
             
         # Log the real error for internal visibility
-        print(f"📡 Backend Error Context: {type(e).__name__} - {e}")
+        logger.error(f"Backend Error Context: {type(e).__name__} - {e}", exc_info=True)
         
         # If it's a known DB error, return 503
         if isinstance(e, SQLAlchemyError):

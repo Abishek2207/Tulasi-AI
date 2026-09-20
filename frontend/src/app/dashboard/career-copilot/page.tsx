@@ -98,7 +98,7 @@ export default function CareerCopilotPage() {
           <div style={{ padding: 32, borderRadius: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
             <h2 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 24 }}>Setup Your GPS</h2>
             
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase" }}>Current Stage</label>
                 <select value={year} onChange={e => setYear(e.target.value)}
@@ -153,7 +153,7 @@ export default function CareerCopilotPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           
           {/* Path Selector */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             {result.paths.map(path => {
                 const isActive = activePathId === path.id;
                 const isRecommended = result.recommendation === path.id;
@@ -177,7 +177,7 @@ export default function CareerCopilotPage() {
             })}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 24 }}>
+          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
             
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                 {/* Timeline / Milestones */}

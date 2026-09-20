@@ -1,0 +1,25 @@
+- [x] 1. Production database/auth foundation (PostgreSQL, Supabase)
+  - [x] Generated Alembic/SQL scripts for RLS and schema
+  - [x] Modified config to prevent silent SQLite production use
+- [x] 2. Canonical career profile
+  - [x] Unified User and Profile models safely via properties and schemas
+- [x] 3. Real market intelligence
+  - [x] SerpApi integration (`serpapi_service.py`)
+  - [x] `/api/market` endpoint
+- [ ] 4. Skill graph + skill gap
+- [ ] 5. Smart job matching
+- [ ] 6. Placement readiness
+- [ ] 7. Personalized learning + Next Best Action
+- [ ] 8. AI interviewer
+- [ ] 9. Communication Coach
+- [ ] 10. Hackathon Presentation Mode
+- [ ] 11. Professional Career Health
+- [ ] 12. Career Risk
+- [ ] 13. Career Growth/Transition
+- [ ] 14. Career Direction
+- [ ] 15. Jarvis orchestration
+- [ ] 16. Intelligent notifications
+- [x] 17. Frontend integration (Dashboard restructuring completed, internal pages pending)
+- [x] 18. Security/RLS (SQL Generated, NOT VERIFIED locally due to SQLite)
+- [ ] 19. E2E testing
+- [ ] 20. Production quality gate

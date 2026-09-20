@@ -92,7 +92,7 @@ export function MissionControl({ token }: { token: string }) {
   }
 
   // Fallback to static mission if API failed or returned no task
-  const task = data?.next_task || STATIC_MISSIONS[Math.floor(Math.random() * STATIC_MISSIONS.length)];
+  const task = data?.next_task || null;
 
   return (
     <div

@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 
 class Settings(BaseSettings):
@@ -9,13 +9,28 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days to match NextAuth
 
     # Database
-    DATABASE_URL: str = "sqlite:///./tulasi_ai.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./ai_platform.db")
 
     @property
     def normalized_database_url(self) -> str:
         """SQLAlchemy requires postgresql:// instead of postgres://.
         Supabase also requires sslmode=require for external connections."""
         url = self.DATABASE_URL
+        if "sqlite" in url:
+            print("================================================================")
+            print("WARNING: Running on SQLite instead of Supabase PostgreSQL!")
+            print("Phase 6: Production persistence, pgvector, and RLS will NOT work.")
+            print("To fix, set DATABASE_URL=postgresql://... in your environment.")
+            print("================================================================")
+            
+        # Fix relative SQLite path to absolute project root path
+        if url.startswith("sqlite:///./"):
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            db_name = url.replace("sqlite:///./", "")
+            # Ensure windows paths use forward slashes for sqlite url
+            abs_db_path = os.path.join(project_root, db_name).replace("\\", "/")
+            url = f"sqlite:///{abs_db_path}"
+            
         # Fix Heroku/Supabase shorthand URL scheme
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
@@ -41,15 +56,26 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "")
 
     # Admin
-    ADMIN_EMAIL: str = "abishekramamoorthy22@gmail.com"
+    ADMIN_EMAILS_RAW: str = os.getenv("ADMIN_EMAILS", "abishekramamoorthy22@gmail.com,abishek2207@gmail.com")
+
+    @property
+    def admin_emails(self) -> list[str]:
+        return [email.strip().lower() for email in self.ADMIN_EMAILS_RAW.split(",") if email.strip()]
 
     @property
     def effective_gemini_key(self) -> str:
         """Returns whichever Gemini API key is set (GOOGLE_API_KEY takes priority)."""
         return self.GOOGLE_API_KEY or self.GEMINI_API_KEY
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"
+    # Razorpay Settings
+    RAZORPAY_KEY_ID: str | None = None
+    RAZORPAY_KEY_SECRET: str | None = None
+    RAZORPAY_WEBHOOK_SECRET: str | None = None
+    # Razorpay Plan IDs (create once in Razorpay Dashboard; store here)
+    # If not set, the backend will auto-create them via API on first use
+    RAZORPAY_PLAN_ID_STUDENT: str | None = None
+    RAZORPAY_PLAN_ID_PROFESSIONAL: str | None = None
+
+    model_config = SettingsConfigDict(env_file=[".env", "../.env"], extra="allow")
 
 settings = Settings()

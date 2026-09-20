@@ -2,16 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from app.core.database import get_session
 from app.core.security import get_current_user
-from app.models.models import User
+from app.models.models import User, Profile
 import os
 import io
-try:
-    from PIL import Image
-except ImportError:
-    Image = None
-from fastapi import File, UploadFile
-from fastapi.responses import StreamingResponse
-
 import re
 from pydantic import BaseModel, constr
 from typing import Optional
@@ -21,33 +14,34 @@ class SetUsernameRequest(BaseModel):
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
+    avatar: Optional[str] = None
+    # Profile specific
     bio: Optional[str] = None
     skills: Optional[str] = None
-    avatar: Optional[str] = None
     department: Optional[str] = None
     target_role: Optional[str] = None
     interest_areas: Optional[str] = None
 
 router = APIRouter()
 
-
 @router.get("/me")
-def get_my_profile(current_user: User = Depends(get_current_user)):
+def get_my_profile(db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    profile = current_user.profile
     return {
         "id": current_user.id,
         "username": current_user.username,
         "email": current_user.email,
         "name": current_user.name,
-        "bio": current_user.bio,
-        "skills": current_user.skills,
         "avatar": current_user.avatar,
         "role": current_user.role,
         "is_pro": current_user.is_pro,
         "xp": current_user.xp,
         "level": current_user.level,
-        "department": current_user.department,
-        "target_role": current_user.target_role,
-        "interest_areas": current_user.interest_areas,
+        "bio": profile.career_goal if profile else None,
+        "skills": profile.current_skills if profile else None,
+        "department": profile.department if profile else None,
+        "target_role": profile.target_role if profile else None,
+        "interest_areas": profile.preferred_companies if profile else None,
     }
 
 
@@ -58,14 +52,23 @@ def update_profile(
     current_user: User = Depends(get_current_user)
 ):
     if data.name is not None: current_user.name = data.name
-    if data.bio is not None: current_user.bio = data.bio
-    if data.skills is not None: current_user.skills = data.skills
     if data.avatar is not None: current_user.avatar = data.avatar
-    if data.department is not None: current_user.department = data.department
-    if data.target_role is not None: current_user.target_role = data.target_role
-    if data.interest_areas is not None: current_user.interest_areas = data.interest_areas
-    
     db.add(current_user)
+    
+    profile = current_user.profile
+    if not profile:
+        profile = Profile(user_id=current_user.id)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+        
+    if data.bio is not None: profile.career_goal = data.bio
+    if data.skills is not None: profile.current_skills = data.skills
+    if data.department is not None: profile.department = data.department
+    if data.target_role is not None: profile.target_role = data.target_role
+    if data.interest_areas is not None: profile.preferred_companies = data.interest_areas
+    
+    db.add(profile)
     db.commit()
     db.refresh(current_user)
     
@@ -87,9 +90,8 @@ def set_username(
     username = data.username.lower().strip()
     
     if not re.match(r"^[a-z0-9_]{3,20}$", username):
-        raise HTTPException(status_code=400, detail="Username must be 3-20 characters (lowercase letters, numbers, underscores only)")
+        raise HTTPException(status_code=400, detail="Username must be 3-20 characters")
     
-    # Check if taken by ANOTHER user (not self)
     existing = db.exec(select(User).where(User.username == username)).first()
     if existing and existing.id != current_user.id:
         raise HTTPException(status_code=400, detail="Username is already taken. Try another!")
@@ -100,15 +102,12 @@ def set_username(
     db.refresh(current_user)
     return {"status": "success", "username": current_user.username}
 
-
 @router.get("/search")
 def search_users(q: str, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
     """Search for users by username or name."""
     if not q or len(q.strip()) < 1:
-        # Return full user list when search empty
         statement = select(User).where(User.id != current_user.id).limit(50)
     else:
-        # Case-insensitive search, partial matching
         statement = select(User).where(
             (User.id != current_user.id) &
             ((User.username.ilike(f"%{q}%")) | (User.name.ilike(f"%{q}%")))
@@ -116,162 +115,4 @@ def search_users(q: str, db: Session = Depends(get_session), current_user: User 
         
     users = db.exec(statement).all()
     
-    # Map following logic
-    from app.models.models import UserFollow
-    follows = db.exec(select(UserFollow).where(UserFollow.follower_id == current_user.id)).all()
-    follow_map = {f.following_id: f for f in follows}
-    
-    results = []
-    for u in users:
-        f = follow_map.get(u.id)
-        results.append({
-            "id": u.id,
-            "username": u.username,
-            "name": u.name,
-            "avatar": u.avatar,
-            "is_following": f.status == "accepted" if f else False,
-            "request_status": f.status if f else "none"
-        })
-        
-    return {"users": results}
-
-
-@router.get("/")
-def get_all_users(
-    db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
-):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
-    users = db.exec(select(User)).all()
-    return [{"id": u.id, "email": u.email, "name": u.name, "role": u.role} for u in users]
-
-
-@router.get("/referrals")
-def get_referral_stats(
-    db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
-):
-    """Returns the user's invite code and how many people have used it."""
-    if not current_user.invite_code:
-        import uuid
-        current_user.invite_code = uuid.uuid4().hex[:8].upper()
-        db.add(current_user)
-        db.commit()
-        db.refresh(current_user)
-        
-    referred_users = db.exec(
-        select(User).where(User.referred_by == current_user.invite_code)
-    ).all()
-    
-    return {
-        "invite_code": current_user.invite_code,
-        "total_referrals": len(referred_users),
-        "is_pro": True,
-        "pro_expiry_date": current_user.pro_expiry_date,
-        "referrals_needed_for_pro": 0
-    }
-
-
-@router.post("/avatar/upload")
-async def upload_avatar(
-    file: UploadFile = File(...),
-    db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Upload a profile avatar image.
-    Saves to data/avatars/<user_id>.<ext> and updates the user's avatar field.
-    Returns the public URL usable in the frontend.
-    """
-    ALLOWED_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"}
-    MAX_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
-
-    if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail="Only JPG, PNG, WebP and GIF images are allowed.")
-
-    contents = await file.read()
-    if len(contents) > MAX_SIZE_BYTES:
-        raise HTTPException(status_code=400, detail="Image must be under 5 MB.")
-
-    # Resize using Pillow if available (keeps file small)
-    if Image is not None:
-        try:
-            img = Image.open(io.BytesIO(contents)).convert("RGBA")
-            img.thumbnail((512, 512), Image.LANCZOS)
-            buf = io.BytesIO()
-            img.save(buf, format="PNG")
-            contents = buf.getvalue()
-            ext = "png"
-        except Exception:
-            ext = (file.filename or "avatar.jpg").rsplit(".", 1)[-1].lower()
-    else:
-        ext = (file.filename or "avatar.jpg").rsplit(".", 1)[-1].lower()
-
-    # Save to disk
-    avatars_dir = os.path.join("data", "avatars")
-    os.makedirs(avatars_dir, exist_ok=True)
-    filename = f"{current_user.id}.{ext}"
-    filepath = os.path.join(avatars_dir, filename)
-    with open(filepath, "wb") as f:
-        f.write(contents)
-
-    # Build the public URL — served by FastAPI's StaticFiles mount at /data
-    base_url = os.getenv("API_BASE_URL", "https://tulasi-ai-soda.onrender.com")
-    avatar_url = f"{base_url}/data/avatars/{filename}"
-
-    # Persist to DB immediately
-    current_user.avatar = avatar_url
-    db.add(current_user)
-    db.commit()
-    db.refresh(current_user)
-
-    return {"status": "success", "avatar_url": avatar_url}
-
-
-@router.post("/avatar/remove-bg")
-async def remove_avatar_bg(
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    AI-powered background removal for user avatars.
-    Converts white/near-white backgrounds to transparent.
-    """
-    if Image is None:
-        raise HTTPException(status_code=500, detail="Pillow library not installed on server.")
-    
-    try:
-        contents = await file.read()
-        img = Image.open(io.BytesIO(contents)).convert("RGBA")
-        datas = img.getdata()
-        
-        newData = []
-        for item in datas:
-            # Check if the pixel is white or near white
-            if item[0] > 235 and item[1] > 235 and item[2] > 235:
-                newData.append((255, 255, 255, 0)) # Fully transparent
-            elif item[0] > 215 and item[1] > 215 and item[2] > 215:
-                # Soft edge
-                avg = (item[0] + item[1] + item[2]) / 3
-                alpha = int(255 - ((avg - 215) / 20) * 255)
-                alpha = max(0, min(255, alpha))
-                newData.append((item[0], item[1], item[2], alpha))
-            else:
-                newData.append(item)
-                
-        img.putdata(newData)
-        
-        # Crop empty space
-        bbox = img.getbbox()
-        if bbox:
-            img = img.crop(bbox)
-            
-        img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='PNG')
-        img_byte_arr.seek(0)
-        
-        return StreamingResponse(img_byte_arr, media_type="image/png")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Image processing failed: {str(e)}")
-
+    return [{"id": u.id, "username": u.username, "name": u.name, "avatar": u.avatar} for u in users]

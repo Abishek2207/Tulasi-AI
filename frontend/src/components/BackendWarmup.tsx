@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { healthCheck } from "@/lib/api";
+import { PlatinumToast } from "./PlatinumToast";
 
 /**
  * 🔥 BackendWarmup Component
  * 
- * This is an aggressive, silent "Handshake" component designed to wake up 
+ * This is an aggressive "Handshake" component designed to wake up 
  * the Render backend as soon as the user hits the landing page.
  * 
  * It runs strictly on mount and uses a fast-retry strategy to ensure 
@@ -15,6 +16,9 @@ import { healthCheck } from "@/lib/api";
  */
 export function BackendWarmup() {
   const warmedUp = useRef(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("Awakening AI CAREER INTELLIGENCE...");
+  const [toastSubtext, setToastSubtext] = useState("Establishing high-performance link with cloud servers. Please hold.");
 
   useEffect(() => {
     if (warmedUp.current) return;
@@ -30,9 +34,21 @@ export function BackendWarmup() {
         const res = await healthCheck();
         if (res && res.status === "ok") {
           console.log("[Warmup] ✅ Backend is Awake & Optimized!");
+          
+          if (retries > 0) {
+            setToastMessage("SERVER LINK ESTABLISHED");
+            setToastSubtext("All systems go. You may proceed.");
+            setTimeout(() => setShowToast(false), 2000);
+          } else {
+            setShowToast(false);
+          }
           return;
         }
       } catch (e) {
+        if (retries === 0) {
+          setShowToast(true);
+        }
+        
         if (retries < MAX_RETRIES) {
           retries++;
           const nextDelay = INITIAL_DELAY * Math.pow(1.5, retries);
@@ -40,6 +56,8 @@ export function BackendWarmup() {
           setTimeout(wake, nextDelay);
         } else {
           console.error("[Warmup] ❌ Backend failed to wake up after multiple attempts.");
+          setToastMessage("SERVER CONNECTION TIMEOUT");
+          setToastSubtext("The cloud servers took too long to respond. Please refresh the page.");
         }
       }
     };
@@ -58,5 +76,5 @@ export function BackendWarmup() {
     return () => window.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
-  return null; // Silent & Invisible
+  return <PlatinumToast show={showToast} message={toastMessage} subtext={toastSubtext} />;
 }

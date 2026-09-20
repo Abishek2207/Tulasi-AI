@@ -60,14 +60,14 @@ class ReasoningEngine:
         Processes a query through the reasoning chain. Supports both blocking and streaming.
         """
         # 1. Prepare structured context
-        intelligence = json.loads(user.user_intelligence_profile or "{}")
-        behavior = json.loads(user.behavioral_patterns or "{}")
+        intelligence = json.loads((user.profile.user_intelligence_profile if getattr(user, "profile", None) else "{}") or "{}")
+        behavior = json.loads((user.profile.behavioral_patterns if getattr(user, "profile", None) else "{}") or "{}")
 
         user_context = {
             "user_type": user.user_type,
-            "department": user.department,
-            "target_role": user.target_role or "Software Engineer",
-            "interests": user.interest_areas,
+            "department": (user.profile.department if getattr(user, "profile", None) else ""),
+            "target_role": (user.profile.target_role if getattr(user, "profile", None) else "") or "Software Engineer",
+            "interests": (user.profile.interest_areas if getattr(user, "profile", None) else ""),
             "level": user.level,
             "xp": user.xp,
             "streak": user.streak,
@@ -243,7 +243,7 @@ class ReasoningEngine:
             if len(full_text) < 50:
                 return
 
-            current_intel = json.loads(user.user_intelligence_profile or "{}")
+            current_intel = json.loads((user.profile.user_intelligence_profile if getattr(user, "profile", None) else "{}") or "{}")
 
             # Fast keyword-based extraction (no extra AI call needed)
             text_lower = full_text.lower()
@@ -271,7 +271,8 @@ class ReasoningEngine:
                 current_intel.get("career_velocity", 50) + 1,
             )
 
-            user.user_intelligence_profile = json.dumps(current_intel)
+            if user.profile:
+                user.profile.user_intelligence_profile = json.dumps(current_intel)
             user.last_intelligence_update = datetime.utcnow()
             db.add(user)
             db.commit()

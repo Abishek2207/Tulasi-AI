@@ -12,8 +12,8 @@ import { toggleSidebar } from "@/store/slices/uiSlice";
 
 import {
   LayoutDashboard, MessageSquare, Target, Map, Rocket,
-  FileText, CreditCard, TrendingUp, Bell,
-  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2, Brain
+  FileText, CreditCard, TrendingUp, Bell, BookOpen,
+  CircleHelp, Settings, FolderKanban, LayoutTemplate, BriefcaseBusiness, Code2, Briefcase, Wand2, Brain, Award, Shield, Globe2
 } from "lucide-react";
 
 type NavItem = {
@@ -28,6 +28,7 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "AI Core Agents",
     items: [
       { icon: LayoutDashboard,    name: "Dashboard",         href: "/dashboard/student" },
+      { icon: Target,             name: "Career OS Engine",  href: "/dashboard/career-os", badge: "P3" },
       { icon: MessageSquare,      name: "Career Copilot",    href: "/dashboard/career-copilot" },
       { icon: FileText,           name: "Resume Analyzer",   href: "/dashboard/resume-analyzer" },
       { icon: Wand2,              name: "Resume Builder",    href: "/dashboard/resume-builder" },
@@ -38,13 +39,19 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: Rocket,             name: "Hackathon Agent",   href: "/dashboard/hackathon-agent" },
       { icon: LayoutTemplate,     name: "Portfolio Builder", href: "/dashboard/portfolio-builder" },
       { icon: TrendingUp,         name: "Progress Tracker",  href: "/dashboard/progress-tracker" },
+      { icon: Award,              name: "Certifications",    href: "/dashboard/certifications", badge: "AI" },
+      { icon: Target,             name: "Focus System",      href: "/dashboard/focus", badge: "AI" },
       { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
+      { icon: BookOpen,           name: "Daily Learning",    href: "/dashboard/daily-learning", badge: "AI" },
+      { icon: Brain,              name: "Neural Doc Lab",    href: "/dashboard/documents", badge: "New" },
+      { icon: Globe2,             name: "Orbit HUB",         href: "/dashboard/groups", badge: "Live" },
     ],
   },
   {
     label: "Account",
     items: [
       { icon: Bell,        name: "Notifications", href: "/dashboard/notifications" },
+      { icon: Shield,      name: "Privacy Center",href: "/dashboard/privacy" },
       { icon: CreditCard,  name: "Billing & Pro", href: "/dashboard/billing" },
     ],
   },
@@ -61,13 +68,18 @@ const PROFESSIONAL_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { icon: MessageSquare,      name: "Leadership Coach",    href: "/dashboard/leadership-coach" },
       { icon: BriefcaseBusiness,  name: "Senior Job Match",    href: "/dashboard/senior-job-match" },
       { icon: Briefcase,          name: "Offer Negotiator",    href: "/dashboard/offer-negotiator" },
+      { icon: Award,              name: "Certifications",      href: "/dashboard/certifications", badge: "AI" },
+      { icon: Target,             name: "Focus System",        href: "/dashboard/focus", badge: "AI" },
       { icon: Brain,              name: "Career Intelligence", href: "/dashboard/career-intelligence", badge: "AI" },
+      { icon: Brain,              name: "Neural Doc Lab",      href: "/dashboard/documents", badge: "New" },
+      { icon: Globe2,             name: "Orbit HUB",           href: "/dashboard/groups", badge: "Live" },
     ],
   },
   {
     label: "Account",
     items: [
       { icon: Bell,        name: "Notifications", href: "/dashboard/notifications" },
+      { icon: Shield,      name: "Privacy Center",href: "/dashboard/privacy" },
       { icon: CreditCard,  name: "Billing & Pro", href: "/dashboard/billing" },
     ],
   },
@@ -99,8 +111,8 @@ export default function Sidebar() {
   const typeStr = (userType || "").toLowerCase();
   let isProfessional = typeStr === "professional" || typeStr === "working professional";
 
-  const professionalPaths = ['/dashboard/professional', '/dashboard/system-design', '/dashboard/code-review', '/dashboard/promotion-strategist', '/dashboard/leadership-coach', '/dashboard/senior-job-match', '/dashboard/offer-negotiator'];
-  const studentPaths = ['/dashboard/student', '/dashboard/career-copilot', '/dashboard/resume-analyzer', '/dashboard/personalized-roadmap', '/dashboard/ai-interview', '/dashboard/project-builder', '/dashboard/job-internship-match', '/dashboard/hackathon-agent', '/dashboard/portfolio-builder', '/dashboard/progress-tracker'];
+  const professionalPaths = ['/dashboard/professional', '/dashboard/system-design', '/dashboard/code-review', '/dashboard/promotion-strategist', '/dashboard/leadership-coach', '/dashboard/senior-job-match', '/dashboard/offer-negotiator', '/dashboard/groups', '/dashboard/documents'];
+  const studentPaths = ['/dashboard/student', '/dashboard/career-copilot', '/dashboard/resume-analyzer', '/dashboard/personalized-roadmap', '/dashboard/ai-interview', '/dashboard/project-builder', '/dashboard/job-internship-match', '/dashboard/hackathon-agent', '/dashboard/portfolio-builder', '/dashboard/progress-tracker', '/dashboard/daily-learning', '/dashboard/groups', '/dashboard/documents'];
 
   if (professionalPaths.some(p => pathname.startsWith(p))) isProfessional = true;
   if (studentPaths.some(p => pathname.startsWith(p))) isProfessional = false;
@@ -155,6 +167,7 @@ export default function Sidebar() {
               return (
                 <motion.div key={item.href} whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
                   <Link href={item.href}
+                    aria-label={`Navigate to ${item.name}`}
                     onClick={handleLinkClick}
                     style={{
                       display: "flex", alignItems: "center", gap: 10,
