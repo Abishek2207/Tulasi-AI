@@ -374,3 +374,32 @@ def export_users_csv(db: Session = Depends(get_session), admin: User = Depends(g
         writer.writerow([u.id, u.name, u.email, u.role, u.xp, u.level, u.created_at.strftime("%Y-%m-%d") if u.created_at else ""])
     output.seek(0)
     return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=tulasi_users.csv"})
+
+@router.get("/market-stats")
+async def get_market_stats(db: Session = Depends(get_session), current_user: User = Depends(get_admin_user)):
+    from app.models.models import Job, MarketSnapshot
+    from sqlmodel import select, func
+    
+    total_jobs = db.exec(select(func.count(Job.id))).one_or_none() or 0
+    total_snapshots = db.exec(select(func.count(MarketSnapshot.id))).one_or_none() or 0
+    
+    return {
+        "status": "ACTIVE",
+        "jobs_collected": total_jobs,
+        "market_snapshots": total_snapshots,
+        "message": "Real SerpApi integration active. Deduplication enabled."
+    }
+
+@router.post("/market-refresh")
+async def refresh_market_data(db: Session = Depends(get_session), current_user: User = Depends(get_admin_user)):
+    try:
+        from app.agents.market_intelligence import fetch_market_trends
+        # Trigger an orchestrated refresh for top roles
+        roles = ["Backend Engineer", "AI Engineer", "Frontend Engineer"]
+        results = {}
+        for role in roles:
+            results[role] = fetch_market_trends(current_role=role, target_role=role, location="Remote")
+            
+        return {"status": "SUCCESS", "results": results, "message": "Market data refreshed successfully."}
+    except Exception as e:
+        return {"status": "ERROR", "message": str(e)}

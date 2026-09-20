@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlmodel import Session, select
 from typing import List, Dict, Any, Optional
@@ -54,7 +55,12 @@ def complete_focus_session(
     if not session or session.user_id != current_user.id:
         raise HTTPException(404, "Session not found")
         
+    if session.status == "completed":
+        # Idempotent return
+        return {"status": "success", "message": "Already completed"}
+        
     session.status = "completed"
+    session.completed_at = datetime.utcnow()
     db.add(session)
     
     log_activity_internal(
@@ -63,6 +69,47 @@ def complete_focus_session(
     )
     db.commit()
     return {"status": "success"}
+
+@router.get("/history")
+def get_focus_history(
+    limit: int = 10,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Returns recent focus sessions for the user."""
+    sessions = db.exec(
+        select(FocusSession)
+        .where(FocusSession.user_id == current_user.id)
+        .order_by(FocusSession.created_at.desc())
+        .limit(limit)
+    ).all()
+    return sessions
+
+@router.get("/stats")
+def get_focus_stats(
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Returns weekly focus statistics."""
+    now = datetime.utcnow()
+    start_of_week = now - timedelta(days=now.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    sessions = db.exec(
+        select(FocusSession)
+        .where(FocusSession.user_id == current_user.id)
+        .where(FocusSession.created_at >= start_of_week)
+        .where(FocusSession.status == "completed")
+    ).all()
+    
+    total_minutes = sum(s.duration_minutes for s in sessions)
+    completed_count = len(sessions)
+    
+    return {
+        "weekly_minutes": total_minutes,
+        "completed_sessions": completed_count,
+        "week_start": start_of_week.isoformat()
+    }
 
 @router.get("/game")
 def get_focus_game(

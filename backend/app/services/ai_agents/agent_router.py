@@ -169,12 +169,12 @@ class AgentRouter:
         agent = AGENTS[agent_key]
 
         # Build user context string
-        intelligence = json.loads(user.user_intelligence_profile or "{}")
+        intelligence = json.loads((user.profile.user_intelligence_profile if getattr(user, "profile", None) else "{}") or "{}")
         user_ctx = (
             f"[USER CONTEXT]\n"
             f"- Year/Stage: {user.user_type or 'student'}\n"
-            f"- Department: {user.department or 'Computer Science'}\n"
-            f"- Target Role: {user.target_role or 'Software Engineer'}\n"
+            f"- Department: {(user.profile.department if getattr(user, "profile", None) else "") or 'Computer Science'}\n"
+            f"- Target Role: {(user.profile.target_role if getattr(user, "profile", None) else "") or 'Software Engineer'}\n"
             f"- XP Level: {user.level} | XP: {user.xp}\n"
             f"- Streak: {user.streak} days\n"
             f"- Strengths: {intelligence.get('strengths', [])}\n"

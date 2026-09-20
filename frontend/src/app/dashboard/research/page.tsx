@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArrowLeft, Loader2, BookOpen, Briefcase, ChevronRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { ModelSelector } from "@/components/dashboard/ModelSelector";
+import { researchApi } from "@/lib/api";
 
 export default function DeepResearchPage() {
   const [activeTab, setActiveTab] = useState<"deep" | "career">("deep");
@@ -19,17 +20,15 @@ export default function DeepResearchPage() {
   const [targetPackage, setTargetPackage] = useState("");
   const [careerResult, setCareerResult] = useState<any>(null);
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+
   const handleDeepSearch = async () => {
     if (!question.trim() || loading) return;
     setLoading(true);
     setDeepResult(null);
     try {
-      const res = await fetch("/api/v1/research/deep", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question })
-      });
-      if (res.ok) setDeepResult(await res.json());
+      const data = await researchApi.deepResearch(question, token);
+      if (data) setDeepResult(data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -42,12 +41,8 @@ export default function DeepResearchPage() {
     setLoading(true);
     setCareerResult(null);
     try {
-      const res = await fetch("/api/v1/research/career", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_role: targetRole, target_package: targetPackage })
-      });
-      if (res.ok) setCareerResult(await res.json());
+      const data = await researchApi.careerResearch(targetRole, targetPackage, token);
+      if (data) setCareerResult(data);
     } catch (e) {
       console.error(e);
     } finally {

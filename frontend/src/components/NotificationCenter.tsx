@@ -17,13 +17,7 @@ interface Notification {
 
 const STORAGE_KEY = "tulasi_notifications_v1";
 
-const DEFAULT_NOTIFICATIONS: Notification[] = [
-  { id: "1", type: "xp", title: "+50 XP Earned", message: "You completed a Mock Interview session.", time: "2m ago", read: false, icon: "⚡" },
-  { id: "2", type: "streak", title: "🔥 3-Day Streak!", message: "Consistency is compounding. Keep going!", time: "1h ago", read: false, icon: "🔥" },
-  { id: "3", type: "achievement", title: "Achievement Unlocked", message: "First Roadmap Generated — 'AI Engineer Path'", time: "3h ago", read: false, icon: "🏆" },
-  { id: "4", type: "interview", title: "Interview Score Ready", message: "Your latest session scored 82/100 — Excellent!", time: "Yesterday", read: true, icon: "🎯" },
-  { id: "5", type: "system", title: "Welcome to Orbit!", message: "Your premium career engine is ready. Start with AI Chat.", time: "2d ago", read: true, icon: "🚀" },
-];
+const DEFAULT_NOTIFICATIONS: Notification[] = [];
 
 const TYPE_COLORS: Record<string, string> = {
   xp: "#8B5CF6",

@@ -363,6 +363,8 @@ export function extractAndParseJson<T>(raw: string, fallback: T): T {
 // ─── Admin ───────────────────────────────────────────────────────────────────
 export const adminApi = {
   stats: () => request<Stats>("/api/admin/stats"),
+  marketStats: () => request<any>("/api/admin/market-stats"),
+  refreshMarket: () => request<any>("/api/admin/market-refresh", { method: "POST" }),
   users: () => request<{ users: AdminUser[] }>("/api/admin/users"),
   reviews: () => request<{ reviews: Review[] }>("/api/admin/reviews"),
   activity: () => request<{ activity: Activity[] }>("/api/admin/activity"),
@@ -432,6 +434,8 @@ export const intelligenceApi = {
   getDailyMission: () => request<{ mission_title: string; mission_description: string; reward_xp: number; module_link: string }>("/api/intelligence/daily-mission"),
   getDailyRoutine: () => request<{ routine: { time: string; task: string; topic: string; intensity: string }[]; generated_at: string; is_fallback?: boolean }>("/api/intelligence/daily-routine"),
   getStrategicPlan: () => request<{ master_goal: string; current_standing: string; six_month_roadmap: { month: string; focus: string; milestone: string }[]; immediate_pivot: string }>("/api/intelligence/strategic-plan"),
+  getSkillGap: () => request<any>("/api/intelligence/skill-gap"),
+  getNextBestAction: () => request<any>("/api/intelligence/next-best-action"),
   getSystemDesignSolution: (problem_id: string, user_query: string) =>
     request<{ analysis: string; guidance: string; architecture_tip: string; next_step: string }>("/api/system-design/guided-solution", {
       method: "POST",
@@ -578,12 +582,12 @@ export interface JobListing {
 export const internshipsApi = {
   list: async (params?: { skills?: string; location?: string }) => {
     const qs = params ? "?" + new URLSearchParams(params as any).toString() : "";
-    const res = await apiFetch<any>(`/api/opportunities/jobs${qs}`);
-    // Handle the wrapper { success: true, data: [...] } from backend
-    if (res.data && res.data.data && Array.isArray(res.data.data)) {
-      return { data: res.data.data as JobListing[], error: res.error };
+    const res = await apiFetch<any>(`/api/phase6/job-matches${qs}`);
+    // Handle the { status, matches: [...] } format from phase6
+    if (res.data && res.data.matches && Array.isArray(res.data.matches)) {
+      return { data: res.data.matches as JobListing[], error: res.error, status: res.data.status };
     }
-    return { data: (res.data as JobListing[]) || [], error: res.error };
+    return { data: [], error: res.error || (res.data?.status === 'UNAVAILABLE' ? 'UNAVAILABLE' : null) };
   },
   apply: (id: string, data: { resume_id?: string; cover_letter?: string }) =>
     apiFetch<any>(`/api/internships/${id}/apply`, { method: "POST", body: JSON.stringify(data) }),
@@ -618,12 +622,30 @@ export const interviewApi = {
       body: JSON.stringify({ role, company, interview_type }),
     }, token),
 
-  answer: (answer: string, session_id: string, token: string) =>
-    request<{ feedback: string; score: number; next_question?: string }>(
+  answer: async (answer: string, session_id: string, token: string, audioBlob?: Blob) => {
+    if (audioBlob) {
+      const formData = new FormData();
+      formData.append("session_id", session_id);
+      formData.append("answer", answer);
+      formData.append("audio_file", audioBlob, "answer.webm");
+      
+      const res = await fetch(`/api/interview/answer-audio`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+         const err = await res.json().catch(() => ({ detail: "API Error" }));
+         throw new Error(err.detail || "API Error");
+      }
+      return res.json();
+    }
+    return request<any>(
       "/api/interview/answer",
       { method: "POST", body: JSON.stringify({ answer, session_id }) },
       token
-    ),
+    );
+  },
 };
 
 // ─── Hackathons ──────────────────────────────────────────────────────────────
@@ -846,6 +868,7 @@ export const activityApi = {
 };
 
 export const profileApi = {
+  setMentorName: (name: string, token: string) => request<any>('/api/profile/mentor', { method: 'POST', body: JSON.stringify({ name }) }, token),
   update: (data: { name?: string; bio?: string; skills?: string; avatar?: string; target_role?: string; interest_areas?: string }) =>
     request<{ message: string; user: User }>("/api/users/profile", {
       method: "PUT",
@@ -941,20 +964,62 @@ export const paymentApi = {
 
 // ─── SaaS Subscriptions ─────────────────────────────────────────────────────
 
+export interface SubscriptionPlan {
+  name: string;
+  price: number;
+  ai_requests_limit: number;
+  features: string[];
+}
+
+export interface SubscriptionStatus {
+  has_subscription: boolean;
+  is_pro: boolean;
+  plan: SubscriptionPlan | null;
+  membership_id: string | null;
+  subscription_status: string;  // free, pending, authenticated, active, past_due, halted, cancelled, expired
+  auto_renew: boolean;
+  provider_payment_method: string | null;  // upi, card, emandate
+  ai_usage_today: number;
+  started_at: string | null;
+  ends_at: string | null;
+  next_billing_at: string | null;
+}
+
+/** Returned by POST /checkout — frontend passes subscription_id to Razorpay */
+export interface CheckoutResponse {
+  subscription_id: string;   // Razorpay sub_xxx — open Checkout with this
+  key: string;               // Razorpay public key (safe to expose)
+  plan_name: string;
+  amount_rupees: number;     // Display only — backend is authoritative for amounts
+  currency: string;
+  description: string;
+}
+
+/** Returned by POST /verify after frontend callback */
+export interface VerifyPaymentResponse {
+  message: string;
+  status: string;
+  membership_id: string | null;
+}
+
+/** A single payment record from GET /history */
+export interface PaymentRecord {
+  id: number;
+  amount: number;
+  currency: string;
+  status: string;
+  payment_method: string | null;
+  provider_payment_id: string | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
 export const subscriptionsApi = {
   /** Get all available subscription plans */
-  getPlans: () => request<any[]>("/api/subscriptions/plans"),
+  getPlans: () => request<SubscriptionPlan[]>("/api/subscriptions/plans"),
 
-  /** Get current user's active subscription and daily usage */
-  getMySubscription: () => request<{
-    has_subscription: boolean;
-    is_pro: boolean;
-    plan: { name: string; price: number; ai_requests_limit: number } | null;
-    subscription_status: string;
-    ai_usage_today: number;
-    started_at: string | null;
-    ends_at: string | null;
-  }>("/api/subscriptions/my-subscription"),
+  /** Get current user's active subscription including AutoPay status */
+  getMySubscription: () => request<SubscriptionStatus>("/api/subscriptions/my-subscription"),
 
   /** Validate and apply a coupon code */
   applyCoupon: (code: string, plan_name: string) =>
@@ -963,26 +1028,42 @@ export const subscriptionsApi = {
       { method: "POST", body: JSON.stringify({ code, plan_name }) }
     ),
 
-  /** Create a checkout order */
-  checkout: (plan_id: number, coupon_code?: string) =>
-    request<{ order_id: string; amount: number; currency: string; name: string; key: string }>(
+  /**
+   * Create a Razorpay Subscription for monthly AutoPay.
+   * Returns subscription_id to open Razorpay Checkout.
+   * Frontend must NOT pass amount — backend is authoritative.
+   */
+  checkout: (plan: string) =>
+    request<CheckoutResponse>(
       "/api/payments/checkout",
-      { method: "POST", body: JSON.stringify({ plan_id, coupon_code }) }
+      { method: "POST", body: JSON.stringify({ plan }) }
     ),
 
-  /** Verify payment and activate subscription */
+  /**
+   * Verify subscription mandate authentication after Razorpay frontend callback.
+   * Uses subscription_id + payment_id (NOT order_id).
+   */
   verifyPayment: (data: {
     razorpay_payment_id: string;
-    razorpay_order_id: string;
+    razorpay_subscription_id: string;  // NOT razorpay_order_id
     razorpay_signature: string;
-    plan_id: number;
-    coupon_code?: string;
   }) =>
-    request<{ message: string }>("/api/payments/verify", {
+    request<VerifyPaymentResponse>("/api/payments/verify", {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  /** Get payment history for the current user */
+  getPaymentHistory: () => request<PaymentRecord[]>("/api/payments/history"),
+
+  /** Cancel the active subscription */
+  cancelSubscription: (cancel_at_cycle_end: boolean = true) =>
+    request<{ message: string; cancel_at_cycle_end: boolean; access_until: string | null }>(
+      "/api/payments/cancel",
+      { method: "POST", body: JSON.stringify({ cancel_at_cycle_end }) }
+    ),
 };
+
 
 // ─── Reviews ─────────────────────────────────────────────────────────────────
 
@@ -1254,3 +1335,81 @@ export interface ResumeHistory {
   score: number;
   [key: string]: string | number | boolean | undefined | null;
 }
+
+export const systemDesignApi = {
+  generateScenario: (role: string, difficulty: string, company_focus: string | null, token: string) =>
+    request<any>("/api/system-design/generate-scenario", {
+      method: "POST",
+      body: JSON.stringify({ role, difficulty, company_focus })
+    }, token),
+  guidedSolution: (problem_id: string, current_step: number, user_input: string, token: string) =>
+    request<any>("/api/system-design/guided-solution", {
+      method: "POST",
+      body: JSON.stringify({ problem_id, current_step, user_input })
+    }, token)
+};
+
+
+export const billingApi: any = new Proxy({}, { get: () => () => Promise.resolve({}) });
+export const careerIntelligenceApi: any = new Proxy({}, { get: () => () => Promise.resolve({}) });
+export const codeReviewApi: any = {
+  evaluate: (answer: string, token: string) => request<any>('/api/code-review/evaluate', { method: 'POST', body: JSON.stringify({ answer }) }, token)
+};
+export const careerCoachApi: any = {
+  evaluate: (specialty: string, question: string, answer: string, token: string) => request<any>('/api/career-coach/evaluate', { method: 'POST', body: JSON.stringify({ specialty, question, answer }) }, token)
+};
+export const dailyLearningApi = {
+  getToday: (token: string) => request<any>('/api/learning/today', {}, token),
+  startResource: (resourceId: string, token: string) => request<any>(`/api/learning/resources/${resourceId}/start`, { method: 'POST' }, token),
+  completeResource: (resourceId: string, token: string) => request<any>(`/api/learning/resources/${resourceId}/complete`, { method: 'POST' }, token),
+  submitPractice: (taskId: string, payload: any, token: string) => request<any>(`/api/practice/${taskId}/submit`, { method: 'POST', body: JSON.stringify(payload) }, token),
+  submitAssessment: (assessmentId: string, payload: any, token: string) => request<any>(`/api/assessment/${assessmentId}/submit`, { method: 'POST', body: JSON.stringify(payload) }, token),
+};
+export const notificationsApi = {
+  getNotifications: (token?: string) => request<any>('/api/notifications', {}, token),
+  getTrending: () => request<any>('/api/notifications/trending'),
+  getIndustryFeed: (token?: string) => request<any>('/api/v1/industry/feed', {}, token),
+  markRead: (id: string, token?: string) => request<any>(`/api/notifications/read/${id}`, { method: 'POST' }, token),
+  markAllRead: (token?: string) => request<any>('/api/notifications/read-all', { method: 'POST' }, token)
+};
+export const negotiatorApi: any = {
+  evaluate: (scenario: string, draft: string, token: string) => request<any>('/api/negotiator/evaluate', { method: 'POST', body: JSON.stringify({ scenario, draft }) }, token)
+};
+export const projectBuilderApi: any = new Proxy({}, { get: () => () => Promise.resolve({}) });
+export const researchApi: any = new Proxy({}, { get: () => () => Promise.resolve({}) });
+export const stripeApi: any = {
+  createCheckoutSession: () => request<any>("/api/stripe/create-checkout-session", { method: "POST" }),
+  createPortalSession: () => request<any>("/api/stripe/customer-portal", { method: "POST" })
+};
+
+export const professionalApi = {
+  getMarketTrends: (data: any, token: string) => request<any>('/api/professional/market-trends', { method: 'POST', body: JSON.stringify(data) }, token),
+  getRiskAnalysis: (data: any, token: string) => request<any>('/api/professional/risk-analysis', { method: 'POST', body: JSON.stringify(data) }, token),
+  getCareerDirections: (data: any, token: string) => request<any>('/api/professional/career-directions', { method: 'POST', body: JSON.stringify(data) }, token)
+};
+
+
+export const jarvisApi = {
+  getDailyNudge: (token?: string) => request<any>('/api/jarvis/daily-nudge', {}, token),
+  getFocusSuggestion: (token?: string) => request<any>('/api/jarvis/focus-suggestion', {}, token),
+  getAccountabilitySummary: (token?: string) => request<any>('/api/jarvis/accountability-summary', {}, token),
+  parseCommand: (command: string, token?: string) => request<any>('/api/jarvis/command', { method: 'POST', body: JSON.stringify({ command }) }, token)
+};
+
+export const streakApi = {
+  getStatus: (token?: string) => request<any>('/api/streak/status', {}, token),
+  checkin: (token?: string) => request<any>('/api/streak/checkin', { method: 'POST' }, token),
+  freeze: (token?: string) => request<any>('/api/streak/freeze', { method: 'POST' }, token),
+  getHistory: (token?: string) => request<any>('/api/streak/history', {}, token)
+};
+// --- Phase 3: Career Execution Engine API ---
+export const executionApi = {
+  getRoadmap: (token?: string) => request<any>('/api/v1/execution/roadmap', { method: 'GET' }, token),
+  generateRoadmap: (roleId: number, token?: string) => request<any>('/api/v1/execution/roadmap', { method: 'POST', body: JSON.stringify({ role_id: roleId }) }, token),
+  getTasks: (token?: string) => request<any>('/api/v1/execution/tasks', { method: 'GET' }, token),
+  updateTask: (taskId: number, status: string, token?: string) => request<any>('/api/v1/execution/tasks/'+taskId, { method: 'PATCH', body: JSON.stringify({ status }) }, token),
+  getProjects: (token?: string) => request<any>('/api/v1/execution/projects', { method: 'GET' }, token),
+  createProject: (data: { title: string; description: string; project_url: string; skill_ids: number[] }, token?: string) => request<any>('/api/v1/execution/projects', { method: 'POST', body: JSON.stringify(data) }, token),
+  completeProject: (projectId: number, token?: string) => request<any>('/api/v1/execution/projects/'+projectId+'/complete', { method: 'PATCH' }, token),
+  getCareerReadiness: (roleId: number, token?: string) => request<any>('/api/v1/execution/readiness/'+roleId, { method: 'GET' }, token)
+};

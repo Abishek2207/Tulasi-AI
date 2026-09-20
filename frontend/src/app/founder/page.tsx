@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Abishek R — Founder & CEO of TulasiAI | Tulasi AI Labs",
@@ -122,12 +123,12 @@ export default function FounderPage() {
               alignItems: "center",
             }}
           >
-            <a
+            <Link
               href="/"
               style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none" }}
             >
               TulasiAI
-            </a>
+            </Link>
             <span>/</span>
             <span style={{ color: "rgba(255,255,255,0.7)" }}>Founder</span>
           </nav>
@@ -374,7 +375,7 @@ export default function FounderPage() {
 
           {/* CTA */}
           <div style={{ textAlign: "center", paddingTop: 16 }}>
-            <a
+            <Link
               href="/"
               style={{
                 display: "inline-block",
@@ -389,8 +390,8 @@ export default function FounderPage() {
               }}
             >
               Try TulasiAI Free
-            </a>
-            <a
+            </Link>
+            <Link
               href="/about"
               style={{
                 display: "inline-block",
@@ -405,7 +406,7 @@ export default function FounderPage() {
               }}
             >
               About Page →
-            </a>
+            </Link>
           </div>
         </article>
       </main>

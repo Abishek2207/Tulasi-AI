@@ -1,0 +1,23 @@
+FROM alpine:3.19
+
+# Install supported languages and tools
+RUN apk add --no-cache \
+    python3 \
+    nodejs \
+    npm \
+    gcc \
+    g++ \
+    openjdk17 \
+    libc-dev
+
+# Create a non-root user for execution
+RUN addgroup -S sandbox && adduser -S sandbox -G sandbox
+
+# Working directory
+WORKDIR /code
+
+# Switch to non-root user
+USER sandbox
+
+# Default command (will be overridden during docker run)
+CMD ["sh"]

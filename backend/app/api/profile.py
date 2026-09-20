@@ -157,7 +157,7 @@ async def get_my_skills(
 ):
     """Get the user's tracked skills with progress percentages."""
     profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
-    if not profile or not profile.skills:
+    if not profile or not profile.current_skills:
         # Return default skills based on user_type
         # Return default skills
         default_skills = [
@@ -170,7 +170,7 @@ async def get_my_skills(
         return {"skills": default_skills, "is_default": True}
 
     try:
-        skills = json.loads(profile.skills)
+        skills = json.loads(profile.current_skills)
     except (json.JSONDecodeError, TypeError):
         skills = []
 
@@ -198,7 +198,7 @@ async def update_my_skills(
             "category": skill.category
         })
     
-    profile.skills = json.dumps(skills_data)
+    profile.current_skills = json.dumps(skills_data)
     db.commit()
     
     return {"success": True, "skills": skills_data, "total": len(skills_data)}

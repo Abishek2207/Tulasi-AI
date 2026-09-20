@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, CheckCircle, BrainCircuit, Trophy, Flame, Zap, Star, Info, X } from "lucide-react";
-import { API } from "@/lib/api";
+import { notificationsApi } from "@/lib/api";
 
 type Notification = {
   id: string;
@@ -68,11 +68,8 @@ export default function NotificationsPage() {
     const token = localStorage.getItem("token") || "";
     if (!token) { setLoading(false); return; }
 
-    fetch(`${API}/api/notifications`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    notificationsApi.getNotifications(token)
+      .then((d: any) => {
         if (d?.notifications?.length) {
           setNotifications(d.notifications);
         }
@@ -80,11 +77,8 @@ export default function NotificationsPage() {
       .catch(() => null)
       .finally(() => setLoading(false));
 
-    fetch(`${API}/api/v1/industry/feed`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    notificationsApi.getIndustryFeed(token)
+      .then((d: any) => {
         if (d?.industry_feed) {
           setIndustryFeed(d.industry_feed);
         }

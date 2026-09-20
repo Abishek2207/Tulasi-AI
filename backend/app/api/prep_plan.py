@@ -49,7 +49,7 @@ def generate_prep_plan(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    target = req.role or current_user.target_role or "Software Engineering"
+    target = req.role or (current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "Software Engineering"
     year_ctx = _year_context(current_user.user_type or "3rd_year")
     xp_ctx = f"User has {current_user.xp} platform XP and a {current_user.streak}-day streak."
 

@@ -7,6 +7,7 @@ import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
 import { TulasiLogo } from "@/components/TulasiLogo";
 import { GraduationCap, ArrowRight } from "lucide-react";
+import { profileApi } from "@/lib/api";
 
 const YEAR_INFO: Record<string, { label: string; focus: string; color: string }> = {
   "1st Year": { label: "1st Year", focus: "C/Python basics, Maths, Digital Logic, Soft Skills, College orientation", color: "#6366f1" },
@@ -55,17 +56,10 @@ export default function OnboardingPage() {
   const handleFinish = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
       const token = localStorage.getItem("token") || "";
 
       // 1. Set User Type to userType (STUDENT or PROFESSIONAL)
-      const typeRes = await fetch(`${apiUrl}/api/profile/set-user-type?user_type=${userType || "STUDENT"}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-      });
-      if (!typeRes.ok) throw new Error("Failed to set user type");
-      
-      const updatedUser = await typeRes.json();
+      const updatedUser = await profileApi.setUserType(userType || "STUDENT", token);
 
       // 2. Build Student Profile Payload
       const profilePayload = {
@@ -78,25 +72,15 @@ export default function OnboardingPage() {
         weak_areas: weakAreas,
         resume_status: resumeStatus,
         existing_projects: existingProjects,
-        daily_available_hours: dailyAvailableTime,
+        daily_available_hours: dailyAvailableTime ? parseInt(dailyAvailableTime) : 2,
         available_days: availableDays
       };
 
       // 3. Update Profile Data
-      const profRes = await fetch(`${apiUrl}/api/profile/me`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(profilePayload)
-      });
-      if (!profRes.ok) throw new Error("Failed to save profile choices");
+      await profileApi.updateExtended(profilePayload, token);
 
       // 4. Set AI Mentor Name
-      const mentorRes = await fetch(`${apiUrl}/api/profile/set-mentor-name`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ mentor_name: mentorName })
-      });
-      if (!mentorRes.ok) throw new Error("Failed to set mentor name");
+      await profileApi.setMentorName(mentorName, token);
 
       // 5. End Onboarding
       const finalUser = { ...updatedUser, is_onboarded: true };

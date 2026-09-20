@@ -24,21 +24,21 @@ class ResumeBuildRequest(BaseModel):
 @limiter.limit("5/minute")
 def build_resume(request: Request, req: ResumeBuildRequest, current_user: User = Depends(require_quota("resume_build", limit=3)), db: Session = Depends(get_session)):
     # 1. Quota Check (Mock)
-    usage = UsageLog(user_id=current_user.id, action_type="resume_build", details=f"Target: {req.target_role}")
+    usage = UsageLog(user_id=current_user.id, action_type="resume_build", details=f"Target: {(req.profile.target_role if getattr(req, "profile", None) else "")}")
     db.add(usage)
     
     # 2. Logic to build resume string using AI
     prompt = f"""
     You are an expert ATS-friendly resume writer. Please generate a highly professional, ATS-optimized resume using the provided details.
     
-    Target Role: {req.target_role}
+    Target Role: {(req.profile.target_role if getattr(req, "profile", None) else "")}
     Contact Info: {req.contact_info}
     Education: {req.education}
     Experience: {req.experience}
-    Skills: {req.skills}
+    Skills: {(req.profile.current_skills if getattr(req, "profile", None) else "")}
     Projects: {req.projects}
     
-    Format the output cleanly in Markdown. Focus on highlighting achievements with quantifiable metrics where possible. Make it tailored exactly to the {req.target_role} role.
+    Format the output cleanly in Markdown. Focus on highlighting achievements with quantifiable metrics where possible. Make it tailored exactly to the {(req.profile.target_role if getattr(req, "profile", None) else "")} role.
     """
     
     ai_response = ai_client.get_response(
@@ -52,7 +52,7 @@ def build_resume(request: Request, req: ResumeBuildRequest, current_user: User =
     resume = SavedResume(
         user_id=current_user.id,
         original_resume=resume_content,
-        job_description=req.target_role,
+        job_description=(req.profile.target_role if getattr(req, "profile", None) else ""),
         improved_resume=resume_content,
         ats_score=95, # placeholder AI score
         readability_score=95

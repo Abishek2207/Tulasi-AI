@@ -277,7 +277,7 @@ def chat(
     context_str = f"\n[Previous Context & Memory:\n{rag_context}\n]" if rag_context else ""
 
     # ── User Intelligence Context ─────────────────────────────────────────────
-    intelligence = json.loads(user.user_intelligence_profile or "{}")
+    intelligence = json.loads((user.profile.user_intelligence_profile if getattr(user, "profile", None) else "{}") or "{}")
     is_founder = bool(user.email and user.email.lower() == "abishekramamoorthy22@gmail.com")
 
     founder_context = (
@@ -347,9 +347,9 @@ def chat(
         f"{founder_context}"
         f"\n\nUSER CONTEXT: ["
         f"User Type: {user.user_type or 'student'}, "
-        f"Department: {user.department or 'Computer Science'}, "
-        f"Target Role: {user.target_role or 'Software Engineer'}, "
-        f"Interests: {user.interest_areas or 'General Tech'}, "
+        f"Department: {(user.profile.department if getattr(user, "profile", None) else "") or 'Computer Science'}, "
+        f"Target Role: {(user.profile.target_role if getattr(user, "profile", None) else "") or 'Software Engineer'}, "
+        f"Interests: {(user.profile.interest_areas if getattr(user, "profile", None) else "") or 'General Tech'}, "
         f"Level: {user.level}]"
         f"\n\nYEAR/ROLE SPECIFIC INSTRUCTION: {year_context}"
         f"{mentor_identity} "
@@ -652,7 +652,7 @@ def chat_stream(
 
     context_str = f"\n[Previous Context & Memory:\n{rag_context}\n]" if rag_context else ""
 
-    intelligence = json.loads(user.user_intelligence_profile or "{}")
+    intelligence = json.loads((user.profile.user_intelligence_profile if getattr(user, "profile", None) else "{}") or "{}")
     is_founder = bool(user.email and user.email.lower() == "abishekramamoorthy22@gmail.com")
     founder_context = (
         "FOUNDER_PROTOCOL ACTIVE: Speak directly with Abishek R (Founder & CEO of Tulasi AI). Elite mode active. "
@@ -689,7 +689,7 @@ def chat_stream(
     awareness = (
         f"IDENTITY PROTOCOL: You are Tulasi AI. Your creator, founder, and CEO is Abishek R. "
         f"Year: 2026. {founder_context}"
-        f"\nUSER CONTEXT: [Type: {user.user_type}, Target: {user.target_role or 'Software Engineer'}, Level: {user.level}]"
+        f"\nUSER CONTEXT: [Type: {user.user_type}, Target: {(user.profile.target_role if getattr(user, "profile", None) else "") or 'Software Engineer'}, Level: {user.level}]"
         f"\nYEAR/ROLE INSTRUCTION: {year_context}"
         f"{mentor_identity} "
         f"\nPROFILE: {json.dumps(intelligence)}{context_str}"

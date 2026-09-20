@@ -133,7 +133,7 @@ def generate_roadmap(
         
     # Construct input for LLM
     user_profile_data = {
-        "target_role": profile.target_role or profile.field or "Professional",
+        "target_role": (profile.profile.target_role if getattr(profile, "profile", None) else "") or profile.field or "Professional",
         "department": profile.field or "Tech",
         "interest_areas": profile.career_goal or "General",
         "user_type": profile.career_stage,

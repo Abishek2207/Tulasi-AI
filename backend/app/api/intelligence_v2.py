@@ -196,10 +196,10 @@ def get_career_gps(
 
 STUDENT PROFILE:
 - Year: {body.year} ({year_context})
-- Target Role: {body.target_role}
+- Target Role: {(body.profile.target_role if getattr(body, "profile", None) else "")}
 - {skills_context}
 
-Generate EXACTLY 3 distinct career paths to become a {body.target_role}, tailored for this student's current year.
+Generate EXACTLY 3 distinct career paths to become a {(body.profile.target_role if getattr(body, "profile", None) else "")}, tailored for this student's current year.
 
 Return ONLY valid JSON with this exact structure:
 {{
@@ -227,13 +227,13 @@ Return ONLY valid JSON with this exact structure:
   "founder_note": "<1-2 sentence personal note from Abishek R (founder of TulasiAI) to this student>"
 }}
 
-Make it highly specific to {body.target_role}. Include real resources (LeetCode, Coursera, fast.ai, etc.).
+Make it highly specific to {(body.profile.target_role if getattr(body, "profile", None) else "")}. Include real resources (LeetCode, Coursera, fast.ai, etc.).
 The 3 paths should genuinely differ in timeline and approach."""
 
     # Always return resilient AI result with high-fidelity fallback
     result = resilient_ai_response(
         prompt, 
-        fallback=_make_gps_fallback(body.target_role, body.year)
+        fallback=_make_gps_fallback((body.profile.target_role if getattr(body, "profile", None) else ""), body.year)
     )
 
 
@@ -242,7 +242,7 @@ The 3 paths should genuinely differ in timeline and approach."""
         db.add(ActivityLog(
             user_id=current_user.id,
             action_type="career_gps_generated",
-            title=f"Career GPS: {body.target_role} ({body.year})",
+            title=f"Career GPS: {(body.profile.target_role if getattr(body, "profile", None) else "")} ({body.year})",
             xp_earned=5,
         ))
         current_user.xp = (current_user.xp or 0) + 5
@@ -278,7 +278,7 @@ USER PROFILE:
 - Name: {current_user.name or "Student"}
 - XP: {current_user.xp or 0}
 - Streak: {current_user.streak or 0} days
-- Target Role: {current_user.target_role or "Software Engineer"}
+- Target Role: {(current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "Software Engineer"}
 - Year Type: {current_user.user_type or "student"}
 - Recent Activity: {activity_summary}
 
@@ -320,7 +320,7 @@ def get_next_task(
     """Single best next action for the user right now."""
     xp = current_user.xp or 0
     streak = current_user.streak or 0
-    target = current_user.target_role or "Software Engineer"
+    target = (current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "Software Engineer"
 
     if streak == 0:
         task = {"action": "Start your streak!", "href": "/dashboard/daily-challenge", "reason": "Complete the ORBIT DAILY to begin your learning streak.", "xp": 50, "icon": "\U0001f525"}
@@ -391,7 +391,7 @@ def ask_mentor(
     """Personal AI mentor that switches modes: career, technical, interview, motivation."""
 
     mode_prompts = {
-        "career": f"You are a world-class career strategist and mentor. Give direct, specific, actionable career advice. The user is targeting: {current_user.target_role or 'Software Engineering'}.",
+        "career": f"You are a world-class career strategist and mentor. Give direct, specific, actionable career advice. The user is targeting: {(current_user.profile.target_role if getattr(current_user, "profile", None) else "") or 'Software Engineering'}.",
         "technical": f"You are a Senior Engineer at Google/Meta. Give precise technical answers with code examples where relevant.",
         "interview": f"You are an expert interview coach. Give STAR-method answers.",
         "motivation": f"You are a motivational mentor.",
@@ -421,7 +421,7 @@ def rag_chat(
     system_prompt = (
         f"You are TulasiAI's AGI Mentor — a world-class Neural Career Strategist. "
         f"The user is {current_user.name or 'an engineering student'}, "
-        f"targeting: {current_user.target_role or 'Software Engineering'}. "
+        f"targeting: {(current_user.profile.target_role if getattr(current_user, "profile", None) else "") or 'Software Engineering'}. "
         f"XP: {current_user.xp or 0}, Streak: {current_user.streak or 0} days. "
         f"Give direct, specific, actionable guidance. Be concise and motivating."
     )
@@ -446,8 +446,8 @@ def get_intelligence_profile(
 ):
     """Return the user's AI intelligence profile."""
     try:
-        profile = json.loads(current_user.user_intelligence_profile or "{}")
-        patterns = json.loads(current_user.behavioral_patterns or "{}")
+        profile = json.loads((current_user.profile.user_intelligence_profile if getattr(current_user, "profile", None) else "{}") or "{}")
+        patterns = json.loads((current_user.profile.behavioral_patterns if getattr(current_user, "profile", None) else "{}") or "{}")
     except Exception:
         profile = {}
         patterns = {}
@@ -459,8 +459,8 @@ def get_intelligence_profile(
             "name": current_user.name,
             "xp": current_user.xp,
             "streak": current_user.streak,
-            "target_role": current_user.target_role,
+            "target_role": (current_user.profile.target_role if getattr(current_user, "profile", None) else ""),
             "user_type": current_user.user_type,
-            "department": current_user.department,
+            "department": (current_user.profile.department if getattr(current_user, "profile", None) else ""),
         }
     }

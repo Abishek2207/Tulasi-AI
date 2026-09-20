@@ -75,33 +75,70 @@ def get_companies(current_user: User = Depends(get_current_user)):
 def get_practice_problems(current_user: User = Depends(get_current_user)):
     return {"practice": PRACTICE}
 
+class ScenarioRequest(BaseModel):
+    role: str = "Backend Engineer"
+    difficulty: str = "Medium"
+    company_focus: Optional[str] = None
+
+@router.post("/generate-scenario")
+def generate_scenario(req: ScenarioRequest, current_user: User = Depends(get_current_user)):
+    """Dynamically generates a unique system design scenario based on the requested profile."""
+    prompt = f"""
+    You are an expert System Design interviewer. Generate a realistic and challenging system design scenario 
+    for a {req.difficulty}-level {req.role} position.
+    {"The scenario should be typical of an interview at " + req.company_focus if req.company_focus else ""}
+    
+    Return ONLY valid JSON in this format:
+    {{
+      "title": "Short title (e.g. Design Twitter)",
+      "description": "Detailed scenario description with scale requirements (e.g. 100M DAU).",
+      "solution_hints": ["3", "core", "technical concepts to consider"]
+    }}
+    """
+    
+    try:
+        from app.core.ai_client import ai_client
+        res = ai_client.get_response(prompt)
+        import re
+        match = re.search(r'\{.*\}', res, re.DOTALL)
+        if match:
+            return json.loads(match.group())
+        raise Exception("Failed to parse JSON")
+    except Exception as e:
+        print(f"⚠️ [System Design Generate Error]: {e}")
+        return {
+            "title": "Design a Distributed Rate Limiter (Fallback)",
+            "description": "Design a highly available rate limiter that can handle 10 million requests per second across a globally distributed fleet of microservices.",
+            "solution_hints": ["Token Bucket Algorithm", "Redis Cluster", "Race Conditions"]
+        }
+
 @router.post("/guided-solution")
 def get_guided_solution(req: SolutionRequest, current_user: User = Depends(get_current_user)):
     """
-    The Tulasi AI Senior Architect Mentor. 
-    Provides multi-step, technical feedback with a focus on trade-offs.
+    Stateful multi-step system design evaluation chain.
+    Evaluates: Functional Req -> Non-Functional -> API Design -> DB Schema -> High Level Arch
     """
+    # Find problem in static lists if requested by ID, else assume user_input might contain the scenario
     problem = next((p for p in PRACTICE if p["id"] == req.problem_id), None)
     if not problem:
         problem = next((p for p in COMPANY_PREP if p["id"] == req.problem_id), None)
         if problem: 
             problem = {"title": problem["question"], "description": problem["question"]}
-
-    if not problem:
-        return {"error": "Problem not found"}
+            
+    problem_title = problem['title'] if problem else req.problem_id
+    problem_desc = problem['description'] if problem else "Dynamic Scenario"
 
     prompt = f"""
-    You are a Principal Software Engineer (L7/L8) at a FAANG company. 
-    You are conducting a System Design interview for "{problem['title']}".
+    You are a Principal Software Engineer conducting a System Design interview for "{problem_title}".
     
-    Current Problem: {problem['description']}
-    Candidate's Current Step: {req.current_step} 
+    Scenario: {problem_desc}
+    Candidate's Current Phase: Phase {req.current_step} 
     Candidate Input: "{req.user_input or 'Just starting analysis'}"
     
     Your Task:
     1. Evaluate the candidate's input with ELITE architectural rigor.
     2. Identify specific logical gaps (e.g., SPOF, Bottlenecks, Data consistency issues).
-    3. Guide them to the next phase: (Functional Req -> Non-Functional -> API Design -> DB Schema -> High Level -> Component Deep Dive).
+    3. Guide them to the next phase in the standard flow (1. Requirements -> 2. Core Entities/API -> 3. High-Level Design -> 4. Deep Dive -> 5. Bottlenecks).
     4. Provide ONE "Architectural Trade-off" question (e.g., Latency vs Availability).
     
     Return ONLY JSON:
@@ -114,10 +151,8 @@ def get_guided_solution(req: SolutionRequest, current_user: User = Depends(get_c
     """
     
     try:
-        # Use robust client directly for best model
         from app.core.ai_client import ai_client
         res = ai_client.get_response(prompt, force_model="complex_reasoning")
-        
         import re
         match = re.search(r'\{.*\}', res, re.DOTALL)
         if match:
@@ -131,3 +166,4 @@ def get_guided_solution(req: SolutionRequest, current_user: User = Depends(get_c
             "architecture_tip": "Consistent hashing minimizes data movement during shard rebalancing.",
             "next_step": "Database Sharding & Replication"
         }
+
