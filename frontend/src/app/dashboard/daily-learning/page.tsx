@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
+import { dailyLearningApi } from "@/lib/api";
 import {
   BookOpen, CheckCircle2, Clock, Calendar, Zap, Play, Check, ChevronRight, AlertCircle, RefreshCw
 } from "lucide-react";
@@ -39,25 +40,22 @@ export default function DailyLearningPage() {
     }
   }, [session]);
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+
   const fetchTodayTasks = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${backendUrl}/api/v1/daily-learning/today`, {
-        headers: authHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await dailyLearningApi.getToday(token);
+      if (data) {
         setDailyData(data);
-      } else {
-        if (res.status === 404) {
-          setError("Career Intelligence Profile not found. Please complete your Career Intelligence setup first.");
-        } else {
-          setError("Failed to fetch daily learning tasks.");
-        }
       }
-    } catch (e) {
-      setError("Failed to connect to the backend. Please try again.");
+    } catch (e: any) {
+      if (e.message?.includes("404")) {
+        setError("Career Intelligence Profile not found. Please complete your Career Intelligence setup first.");
+      } else {
+        setError("Failed to fetch daily learning tasks.");
+      }
     } finally {
       setLoading(false);
     }
@@ -72,20 +70,13 @@ export default function DailyLearningPage() {
         time_spent_minutes: estimatedMinutes,
         was_adapted: false
       };
-      const res = await fetch(`${backendUrl}/api/v1/daily-learning/task/${taskId}/complete`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        // Optimistically update
-        setDailyData((prev: any) => ({
-          ...prev,
-          tasks: prev.tasks.map((t: Task) => t.id === taskId ? { ...t, status: "completed" } : t)
-        }));
-      } else {
-        alert("Failed to complete task.");
-      }
+      await dailyLearningApi.completeResource(taskId.toString(), token);
+      
+      // Optimistically update
+      setDailyData((prev: any) => ({
+        ...prev,
+        tasks: prev.tasks.map((t: Task) => t.id === taskId ? { ...t, status: "completed" } : t)
+      }));
     } catch (e) {
       alert("Error completing task.");
     } finally {

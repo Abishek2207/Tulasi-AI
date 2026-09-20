@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import AdaptiveCameraUX from "@/components/dashboard/AdaptiveCameraUX";
 import toast from "react-hot-toast";
 
-type State = "focused" | "distracted" | "low engagement" | "neutral" | "uncertain";
+type State = "focused" | "distracted" | "low engagement" | "neutral" | "uncertain" | "camera_unavailable" | "no_face_detected";
 
 export default function FocusSystemPage() {
   const router = useRouter();

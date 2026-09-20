@@ -70,7 +70,10 @@ export default function AIInterviewPage() {
   const [isRecording, setIsRecording] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
+  const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const [audioBlob, setAudioBlob] = useState<Blob | undefined>(undefined);
   const selectedType = INTERVIEW_TYPES.find(t => t.id === interviewType);
 
   useEffect(() => {
@@ -82,6 +85,20 @@ export default function AIInterviewPage() {
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [phase]);
+
+  // TTS for question
+  useEffect(() => {
+    if (currentQuestionStr && phase === "interview" && typeof window !== 'undefined') {
+      const utterance = new SpeechSynthesisUtterance(currentQuestionStr);
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.name.includes("Google") || v.name.includes("Female") || v.name.includes("Samantha"));
+      if (preferred) utterance.voice = preferred;
+      window.speechSynthesis.cancel(); 
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [currentQuestionStr, phase]);
 
   const formatTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
@@ -113,7 +130,7 @@ export default function AIInterviewPage() {
     setPhase("evaluating");
     
     try {
-        const res = await interviewApi.answer(answer, sessionId, session.user.accessToken) as any;
+        const res = await interviewApi.answer(answer, sessionId, session.user.accessToken, audioBlob) as any;
         
         // res.eval contains the per-question evaluation
         if (res.eval) {
@@ -129,6 +146,8 @@ export default function AIInterviewPage() {
         }
         
         setAnswer("");
+        setAudioBlob(undefined);
+        audioChunksRef.current = [];
     } catch (err: any) {
         toast.error(err.message || "Failed to submit answer");
         setPhase("interview");
@@ -264,7 +283,66 @@ export default function AIInterviewPage() {
               />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <button
-                  onClick={() => setIsRecording(!isRecording)}
+                  onClick={async () => {
+                    if (isRecording) {
+                      if (recognitionRef.current) recognitionRef.current.stop();
+                      if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
+                      setIsRecording(false);
+                    } else {
+                      setIsRecording(true);
+                      window.speechSynthesis.cancel();
+                      
+                      try {
+                          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                          const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                          mediaRecorderRef.current = mediaRecorder;
+                          audioChunksRef.current = [];
+                          
+                          mediaRecorder.ondataavailable = (e) => {
+                              if (e.data.size > 0) audioChunksRef.current.push(e.data);
+                          };
+                          
+                          mediaRecorder.onstop = () => {
+                              const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                              setAudioBlob(blob);
+                              stream.getTracks().forEach(t => t.stop());
+                          };
+                          
+                          mediaRecorder.start();
+                      } catch (err) {
+                          console.error("Mic access denied", err);
+                          toast.error("Microphone access denied. Only text input will be recorded.");
+                      }
+
+                      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                      if (SpeechRecognition) {
+                        const recognition = new SpeechRecognition();
+                        recognition.continuous = true;
+                        recognition.interimResults = true;
+                        recognition.onresult = (event: any) => {
+                          let finalTranscript = '';
+                          for (let i = event.resultIndex; i < event.results.length; ++i) {
+                            if (event.results[i].isFinal) {
+                              finalTranscript += event.results[i][0].transcript + ' ';
+                            }
+                          }
+                          if (finalTranscript) {
+                            setAnswer(prev => (prev + ' ' + finalTranscript).trim());
+                          }
+                        };
+                        recognition.onerror = () => setIsRecording(false);
+                        recognition.onend = () => {
+                            if (isRecording) {
+                                // Keep it running or just let it stop naturally
+                            }
+                        };
+                        recognitionRef.current = recognition;
+                        try { recognition.start(); } catch (e) {}
+                      } else {
+                        toast.error("Speech recognition not supported in this browser.");
+                      }
+                    }
+                  }}
                   style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 12, background: isRecording ? "rgba(244,63,94,0.1)" : "rgba(255,255,255,0.04)", border: `1px solid ${isRecording ? "rgba(244,63,94,0.3)" : "rgba(255,255,255,0.1)"}`, color: isRecording ? "#F43F5E" : "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
                   {isRecording ? <><MicOff size={16} /> Stop Recording</> : <><Mic size={16} /> Voice Answer</>}
                 </button>

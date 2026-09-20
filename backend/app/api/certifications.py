@@ -40,7 +40,7 @@ def recommend_certifications(
         select(CareerIntelligenceProfile).where(CareerIntelligenceProfile.user_id == current_user.id)
     ).first()
     
-    target_role = profile.target_role if profile else "Software Engineer"
+    target_role = (profile.profile.target_role if getattr(profile, "profile", None) else "") if profile else "Software Engineer"
     skills = profile.skills_json if profile else "[]"
     
     prompt = f"""You are a senior tech career coach.

@@ -93,11 +93,11 @@ def run_career_research(
 ):
     # Prepare current context
     current_exp = current_user.current_experience or "Fresher / No experience defined"
-    current_skills = current_user.skills or "No skills defined"
+    current_skills = (current_user.profile.current_skills if getattr(current_user, "profile", None) else "") or "No skills defined"
     
     prompt = f"""
     You are a Career GPS expert. The user wants to reach:
-    - Target Role: {req.target_role}
+    - Target Role: {(req.profile.target_role if getattr(req, "profile", None) else "")}
     - Target Package: {req.target_package}
     
     Their current profile is:
@@ -126,7 +126,8 @@ def run_career_research(
         data = json.loads(clean_json)
         
         # Update user's DB state to match their new goal
-        current_user.target_role = req.target_role
+        if current_user.profile:
+            current_user.profile.target_role = (req.profile.target_role if getattr(req, "profile", None) else "")
         current_user.target_package = req.target_package
         session.add(current_user)
         session.commit()

@@ -4,12 +4,13 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { AgentBadge } from "@/components/ui/AgentBadge";
-import { chatApi } from "@/lib/api";
+import { careerCoachApi } from "@/lib/api";
 import {
   Mic, Send, RefreshCw, ChevronRight, CheckCircle2,
   MessageSquare, Brain, TrendingUp, Lock,
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import toast from "react-hot-toast";
 
 const PROMPTS = [
   { id: "intro",    category: "HR",           text: "Tell me about yourself and why you chose engineering." },
@@ -21,11 +22,11 @@ const PROMPTS = [
 ];
 
 interface Feedback {
-  grammar: string;
+  tone: string;
   clarity: string;
-  confidence: number; // 0-100
+  score: number; // 0-100
   suggestions: string[];
-  overall: string;
+  verdict: string;
 }
 
 export default function CommunicationAgentPage() {
@@ -44,58 +45,25 @@ export default function CommunicationAgentPage() {
 
   const handleSubmit = async () => {
     if (!answer.trim() || loading) return;
+    if (!session?.user?.accessToken) {
+        toast.error("Please login to use this tool");
+        return;
+    }
     setLoading(true);
     setFeedback(null);
     setError(null);
 
-    const prompt = `You are an expert interview coach and communication evaluator.
-
-The candidate was asked: "${activePrompt.text}"
-
-Their answer was:
-"${answer}"
-
-Respond ONLY with a valid JSON object in this exact format:
-{
-  "grammar": "brief grammar assessment",
-  "clarity": "brief clarity/structure assessment",
-  "confidence": <number 0-100>,
-  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
-  "overall": "one sentence overall verdict"
-}`;
-
     try {
-      const res = await chatApi.send(prompt, "communication_feedback");
-
-      // chatApi.send returns {response, session_id, model_used} — check for response field
-      const rawText: string =
-        (res as any)?.data?.response ??
-        (res as any)?.response ??
-        (typeof res === "string" ? res : "");
-
-      if (!rawText) {
-        setError("Could not get feedback. Please try again.");
+      const parsed = await careerCoachApi.evaluate("communication", activePrompt.text, answer, session.user.accessToken);
+      if (parsed && typeof parsed.score === "number") {
+          setFeedback(parsed);
+          setHistory(prev => [{ prompt: activePrompt.text.slice(0, 40) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
       } else {
-        try {
-          const match = rawText.match(/\{[\s\S]*\}/);
-          if (match) {
-            const parsed: Feedback = JSON.parse(match[0]);
-            setFeedback(parsed);
-            setHistory(prev => [
-              { prompt: activePrompt.text.slice(0, 50) + "…", score: parsed.confidence },
-              ...prev.slice(0, 4),
-            ]);
-          } else {
-            setError("Could not parse AI feedback. Try again.");
-          }
-        } catch {
-          setError("Could not parse AI feedback. Try again.");
-        }
+          setError("Could not get a valid response from the server.");
       }
     } catch (err: any) {
       setError(err?.message || "Could not get feedback. Please try again.");
     }
-
     setLoading(false);
   };
 
@@ -226,18 +194,18 @@ Respond ONLY with a valid JSON object in this exact format:
             {feedback && (
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 style={{ padding: 28, borderRadius: 24, background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.18)", display: "flex", flexDirection: "column", gap: 18 }}>
-                {/* Confidence Score */}
+                {/* Score */}
                 <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 42, fontWeight: 900, color: feedback.confidence >= 70 ? "#10B981" : feedback.confidence >= 45 ? "#F59E0B" : "#F43F5E" }}>
-                      {feedback.confidence}
+                    <div style={{ fontSize: 42, fontWeight: 900, color: feedback.score >= 70 ? "#10B981" : feedback.score >= 45 ? "#F59E0B" : "#F43F5E" }}>
+                      {feedback.score}
                     </div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, marginTop: 2 }}>CONFIDENCE</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, marginTop: 2 }}>SCORE</div>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, color: "white", fontWeight: 600, marginBottom: 8 }}>{feedback.overall}</div>
+                    <div style={{ fontSize: 14, color: "white", fontWeight: 600, marginBottom: 8 }}>{feedback.verdict}</div>
                     <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 6 }}>
-                      <div style={{ height: "100%", width: `${feedback.confidence}%`, borderRadius: 6, background: feedback.confidence >= 70 ? "#10B981" : feedback.confidence >= 45 ? "#F59E0B" : "#F43F5E", transition: "width 0.6s ease" }} />
+                      <div style={{ height: "100%", width: `${feedback.score}%`, borderRadius: 6, background: feedback.score >= 70 ? "#10B981" : feedback.score >= 45 ? "#F59E0B" : "#F43F5E", transition: "width 0.6s ease" }} />
                     </div>
                   </div>
                 </div>
@@ -245,7 +213,7 @@ Respond ONLY with a valid JSON object in this exact format:
                 {/* Detail Cards */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   {[
-                    { label: "Grammar",  val: feedback.grammar,  color: "#3B82F6" },
+                    { label: "Tone",  val: feedback.tone,  color: "#3B82F6" },
                     { label: "Clarity",  val: feedback.clarity,  color: "#A78BFA" },
                   ].map(c => (
                     <div key={c.label} style={{ padding: "14px 16px", borderRadius: 14, background: `${c.color}08`, border: `1px solid ${c.color}20` }}>

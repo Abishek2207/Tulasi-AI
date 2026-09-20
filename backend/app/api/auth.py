@@ -141,22 +141,31 @@ def login(request: Request, req: LoginRequest, background_tasks: BackgroundTasks
     if not req.email or not req.password:
         raise HTTPException(status_code=400, detail="Email and password are required")
         
-    query = select(User).where(User.email == req.email)
+    email_or_id = req.email.strip()
+    
     try:
-        result = db.exec(query)
-        user = result.first()
+        if email_or_id.upper().startswith("TUL-"):
+            from app.models.models import Subscription
+            sub = db.exec(select(Subscription).where(Subscription.membership_id == email_or_id.upper())).first()
+            if not sub:
+                raise HTTPException(status_code=401, detail="Invalid Member ID or password")
+            user = db.exec(select(User).where(User.id == sub.user_id)).first()
+        else:
+            query = select(User).where(User.email == email_or_id.lower())
+            result = db.exec(query)
+            user = result.first()
     except Exception as e:
         print(f"Login DB error: {e}")
         raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Invalid email/ID or password")
 
     # Streak and last activity are now handled centrally by log_activity_internal below.
 
     # ── Auto-elevate to admin if email matches ─────────────────────────
     needs_commit = False
-    if user.email.lower() in settings.admin_emails and user.role != "admin":
+    if user.email and user.email.lower() in settings.admin_emails and user.role != "admin":
         user.role = "admin"
         db.add(user)
         needs_commit = True
@@ -193,8 +202,8 @@ def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "name": current_user.name,
         "username": current_user.username,
-        "bio": current_user.bio or "",
-        "skills": current_user.skills or "",
+        "bio": (current_user.profile.bio if getattr(current_user, "profile", None) else "") or "",
+        "skills": (current_user.profile.current_skills if getattr(current_user, "profile", None) else "") or "",
         "role": current_user.role,
         "avatar": current_user.avatar,
         "streak": current_user.streak,
@@ -207,9 +216,9 @@ def get_me(current_user: User = Depends(get_current_user)):
         "pro_expiry_date": "Unlimited Lifetime Access",
         "user_type": getattr(current_user, "user_type", "student") or "student",
         "is_onboarded": getattr(current_user, "is_onboarded", False) or False,
-        "department": current_user.department,
-        "target_role": current_user.target_role,
-        "interest_areas": current_user.interest_areas,
+        "department": (current_user.profile.department if getattr(current_user, "profile", None) else ""),
+        "target_role": (current_user.profile.target_role if getattr(current_user, "profile", None) else ""),
+        "interest_areas": (current_user.profile.interest_areas if getattr(current_user, "profile", None) else ""),
     }
 
 

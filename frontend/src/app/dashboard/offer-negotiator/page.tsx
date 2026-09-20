@@ -4,12 +4,13 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { AgentBadge } from "@/components/ui/AgentBadge";
-import { chatApi } from "@/lib/api";
+import { negotiatorApi } from "@/lib/api";
 import {
   Banknote, Send, RefreshCw, ChevronRight, CheckCircle2,
   Lock, ArrowUpRight
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import toast from "react-hot-toast";
 
 const PROMPTS = [
   { id: "lowball",   category: "Low Offer",  text: "You just received a senior engineering offer for 150k, but you were expecting 180k. Write your counter email." },
@@ -41,46 +42,21 @@ export default function OfferNegotiatorPage() {
 
   const handleSubmit = async () => {
     if (!answer.trim() || loading) return;
+    if (!session?.user?.accessToken) {
+        toast.error("Please login to use Offer Negotiator");
+        return;
+    }
     setLoading(true);
     setFeedback(null);
     setError(null);
 
-    const prompt = `You are an expert Tech Salary Negotiator.
-
-The user is dealing with this negotiation scenario: "${activePrompt.text}"
-
-Their draft response to the recruiter/hiring manager is:
-"${answer}"
-
-Analyze the draft for leverage utilization, professionalism, and likelihood of success.
-Respond ONLY with a valid JSON object in this exact format:
-{
-  "leverage": "brief assessment of how well they used their leverage/position",
-  "professionalism": "brief assessment of tone (collaborative vs combative)",
-  "score": <number 0-100 representing negotiation strength>,
-  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
-  "verdict": "one sentence overall assessment"
-}`;
-
     try {
-      const res = await chatApi.send(prompt, undefined, "negotiation_feedback");
-      const rawText: string = (res as any)?.data?.response ?? (res as any)?.response ?? (typeof res === "string" ? res : "");
-
-      if (!rawText) {
-        setError("Could not get feedback. Please try again.");
+      const parsed = await negotiatorApi.evaluate(activePrompt.text, answer, session.user.accessToken);
+      if (parsed && typeof parsed.score === "number") {
+          setFeedback(parsed);
+          setHistory(prev => [{ prompt: activePrompt.text.slice(0, 40) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
       } else {
-        try {
-          const match = rawText.match(/\{[\s\S]*\}/);
-          if (match) {
-            const parsed: Feedback = JSON.parse(match[0]);
-            setFeedback(parsed);
-            setHistory(prev => [{ prompt: activePrompt.text.slice(0, 40) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
-          } else {
-            setError("Could not parse AI feedback. Try again.");
-          }
-        } catch {
-          setError("Could not parse AI feedback. Try again.");
-        }
+          setError("Could not get a valid response from the server.");
       }
     } catch (err: any) {
       setError(err?.message || "Could not get feedback. Please try again.");

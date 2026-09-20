@@ -4,12 +4,13 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { AgentBadge } from "@/components/ui/AgentBadge";
-import { chatApi } from "@/lib/api";
+import { careerCoachApi } from "@/lib/api";
 import {
   Users, Send, RefreshCw, ChevronRight, CheckCircle2,
   Lock, Crown
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import toast from "react-hot-toast";
 
 const PROMPTS = [
   { id: "conflict", category: "Conflict",   text: "Two of your senior engineers strongly disagree on the architecture for a new service. How do you resolve this?" },
@@ -41,46 +42,21 @@ export default function LeadershipCoachPage() {
 
   const handleSubmit = async () => {
     if (!answer.trim() || loading) return;
+    if (!session?.user?.accessToken) {
+        toast.error("Please login to use this tool");
+        return;
+    }
     setLoading(true);
     setFeedback(null);
     setError(null);
 
-    const prompt = `You are an expert Engineering Manager Coach.
-
-The user was given this management scenario: "${activePrompt.text}"
-
-Their response/handling is:
-"${answer}"
-
-Analyze for empathy, leadership effectiveness, and practical outcome.
-Respond ONLY with a valid JSON object in this exact format:
-{
-  "empathy": "brief assessment of emotional intelligence and team care",
-  "effectiveness": "brief assessment of problem resolution and stakeholder management",
-  "score": <number 0-100 representing leadership quality>,
-  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
-  "verdict": "one sentence overall assessment"
-}`;
-
     try {
-      const res = await chatApi.send(prompt, "leadership_feedback");
-      const rawText: string = (res as any)?.data?.response ?? (res as any)?.response ?? (typeof res === "string" ? res : "");
-
-      if (!rawText) {
-        setError("Could not get feedback. Please try again.");
+      const parsed = await careerCoachApi.evaluate("leadership", activePrompt.text, answer, session.user.accessToken);
+      if (parsed && typeof parsed.score === "number") {
+          setFeedback(parsed);
+          setHistory(prev => [{ prompt: activePrompt.text.slice(0, 40) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
       } else {
-        try {
-          const match = rawText.match(/\{[\s\S]*\}/);
-          if (match) {
-            const parsed: Feedback = JSON.parse(match[0]);
-            setFeedback(parsed);
-            setHistory(prev => [{ prompt: activePrompt.text.slice(0, 40) + "…", score: parsed.score }, ...prev.slice(0, 4)]);
-          } else {
-            setError("Could not parse AI feedback. Try again.");
-          }
-        } catch {
-          setError("Could not parse AI feedback. Try again.");
-        }
+          setError("Could not get a valid response from the server.");
       }
     } catch (err: any) {
       setError(err?.message || "Could not get feedback. Please try again.");

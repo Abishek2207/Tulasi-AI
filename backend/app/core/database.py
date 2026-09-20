@@ -30,6 +30,25 @@ except Exception as e:
 
 # Alembic now handles migrations.
 
+from sqlalchemy import event
+from sqlalchemy.orm import Session as SQLAlchemySession
+from sqlalchemy.sql import text
+
+@event.listens_for(SQLAlchemySession, "after_begin")
+def set_rls_context(session, transaction, connection):
+    """
+    Automatically inject the authenticated user's ID into the PostgreSQL transaction 
+    context so RLS policies can evaluate current_app_user().
+    Also drops BYPASSRLS privileges by assuming the authenticated role.
+    """
+    user_id = session.info.get("current_user_id")
+    if user_id is not None:
+        # Drop superuser/bypassrls privileges for this transaction
+        connection.execute(text("SET LOCAL ROLE authenticated"))
+        connection.execute(
+            text("SELECT set_config('app.current_user_id', :uid, true)"),
+            {"uid": str(user_id)}
+        )
 
 def init_db():
     import time
@@ -46,8 +65,11 @@ def init_db():
         ChatMessage, ChatSession, Certificate, PersistentInterviewSession,
         Internship, PrepPlan, Announcement, InviteCode, DailyChallenge,
         DailyChallengeSubmission, MentorInsight,
-        SubscriptionPlan, UserSubscription, Payment, Coupon, CouponRedemption,
-        ATSReport, UsageLog, AdminLog
+        Subscription, Payment, Coupon, CouponRedemption,
+        ATSReport, UsageLog, AdminLog, Goal, Skill, SkillAssessment,
+        SkillMastery, RevisionSchedule, DocumentTopic, Document, DocumentChunk,
+        LearningPlan, DailyTask, TaskCompletion, LearningSession,
+        FocusSession, IndustryUpdate, Job, MarketSnapshot, Profile, Notification
     )
     
     max_retries = 3
@@ -63,8 +85,9 @@ def init_db():
             logger.info("Database connection established.")
 
             # 2. Create tables if they don't exist (Validates users, sessions, etc.)
-            SQLModel.metadata.create_all(engine)
-            logger.info("Required tables validated/created.")
+            # SQLModel.metadata.create_all(engine) removed.
+            # Alembic is exclusively authoritative for schema management.
+            logger.info("Database connection validated.")
             
             # Alembic is now handling schema sync and migrations.
             # 3. Seed essential data (Groups, Hackathons, Reviews)

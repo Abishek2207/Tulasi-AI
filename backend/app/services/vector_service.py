@@ -1,6 +1,6 @@
 import os
 import json
-import numpy as np
+
 try:
     import faiss
 except ImportError:
@@ -50,7 +50,7 @@ class VectorService:
         chunk = UserMemoryChunk(
             user_id=user_id, 
             content=text, 
-            embedding_json=json.dumps(vector)
+            embedding=json.dumps(vector)
         )
         db.add(chunk)
         db.commit()
@@ -77,70 +77,64 @@ class VectorService:
             embeddings = [self._get_model().encode(t).tolist() for t in texts]
 
         for i, text in enumerate(texts):
-            chunk = UserMemoryChunk(user_id=user_id, content=text, embedding_json=json.dumps(embeddings[i]))
+            chunk = UserMemoryChunk(user_id=user_id, content=text, embedding=json.dumps(embeddings[i]))
             db.add(chunk)
         db.commit()
 
     def retrieve_context(self, user_id: int, query: str, db: Session, top_k: int = 3) -> str:
         """Retrieves top_k relevant memory chunks for the user."""
-        if not faiss:
+        query_vec = self.embed_documents(query)
+        if not query_vec:
             return ""
 
-        chunks = db.exec(select(UserMemoryChunk).where(UserMemoryChunk.user_id == user_id)).all()
-        if not chunks:
-            return ""
-        
-        # Build ephemeral FAISS index for this user
-        vectors = []
-        valid_chunks = []
-        for c in chunks:
-            try:
-                v = json.loads(c.embedding_json)
-                if isinstance(v, list) and len(v) > 0:
-                    vectors.append(v)
-                    valid_chunks.append(c)
-            except Exception:
-                pass
-        
-        if not vectors:
-            return ""
-
-        # Ensure all vectors have the same dimension before creating the array
-        dim = len(vectors[0])
-        consistent_vectors = []
-        consistent_chunks = []
-        for i, v in enumerate(vectors):
-            if len(v) == dim:
-                consistent_vectors.append(v)
-                consistent_chunks.append(valid_chunks[i])
-        
-        if not consistent_vectors:
-            return ""
-
-        vectors_np = np.array(consistent_vectors).astype('float32')
-        index = faiss.IndexFlatL2(dim)
-        index.add(vectors_np)
+        from app.core.database import is_sqlite
         
         try:
-            query_vec = self.embed_documents(query)
-            if not query_vec or len(query_vec) != dim:
-                print(f"Query vector dimension mismatch ({len(query_vec) if query_vec else 0} vs {dim}). Skipping context.")
-                return ""
-            
-            query_np = np.array([query_vec]).astype('float32')
-            
-            # Prevent out-of-bounds error if less chunks than top_k
-            k = min(top_k, len(consistent_chunks))
-            distances, indices = index.search(query_np, k)
-            
-            context_parts = []
-            for idx in indices[0]:
-                if 0 <= idx < len(consistent_chunks):
-                    context_parts.append(consistent_chunks[idx].content)
-            
-            return "\n---\n".join(context_parts)
+            if is_sqlite:
+                chunks = db.exec(select(UserMemoryChunk).where(UserMemoryChunk.user_id == user_id)).all()
+                if not chunks:
+                    return ""
+                
+                import numpy as np
+                valid_chunks = []
+                vectors = []
+                for c in chunks:
+                    if c.embedding:
+                        try:
+                            v = json.loads(c.embedding)
+                            if isinstance(v, list) and len(v) > 0:
+                                vectors.append(v)
+                                valid_chunks.append(c)
+                        except Exception:
+                            pass
+                
+                if not vectors:
+                    return ""
+
+                vecs_np = np.array(vectors)
+                q_np = np.array(query_vec)
+                norms_v = np.linalg.norm(vecs_np, axis=1)
+                norm_q = np.linalg.norm(q_np)
+                norms_v[norms_v == 0] = 1e-9
+                if norm_q == 0: norm_q = 1e-9
+                similarities = np.dot(vecs_np, q_np) / (norms_v * norm_q)
+                
+                top_k_idx = similarities.argsort()[-top_k:][::-1]
+                
+                context_parts = []
+                for i in top_k_idx:
+                    if similarities[i] > 0.3:
+                        context_parts.append(valid_chunks[i].content)
+                return "\n".join(context_parts)
+            else:
+                q = select(UserMemoryChunk).where(UserMemoryChunk.user_id == user_id)
+                q = q.order_by(UserMemoryChunk.embedding.cosine_distance(query_vec)).limit(top_k)
+                top_chunks = db.exec(q).all()
+                if not top_chunks:
+                    return ""
+                return "\n".join([c.content for c in top_chunks])
         except Exception as e:
-            print(f"FAISS search failed: {e}")
+            print(f"Context retrieval failed: {e}")
             return ""
 
     def update_user_intelligence(self, user_id: int, interaction: str, db: Session):
@@ -152,7 +146,7 @@ class VectorService:
         user = db.get(User, user_id)
         if not user: return
 
-        current_profile = json.loads(user.user_intelligence_profile or "{}")
+        current_profile = json.loads((user.profile.user_intelligence_profile if getattr(user, "profile", None) else "{}") or "{}")
         
         prompt = f"""
         Analyze this interaction and extract key user intelligence (technical skills, career goals, strengths, or knowledge gaps).
@@ -183,7 +177,8 @@ class VectorService:
                     "gaps": list(set((current_profile.get("gaps", []) + new_profile.get("gaps", []))[-10:])),
                     "sentiment": new_profile.get("sentiment", "neutral")
                 }
-                user.user_intelligence_profile = json.dumps(combined)
+                if user.profile:
+                    user.profile.user_intelligence_profile = json.dumps(combined)
                 from datetime import datetime
                 user.last_intelligence_update = datetime.utcnow()
                 db.add(user)

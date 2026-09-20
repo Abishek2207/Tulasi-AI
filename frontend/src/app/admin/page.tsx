@@ -16,7 +16,7 @@ import { API_URL, adminApi, Stats, AdminUser, Review, Activity, LeaderboardEntry
   RetentionData, HeatmapData, LiveUsers,
 } from "@/lib/api";
 
-type Tab = "overview" | "metrics" | "users" | "reviews" | "activity" | "leaderboard" | "code" | "chat" | "hackathons" | "revenue" | "health" | "tools" | "internships";
+type Tab = "overview" | "metrics" | "users" | "reviews" | "activity" | "leaderboard" | "code" | "chat" | "hackathons" | "revenue" | "health" | "tools" | "internships" | "market";
 
 const fmt = (d?: string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 const fmtDT = (d?: string | null) => d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -41,6 +41,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "tools",       label: "Admin Tools",    icon: "🛠️" },
   { id: "internships", label: "Internships",    icon: "💼" },
   { id: "health",      label: "System Health",  icon: "🩺" },
+  { id: "market",      label: "Market Intelligence",  icon: "🌐" },
 ];
 
 const rankColor = (r: number) => r === 1 ? "#FFD700" : r === 2 ? "#C0C0C0" : r === 3 ? "#CD7F32" : r <= 10 ? "#8B5CF6" : "var(--text-muted)";
@@ -157,7 +158,7 @@ export default function AdminPage() {
       const [u, r, s, a, lb, ca, cha, hk, an, rev] = await Promise.allSettled([
         adminApi.users(), adminApi.reviews(), adminApi.stats(), adminApi.activity(),
         adminApi.leaderboard(), adminApi.code(), adminApi.chat(), adminApi.hackathons(),
-        adminApi.analytics(), adminApi.revenue(),
+        adminApi.analytics(), adminApi.revenue(), adminApi.marketStats(),
       ]);
       if (u.status === "fulfilled") setUsers(u.value.users);
       if (r.status === "fulfilled") setReviews(r.value.reviews);

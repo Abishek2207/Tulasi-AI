@@ -16,6 +16,13 @@ class Settings(BaseSettings):
         """SQLAlchemy requires postgresql:// instead of postgres://.
         Supabase also requires sslmode=require for external connections."""
         url = self.DATABASE_URL
+        if "sqlite" in url:
+            print("================================================================")
+            print("WARNING: Running on SQLite instead of Supabase PostgreSQL!")
+            print("Phase 6: Production persistence, pgvector, and RLS will NOT work.")
+            print("To fix, set DATABASE_URL=postgresql://... in your environment.")
+            print("================================================================")
+            
         # Fix relative SQLite path to absolute project root path
         if url.startswith("sqlite:///./"):
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -59,6 +66,15 @@ class Settings(BaseSettings):
     def effective_gemini_key(self) -> str:
         """Returns whichever Gemini API key is set (GOOGLE_API_KEY takes priority)."""
         return self.GOOGLE_API_KEY or self.GEMINI_API_KEY
+
+    # Razorpay Settings
+    RAZORPAY_KEY_ID: str | None = None
+    RAZORPAY_KEY_SECRET: str | None = None
+    RAZORPAY_WEBHOOK_SECRET: str | None = None
+    # Razorpay Plan IDs (create once in Razorpay Dashboard; store here)
+    # If not set, the backend will auto-create them via API on first use
+    RAZORPAY_PLAN_ID_STUDENT: str | None = None
+    RAZORPAY_PLAN_ID_PROFESSIONAL: str | None = None
 
     model_config = SettingsConfigDict(env_file=[".env", "../.env"], extra="allow")
 

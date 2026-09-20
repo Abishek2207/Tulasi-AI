@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Camera, CameraOff, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaceLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 
-type State = "focused" | "distracted" | "low engagement" | "neutral" | "uncertain";
+type State = "focused" | "distracted" | "low engagement" | "neutral" | "uncertain" | "camera_unavailable" | "no_face_detected";
 
 interface AdaptiveCameraUXProps {
   onStateChange: (state: State) => void;
@@ -16,31 +17,104 @@ export default function AdaptiveCameraUX({ onStateChange }: AdaptiveCameraUXProp
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentState, setCurrentState] = useState<State>("uncertain");
   const [showPrompt, setShowPrompt] = useState(true);
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
+  
+  const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
+  const isPredictingRef = useRef<boolean>(false);
+  const animationRef = useRef<number>(0);
 
-  // Attach stream to video element
+  // Initialize MediaPipe
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
+    async function initModel() {
+      try {
+        const filesetResolver = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+        );
+        const faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+            delegate: "GPU"
+          },
+          outputFaceBlendshapes: false,
+          runningMode: "VIDEO",
+          numFaces: 1
+        });
+        faceLandmarkerRef.current = faceLandmarker;
+        setIsModelLoaded(true);
+      } catch (err) {
+        console.error("Failed to load FaceLandmarker", err);
+      }
     }
-  }, [stream]);
+    initModel();
+    return () => {
+      if (faceLandmarkerRef.current) {
+        faceLandmarkerRef.current.close();
+      }
+    };
+  }, []);
 
-  // Simulated ML State Detection
+  const updateState = useCallback((newState: State) => {
+    setCurrentState(prev => {
+      if (prev !== newState) {
+        onStateChange(newState);
+      }
+      return newState;
+    });
+  }, [onStateChange]);
+
   useEffect(() => {
-    if (!stream) return;
+    let animationFrameId: number;
+    let isActive = true;
+
+    const predictWebcam = async () => {
+      if (!videoRef.current || !faceLandmarkerRef.current || !stream || !isActive) return;
+      
+      const video = videoRef.current;
+      
+      if (video.readyState >= 2) {
+        const startTimeMs = performance.now();
+        try {
+          const results = faceLandmarkerRef.current.detectForVideo(video, startTimeMs);
+          if (results.faceLandmarks && results.faceLandmarks.length > 0) {
+            const landmarks = results.faceLandmarks[0];
+            const nose = landmarks[1];
+            const leftCheek = landmarks[234];
+            const rightCheek = landmarks[454];
+            
+            const leftDist = nose.x - leftCheek.x;
+            const rightDist = rightCheek.x - nose.x;
+            const ratio = leftDist / rightDist;
+            
+            if (ratio > 2.5 || ratio < 0.4) {
+              updateState("low engagement");
+            } else {
+              updateState("focused");
+            }
+          } else {
+            updateState("no_face_detected");
+          }
+        } catch (e) {
+          console.error("Inference error:", e);
+        }
+      }
+      
+      if (isActive) {
+        animationFrameId = window.requestAnimationFrame(predictWebcam);
+      }
+    };
+
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.onloadeddata = () => {
+        if (isActive) predictWebcam();
+      };
+    }
     
-    // Start with focused
-    setCurrentState("focused");
-    onStateChange("focused");
-
-    const interval = setInterval(() => {
-      const states: State[] = ["focused", "focused", "focused", "distracted", "low engagement", "neutral"];
-      const randomState = states[Math.floor(Math.random() * states.length)];
-      setCurrentState(randomState);
-      onStateChange(randomState);
-    }, 15000); // Change state every 15 seconds randomly
-
-    return () => clearInterval(interval);
-  }, [stream, onStateChange]);
+    return () => {
+      isActive = false;
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [stream, updateState]);
 
   const requestCamera = async () => {
     try {
@@ -48,9 +122,11 @@ export default function AdaptiveCameraUX({ onStateChange }: AdaptiveCameraUXProp
       setStream(mediaStream);
       setHasPermission(true);
       setShowPrompt(false);
+      updateState("uncertain");
     } catch (err) {
       console.error("Camera access denied", err);
       setHasPermission(false);
+      updateState("camera_unavailable");
     }
   };
 
@@ -59,9 +135,23 @@ export default function AdaptiveCameraUX({ onStateChange }: AdaptiveCameraUXProp
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
+    isPredictingRef.current = false;
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    
     setHasPermission(null);
-    setCurrentState("uncertain");
+    updateState("uncertain");
     setShowPrompt(true);
+  };
+
+  const getStateColor = (state: State) => {
+    switch (state) {
+      case "focused": return "#10b981";
+      case "distracted": return "#ef4444";
+      case "low engagement": return "#f59e0b";
+      case "no_face_detected": return "#f43f5e";
+      case "camera_unavailable": return "#6b7280";
+      default: return "#818cf8";
+    }
   };
 
   return (
@@ -69,12 +159,12 @@ export default function AdaptiveCameraUX({ onStateChange }: AdaptiveCameraUXProp
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Camera size={20} color="#818cf8" />
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>Adaptive UX Vision</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 600 }}>Adaptive UX Vision (MediaPipe)</h3>
         </div>
         {stream && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, textTransform: "uppercase", fontWeight: 600, color: currentState === "focused" ? "#10b981" : currentState === "distracted" ? "#ef4444" : "#f59e0b" }}>
-              {currentState}
+            <span style={{ fontSize: 12, textTransform: "uppercase", fontWeight: 600, color: getStateColor(currentState) }}>
+              {currentState.replace("_", " ")}
             </span>
             <button onClick={stopCamera} style={{ background: "rgba(239, 68, 68, 0.1)", border: "none", color: "#ef4444", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
               Stop Camera
@@ -89,15 +179,16 @@ export default function AdaptiveCameraUX({ onStateChange }: AdaptiveCameraUXProp
             <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
               <AlertCircle size={24} color="#f59e0b" style={{ flexShrink: 0 }} />
               <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.5 }}>
-                <strong>Camera access is optional.</strong> TulasiAI can use local visual signals to adapt your learning experience. Camera frames are processed locally where technically possible and are not stored by default.
+                <strong>Camera access is optional.</strong> TulasiAI uses MediaPipe to process frames locally and estimate head pose. No frames or biometric data are recorded or sent to servers.
               </p>
             </div>
             
             <button 
               onClick={requestCamera}
-              style={{ background: "#4F46E5", border: "none", color: "white", padding: "10px 20px", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+              disabled={!isModelLoaded}
+              style={{ background: isModelLoaded ? "#4F46E5" : "#4b5563", border: "none", color: "white", padding: "10px 20px", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: isModelLoaded ? "pointer" : "not-allowed" }}
             >
-              Enable Local Processing
+              {isModelLoaded ? "Enable Local Inference" : "Loading Model..."}
             </button>
             {hasPermission === false && (
               <p style={{ color: "#ef4444", fontSize: 13, marginTop: 12, margin: 0 }}>Permission denied. Check browser settings.</p>

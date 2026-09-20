@@ -77,7 +77,7 @@ async def generate_portfolio(data: PortfolioInput, current_user: User = Depends(
     Name: {data.name}
     Title: {data.title}
     Tagline: {data.tagline}
-    Bio: {data.bio}
+    Bio: {(data.profile.bio if getattr(data, "profile", None) else "")}
     
     Please generate a robust portfolio including:
     1. A polished, professional version of their bio.

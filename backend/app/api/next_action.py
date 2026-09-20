@@ -200,12 +200,16 @@ def complete_onboarding(
         raise HTTPException(400, f"Invalid user_type. Valid: {VALID_USER_TYPES}")
 
     current_user.user_type = payload.user_type
-    current_user.department = payload.department
-    current_user.target_role = payload.target_role
-    if payload.target_companies:
-        current_user.target_companies = ",".join(payload.target_companies)
-    if payload.interest_areas:
-        current_user.interest_areas = ",".join(payload.interest_areas)
+    if current_user.profile:
+        current_user.profile.department = (payload.profile.department if getattr(payload, "profile", None) else "")
+    if current_user.profile:
+        current_user.profile.target_role = (payload.profile.target_role if getattr(payload, "profile", None) else "")
+    if (payload.profile.target_companies if getattr(payload, "profile", None) else ""):
+        if current_user.profile:
+            current_user.profile.target_companies = ",".join((payload.profile.target_companies if getattr(payload, "profile", None) else ""))
+    if (payload.profile.interest_areas if getattr(payload, "profile", None) else ""):
+        if current_user.profile:
+            current_user.profile.interest_areas = ",".join((payload.profile.interest_areas if getattr(payload, "profile", None) else ""))
         
     current_user.is_onboarded = True
     
@@ -231,7 +235,7 @@ def complete_onboarding(
             "streak": current_user.streak,
             "is_onboarded": current_user.is_onboarded,
             "user_type": current_user.user_type,
-            "department": current_user.department,
-            "target_role": current_user.target_role
+            "department": (current_user.profile.department if getattr(current_user, "profile", None) else ""),
+            "target_role": (current_user.profile.target_role if getattr(current_user, "profile", None) else "")
         }
     }

@@ -28,6 +28,7 @@ const STUDENT_NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "AI Core Agents",
     items: [
       { icon: LayoutDashboard,    name: "Dashboard",         href: "/dashboard/student" },
+      { icon: Target,             name: "Career OS Engine",  href: "/dashboard/career-os", badge: "P3" },
       { icon: MessageSquare,      name: "Career Copilot",    href: "/dashboard/career-copilot" },
       { icon: FileText,           name: "Resume Analyzer",   href: "/dashboard/resume-analyzer" },
       { icon: Wand2,              name: "Resume Builder",    href: "/dashboard/resume-builder" },

@@ -385,8 +385,8 @@ def search_users(q: str, current_user: User = Depends(get_current_user), db: Ses
             or_(
                 User.name.ilike(f"%{q}%"),
                 User.email.ilike(f"%{q}%"),
-                User.target_role.ilike(f"%{q}%"),
-                User.interest_areas.ilike(f"%{q}%")
+                (User.profile.target_role if getattr(User, "profile", None) else "").ilike(f"%{q}%"),
+                (User.profile.interest_areas if getattr(User, "profile", None) else "").ilike(f"%{q}%")
             )
         )
     ).limit(20)
@@ -397,8 +397,8 @@ def search_users(q: str, current_user: User = Depends(get_current_user), db: Ses
             "id": u.id, 
             "name": u.name or u.email.split("@")[0], 
             "email": u.email,
-            "target_role": u.target_role,
-            "interest_areas": u.interest_areas,
+            "target_role": (u.profile.target_role if getattr(u, "profile", None) else ""),
+            "interest_areas": (u.profile.interest_areas if getattr(u, "profile", None) else ""),
             "level": u.level,
             "is_pro": u.is_pro
         } for u in users

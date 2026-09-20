@@ -28,6 +28,16 @@ const Code2 = ({ size, color }: { size: number; color: string }) => (
   </svg>
 );
 
+// ── Stable decorative positions — computed once at module load ────────
+const NEURAL_NODES = [...Array(20)].map(() => ({
+  top: `${Math.random() * 60}%`,
+  left: `${Math.random() * 100}%`,
+  animateX: Math.random() * 20 - 10,
+  animateY: Math.random() * 20 - 10,
+  duration: 4 + Math.random() * 4,
+  delay: Math.random() * 5,
+}));
+
 // ── Feature Data ────────────────────────────────────────────────
 const primaryFeatures = [
   { id: "ai-tutor", title: "AI Learning Mentor", desc: "Understand concepts, revise topics, and learn with personalized explanations.", icon: BrainCircuit, color: "#10B981", span: 2, bg: "rgba(16,185,129,0.05)" },
@@ -198,6 +208,7 @@ function Hero() {
   }, []);
 
   const y = useTransform(scrollYProgress, [0, 1], [0, -150]);
+
   const opacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
 
   // 3D Dashboard Content Box
@@ -217,16 +228,16 @@ function Hero() {
           
           {/* Advanced Neural Background Nodes */}
           <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: -1 }}>
-             {mounted && [...Array(20)].map((_, i) => (
+             {mounted && NEURAL_NODES.map((node, i) => (
                <motion.div 
                  key={i}
                  initial={{ opacity: 0 }}
-                 animate={{ opacity: [0.1, 0.3, 0.1], scale: [1, 1.2, 1], x: Math.random() * 20 - 10, y: Math.random() * 20 - 10 }}
-                 transition={{ duration: 4 + Math.random() * 4, repeat: Infinity, ease: "linear", delay: Math.random() * 5 }}
+                 animate={{ opacity: [0.1, 0.3, 0.1], scale: [1, 1.2, 1], x: node.animateX, y: node.animateY }}
+                 transition={{ duration: node.duration, repeat: Infinity, ease: "linear", delay: node.delay }}
                  style={{ 
                    position: "absolute", 
-                   top: `${Math.random() * 60}%`, 
-                   left: `${Math.random() * 100}%`,
+                   top: node.top, 
+                   left: node.left,
                    width: 2, height: 2, 
                    background: "white", 
                    borderRadius: "50%",

@@ -57,7 +57,7 @@ export function DailyLearningWidget() {
           Authorization: `Bearer ${session.user.accessToken}`
         },
         body: JSON.stringify({
-          time_spent_minutes: 30, // Mock for now
+          time_spent_minutes: data?.daily_time_minutes || 0,
           difficulty_rating: 3,
           was_adapted: false
         })

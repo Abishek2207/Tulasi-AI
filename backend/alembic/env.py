@@ -18,7 +18,7 @@ from app.core.config import settings
 config = context.config
 
 # Dynamically set the database URL from settings
-config.set_main_option("sqlalchemy.url", settings.normalized_database_url)
+config.set_main_option("sqlalchemy.url", settings.normalized_database_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -83,3 +83,5 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+
+

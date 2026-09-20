@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "About TulasiAI — Built by Abishek R, Founder & CEO",
@@ -82,11 +83,11 @@ export default function AboutPage() {
       <main style={{ background: "#05070D", minHeight: "100vh", color: "white", padding: "0 24px 80px" }}>
         {/* Hero */}
         <div style={{ maxWidth: 960, margin: "0 auto", paddingTop: 80, textAlign: "center" }}>
-          <a href="/" style={{ textDecoration: "none", display: "inline-block", marginBottom: 40 }}>
+          <Link href="/" style={{ textDecoration: "none", display: "inline-block", marginBottom: 40 }}>
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", gap: 8 }}>
               ← Back to Tulasi AI
             </span>
-          </a>
+          </Link>
 
           {/* Creator Card */}
           <div style={{

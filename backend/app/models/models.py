@@ -1,6 +1,8 @@
 from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, UniqueConstraint
 from typing import Optional, List
+from sqlalchemy import Column
+from app.models.custom_types import VectorType
 from datetime import datetime, timezone
 import enum
 
@@ -34,8 +36,6 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     hashed_password: Optional[str] = None
     name: str = ""
-    bio: Optional[str] = None
-    skills: Optional[str] = None  # comma-separated
     avatar: Optional[str] = None
     role: str = "student"
     provider: str = "email"
@@ -63,16 +63,10 @@ class User(SQLModel, table=True):
     is_onboarded: bool = False           # True after user completes onboarding modal
     
     # ── Career Intelligence Metadata ──
-    department: Optional[str] = None     # e.g. "Computer Science", "Information Technology"
-    target_role: Optional[str] = None    # e.g. "AI Engineer", "Frontend Developer"
-    target_companies: Optional[str] = None # comma-separated
-    interest_areas: Optional[str] = None # comma-separated (e.g. "Web3, LLMs, DevOps")
     onboarding_step: int = 0             # Track multi-step onboarding progress
+    last_intelligence_update: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # ── [NEW] Super Intelligence Profile ──
-    user_intelligence_profile: Optional[str] = "{}" # JSON: {facts: [], strengths: [], gaps: [], career_velocity: 50, technical_depth: 30}
-    last_intelligence_update: datetime = Field(default_factory=datetime.utcnow)
-    behavioral_patterns: Optional[str] = "{}" # JSON: {learning_style: "visual", responsiveness: "high", focus_areas: []}
     
     # Relationships
     resumes: List["SavedResume"] = Relationship(back_populates="user")
@@ -87,7 +81,6 @@ class Profile(SQLModel, table=True):
     experience_years: Optional[int] = 0
     skill_level: Optional[str] = None
     ai_mentor_name: Optional[str] = None
-    skills: Optional[str] = None # JSON string
     learning_hours_per_day: Optional[int] = 2
     
     # ── Intelligent Onboarding Fields ──
@@ -181,18 +174,6 @@ class Notification(SQLModel, table=True):
     category: str # AI Skills | Certifications | Placement | Job Switch | Package Growth | Roadmap Reminder
     is_read: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
-
-class FocusSession(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id", index=True)
-    topic: str
-    duration_minutes: int
-    status: str = "active" # active | completed | interrupted
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-class IndustryUpdate(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id", index=True)
     role_context: str
     title: str
     summary: str
@@ -430,7 +411,7 @@ class UserMemoryChunk(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
     content: str
-    embedding_json: str  # Storing as stringified JSON representation of array for simple compat
+    embedding: Optional[list[float]] = Field(default=None, sa_column=Column(VectorType))
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -466,6 +447,7 @@ class SavedResume(SQLModel, table=True):
     keyword_match_percent: int = 0
     feedback_json: str = "[]"
     missing_keywords_json: str = "[]"
+    embedding: Optional[list[float]] = Field(default=None, sa_column=Column(VectorType))
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -660,33 +642,38 @@ class ApiSource(SQLModel, table=True):
 
 # ── SaaS Platform Models ──────────────────────────────────────────────
 
-class SubscriptionPlan(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(index=True) # Student, Professional, Enterprise
-    price: int
-    ai_requests_limit: int
-    resume_downloads_limit: int
-    features_json: str = "[]"
-    is_active: bool = True
-
-class UserSubscription(SQLModel, table=True):
+class Subscription(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
-    plan_id: int = Field(foreign_key="subscriptionplan.id", index=True)
-    status: str = "active" # active, cancelled, expired
-    start_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    end_date: Optional[datetime] = None
-    razorpay_subscription_id: Optional[str] = None
-    
+    plan: str # student, professional
+    status: str = "pending" # pending, active, authenticated, past_due, halted, cancelled, expired, failed
+    membership_id: Optional[str] = Field(default=None, unique=True, index=True)
+    amount: float
+    currency: str = "INR"
+    billing_interval: str = "month"
+    started_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    next_billing_at: Optional[datetime] = None
+    auto_renew: bool = True
+    payment_provider: str = "razorpay"
+    provider_customer_id: Optional[str] = None
+    provider_subscription_id: Optional[str] = Field(default=None, unique=True, index=True)
+    provider_payment_method: Optional[str] = None  # upi, card, emandate
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class Payment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
+    subscription_id: Optional[int] = Field(default=None, foreign_key="subscription.id", index=True)
     amount: float
     currency: str = "INR"
-    status: str = "pending" # success, failed, pending
-    razorpay_payment_id: Optional[str] = None
-    razorpay_order_id: Optional[str] = None
-    razorpay_signature: Optional[str] = None
+    provider: str = "razorpay"
+    provider_payment_id: Optional[str] = Field(default=None, unique=True, index=True)
+    provider_order_id: Optional[str] = None
+    payment_method: Optional[str] = None  # upi, card, emandate
+    status: str = "created" # created, pending, paid, failed, refunded, cancelled
+    paid_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Coupon(SQLModel, table=True):
@@ -834,6 +821,8 @@ class Document(SQLModel, table=True):
     file_path: str
     file_size_bytes: int
     page_count: int = 0
+    status: str = "READY" # UPLOADING, QUEUED, PROCESSING, EMBEDDING, READY, FAILED
+    error_message: Optional[str] = None
     analysis_result: Optional[str] = None # JSON containing suggested topics, etc.
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -844,5 +833,329 @@ class DocumentChunk(SQLModel, table=True):
     page_number: int
     chunk_index: int
     content: str
-    # Note: embeddings themselves are stored in FAISS, not here in the RDBMS.
+    embedding: Optional[list[float]] = Field(default=None, sa_column=Column(VectorType))
+    metadata_json: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+# ── Phase 2: Core Learning & RAG Entities ──
+
+class Goal(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    goal: str
+    priority: str = "high"
+    deadline: Optional[datetime] = None
+    target_role: Optional[str] = None
+    target_salary: Optional[str] = None
+    location: Optional[str] = None
+    daily_minutes: int = 120
+    preferred_days: str = "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday"
+    status: str = "active"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Skill(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True)
+    normalized_name: str = Field(index=True, default="")
+    category: str = Field(default="General")
+    description: Optional[str] = None
+    parent_skill_id: Optional[int] = Field(default=None, foreign_key="skill.id")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CareerRole(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True)
+    normalized_name: str = Field(index=True, unique=True)
+    description: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class RoleSkillRequirement(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    role_id: int = Field(foreign_key="careerrole.id", index=True)
+    skill_id: int = Field(foreign_key="skill.id", index=True)
+    importance: float = Field(default=1.0) # 0.0 to 1.0 (1.0 = mandatory, 0.5 = nice to have)
+    minimum_level: float = Field(default=0.5) # 0.0 to 1.0 required proficiency
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserSkill(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    skill_id: int = Field(foreign_key="skill.id", index=True)
+    proficiency: float = Field(default=0.0) # 0.0 to 1.0
+    evidence: Optional[str] = None # "Assessed via RAG", "Code execution", etc.
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class JobSkillRequirement(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("job_id", "skill_id", name="uq_job_skill"),)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    job_id: int = Field(foreign_key="job.id", index=True, ondelete="CASCADE")
+    skill_id: int = Field(foreign_key="skill.id", index=True)
+    importance: float = Field(default=1.0)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SkillAssessment(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    skill_name: str
+    mastery_level: str  # Beginner, Intermediate, Advanced
+    confidence: float   # 0.0 to 1.0
+    evidence: str
+    last_assessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    next_review: Optional[datetime] = None
+
+class SkillMastery(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    skill_name: str
+    mastery_score: float = 0.0
+    topics_completed: int = 0
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class RevisionSchedule(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    topic: str
+    last_studied: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_tested: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    score: float = 0.0
+    mastery: float = 0.0
+    confidence: float = 0.0
+    next_review: datetime
+
+class DocumentTopic(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    document_id: int = Field(foreign_key="document.id", index=True)
+    topic_name: str
+    confidence: float
+
+
+
+class Job(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    source: str
+    source_job_id: Optional[str] = Field(default=None, index=True)
+    title: str
+    company: str
+    location: Optional[str] = None
+    remote_type: Optional[str] = None
+    description: Optional[str] = None
+    experience_requirements: Optional[str] = None
+    salary_min: Optional[int] = None
+    salary_max: Optional[int] = None
+    salary_currency: Optional[str] = None
+    employment_type: Optional[str] = None
+    source_url: Optional[str] = None
+    application_url: Optional[str] = None
+    posted_at: Optional[str] = None
+    fetched_at: datetime = Field(default_factory=datetime.utcnow)
+    content_hash: str = Field(unique=True, index=True)
+
+class JobEmbedding(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    job_id: int = Field(foreign_key="job.id", index=True, ondelete="CASCADE")
+    embedding: Optional[list[float]] = Field(default=None, sa_column=Column(VectorType))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserJobMatch(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("user_id", "job_id", name="uq_user_job_match"),)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    job_id: int = Field(foreign_key="job.id", index=True, ondelete="CASCADE")
+    semantic_score: float = Field(default=0.0)
+    skill_gap_score: float = Field(default=0.0)
+    total_match_score: float = Field(default=0.0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class MarketSnapshot(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    role: str = Field(index=True)
+    location: str
+    time_period: str
+    jobs_analyzed: int
+    top_skills: str # JSON array
+    companies: str # JSON array
+    salary_signals: str # JSON object
+    demand_signals: str
+    source_metadata: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class FocusSession(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(index=True)
+    duration_minutes: int
+    task_description: str
+    status: str = 'active'
+    completed_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class IndustryUpdate(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    content: str
+    source: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# ── Phase 2: Learning Engine Models ──────────────────────────────────────
+
+class LearningTopic(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    skill_id: int = Field(foreign_key="skill.id", index=True)
+    name: str = Field(index=True)
+    description: Optional[str] = None
+    order_index: int = Field(default=0)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class LearningResource(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    topic_id: int = Field(foreign_key="learningtopic.id", index=True)
+    title: str
+    description: Optional[str] = None
+    resource_type: str = Field(default="article")
+    url: Optional[str] = None
+    difficulty: str = Field(default="beginner")
+    estimated_minutes: int = Field(default=15)
+    is_available: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserLearningProgress(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    resource_id: int = Field(foreign_key="learningresource.id", index=True)
+    status: str = Field(default="not_started")
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PracticeTask(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    skill_id: int = Field(foreign_key="skill.id", index=True)
+    topic_id: Optional[int] = Field(default=None, foreign_key="learningtopic.id", index=True)
+    title: str
+    prompt: str
+    expected_output: Optional[str] = None
+    evaluation_method: str = Field(default="exact_match")
+    difficulty: str = Field(default="beginner")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PracticeAttempt(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    task_id: int = Field(foreign_key="practicetask.id", index=True)
+    user_answer: str
+    score: float = Field(default=0.0)
+    feedback: Optional[str] = None
+    attempted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Assessment(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    skill_id: int = Field(foreign_key="skill.id", index=True)
+    title: str
+    difficulty: str = Field(default="beginner")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AssessmentQuestion(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    assessment_id: int = Field(foreign_key="assessment.id", index=True)
+    prompt: str
+    options_json: Optional[str] = None
+    expected_answer: str
+    question_type: str = Field(default="multiple_choice")
+    points: int = Field(default=1)
+
+class AssessmentAttempt(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    assessment_id: int = Field(foreign_key="assessment.id", index=True)
+    score: float = Field(default=0.0)
+    passed: bool = Field(default=False)
+    attempted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SkillEvidence(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    skill_id: int = Field(foreign_key="skill.id", index=True)
+    source_type: str
+    source_id: Optional[str] = None
+    score: float
+    confidence: float = Field(default=1.0)
+    previous_level: float = Field(default=0.0)
+    new_level: float = Field(default=0.0)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "skill_id", "source_type", "source_id", name="uq_skill_evidence_replay"),
+    )
+
+# ── Phase 3: Career Execution Engine Models ──────────────────────────────
+
+class UserRoadmap(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    role_id: int = Field(foreign_key="careerrole.id", index=True)
+    status: str = Field(default="active") # active, completed, abandoned
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class RoadmapMilestone(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    roadmap_id: int = Field(foreign_key="userroadmap.id", index=True)
+    skill_id: Optional[int] = Field(default=None, foreign_key="skill.id", index=True)
+    title: str
+    description: Optional[str] = None
+    order_index: int = Field(default=0)
+    status: str = Field(default="locked") # locked, active, completed
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ActionTask(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    milestone_id: Optional[int] = Field(default=None, foreign_key="roadmapmilestone.id", index=True)
+    skill_id: Optional[int] = Field(default=None, foreign_key="skill.id", index=True)
+    title: str
+    description: Optional[str] = None
+    difficulty: str = Field(default="beginner")
+    estimated_minutes: int = Field(default=30)
+    status: str = Field(default="pending") # pending, in_progress, completed, skipped
+    due_date: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserProject(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    title: str
+    description: Optional[str] = None
+    project_url: Optional[str] = None
+    status: str = Field(default="planned") # planned, active, completed
+    completion_date: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ProjectSkill(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="userproject.id", index=True)
+    skill_id: int = Field(foreign_key="skill.id", index=True)
+    evidence_text: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserExperience(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    title: str
+    experience_type: str = Field(default="job") # job, internship, certification, hackathon
+    description: Optional[str] = None
+    verified_url: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CareerReadinessLog(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    role_id: int = Field(foreign_key="careerrole.id", index=True)
+    readiness_score: float = Field(default=0.0)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

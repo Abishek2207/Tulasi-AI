@@ -529,6 +529,41 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
+            # Check if Docker is available
+            docker_available = False
+            try:
+                if subprocess.run(["docker", "info"], capture_output=True, timeout=2).returncode == 0:
+                    docker_available = True
+            except:
+                pass
+
+            def run_sandboxed(cmd_list, timeout_sec):
+                """Helper to run a command either in docker sandbox or locally."""
+                if docker_available:
+                    # Windows paths need careful mapping in docker, but we can just mount the temp_dir
+                    # and rely on the Dockerfile's WORKDIR /code
+                    mnt_path = temp_dir.replace("\\", "/") # For Windows
+                    if mnt_path[1] == ":":
+                        mnt_path = "/" + mnt_path[0].lower() + mnt_path[2:]
+                    
+                    docker_cmd = [
+                        "docker", "run", "--rm", "-i", 
+                        "--network", "none",
+                        "--memory", "256m",
+                        "--cpus", "0.5",
+                        "-v", f"{temp_dir}:/code",
+                        "tulasiai-sandbox"
+                    ] + cmd_list
+                    return subprocess.run(docker_cmd, input=stdin_data, capture_output=True, text=True, timeout=timeout_sec)
+                else:
+                    return subprocess.run(
+                        cmd_list,
+                        input=stdin_data,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout_sec,
+                        preexec_fn=enable_memory_limit if os.name == "posix" else None
+                    )
 
             # ── Python ────────────────────────────────────────────────────────
             if req.language == "python":
@@ -536,30 +571,23 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
                 with open(src_path, "w", encoding="utf-8") as f:
                     f.write(req.code)
 
-                cmd = ["python", src_path] if os.name == "nt" else ["python3", src_path]
-                result = subprocess.run(
-                    cmd,
-                    input=stdin_data,
-                    capture_output=True,
-                    text=True,
-                    timeout=EXEC_TIMEOUT,
-                    preexec_fn=enable_memory_limit if os.name == "posix" else None
-                )
+                cmd = ["python3", "script.py"] if docker_available else (["python", src_path] if os.name == "nt" else ["python3", src_path])
+                result = run_sandboxed(cmd, EXEC_TIMEOUT)
 
             # ── C ─────────────────────────────────────────────────────────────
             elif req.language == "c":
                 src_path = os.path.join(temp_dir, "main.c")
-                out_path = os.path.join(temp_dir, "a.exe" if os.name == "nt" else "a.out")
+                out_path = os.path.join(temp_dir, "a.exe" if os.name == "nt" and not docker_available else "a.out")
                 with open(src_path, "w", encoding="utf-8") as f:
                     f.write(req.code)
 
                 # Compile step
-                compile_res = subprocess.run(
-                    ["gcc", "-O2", src_path, "-o", out_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=COMPILE_TIMEOUT,
-                )
+                if docker_available:
+                    compile_cmd = ["gcc", "-O2", "main.c", "-o", "a.out"]
+                    compile_res = run_sandboxed(compile_cmd, COMPILE_TIMEOUT)
+                else:
+                    compile_res = subprocess.run(["gcc", "-O2", src_path, "-o", out_path], capture_output=True, text=True, timeout=COMPILE_TIMEOUT)
+                
                 if compile_res.returncode != 0:
                     elapsed = int((time.time() - start_time) * 1000)
                     return {
@@ -570,29 +598,23 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
                         "execution_time_ms": elapsed,
                     }
 
-                result = subprocess.run(
-                    [out_path],
-                    input=stdin_data,
-                    capture_output=True,
-                    text=True,
-                    timeout=EXEC_TIMEOUT,
-                    preexec_fn=enable_memory_limit if os.name == "posix" else None
-                )
+                cmd = ["./a.out"] if docker_available else [out_path]
+                result = run_sandboxed(cmd, EXEC_TIMEOUT)
 
             # ── C++ ───────────────────────────────────────────────────────────
             elif req.language == "cpp":
                 src_path = os.path.join(temp_dir, "main.cpp")
-                out_path = os.path.join(temp_dir, "a.exe" if os.name == "nt" else "a.out")
+                out_path = os.path.join(temp_dir, "a.exe" if os.name == "nt" and not docker_available else "a.out")
                 with open(src_path, "w", encoding="utf-8") as f:
                     f.write(req.code)
 
                 # Compile step
-                compile_res = subprocess.run(
-                    ["g++", "-O2", "-std=c++17", src_path, "-o", out_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=COMPILE_TIMEOUT,
-                )
+                if docker_available:
+                    compile_cmd = ["g++", "-O2", "-std=c++17", "main.cpp", "-o", "a.out"]
+                    compile_res = run_sandboxed(compile_cmd, COMPILE_TIMEOUT)
+                else:
+                    compile_res = subprocess.run(["g++", "-O2", "-std=c++17", src_path, "-o", out_path], capture_output=True, text=True, timeout=COMPILE_TIMEOUT)
+
                 if compile_res.returncode != 0:
                     elapsed = int((time.time() - start_time) * 1000)
                     return {
@@ -603,14 +625,8 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
                         "execution_time_ms": elapsed,
                     }
 
-                result = subprocess.run(
-                    [out_path],
-                    input=stdin_data,
-                    capture_output=True,
-                    text=True,
-                    timeout=EXEC_TIMEOUT,
-                    preexec_fn=enable_memory_limit if os.name == "posix" else None
-                )
+                cmd = ["./a.out"] if docker_available else [out_path]
+                result = run_sandboxed(cmd, EXEC_TIMEOUT)
 
             # ── Java ──────────────────────────────────────────────────────────
             elif req.language == "java":
@@ -619,12 +635,12 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
                     f.write(req.code)
 
                 # Compile step
-                compile_res = subprocess.run(
-                    ["javac", src_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=COMPILE_TIMEOUT,
-                )
+                if docker_available:
+                    compile_cmd = ["javac", "Main.java"]
+                    compile_res = run_sandboxed(compile_cmd, COMPILE_TIMEOUT)
+                else:
+                    compile_res = subprocess.run(["javac", src_path], capture_output=True, text=True, timeout=COMPILE_TIMEOUT)
+                
                 if compile_res.returncode != 0:
                     elapsed = int((time.time() - start_time) * 1000)
                     return {
@@ -635,13 +651,8 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
                         "execution_time_ms": elapsed,
                     }
 
-                result = subprocess.run(
-                    ["java", "-Xmx128m", "-cp", temp_dir, "Main"],
-                    input=stdin_data,
-                    capture_output=True,
-                    text=True,
-                    timeout=EXEC_TIMEOUT,
-                )
+                cmd = ["java", "-Xmx128m", "-cp", ".", "Main"] if docker_available else ["java", "-Xmx128m", "-cp", temp_dir, "Main"]
+                result = run_sandboxed(cmd, EXEC_TIMEOUT)
 
             # ── JavaScript ────────────────────────────────────────────────────
             elif req.language == "javascript":
@@ -649,14 +660,8 @@ def run_code(req: CodeRequest, current_user: User = Depends(get_current_user)):
                 with open(src_path, "w", encoding="utf-8") as f:
                     f.write(req.code)
 
-                result = subprocess.run(
-                    ["node", src_path],
-                    input=stdin_data,
-                    capture_output=True,
-                    text=True,
-                    timeout=EXEC_TIMEOUT,
-                    preexec_fn=enable_memory_limit if os.name == "posix" else None
-                )
+                cmd = ["node", "script.js"] if docker_available else ["node", src_path]
+                result = run_sandboxed(cmd, EXEC_TIMEOUT)
 
             # ── Build response ────────────────────────────────────────────────
             execution_time_ms = int((time.time() - start_time) * 1000)
