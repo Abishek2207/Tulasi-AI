@@ -62,9 +62,9 @@ def generate_roadmap(
     session: Session = Depends(get_session)
 ):
     # Fetch intelligence context
-    intelligence = json.loads((current_user.profile.user_intelligence_profile if getattr(current_user, "profile", None) else "{}") or "{}")
+    intelligence = json.loads((current_user.profile.user_intelligence_profile if getattr(current_user, 'profile', None) else "{}") or "{}")
     user_context = (
-        f"USER: {current_user.user_type}, Role: {(current_user.profile.target_role if getattr(current_user, "profile", None) else "") or 'General SE'}, Level: {current_user.level}. "
+        f"USER: {current_user.user_type}, Role: {(current_user.profile.target_role if getattr(current_user, 'profile', None) else '') or 'General SE'}, Level: {current_user.level}. "
         f"STRENGTHS: {intelligence.get('strengths', [])}. GAPS: {intelligence.get('gaps', [])}."
     )
     
@@ -98,7 +98,7 @@ Output strictly as a valid JSON object matching this exact schema:
 Return ONLY raw JSON, nothing else."""
 
     # Universal Resilience: Never 500
-    fallback_data = ROADMAP_FALLBACKS.get(req.goal) or ROADMAP_FALLBACKS.get((current_user.profile.target_role if getattr(current_user, "profile", None) else "")) or ROADMAP_FALLBACKS["Software Engineer"]
+    fallback_data = ROADMAP_FALLBACKS.get(req.goal) or ROADMAP_FALLBACKS.get((current_user.profile.target_role if getattr(current_user, 'profile', None) else '')) or ROADMAP_FALLBACKS["Software Engineer"]
     # Ensure title/desc are dynamic in fallback
     fallback_data = fallback_data.copy()
     fallback_data["title"] = f"Roadmap for {req.goal}"

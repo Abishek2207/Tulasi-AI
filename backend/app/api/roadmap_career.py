@@ -28,7 +28,7 @@ async def generate_career_roadmap(
             goal = Goal(
                 user_id=current_user.id,
                 goal=profile.student_goal or "Upskill",
-                target_role=(profile.profile.target_role if getattr(profile, "profile", None) else "") or req.focus or "Software Engineer",
+                target_role=(profile.profile.target_role if getattr(profile, "profile", None) else '') or req.focus or "Software Engineer",
                 daily_minutes=req.hours_per_day * 60,
                 target_companies=req.target_company
             )
@@ -42,8 +42,8 @@ async def generate_career_roadmap(
         # Store the roadmap into LearningPlan and DailyTasks
         plan = LearningPlan(
             user_id=current_user.id,
-            title=f"Roadmap to {(goal.profile.target_role if getattr(goal, "profile", None) else "")}",
-            target_role=(goal.profile.target_role if getattr(goal, "profile", None) else ""),
+            title=f"Roadmap to {(goal.profile.target_role if getattr(goal, 'profile', None) else '')}",
+            target_role=(goal.profile.target_role if getattr(goal, 'profile', None) else ''),
         )
         db.add(plan)
         db.commit()
@@ -116,7 +116,7 @@ async def get_my_roadmaps(
     roadmap = {
         "id": str(plan.id),
         "title": plan.title,
-        "target_role": (plan.profile.target_role if getattr(plan, "profile", None) else ""),
+        "target_role": (plan.profile.target_role if getattr(plan, "profile", None) else ''),
         "milestones": milestones
     }
     
@@ -150,7 +150,7 @@ async def get_single_roadmap(
     return {
         "id": str(plan.id),
         "title": plan.title,
-        "target_role": (plan.profile.target_role if getattr(plan, "profile", None) else ""),
+        "target_role": (plan.profile.target_role if getattr(plan, "profile", None) else ''),
         "milestones": milestones
     }
 
