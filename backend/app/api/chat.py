@@ -781,33 +781,8 @@ def chat_stream(
 
 
 def _get_inline_fallback(message: str, tool: str) -> str:
-    """Returns a smart inline fallback when all AI is unavailable."""
-    msg = message.lower()
-    if tool == "system_design" or any(k in msg for k in ["design", "architecture", "scale"]):
-        return (
-            "### 🏗️ System Design Framework\n\n"
-            "**Step 1 — Requirements Gathering**\n- Functional vs Non-functional requirements\n- Estimate scale: DAU, QPS, storage\n\n"
-            "**Step 2 — High Level Architecture**\n- Client → Load Balancer → API Servers → Cache (Redis) → Database\n\n"
-            "**Step 3 — Component Deep Dive**\n- DB: SQL for ACID, NoSQL for scale\n- Cache: LRU eviction, write-through vs write-back\n- Queue: Kafka for async, high-throughput\n\n"
-            "> ⚡ Full AI mentor temporarily at capacity. Retry in 30s for a personalized deep-dive."
-        )
-    elif tool == "interview" or "interview" in msg:
-        return (
-            "### 🎤 Mock Interview — Let's Begin\n\n"
-            "**Question 1 (Technical):**\n> *What is the time complexity of QuickSort in the average vs worst case? How would you avoid the worst case?*\n\n"
-            "Take your time. Structure your answer: define the algorithm → analyze → propose optimization.\n\n"
-            "> ⚡ AI interviewer restarting. Your question is live!"
-        )
-    else:
-        return (
-            "### 🤖 Tulasi AI — Temporarily Recalibrating\n\n"
-            "I'm momentarily at capacity, but I'm still here for you!\n\n"
-            "**Quick Actions while I restart:**\n"
-            "- 🧩 Try a **Coding Problem** in the Code Arena\n"
-            "- 🗂️ Review your **Flashcards**\n"
-            "- 📋 Check your **Daily Challenge**\n\n"
-            "> ⚡ Please retry your question in 30 seconds for a full AI response."
-        )
+    from fastapi import HTTPException
+    raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI provider failed")
 
 
 @router.post("/feedback")

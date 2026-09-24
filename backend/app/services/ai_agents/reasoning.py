@@ -113,11 +113,8 @@ class ReasoningEngine:
 
         except Exception as e:
             print(f"❌ ReasoningEngine.process_query failed: {e}")
-            # Return a structured fallback — never crash the caller
-            return {
-                "thought": f"Error during reasoning: {str(e)}",
-                "response": self._get_smart_fallback(query),
-            }
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI provider failed")
 
     def _stream_reasoning(
         self, prompt: str, history: List[Dict], user: User, db: Session
@@ -167,7 +164,8 @@ class ReasoningEngine:
 
         except Exception as e:
             print(f"❌ ReasoningEngine._stream_reasoning failed: {e}")
-            yield self._get_smart_fallback(prompt[:200])
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI provider failed")
 
     def _get_smart_fallback(self, query: str) -> str:
         """

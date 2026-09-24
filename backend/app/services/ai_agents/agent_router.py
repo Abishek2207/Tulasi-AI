@@ -213,52 +213,8 @@ class AgentRouter:
             return self._module_fallback(message, module)
 
     def _module_fallback(self, message: str, module: str) -> str:
-        """Returns module-specific fallback content when all AI is unavailable."""
-        module_responses = {
-            "system_design": (
-                "### 🏗️ System Design Hint\n\n"
-                "**The FAANG System Design Template:**\n"
-                "1. **Clarify** — What are functional + non-functional requirements?\n"
-                "2. **Estimate** — QPS, Storage, Bandwidth calculations\n"
-                "3. **High Level** — Draw: Client → LB → API → Cache → DB\n"
-                "4. **Deep Dive** — DB schema, caching strategy, queue design\n"
-                "5. **Trade-offs** — Consistency vs Availability, SQL vs NoSQL\n\n"
-                "> *Full AI architect recalibrating. Retry in 30s.*"
-            ),
-            "career_gps": (
-                "### 🗺️ Career GPS — Offline Mode\n\n"
-                "**Universal Career Acceleration Path:**\n"
-                "- **Month 1-2:** Core DSA + Language mastery (Python/Java/C++)\n"
-                "- **Month 3-4:** 100+ LeetCode + 2 portfolio projects\n"
-                "- **Month 5-6:** System Design + Internship/Job applications\n"
-                "- **Month 7+:** Mock interviews + offer negotiation\n\n"
-                "> *Personalized GPS recalibrating. Retry for role-specific path.*"
-            ),
-            "mock_interview": (
-                "### 🎤 Interview Question — Practice Now\n\n"
-                "**DSA Round:**\n"
-                "> *Given an array of integers, find the two numbers that add up to a target sum.*\n\n"
-                "**Hint:** Think about HashMap — O(n) solution exists.\n\n"
-                "Take 5 minutes, write your solution, then retry for AI evaluation."
-            ),
-            "prep_plan": (
-                "### 📋 Preparation Framework\n\n"
-                "**60-Day Intensive Plan:**\n"
-                "- **Days 1-15:** DSA foundations (Arrays, Strings, LinkedList)\n"
-                "- **Days 16-30:** Trees, Graphs, DP (Neetcode 150)\n"
-                "- **Days 31-45:** System Design (Grokking + 3 design problems)\n"
-                "- **Days 46-60:** Mock interviews (3/week) + Resume polish\n\n"
-                "> *Personalized plan generating. Retry in 30s.*"
-            ),
-        }
-        return module_responses.get(
-            module,
-            (
-                "### 🤖 Tulasi AI\n\n"
-                "I'm momentarily recalibrating. Please retry in 30 seconds for a full personalized response.\n\n"
-                "**While you wait:** Check the Code Arena for practice problems or review your Daily Challenge!"
-            ),
-        )
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI provider failed")
 
 
 # Singleton
