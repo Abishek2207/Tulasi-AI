@@ -37,223 +37,6 @@ class RAGChatRequest(BaseModel):
     media: Optional[str] = None
 
 
-# ── FALLBACK GENERATORS (always succeed) ────────────────────────────────────
-
-def _make_gps_fallback(role: str, year: str) -> dict:
-    """Role-aware Career GPS fallback — returned when AI is unavailable."""
-    role_skills = {
-        "AI Engineer": ["Python", "PyTorch", "LLM Fine-tuning", "MLOps", "Vector DBs"],
-        "AI Research Scientist": ["Python", "Research Papers", "JAX/PyTorch", "Mathematics", "Deep Learning"],
-        "Software Engineer": ["Python/Java", "Data Structures", "System Design", "SQL", "Git"],
-        "Data Scientist": ["Python", "Statistics", "ML Algorithms", "Pandas", "SQL"],
-        "ML Engineer": ["Python", "TensorFlow", "Kubernetes", "MLflow", "Docker"],
-        "Full Stack Developer": ["React", "Node.js", "PostgreSQL", "TypeScript", "Docker"],
-        "DevOps Engineer": ["Kubernetes", "Docker", "CI/CD", "Terraform", "AWS"],
-        "Product Manager": ["Product Strategy", "SQL", "User Research", "Agile", "Analytics"],
-        "Cybersecurity Engineer": ["Penetration Testing", "SIEM", "Python", "Network Security", "Cloud Security"],
-        "Cloud Architect": ["AWS/GCP/Azure", "Kubernetes", "Terraform", "Microservices", "Security"],
-    }
-    skills = role_skills.get(role, ["Python", "Data Structures", "System Design", "SQL", "Git"])
-
-    year_offsets = {
-        "1st_year": 0, "2nd_year": 1, "3rd_year": 2, "4th_year": 3
-    }
-    offset = year_offsets.get(year, 2)
-
-    return {
-        "paths": [
-            {
-                "id": "fast_track",
-                "title": f"Fast Track to {role}",
-                "tagline": "Aggressive sprint — compress 12 months into 6 with focused intensity.",
-                "color": "#8B5CF6",
-                "timeline_months": max(4, 6 - offset),
-                "difficulty": "Aggressive",
-                "milestones": [
-                    {"month": 1, "goal": f"Master core {skills[0]} fundamentals", "resources": ["LeetCode", "GeeksForGeeks", "YouTube: Striver"]},
-                    {"month": 3, "goal": f"Build 2 {role} portfolio projects", "resources": ["GitHub", "Vercel", "Render"]},
-                    {"month": max(4, 6 - offset), "goal": "Land first offer / internship", "resources": ["LinkedIn", "Naukri", "AngelList"]},
-                ],
-                "key_skills": skills[:4],
-                "companies": ["TCS", "Infosys", "Cognizant"],
-                "job_readiness_pct": 72,
-            },
-            {
-                "id": "balanced",
-                "title": f"Balanced {role} Excellence",
-                "tagline": "Steady mastery — depth over speed, quality over shortcuts.",
-                "color": "#10B981",
-                "timeline_months": 9,
-                "difficulty": "Balanced",
-                "milestones": [
-                    {"month": 2, "goal": "Complete DSA + CS Fundamentals", "resources": ["CS50", "CLRS", "Neetcode 150"]},
-                    {"month": 5, "goal": f"Full-stack {role} project deployment", "resources": ["Next.js Docs", "Supabase", "Docker Docs"]},
-                    {"month": 9, "goal": "Clear interviews at mid-tier to top-tier companies", "resources": ["Pramp", "InterviewBit", "Exponent"]},
-                ],
-                "key_skills": skills,
-                "companies": ["Zoho", "Freshworks", "Razorpay", "Zomato"],
-                "job_readiness_pct": 82,
-            },
-            {
-                "id": "conservative",
-                "title": "Thorough Mastery Route",
-                "tagline": "FAANG-caliber depth — 12 months of relentless mastery.",
-                "color": "#F59E0B",
-                "timeline_months": 12,
-                "difficulty": "Conservative",
-                "milestones": [
-                    {"month": 3, "goal": f"Solid {skills[0]} + OOP + DSA foundation", "resources": ["Neetcode", "Striver A2Z DSA", "MIT OCW"]},
-                    {"month": 6, "goal": "System Design mastery (LLD + HLD)", "resources": ["Grokking System Design", "DDIA Book", "Engineering blogs"]},
-                    {"month": 12, "goal": "FAANG/Research Lab interview readiness", "resources": ["LeetCode Premium", "Pramp", "Mock interviews"]},
-                ],
-                "key_skills": skills + ["System Design", "Distributed Systems"],
-                "companies": ["Google", "Microsoft", "Amazon", "Meta"],
-                "job_readiness_pct": 91,
-            },
-        ],
-        "recommendation": "balanced",
-        "founder_note": f"Every great {role} started exactly where you are now. Trust the process, stay consistent, and Tulasi AI will guide every single step of your journey. — Abishek R, Founder",
-    }
-
-
-def _make_salary_fallback(role: str, location: str, yoe: int) -> dict:
-    """Location + role aware salary fallback."""
-    role_bases = {
-        "AI Engineer": 12, "ML Engineer": 11, "Data Scientist": 9,
-        "Software Engineer": 7, "Full Stack Developer": 7, "Backend Developer": 8,
-        "Frontend Developer": 6, "DevOps Engineer": 9, "Cloud Architect": 14,
-        "Product Manager": 10, "Cybersecurity Engineer": 10,
-        "AI Research Scientist": 15,
-    }
-    location_multipliers = {
-        "Bangalore": 1.2, "Hyderabad": 1.1, "Chennai": 1.0, "Pune": 1.05,
-        "Mumbai": 1.15, "Delhi NCR": 1.1, "Remote (India)": 1.0,
-        "USA": 5.0, "UK": 3.5, "Singapore": 3.0,
-    }
-    base = role_bases.get(role, 8) + (yoe * 2.5)
-    mult = location_multipliers.get(location, 1.0)
-    min_lpa = round(base * mult * 0.7, 1)
-    med_lpa = round(base * mult, 1)
-    max_lpa = round(base * mult * 2.2, 1)
-
-    return {
-        "role": role,
-        "location": location,
-        "yoe": yoe,
-        "salary_range": {
-            "min_lpa": min_lpa, "median_lpa": med_lpa,
-            "max_lpa": max_lpa, "currency": "INR", "unit": "LPA"
-        },
-        "market_percentiles": {
-            "p25": round(min_lpa * 1.1, 1),
-            "p50": med_lpa,
-            "p75": round(med_lpa * 1.4, 1),
-            "p90": max_lpa,
-        },
-        "top_paying_companies": [
-            {"company": "Google India", "range": f"\u20b9{round(max_lpa*0.8)}-{round(max_lpa)} LPA", "perks": "ESOP + Annual Bonus + Relocation"},
-            {"company": "Microsoft India", "range": f"\u20b9{round(max_lpa*0.65)}-{round(max_lpa*0.85)} LPA", "perks": "RSU + Performance Bonus"},
-            {"company": "Flipkart / Meesho", "range": f"\u20b9{round(med_lpa*1.2)}-{round(max_lpa*0.7)} LPA", "perks": "Variable Pay + ESOPs"},
-            {"company": "Razorpay / Zepto", "range": f"\u20b9{round(med_lpa)}-{round(max_lpa*0.6)} LPA", "perks": "Startup ESOPs + Fast Growth"},
-        ],
-        "negotiation_script": {
-            "opening": f"Based on 2025 market data, {role}s in {location} with {yoe} YOE earn \u20b9{med_lpa}-{round(max_lpa*0.7)} LPA. My skills and projects align with the senior end of this range.",
-            "counter_offer": f"I appreciate the offer. Given my direct expertise and the market benchmarks I've researched, could we bring the base to \u20b9{round(med_lpa*1.25)} LPA? I'm confident in delivering outsized value from day one.",
-            "close": "I'm excited about the team and the mission. With this compensation aligned, I'm ready to sign and contribute immediately — let's make this happen.",
-        },
-        "key_insights": [
-            f"Demand for {role}s in {location} grew 38% in 2025, driven by AI adoption",
-            "Cloud certifications (AWS/GCP/Azure) boost packages by 20-30% on average",
-            f"Senior {role}s command 2-3x entry-level packages in {location}",
-        ],
-        "skills_that_boost_salary": ["LLMs & GenAI", "System Design", "Cloud Architecture", "Kubernetes", "Rust/Go"],
-        "market_trend": "growing",
-        "trend_note": f"{role} roles in {location} see strong demand as companies accelerate AI-first digital transformation. Compensation is rising year-over-year.",
-    }
-
-
-# ── CAREER GPS ─────────────────────────────────────────────────────────────────
-@router.post("/career-gps")
-@limiter.limit("10/minute")
-def get_career_gps(
-    request: Request,
-    body: CareerGPSRequest,
-    db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
-):
-    """Generate 3 personalized career paths with timelines based on year and target role."""
-
-    year_context = {
-        "1st_year": "a first-year engineering student (just started college). Focus on fundamentals.",
-        "2nd_year": "a second-year student. Introduce DSA, projects, open source.",
-        "3rd_year": "a third-year student ready for internships and advanced topics.",
-        "4th_year": "a final-year student aiming for placement and interviews.",
-    }.get(body.year, "an engineering student")
-
-    skills_context = f"Current skills: {body.current_skills}" if body.current_skills else "Skills not specified — provide general guidance."
-
-    prompt = f"""You are TulasiAI's Career GPS — a world-class AI career strategist.
-
-STUDENT PROFILE:
-- Year: {body.year} ({year_context})
-- Target Role: {(body.profile.target_role if getattr(body, 'profile', None) else '')}
-- {skills_context}
-
-Generate EXACTLY 3 distinct career paths to become a {(body.profile.target_role if getattr(body, 'profile', None) else '')}, tailored for this student's current year.
-
-Return ONLY valid JSON with this exact structure:
-{{
-  "paths": [
-    {{
-      "id": "fast_track",
-      "title": "<path name>",
-      "tagline": "<1 sentence hook>",
-      "color": "#8B5CF6",
-      "timeline_months": <integer>,
-      "difficulty": "Aggressive|Balanced|Conservative",
-      "milestones": [
-        {{"month": 1, "goal": "<specific milestone>", "resources": ["<resource 1>", "<resource 2>"]}},
-        {{"month": 3, "goal": "<specific milestone>", "resources": ["<resource 1>", "<resource 2>"]}},
-        {{"month": 6, "goal": "<specific milestone>", "resources": ["<resource 1>"]}},
-        {{"month": <end>, "goal": "<final goal>", "resources": []}}
-      ],
-      "key_skills": ["<skill 1>", "<skill 2>", "<skill 3>", "<skill 4>", "<skill 5>"],
-      "companies": ["<company 1>", "<company 2>", "<company 3>"],
-      "job_readiness_pct": <integer 60-100>
-    }},
-    ... (repeat for 2 more paths with ids "balanced" and "conservative")
-  ],
-  "recommendation": "fast_track|balanced|conservative",
-  "founder_note": "<1-2 sentence personal note from Abishek R (founder of TulasiAI) to this student>"
-}}
-
-Make it highly specific to {(body.profile.target_role if getattr(body, 'profile', None) else '')}. Include real resources (LeetCode, Coursera, fast.ai, etc.).
-The 3 paths should genuinely differ in timeline and approach."""
-
-    # Always return resilient AI result with high-fidelity fallback
-    result = resilient_ai_response(
-        prompt, 
-        fallback=_make_gps_fallback((body.profile.target_role if getattr(body, 'profile', None) else ''), body.year)
-    )
-
-
-    # Log activity (best-effort)
-    try:
-        db.add(ActivityLog(
-            user_id=current_user.id,
-            action_type="career_gps_generated",
-            title=f"Career GPS: {(body.profile.target_role if getattr(body, 'profile', None) else '')} ({body.year})",
-            xp_earned=5,
-        ))
-        current_user.xp = (current_user.xp or 0) + 5
-        db.add(current_user)
-        db.commit()
-    except Exception:
-        pass
-
-    return result
-
-
 # ── DAILY PLAN ─────────────────────────────────────────────────────────────────
 @router.get("/daily-plan")
 @limiter.limit("5/minute")
@@ -308,7 +91,7 @@ Generate a focused, achievable study plan for TODAY. Return ONLY valid JSON:
         "streak_note": f"You're on a {current_user.streak or 0}-day streak. Keep going!" if current_user.streak else None,
     }
     
-    return resilient_ai_response(prompt, fallback=fallback)
+    return resilient_ai_response(prompt, fallback=None)
 
 
 # ── NEXT BEST TASK ─────────────────────────────────────────────────────────────
@@ -375,7 +158,7 @@ Provide a comprehensive salary intelligence report. Return ONLY valid JSON:
 
     return resilient_ai_response(
         prompt, 
-        fallback=_make_salary_fallback(body.role, body.location, body.yoe)
+        fallback=None
     )
 
 
@@ -400,13 +183,9 @@ def ask_mentor(
     system_context = mode_prompts.get(body.mode, mode_prompts["career"])
     prompt = f"{system_context}\n\nUser asks: {body.question}"
 
-    fallback = {
-        "response": f"I'm momentarily recalibrating my neural pathways. Your question is important — please try again in 30 seconds.",
-        "mode": body.mode,
-        "mentor_name": "TULASI INTELLIGENCE",
-    }
     
-    return resilient_ai_response(prompt, fallback=fallback, is_json=False)
+    
+    return resilient_ai_response(prompt, fallback=None, is_json=False)
 
 
 @router.post("/chat")
@@ -430,7 +209,7 @@ def rag_chat(
     
     raw = resilient_ai_response(
         full_prompt,
-        fallback="I'm momentarily recalibrating my neural pathways. Your question is important — please try again in 30 seconds.",
+        fallback=None,
         is_json=False
     )
     
