@@ -103,7 +103,7 @@ Return ONLY raw JSON, nothing else."""
     fallback_data = fallback_data.copy()
     fallback_data["title"] = f"Roadmap for {req.goal}"
     
-    roadmap_data = resilient_ai_response(prompt, fallback=fallback_data)
+    roadmap_data = resilient_ai_response(prompt)
     
     try:
         # Save to DB

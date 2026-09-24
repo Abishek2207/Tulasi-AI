@@ -8,6 +8,7 @@ Tulasi AI — Resilient Gemini AI Router
 import os
 import time
 from typing import Optional, List
+from fastapi import HTTPException
 
 from dotenv import load_dotenv
 
@@ -92,12 +93,12 @@ def resilient_ai_response(
                     pass
                 
                 print(f"⚠️ [AI Safety Guard] JSON Decode failed. Raw: {raw[:100]}...")
-                return fallback
+                raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
         
         return raw
     except Exception as e:
         print(f"⚠️ [AI Safety Guard] Triggered for prompt. Error: {e}")
-        return fallback
+        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
 
 
 def get_embedding(text: str) -> Optional[List[float]]:
@@ -114,4 +115,4 @@ def get_embedding(text: str) -> Optional[List[float]]:
         return response.embeddings[0].values
     except Exception as e:
         print(f"Embedding error: {e}")
-        return [0.0] * 768
+        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")

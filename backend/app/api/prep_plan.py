@@ -96,7 +96,7 @@ Return ONLY the raw JSON object, nothing else."""
 
     try:
         plan_data = resilient_ai_response(
-            prompt, fallback=fallback_plan, force_model="complex_reasoning"
+            prompt, force_model="complex_reasoning"
         )
 
         new_plan = PrepPlan(

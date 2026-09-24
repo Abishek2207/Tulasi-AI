@@ -44,6 +44,6 @@ Respond ONLY with a valid JSON object in this exact format (ensure strings are e
         "refactored_code": data.code_snippet
     }
 
-    result = resilient_ai_response(prompt, fallback=fallback)
+    result = resilient_ai_response(prompt)
     
     return result

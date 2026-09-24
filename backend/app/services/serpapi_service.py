@@ -4,6 +4,7 @@ import json
 import httpx
 from datetime import datetime
 from sqlmodel import Session, select
+from fastapi import HTTPException
 from typing import List, Dict, Optional
 from app.models.models import Job, MarketSnapshot
 
@@ -14,7 +15,7 @@ class SerpApiService:
     async def fetch_jobs(role: str, location: str = "India") -> List[Dict]:
         """Fetches real jobs from SerpApi Google Jobs."""
         if not SERPAPI_API_KEY:
-            return []
+            raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: SerpAPI not configured")
             
         url = "https://serpapi.com/search.json"
         params = {
@@ -32,7 +33,7 @@ class SerpApiService:
                 return data.get("jobs_results", [])
             except Exception as e:
                 print(f"SerpApi Error: {e}")
-                return []
+                raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: SerpAPI failed")
 
     @staticmethod
     def sync_jobs_to_db(db: Session, jobs_data: List[Dict], role: str) -> List[Job]:
@@ -48,11 +49,17 @@ class SerpApiService:
             description = job_data.get("description", "")
             job_id = job_data.get("job_id", "")
             
-            # Create content hash for deduplication
-            content_str = f"{title}-{company}-{location}-{job_id}"
-            content_hash = hashlib.sha256(content_str.encode()).hexdigest()
             
-            existing = db.exec(select(Job).where(Job.content_hash == content_hash)).first()
+            existing = None
+            if job_id:
+                existing = db.exec(select(Job).where((Job.source_job_id == job_id) & (Job.source == "SerpApi"))).first()
+            
+            content_hash = None
+            if not existing:
+                content_str = f"{title}-{company}-{location}-{job_id}"
+                content_hash = hashlib.sha256(content_str.encode()).hexdigest()
+                existing = db.exec(select(Job).where(Job.content_hash == content_hash)).first()
+
             if not existing:
                 new_job = Job(
                     source="SerpApi",
@@ -72,21 +79,38 @@ class SerpApiService:
             
         return new_jobs
 
+    
     @staticmethod
     async def generate_market_snapshot(db: Session, role: str, location: str = "India") -> MarketSnapshot:
         """Fetches live data, creates snapshot, handles UNAVAILABLE / STALE states."""
-        jobs_data = await SerpApiService.fetch_jobs(role, location)
+        jobs_data = []
+        try:
+            jobs_data = await SerpApiService.fetch_jobs(role, location)
+        except HTTPException:
+            pass
+
         
         if not jobs_data:
             # Check for stale data
             existing_jobs = db.exec(select(Job).where(Job.title.ilike(f"%{role}%"))).all()
+            
             if existing_jobs:
+                stale_skills = []
+                for j in existing_jobs:
+                    desc = (j.description or "").lower()
+                    if "python" in desc: stale_skills.append("Python")
+                    if "react" in desc: stale_skills.append("React")
+                    if "sql" in desc: stale_skills.append("SQL")
+                    if "aws" in desc: stale_skills.append("AWS")
+                stale_skills = list(set(stale_skills))[:5]
+                
                 snapshot = MarketSnapshot(
                     role=role,
                     location=location,
                     time_period="Last 30 Days",
                     jobs_analyzed=len(existing_jobs),
-                    top_skills=json.dumps(["Python", "SQL", "React"]), # Extracted from stale jobs
+                    top_skills=json.dumps(stale_skills),
+
                     companies=json.dumps(list(set(j.company for j in existing_jobs))[:5]),
                     salary_signals=json.dumps({"min": 0, "max": 0}),
                     demand_signals="STALE",

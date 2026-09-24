@@ -78,4 +78,6 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=[".env", "../.env"], extra="allow")
 
+    POSTHOG_API_KEY: str | None = None
+
 settings = Settings()

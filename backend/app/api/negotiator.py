@@ -45,6 +45,6 @@ Respond ONLY with a valid JSON object in this exact format:
         "verdict": "Could not fully evaluate this draft."
     }
 
-    result = resilient_ai_response(prompt, fallback=fallback)
+    result = resilient_ai_response(prompt)
     
     return result

@@ -1350,8 +1350,8 @@ export const systemDesignApi = {
 };
 
 
-export const billingApi: any = new Proxy({}, { get: () => () => Promise.resolve({}) });
-export const careerIntelligenceApi: any = new Proxy({}, { get: () => () => Promise.resolve({}) });
+export const billingApi: any = new Proxy({}, { get: () => () => Promise.reject(new Error("Service temporarily unavailable")) });
+export const careerIntelligenceApi: any = new Proxy({}, { get: () => () => Promise.reject(new Error("Service temporarily unavailable")) });
 export const codeReviewApi: any = {
   evaluate: (answer: string, token: string) => request<any>('/api/code-review/evaluate', { method: 'POST', body: JSON.stringify({ answer }) }, token)
 };
@@ -1375,8 +1375,8 @@ export const notificationsApi = {
 export const negotiatorApi: any = {
   evaluate: (scenario: string, draft: string, token: string) => request<any>('/api/negotiator/evaluate', { method: 'POST', body: JSON.stringify({ scenario, draft }) }, token)
 };
-export const projectBuilderApi: any = new Proxy({}, { get: () => () => Promise.resolve({}) });
-export const researchApi: any = new Proxy({}, { get: () => () => Promise.resolve({}) });
+export const projectBuilderApi: any = new Proxy({}, { get: () => () => Promise.reject(new Error("Service temporarily unavailable")) });
+export const researchApi: any = new Proxy({}, { get: () => () => Promise.reject(new Error("Service temporarily unavailable")) });
 export const stripeApi: any = {
   createCheckoutSession: () => request<any>("/api/stripe/create-checkout-session", { method: "POST" }),
   createPortalSession: () => request<any>("/api/stripe/customer-portal", { method: "POST" })

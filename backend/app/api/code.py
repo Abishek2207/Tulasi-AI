@@ -730,6 +730,6 @@ User's Code:
         explanation = get_ai_response(prompt, force_model="complex_reasoning")
         status = "success" if "API key" not in explanation else "error"
     except Exception as e:
-        explanation = "🧠 **Neural Sync Timeout**\n\nThe AI mentor is currently assisting many students. However, for this problem, we recommend double-checking your loop boundaries (off-by-one errors) and verifying your logic with a simple test case on paper. You've got this!"
-        status = "success" # Treat as graceful fallback
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="AI mentor is currently unavailable. Please try again later.")
     return {"explanation": explanation, "status": status}
