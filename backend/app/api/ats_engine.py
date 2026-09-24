@@ -23,7 +23,7 @@ class ResumeBuildRequest(BaseModel):
 @router.post("/build")
 @limiter.limit("5/minute")
 def build_resume(request: Request, req: ResumeBuildRequest, current_user: User = Depends(require_quota("resume_build", limit=3)), db: Session = Depends(get_session)):
-    # 1. Quota Check (Mock)
+    # 1. Quota Check
     usage = UsageLog(user_id=current_user.id, action_type="resume_build", details=f"Target: {(req.profile.target_role if getattr(req, 'profile', None) else '')}")
     db.add(usage)
     
@@ -54,8 +54,8 @@ def build_resume(request: Request, req: ResumeBuildRequest, current_user: User =
         original_resume=resume_content,
         job_description=(req.profile.target_role if getattr(req, 'profile', None) else ''),
         improved_resume=resume_content,
-        ats_score=95, # placeholder AI score
-        readability_score=95
+        ats_score=None,
+        readability_score=None
     )
     db.add(resume)
     db.commit()
@@ -77,18 +77,40 @@ def analyze_resume(request: Request, req: AnalyzeRequest, current_user: User = D
     usage = UsageLog(user_id=current_user.id, action_type="ats_analyze")
     db.add(usage)
     
-    # Mock AI Analysis
+    prompt = f"""
+    You are an expert ATS (Applicant Tracking System).
+    Analyze this resume against the target job description.
+    
+    Target Job: {req.target_job_description}
+    Resume: {resume.improved_resume or resume.original_resume}
+    
+    Return ONLY valid JSON with no markdown formatting:
+    {{
+      "overall_score": 85,
+      "keyword_match_score": 80,
+      "skills_score": 90,
+      "experience_score": 85,
+      "formatting_score": 90,
+      "missing_keywords_json": ["Docker", "K8s"],
+      "skill_gap_analysis": "Brief analysis string",
+      "improvement_suggestions_json": ["Suggest 1", "Suggest 2"]
+    }}
+    """
+    
+    from app.core.ai_router import resilient_ai_response
+    ai_data = resilient_ai_response(prompt)
+    
     report = ATSReport(
         user_id=current_user.id,
         resume_id=resume.id,
-        overall_score=88,
-        keyword_match_score=85,
-        skills_score=90,
-        experience_score=80,
-        formatting_score=95,
-        missing_keywords_json='["Docker", "Kubernetes"]',
-        skill_gap_analysis="Needs more cloud experience",
-        improvement_suggestions_json='["Quantify impact in project 1"]'
+        overall_score=ai_data.get("overall_score", 0),
+        keyword_match_score=ai_data.get("keyword_match_score", 0),
+        skills_score=ai_data.get("skills_score", 0),
+        experience_score=ai_data.get("experience_score", 0),
+        formatting_score=ai_data.get("formatting_score", 0),
+        missing_keywords_json=json.dumps(ai_data.get("missing_keywords_json", [])),
+        skill_gap_analysis=ai_data.get("skill_gap_analysis", ""),
+        improvement_suggestions_json=json.dumps(ai_data.get("improvement_suggestions_json", []))
     )
     db.add(report)
     db.commit()

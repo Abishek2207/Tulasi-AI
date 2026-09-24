@@ -93,7 +93,7 @@ Example output format:
         }
     ]
     
-    return resilient_ai_response(prompt, fallback=fallback_certs, is_json=True)
+    return resilient_ai_response(prompt, is_json=True)
 
 @router.post("/start")
 def start_certification(
@@ -130,7 +130,7 @@ Return ONLY strict JSON with this exact structure:
     }
     
     # We want a string returned for study_path_json
-    study_dict = resilient_ai_response(prompt, fallback=fallback_study, is_json=True)
+    study_dict = resilient_ai_response(prompt, is_json=True)
     study_path = json.dumps(study_dict)
 
     cert = UserCertification(

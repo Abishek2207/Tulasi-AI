@@ -57,7 +57,7 @@ Return ONLY the raw JSON object, no markdown, no backticks, no introduction."""
     }
 
     try:
-        data = resilient_ai_response(prompt, fallback=fallback, force_model="complex_reasoning")
+        data = resilient_ai_response(prompt, force_model="complex_reasoning")
         
         # ── 💡 Log Activity ──────────────────────────────────────────
         log_activity_internal(current_user, db, "startup_saved", f"Generated idea: {data.get('name', 'New Startup')}")
