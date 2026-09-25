@@ -438,7 +438,7 @@ export const Footer = React.memo(function Footer() {
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {[
                   { name: "Documentation", href: "/about" },
-                  { name: "System Status", href: "https://tulasi-ai-soda.onrender.com/api" },
+                  { name: "System Status", href: "https://tulasi-ai-wgwl.onrender.com/api" },
                   { name: "Changelog", href: "/blog" },
                   { name: "Community", href: "https://instagram.com/_.abi22._" },
                   { name: "Support", href: "/contact" }
