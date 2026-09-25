@@ -206,7 +206,7 @@ def health():
         "db": db_status,
         "db_detail": db_detail,
         "uptime_seconds": uptime,
-        "environment": "production" if "render" in str(engine.url) else "development" if engine else "error-state",
+        "environment": "production" if not str(engine.url).startswith("sqlite") else "development",
         "integrations": integrations
     }
 
