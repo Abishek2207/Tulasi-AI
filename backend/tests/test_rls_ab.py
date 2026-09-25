@@ -7,7 +7,7 @@ from app.core.security import get_password_hash
 import uuid
 
 # Use the environment DATABASE_URL or fallback (though the test runner will set it)
-db_url = os.environ.get("DATABASE_URL", "postgresql://REDACTED:REDACTED@REDACTED:6543/postgres?sslmode=require")
+db_url = os.environ.get("DATABASE_URL", "postgresql://postgres.postgres:REDACTED@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require")
 
 @pytest.fixture(scope="module")
 def engine():
