@@ -15,9 +15,16 @@ class Settings(BaseSettings):
     def normalized_database_url(self) -> str:
         """SQLAlchemy requires postgresql:// instead of postgres://.
         Supabase also requires sslmode=require for external connections."""
-        url = os.getenv("REAL_DATABASE_URL", self.DATABASE_URL)
-        if os.getenv("RENDER") or "render" in url:
-            url = "postgresql://postgres.eutfcuksxystonjbniud:%40Abishek_22@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require"
+        url = os.getenv("DATABASE_URL", self.DATABASE_URL)
+        
+        is_render = os.getenv("RENDER") is not None
+        
+        if is_render:
+            if not os.getenv("DATABASE_URL"):
+                raise RuntimeError("DATABASE_URL is missing from Render environment.")
+            if "sqlite" in url:
+                raise RuntimeError("DATABASE_URL is configured for SQLite on Render. Production must use PostgreSQL.")
+                
         if "sqlite" in url:
             print("================================================================")
             print("WARNING: Running on SQLite instead of Supabase PostgreSQL!")
