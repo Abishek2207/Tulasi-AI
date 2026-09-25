@@ -16,7 +16,7 @@ class Settings(BaseSettings):
         """SQLAlchemy requires postgresql:// instead of postgres://.
         Supabase also requires sslmode=require for external connections."""
         url = os.getenv("REAL_DATABASE_URL", self.DATABASE_URL)
-        if "render" in url:
+        if os.getenv("RENDER") or "render" in url:
             url = "postgresql://postgres.eutfcuksxystonjbniud:%40Abishek_22@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require"
         if "sqlite" in url:
             print("================================================================")
