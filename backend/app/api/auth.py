@@ -156,7 +156,7 @@ def login(request: Request, req: LoginRequest, background_tasks: BackgroundTasks
             user = result.first()
     except Exception as e:
         print(f"Login DB error: {e}")
-        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+        raise HTTPException(status_code=503, detail=f"Database temporarily unavailable: {str(e)} ({type(e).__name__})")
 
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email/ID or password")
