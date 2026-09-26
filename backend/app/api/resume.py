@@ -96,16 +96,7 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
   "improved_resume": "YOUR FULLY REWRITTEN AND STRUCTURED RESUME TEXT HERE... (with SUMMARY, EXPERIENCE, SKILLS, PROJECTS)"
 }}"""
 
-    fallback = {
-        "ats_score": 55,
-        "readability_score": 60,
-        "keyword_match_percent": 40,
-        "feedback": ["AI Engine is currently in safe-mode. Analysis is based on structural heuristics.", "Ensure your resume has clear section headers."],
-        "missing_keywords": ["Analysis Pending"],
-        "improved_resume": data.resume_text
-    }
-
-    result = resilient_ai_response(prompt, fallback)
+    result = resilient_ai_response(prompt)
     
     # ── 💾 Auto-Save to Database ──
     try:
@@ -159,4 +150,5 @@ def get_resume_history(
             "created_at": r.created_at.isoformat()
         })
     return history
+
 
