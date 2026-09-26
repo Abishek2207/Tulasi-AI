@@ -408,7 +408,7 @@ def chat(
         except Exception as e2:
             print(f"❌ Direct AI fallback failed: {e2}")
             from fastapi import HTTPException
-            raise HTTPException(status_code=400, detail="AI service is not configured or unavailable.")
+            raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI provider failed")
 
     # ── Persist messages ──────────────────────────────────────────────────────
     db.add(ChatMessage(session_id=session_id, user_id=user.id, role="user", content=req.message))
@@ -549,7 +549,7 @@ def chat_voice(
     except Exception as e:
         print(f"⚠️ Voice AI fast call failed: {e}")
         from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="AI service is not configured or unavailable.")
+        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI provider failed")
 
     # Fire-and-forget DB persistence (background, non-blocking)
     try:
