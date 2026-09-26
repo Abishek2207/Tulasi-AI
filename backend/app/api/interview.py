@@ -20,7 +20,7 @@ from app.models.models import User, ActivityLog, PersistentInterviewSession
 from app.core.database import get_session
 from app.core.rate_limit import limiter
 from app.api.activity import log_activity_internal
-from app.core.ai_router import get_ai_response
+from app.core.ai_router import get_ai_response, resilient_ai_response
 
 router = APIRouter()
 
@@ -233,21 +233,8 @@ Provide a structured evaluation. Return ONLY valid JSON with EXACTLY these keys:
 
 Be precise and specific. Base all feedback on the reference examples above. No generic statements."""
 
-    try:
-        raw = get_ai_response(prompt)
-        match = re.search(r'\{.*\}', raw, re.DOTALL)
-        result = json.loads(match.group() if match else raw)
-    except Exception as e:
-        print(f"❌ [RAG Eval] Parse failed: {e}")
-        result = {
-            "score": 5, "clarity": 5, "relevance": 5, "structure": 5, "depth": 5,
-            "strengths": ["Attempted the question", "Showed some understanding"],
-            "weaknesses": ["Response lacked depth", "Missing technical specifics"],
-            "missing_keywords": all_keywords[:3],
-            "improvement_tip": "Study the core concepts more deeply and use structured answer formats.",
-            "improved_answer": "A truly strong answer would provide deep technical specifics and structured formatting.",
-            "summary": "The candidate provided a partial answer. More depth and technical specificity is needed."
-        }
+    # Use resilient AI response without a fake fallback; raises 503 if providers fail
+    result = resilient_ai_response(prompt, is_json=True)
 
     # Inject our heuristic confidence score
     result["confidence_score"] = confidence
@@ -491,3 +478,5 @@ def answer_question(
         "remaining": interview_session.num_questions - interview_session.questions_asked,
         "difficulty": new_difficulty,
     }
+
+

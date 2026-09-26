@@ -91,6 +91,7 @@ def test_resume_improve_validation(normal_user_token_headers):
     assert response.status_code == 400
 
 def test_interview_flow(db_session: Session, normal_user_token_headers):
+
     # 1. Start Interview
     start_payload = {
         "role": "Software Engineer",
@@ -99,36 +100,46 @@ def test_interview_flow(db_session: Session, normal_user_token_headers):
         "num_questions": 3
     }
     
-    response = client.post("/api/interview/start", json=start_payload, headers=normal_user_token_headers)
-    assert response.status_code == 200, response.text
-    data = response.json()
-    
-    assert data["status"] == "in_progress"
-    assert "session_id" in data
-    assert "question" in data
-    assert data["question_number"] == 1
-    
-    session_id = data["session_id"]
-    
-    # Check DB
-    session_record = db_session.exec(select(PersistentInterviewSession).where(PersistentInterviewSession.session_id == session_id)).first()
-    assert session_record is not None
-    assert session_record.questions_asked == 1
-    
-    # 2. Answer Question
-    answer_payload = {
-        "session_id": session_id,
-        "answer": "My answer is to use a hash map for O(1) lookups."
-    }
-    
-    response = client.post("/api/interview/answer", json=answer_payload, headers=normal_user_token_headers)
-    assert response.status_code == 200, response.text
-    data = response.json()
-    
-    assert data["status"] in ["in_progress", "completed"]
-    assert "eval" in data
-    assert "score" in data["eval"]
-    assert data["question_number"] == 2
+    with patch("app.api.interview.get_ai_response") as mock_get_ai, patch("app.api.interview.resilient_ai_response") as mock_resilient_ai:
+        mock_get_ai.return_value = "What is a hash map?"
+        mock_resilient_ai.return_value = {
+            "score": 8, "clarity": 8, "relevance": 8, "structure": 8, "depth": 8,
+            "strengths": ["Good"], "weaknesses": ["None"], "missing_keywords": [],
+            "improvement_tip": "None", "improved_answer": "None", "summary": "Good"
+        }
+        
+        response = client.post("/api/interview/start", json=start_payload, headers=normal_user_token_headers)
+        assert response.status_code == 200, response.text
+        data = response.json()
+        
+        assert data["status"] == "in_progress"
+        assert "session_id" in data
+        assert "question" in data
+        assert data["question_number"] == 1
+        
+        session_id = data["session_id"]
+        
+        # Check DB
+        session_record = db_session.exec(select(PersistentInterviewSession).where(PersistentInterviewSession.session_id == session_id)).first()
+        assert session_record is not None
+        assert session_record.questions_asked == 1
+        
+        # 2. Answer Question
+        answer_payload = {
+            "session_id": session_id,
+            "answer": "My answer is to use a hash map for O(1) lookups."
+        }
+        
+        mock_get_ai.return_value = "Next question!"
+        response = client.post("/api/interview/answer", json=answer_payload, headers=normal_user_token_headers)
+        assert response.status_code == 200, response.text
+        data = response.json()
+        
+        assert data["status"] in ["in_progress", "completed"]
+        assert "eval" in data
+        assert "score" in data["eval"]
+        assert data["question_number"] == 2
+
     
     # 3. Invalid Session
     invalid_payload = {

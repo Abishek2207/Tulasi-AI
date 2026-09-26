@@ -41,7 +41,7 @@ def get_ai_response(
 
 def resilient_ai_response(
     prompt: str,
-    fallback: any,
+    fallback: any = None,
     force_model: Optional[str] = "complex_reasoning",
     is_json: bool = True,
     return_str: bool = False
@@ -116,3 +116,4 @@ def get_embedding(text: str) -> Optional[List[float]]:
     except Exception as e:
         print(f"Embedding error: {e}")
         raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+
