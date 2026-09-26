@@ -359,24 +359,135 @@ def start_interview(
         raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
 
     try:
-        history.append({"role": "ai", "content": next_q})
+        history = [{"role": "ai", "content": question}]
 
-        interview_session.history_json = json.dumps(history)
-        interview_session.updated_at = datetime.utcnow()
+        interview_session = PersistentInterviewSession(
+            session_id=session_id,
+            user_id=current_user.id,
+            role=req.role,
+            company=req.company,
+            interview_type=req.interview_type,
+            questions_asked=1,
+            num_questions=num_q,
+            current_difficulty=5,
+            history_json=json.dumps(history),
+            scores_json="{}"
+        )
         db.add(interview_session)
         db.commit()
 
         return {
             "status": "in_progress",
-            "eval": eval_result,           # Per-question feedback
-            "question": next_q,
-            "question_number": interview_session.questions_asked,
+            "session_id": session_id,
+            "question": question,
+            "question_number": 1,
             "total_questions": num_q,
-            "remaining": num_q - interview_session.questions_asked,
-            "difficulty": new_difficulty,
+            "remaining": num_q - 1,
+            "difficulty": 5,
         }
     except Exception as e:
         db.rollback()
-        raise HTTPException(500, f"Database Error saving next question: {str(e)}")
+        raise HTTPException(500, f"Database Error starting interview: {str(e)}")
 
 
+@router.post("/answer")
+@limiter.limit("10/minute")
+def answer_question(
+    request: Request,
+    req: InterviewAnswerRequest,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    statement = select(PersistentInterviewSession).where(
+        PersistentInterviewSession.session_id == req.session_id,
+        PersistentInterviewSession.user_id == current_user.id
+    )
+    interview_session = db.exec(statement).first()
+
+    if not interview_session:
+        raise HTTPException(status_code=404, detail="Interview session not found.")
+
+    history = json.loads(interview_session.history_json or "[]")
+    scores = json.loads(interview_session.scores_json or "{}")
+
+    if not history:
+        raise HTTPException(status_code=400, detail="Invalid session history.")
+
+    last_q = history[-1]["content"]
+    
+    try:
+        eval_result = _evaluate_answer_with_rag(
+            question=last_q,
+            answer=req.answer,
+            role=interview_session.role,
+            interview_type=interview_session.interview_type,
+            difficulty=interview_session.current_difficulty
+        )
+    except Exception as e:
+        print(f"⚠️ [Interview Eval Fallback] AI Error: {e}")
+        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+
+    scores[str(interview_session.questions_asked)] = eval_result
+    interview_session.scores_json = json.dumps(scores)
+
+    history.append({"role": "user", "content": req.answer})
+    
+    if interview_session.questions_asked >= interview_session.num_questions:
+        final_report = _compute_job_readiness(scores)
+        interview_session.history_json = json.dumps(history)
+        interview_session.status = "completed"
+        interview_session.updated_at = datetime.utcnow()
+        db.add(interview_session)
+        
+        log_activity_internal(
+            db=db,
+            user_id=current_user.id,
+            action="Mock Interview Completed",
+            description=f"Completed {interview_session.interview_type} mock interview for {interview_session.role}.",
+            metadata_json=json.dumps(final_report)
+        )
+        db.commit()
+
+        return {
+            "status": "completed",
+            "eval": eval_result,
+            "report": final_report
+        }
+
+    new_difficulty = _adapt_difficulty(interview_session.current_difficulty, eval_result.get("score", 5))
+    interview_session.current_difficulty = new_difficulty
+
+    history_text = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history[-4:]])
+    
+    next_q_prompt = (
+        f"You are a senior {interview_session.interview_type} interviewer hiring a {interview_session.role}.\n"
+        f"The interview is currently at difficulty level {new_difficulty}/10.\n"
+        f"Recent Conversation:\n{history_text}\n\n"
+        f"Based on the candidate's last answer, ask the NEXT interview question.\n"
+        f"Do not provide feedback or pleasantries. Just output the question itself."
+    )
+
+    try:
+        next_q = get_ai_response(next_q_prompt)
+    except Exception as fallback_e:
+        print(f"⚠️ [Interview Next Fallback] AI Error: {fallback_e}")
+        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+
+    history.append({"role": "ai", "content": next_q})
+
+    interview_session.history_json = json.dumps(history)
+    interview_session.questions_asked += 1
+    interview_session.updated_at = datetime.utcnow()
+    
+    db.add(interview_session)
+    db.commit()
+
+    return {
+        "status": "in_progress",
+        "eval": eval_result,
+        "question": next_q,
+        "question_number": interview_session.questions_asked,
+        "total_questions": interview_session.num_questions,
+        "remaining": interview_session.num_questions - interview_session.questions_asked,
+        "difficulty": new_difficulty,
+    }
