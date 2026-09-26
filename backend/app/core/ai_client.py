@@ -18,7 +18,7 @@ class HybridAIClient:
     Hybrid AI client with resilient fallback chain:
       1. Gemini (multiple free-tier models, newest first)
       2. OpenRouter (google/gemma-2-9b-it:free — robust free model)
-      3. Groq (llama-3.1-8b-instant)
+      3. Groq (openai/gpt-oss-20b)
       4. Mock fallback (always succeeds, context-aware)
     """
 
@@ -207,7 +207,7 @@ class HybridAIClient:
             "Authorization": f"Bearer {groq_key}",
             "Content-Type": "application/json",
         }
-        payload = {"model": "llama-3.1-8b-instant", "messages": messages, "stream": stream}
+        payload = {"model": "openai/gpt-oss-20b", "messages": messages, "stream": stream}
 
         if stream:
             def gen():
