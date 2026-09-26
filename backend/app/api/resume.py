@@ -105,7 +105,7 @@ Respond STRICTLY in this JSON format (no markdown code blocks, no other text):
         "improved_resume": data.resume_text
     }
 
-    result = resilient_ai_response(prompt)
+    result = resilient_ai_response(prompt, fallback)
     
     # ── 💾 Auto-Save to Database ──
     try:
