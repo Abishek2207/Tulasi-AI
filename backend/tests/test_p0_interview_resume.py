@@ -57,6 +57,8 @@ def normal_user_token_headers():
 
 client = TestClient(app)
 
+from unittest.mock import patch
+
 def test_resume_improve(db_session: Session, normal_user_token_headers):
     # Test Resume ATS endpoint
     payload = {
@@ -65,7 +67,10 @@ def test_resume_improve(db_session: Session, normal_user_token_headers):
     }
     
     # 1. Valid request
-    response = client.post("/api/resume/improve", json=payload, headers=normal_user_token_headers)
+    with patch("app.api.resume.resilient_ai_response") as mock_ai:
+        mock_ai.return_value = {"ats_score": 85, "improved_resume": "I write excellent Python code.", "feedback": ["Add more details"]}
+        response = client.post("/api/resume/improve", json=payload, headers=normal_user_token_headers)
+        
     assert response.status_code == 200, response.text
     
     data = response.json()
@@ -132,3 +137,5 @@ def test_interview_flow(db_session: Session, normal_user_token_headers):
     }
     response = client.post("/api/interview/answer", json=invalid_payload, headers=normal_user_token_headers)
     assert response.status_code == 404
+
+
