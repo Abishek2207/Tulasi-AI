@@ -66,7 +66,7 @@ async def get_user_from_token(token: str, db: Session) -> Optional[User]:
 
 
 def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
-    admin_emails = [settings.ADMIN_EMAIL.lower(), "abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
+    admin_emails = settings.admin_emails + ["abishek2207@gmail.com", "abishekramamoorthy22@gmail.com"]
     is_admin_email = current_user.email and current_user.email.lower() in admin_emails
     if current_user.role != "admin" and not is_admin_email:
         raise HTTPException(status_code=403, detail="Admin access only")

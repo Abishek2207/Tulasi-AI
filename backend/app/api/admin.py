@@ -248,8 +248,7 @@ def get_live_users(db: Session = Depends(get_session), admin: User = Depends(get
 # ─────────────────────────────────────────────────────────────────────
 
 @router.post("/seed-hackathons")
-def seed_hackathons(db: Session = Depends(get_session), admin: User = None):
-    # admin = Depends(get_admin_user) — Temporarily bypassed for demo seeding
+def seed_hackathons(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
     from sqlalchemy import text
     added = 0
     skipped = 0
@@ -276,8 +275,7 @@ def seed_hackathons(db: Session = Depends(get_session), admin: User = None):
     return {"message": f"Seeded {added} hackathons", "added": added, "skipped": skipped}
 
 @router.post("/seed-reviews")
-def seed_reviews(db: Session = Depends(get_session), admin: User = None):
-    # admin = Depends(get_admin_user) — Temporarily bypassed for demo seeding
+def seed_reviews(db: Session = Depends(get_session), admin: User = Depends(get_admin_user)):
     from sqlalchemy import text
     added = 0
     skipped = 0
