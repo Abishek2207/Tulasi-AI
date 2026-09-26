@@ -16,6 +16,11 @@ def override_get_normal_user():
 def override_get_admin_user():
     return admin_user
 
+@pytest.fixture(autouse=True)
+def clear_overrides():
+    yield
+    app.dependency_overrides = {}
+
 def test_no_auth():
     """A. No Authorization header should return 401/403."""
     app.dependency_overrides = {}
@@ -49,3 +54,4 @@ def test_client_claim_admin():
     # Send forged payload
     response = client.post("/api/admin/seed-hackathons", json={"role": "admin", "admin": True})
     assert response.status_code == 403
+
