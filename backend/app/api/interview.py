@@ -427,10 +427,10 @@ def answer_question(
         db.add(interview_session)
         
         log_activity_internal(
+            user=current_user,
             db=db,
-            user_id=current_user.id,
-            action="Mock Interview Completed",
-            description=f"Completed {interview_session.interview_type} mock interview for {interview_session.role}.",
+            action_type="Mock Interview Completed",
+            title=f"Completed {interview_session.interview_type} mock interview for {interview_session.role}.",
             metadata_json=json.dumps(final_report)
         )
         db.commit()
@@ -478,5 +478,6 @@ def answer_question(
         "remaining": interview_session.num_questions - interview_session.questions_asked,
         "difficulty": new_difficulty,
     }
+
 
 
