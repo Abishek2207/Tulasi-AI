@@ -186,7 +186,7 @@ def _evaluate_answer_with_rag(
     Retrieve top-3 similar ideal answers, build an anchor prompt, 
     call Gemini for structured evaluation, return parsed dict.
     """
-    top_examples = _rag.retrieve_top_k(f"Q: {question}\nA: {answer}", k=3)
+    top_examples = _rag.retrieve_top_k(f"Q: {question}\nA: {answer}", k=1)
 
     # Build keyword list from retrieved examples
     all_keywords: List[str] = []
@@ -234,7 +234,7 @@ Provide a structured evaluation. Return ONLY valid JSON with EXACTLY these keys:
 Be precise and specific. Base all feedback on the reference examples above. No generic statements."""
 
     # Use resilient AI response without a fake fallback; raises 503 if providers fail
-    result = resilient_ai_response(prompt, is_json=True)
+    result = resilient_ai_response(prompt, is_json=True, force_model=None)
 
     # Inject our heuristic confidence score
     result["confidence_score"] = confidence
@@ -478,6 +478,7 @@ def answer_question(
         "remaining": interview_session.num_questions - interview_session.questions_asked,
         "difficulty": new_difficulty,
     }
+
 
 
 
