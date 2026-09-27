@@ -147,6 +147,14 @@ app.mount("/data", StaticFiles(directory="data"), name="data")
 
 
 
+
+@app.get("/api/debug/ai-full-error")
+def debug_ai_full_error():
+    from app.core.ai_client import ai_client
+    # get_response throws HTTPException on failure, which returns the full error detail
+    return {"result": ai_client.get_response("test", force_model=None)}
+
+
 # ── Root Endpoint ──────────────────────────────────────────────────
 @app.get("/")
 def root():
