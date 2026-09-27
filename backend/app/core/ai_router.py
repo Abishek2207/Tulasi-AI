@@ -93,12 +93,12 @@ def resilient_ai_response(
                     pass
                 
                 print(f"⚠️ [AI Safety Guard] JSON Decode failed. Raw: {raw[:100]}...")
-                raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+                raise HTTPException(status_code=503, detail=f"SERVICE_UNAVAILABLE: AI providers unavailable. {str(e) if locals().get('e') else ''}")
         
         return raw
     except Exception as e:
         print(f"⚠️ [AI Safety Guard] Triggered for prompt. Error: {e}")
-        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+        raise HTTPException(status_code=503, detail=f"SERVICE_UNAVAILABLE: AI providers unavailable. {str(e) if locals().get('e') else ''}")
 
 
 def get_embedding(text: str) -> Optional[List[float]]:
@@ -115,5 +115,7 @@ def get_embedding(text: str) -> Optional[List[float]]:
         return response.embeddings[0].values
     except Exception as e:
         print(f"Embedding error: {e}")
-        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+        raise HTTPException(status_code=503, detail=f"SERVICE_UNAVAILABLE: AI providers unavailable. {str(e) if locals().get('e') else ''}")
+
+
 
