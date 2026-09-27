@@ -207,7 +207,7 @@ class HybridAIClient:
             "Authorization": f"Bearer {groq_key}",
             "Content-Type": "application/json",
         }
-        payload = {"model": "openai/gpt-oss-20b", "messages": messages, "stream": stream}
+        payload = {"model": "llama3-8b-8192", "messages": messages, "stream": stream}
 
         if stream:
             def gen():
@@ -407,7 +407,7 @@ class HybridAIClient:
                     err = str(e)
                     print(f"⚠️ [AI] Gemini {model_name} failed: {err}")
                     errors.append(f"Gemini/{model_name}: {err}")
-                    if "API key" in err or "400" in err or "429" in err or self._is_quota_error(err):
+                    if "API key" in err or "429" in err or self._is_quota_error(err):
                         print("⏭️ [AI] Skipping remaining Gemini models due to Auth/Quota error.")
                         break
 
@@ -423,7 +423,7 @@ class HybridAIClient:
                     err = str(e)
                     print(f"❌ [AI] OpenRouter {or_model} failed: {err}")
                     errors.append(f"OpenRouter/{or_model}: {err}")
-                    if "401" in err or "403" in err or "429" in err or self._is_quota_error(err) or "credits" in err.lower():
+                    if "401" in err or "403" in err or "429" in err or "credits" in err.lower():
                         print("⏭️ [AI] Skipping remaining OpenRouter models due to Auth/Quota error.")
                         break
 
@@ -445,3 +445,4 @@ class HybridAIClient:
 
 # Singleton
 ai_client = HybridAIClient()
+
