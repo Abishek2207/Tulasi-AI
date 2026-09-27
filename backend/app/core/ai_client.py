@@ -28,9 +28,7 @@ class HybridAIClient:
     ]
 
     OPENROUTER_FREE_MODELS = [
-        "meta-llama/llama-3.1-8b-instruct:free",
-        "mistralai/mistral-7b-instruct:free",
-        "openchat/openchat-7b:free",
+        "openrouter/free"
     ]
 
     def __init__(self):
