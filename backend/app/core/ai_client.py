@@ -28,9 +28,9 @@ class HybridAIClient:
     ]
 
     OPENROUTER_FREE_MODELS = [
-        "google/gemma-2-9b-it:free",
-        "meta-llama/llama-3-8b-instruct:free",
-        "gryphe/mythomist-7b:free",
+        "meta-llama/llama-3.1-8b-instruct:free",
+        "mistralai/mistral-7b-instruct:free",
+        "openchat/openchat-7b:free",
     ]
 
     def __init__(self):
@@ -207,7 +207,7 @@ class HybridAIClient:
             "Authorization": f"Bearer {groq_key}",
             "Content-Type": "application/json",
         }
-        payload = {"model": "llama3-8b-8192", "messages": messages, "stream": stream}
+        payload = {"model": "llama-3.1-8b-instant", "messages": messages, "stream": stream}
 
         if stream:
             def gen():
