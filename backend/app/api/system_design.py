@@ -152,7 +152,7 @@ def get_guided_solution(req: SolutionRequest, current_user: User = Depends(get_c
     
     try:
         from app.core.ai_client import ai_client
-        res = ai_client.get_response(prompt, force_model="complex_reasoning")
+        res = ai_client.get_response(prompt, force_model=None)
         import re
         match = re.search(r'\{.*\}', res, re.DOTALL)
         if match:

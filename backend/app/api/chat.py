@@ -250,7 +250,7 @@ def chat(
                 f"Message: \"{req.message}\"\n"
                 f"Return JSON: {{\"is_safe\": true/false, \"reason\": \"short reason if unsafe\"}}"
             )
-            safety_res = get_ai_response(safety_prompt, force_model="fast_flash")
+            safety_res = get_ai_response(safety_prompt, force_model=None)
             safety_match = re.search(r"\{.*\}", safety_res, re.DOTALL)
             if safety_match:
                 safety_data = json.loads(safety_match.group())
@@ -379,7 +379,7 @@ def chat(
             response_text = resilient_ai_response(
                 req.message, 
                 fallback=_fallback,
-                force_model="fast_flash", # Use faster model for simple tool generation
+                force_model=None, # Use faster model for simple tool generation
                 is_json=True,
                 return_str=True
             )
@@ -544,7 +544,7 @@ def chat_voice(
         response_text = get_ai_response(
             req.message,
             system_instruction=system_instruction,
-            force_model="fast_flash",
+            force_model=None,
         )
     except Exception as e:
         print(f"⚠️ Voice AI fast call failed: {e}")
@@ -625,7 +625,7 @@ def chat_stream(
             f"Evaluate safety of: '{req.message}'. "
             "Return {\"is_safe\": bool, \"reason\": string}"
         )
-        safety_res = get_ai_response(safety_prompt, force_model="fast_flash")
+        safety_res = get_ai_response(safety_prompt, force_model=None)
         safety_match = re.search(r"\{.*\}", safety_res, re.DOTALL)
         if safety_match:
             safety_data = json.loads(safety_match.group())
@@ -709,7 +709,7 @@ def chat_stream(
         structured_tools = ["flashcards", "roadmap_gen", "json_mode"]
         if tool in structured_tools:
             try:
-                direct = get_ai_response(req.message, history=history, system_instruction=system_instruction, force_model="fast_flash")
+                direct = get_ai_response(req.message, history=history, system_instruction=system_instruction, force_model=None)
                 full_response = direct
                 yield f"data: {json.dumps({'token': direct, 'session_id': session_id, 'done': False})}\n\n"
                 return # Stop after direct response

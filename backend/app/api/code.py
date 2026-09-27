@@ -727,7 +727,7 @@ User's Code:
 ```
 """
     try:
-        explanation = get_ai_response(prompt, force_model="complex_reasoning")
+        explanation = get_ai_response(prompt, force_model=None)
         status = "success" if "API key" not in explanation else "error"
     except Exception as e:
         from fastapi import HTTPException

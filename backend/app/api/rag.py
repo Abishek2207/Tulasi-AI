@@ -142,7 +142,7 @@ def process_document(doc_id: int, file_path: str, user_id: int):
                 '"summary": "string", "suggested_questions": ["string"]}'
             )
             try:
-                res = ai_client.get_response(prompt, force_model="gemini-2.5-flash")
+                res = ai_client.get_response(prompt, force_model=None)
                 cleaned = res.replace("`json", "").replace("`", "").strip()
                 parsed = json.loads(cleaned)
                 doc.analysis_result = json.dumps(parsed)
@@ -318,5 +318,5 @@ async def chat_document(
         f"User question: {user_query}"
     )
 
-    answer = ai_client.get_response(prompt, force_model="gemini-2.5-flash")
+    answer = ai_client.get_response(prompt, force_model=None)
     return {"answer": answer, "citations": citations}

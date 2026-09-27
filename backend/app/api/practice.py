@@ -63,7 +63,7 @@ def get_next_question(
     """
     
     # We use ai_client to generate the question
-    question_text = ai_client.get_response(message=prompt, force_model="fast_flash")
+    question_text = ai_client.get_response(message=prompt, force_model=None)
     if not question_text or question_text.startswith("No response"):
         question_text = f"Explain the core concepts of {topic} and give a real-world example."
 
@@ -121,7 +121,7 @@ def submit_answer(
     Do not output any markdown formatting or text outside the JSON.
     """
     
-    ai_response = ai_client.get_response(message=prompt, force_model="fast_flash")
+    ai_response = ai_client.get_response(message=prompt, force_model=None)
     
     # Parse JSON safely
     score = 0

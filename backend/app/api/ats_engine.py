@@ -44,7 +44,7 @@ def build_resume(request: Request, req: ResumeBuildRequest, current_user: User =
     ai_response = ai_client.get_response(
         message=prompt,
         system_instruction="You are an elite technical recruiter and resume writer. Output ONLY the markdown resume.",
-        force_model="gemini-2.5-flash"
+        
     )
     
     resume_content = str(ai_response)
