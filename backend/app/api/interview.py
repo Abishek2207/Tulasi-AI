@@ -311,7 +311,7 @@ def start_interview(
     current_user: User = Depends(get_current_user),
 ):
     session_id = str(uuid.uuid4())
-    num_q = min(max(req.num_questions, 3), 10)
+    num_q = min(max(req.num_questions, 1), 10)
 
     type_instructions = {
         "Technical": "focus on deep domain knowledge, language-specific nuances, and framework expertise",
@@ -342,8 +342,7 @@ def start_interview(
         raw_question = get_ai_response(prompt)
         question = raw_question
     except Exception as fallback_e:
-        print(f"⚠️ [Interview Next Fallback] AI Error: {fallback_e}")
-        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+        raise HTTPException(status_code=503, detail=f"SERVICE_UNAVAILABLE: AI providers unavailable. {str(fallback_e)}")
 
     try:
         history = [{"role": "ai", "content": question}]
@@ -411,8 +410,7 @@ def answer_question(
             difficulty=interview_session.current_difficulty
         )
     except Exception as e:
-        print(f"⚠️ [Interview Eval Fallback] AI Error: {e}")
-        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+        raise HTTPException(status_code=503, detail=f"SERVICE_UNAVAILABLE: AI providers unavailable. {str(e)}")
 
     scores[str(interview_session.questions_asked)] = eval_result
     interview_session.scores_json = json.dumps(scores)
@@ -457,8 +455,7 @@ def answer_question(
     try:
         next_q = get_ai_response(next_q_prompt)
     except Exception as fallback_e:
-        print(f"⚠️ [Interview Next Fallback] AI Error: {fallback_e}")
-        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI providers unavailable.")
+        raise HTTPException(status_code=503, detail=f"SERVICE_UNAVAILABLE: AI providers unavailable. {str(fallback_e)}")
 
     history.append({"role": "ai", "content": next_q})
 
@@ -478,6 +475,7 @@ def answer_question(
         "remaining": interview_session.num_questions - interview_session.questions_asked,
         "difficulty": new_difficulty,
     }
+
 
 
 
