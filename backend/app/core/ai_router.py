@@ -42,7 +42,7 @@ def get_ai_response(
 def resilient_ai_response(
     prompt: str,
     fallback: any = None,
-    force_model: Optional[str] = "complex_reasoning",
+    force_model: Optional[str] = None,
     is_json: bool = True,
     return_str: bool = False
 ):
