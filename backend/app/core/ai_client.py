@@ -234,9 +234,9 @@ class HybridAIClient:
                     raise AIClientError(f"Groq API error ({resp.status_code}): {resp.text}")
                 return resp.json()["choices"][0]["message"]["content"]
 
-    def _call_mock_fallback(self, message: str, stream: bool = False) -> Union[str, Generator]:
+    def _call_mock_fallback(self, message: str, stream: bool = False, error_details: str = "") -> Union[str, Generator]:
         from fastapi import HTTPException
-        raise HTTPException(status_code=503, detail="SERVICE_UNAVAILABLE: AI provider failed")
+        raise HTTPException(status_code=503, detail=f"SERVICE_UNAVAILABLE: AI provider failed. Details: {error_details}")
 
     # ── Main Entry Point ──────────────────────────────────────────────────────
 
@@ -440,9 +440,10 @@ class HybridAIClient:
 
             # 4. Mock fallback
             print(f"🔄 [AI] All providers failed — using Mock Fallback. Errors: {errors}")
-            return self._call_mock_fallback(message, stream=False)
+            return self._call_mock_fallback(message, stream=False, error_details=str(errors))
 
 
 # Singleton
 ai_client = HybridAIClient()
+
 
