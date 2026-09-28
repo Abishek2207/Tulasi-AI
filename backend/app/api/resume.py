@@ -145,8 +145,8 @@ def get_resume_history(
             "ats_score": r.ats_score,
             "readability_score": r.readability_score,
             "keyword_match_percent": r.keyword_match_percent,
-            "feedback": json.loads(r.feedback_json),
-            "missing_keywords": json.loads(r.missing_keywords_json),
+            "feedback": json.loads(r.feedback_json or "[]"),
+            "missing_keywords": json.loads(r.missing_keywords_json or "[]"),
             "created_at": r.created_at.isoformat()
         })
     return history
