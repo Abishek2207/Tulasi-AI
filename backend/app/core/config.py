@@ -14,8 +14,14 @@ class Settings(BaseSettings):
     @property
     def normalized_database_url(self) -> str:
         """SQLAlchemy requires postgresql:// instead of postgres://.
-        Supabase also requires sslmode=require for external connections."""
-        url = os.getenv("DATABASE_URL", self.DATABASE_URL)
+        Supabase also requires sslmode=require for external connections.
+        
+        IMPORTANT: Uses self.DATABASE_URL (Pydantic-resolved at instantiation)
+        NOT os.getenv() directly, to guarantee deterministic results.
+        os.getenv() in a @property can return different values on each call.
+        """
+        # self.DATABASE_URL is resolved by Pydantic from env/env_file at Settings().
+        url = self.DATABASE_URL
         
         is_render = os.getenv("RENDER") is not None
         

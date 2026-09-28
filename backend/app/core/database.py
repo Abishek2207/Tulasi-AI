@@ -4,7 +4,14 @@ Base = SQLModel
 from sqlalchemy.pool import QueuePool
 from app.core.config import settings
 
-is_sqlite = settings.normalized_database_url.startswith("sqlite")
+# FIX: Cache DB URL once to prevent race conditions.
+# normalized_database_url @property calls os.getenv() every invocation.
+# Two consecutive calls can return different values (sqlite vs postgresql).
+# Bug: engine created with postgresql URL + sqlite connect_args
+# -> psycopg2 received "check_same_thread" -> ProgrammingError on Render.
+_DB_URL: str = settings.normalized_database_url
+
+is_sqlite = _DB_URL.startswith("sqlite")
 connect_args = {"check_same_thread": False} if is_sqlite else {}
 
 try:
@@ -20,7 +27,7 @@ try:
         })
 
     engine = create_engine(
-        settings.normalized_database_url, 
+        _DB_URL, 
         **engine_kwargs
     )
 except Exception as e:
