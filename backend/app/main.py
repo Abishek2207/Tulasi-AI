@@ -239,14 +239,49 @@ def health_db():
         raise HTTPException(status_code=503, detail=f"Database unreachable: {str(e)}")
 
 
-@app.get("/api/debug/db")
-def debug_db():
+@app.get("/api/debug/patch-prod-db")
+def patch_prod_db():
     from app.core.database import engine
     from sqlalchemy import text
     try:
         with engine.begin() as conn:
-            res = conn.execute(text("SELECT * FROM review LIMIT 1"))
-            return {"status": "success", "data": [dict(r) for r in res.mappings()]}
+            sqls = [
+                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS freeze_used_at TIMESTAMP;',
+                'ALTER TABLE goal ADD COLUMN IF NOT EXISTS target_companies VARCHAR;',
+                'ALTER TABLE notification ADD COLUMN IF NOT EXISTS role_context VARCHAR;',
+                'ALTER TABLE notification ADD COLUMN IF NOT EXISTS summary VARCHAR;',
+                'ALTER TABLE notification ADD COLUMN IF NOT EXISTS impact_level VARCHAR;',
+                'ALTER TABLE notification ADD COLUMN IF NOT EXISTS source_tech VARCHAR;',
+                '''CREATE TABLE IF NOT EXISTS focussession (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    duration_minutes INTEGER NOT NULL,
+                    task_description VARCHAR NOT NULL,
+                    status VARCHAR DEFAULT 'active' NOT NULL,
+                    completed_at TIMESTAMP,
+                    created_at TIMESTAMP NOT NULL
+                );'''
+            ]
+            results = []
+            for s in sqls:
+                try:
+                    conn.execute(text(s))
+                    results.append(f"SUCCESS: {s[:30]}")
+                except Exception as e:
+                    results.append(f"ERROR on {s[:30]}: {str(e)}")
+            return {"status": "success", "results": results}
+    except Exception as e:
+        return {"status": "error", "error_detail": str(e)}
+
+@app.get("/api/debug/db")
+def debug_db():
+    from app.core.database import engine
+    from sqlalchemy import text, inspect as sa_inspect
+    try:
+        with engine.connect() as conn:
+            inspector = sa_inspect(conn)
+            tables = inspector.get_table_names()
+            return {"status": "success", "tables": sorted(tables), "table_count": len(tables)}
     except Exception as e:
         return {"status": "error", "error_type": e.__class__.__name__, "error_detail": str(e)}
 
