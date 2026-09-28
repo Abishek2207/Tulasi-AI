@@ -57,10 +57,34 @@ async def lifespan(app: FastAPI):
         try:
             # We defer all database-heavy logic until AFTER the app is listening
             await asyncio.sleep(1) 
+            # Run alembic migrations first to keep the schema in sync
+            await asyncio.to_thread(_run_alembic_upgrade)
             await asyncio.to_thread(init_db)
             print("✅ Database initialised (Background)")
         except Exception as e:
             print(f"❌ Deferred Init Failed: {e}")
+
+    def _run_alembic_upgrade():
+        import subprocess, sys, os
+        try:
+            backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            result = subprocess.run(
+                [sys.executable, "-m", "alembic", "upgrade", "head"],
+                cwd=backend_dir,
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+            if result.returncode == 0:
+                print("✅ Alembic migrations applied successfully")
+                if result.stdout:
+                    print(result.stdout)
+            else:
+                print(f"⚠️ Alembic migration warning (exit={result.returncode}): {result.stderr[:500]}")
+        except Exception as e:
+            print(f"⚠️ Alembic migration failed: {e}")
+
+
 
     async def keep_awake():
         import httpx
@@ -147,14 +171,6 @@ app.mount("/data", StaticFiles(directory="data"), name="data")
 
 
 
-
-@app.get("/api/debug/ai-full-error")
-def debug_ai_full_error():
-    from app.core.ai_client import ai_client
-    # get_response throws HTTPException on failure, which returns the full error detail
-    return {"result": ai_client.get_response("test", force_model=None)}
-
-
 # ── Root Endpoint ──────────────────────────────────────────────────
 @app.get("/")
 def root():
@@ -214,7 +230,7 @@ def health():
         "db": db_status,
         "db_detail": db_detail,
         "uptime_seconds": uptime,
-        "environment": "production" if not str(engine.url).startswith("sqlite") else "development",
+        "environment": "production" if "render" in str(engine.url) else "development" if engine else "error-state",
         "integrations": integrations
     }
 
@@ -239,49 +255,14 @@ def health_db():
         raise HTTPException(status_code=503, detail=f"Database unreachable: {str(e)}")
 
 
-@app.get("/api/debug/patch-prod-db")
-def patch_prod_db():
+@app.get("/api/debug/db")
+def debug_db():
     from app.core.database import engine
     from sqlalchemy import text
     try:
         with engine.begin() as conn:
-            sqls = [
-                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS freeze_used_at TIMESTAMP;',
-                'ALTER TABLE goal ADD COLUMN IF NOT EXISTS target_companies VARCHAR;',
-                'ALTER TABLE notification ADD COLUMN IF NOT EXISTS role_context VARCHAR;',
-                'ALTER TABLE notification ADD COLUMN IF NOT EXISTS summary VARCHAR;',
-                'ALTER TABLE notification ADD COLUMN IF NOT EXISTS impact_level VARCHAR;',
-                'ALTER TABLE notification ADD COLUMN IF NOT EXISTS source_tech VARCHAR;',
-                '''CREATE TABLE IF NOT EXISTS focussession (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL,
-                    duration_minutes INTEGER NOT NULL,
-                    task_description VARCHAR NOT NULL,
-                    status VARCHAR DEFAULT 'active' NOT NULL,
-                    completed_at TIMESTAMP,
-                    created_at TIMESTAMP NOT NULL
-                );'''
-            ]
-            results = []
-            for s in sqls:
-                try:
-                    conn.execute(text(s))
-                    results.append(f"SUCCESS: {s[:30]}")
-                except Exception as e:
-                    results.append(f"ERROR on {s[:30]}: {str(e)}")
-            return {"status": "success", "results": results}
-    except Exception as e:
-        return {"status": "error", "error_detail": str(e)}
-
-@app.get("/api/debug/db")
-def debug_db():
-    from app.core.database import engine
-    from sqlalchemy import text, inspect as sa_inspect
-    try:
-        with engine.connect() as conn:
-            inspector = sa_inspect(conn)
-            tables = inspector.get_table_names()
-            return {"status": "success", "tables": sorted(tables), "table_count": len(tables)}
+            res = conn.execute(text("SELECT * FROM review LIMIT 1"))
+            return {"status": "success", "data": [dict(r) for r in res.mappings()]}
     except Exception as e:
         return {"status": "error", "error_type": e.__class__.__name__, "error_detail": str(e)}
 
