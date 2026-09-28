@@ -3,6 +3,7 @@ Group Chat API — /api/groups
 Supports: create group, join by code, list user groups, get/send messages
 """
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlmodel import Session, select
 from pydantic import BaseModel
 from typing import Optional

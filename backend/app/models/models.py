@@ -66,6 +66,9 @@ class User(SQLModel, table=True):
     onboarding_step: int = 0             # Track multi-step onboarding progress
     last_intelligence_update: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
+    # ── Streak Freeze ──
+    freeze_used_at: Optional[datetime] = Field(default=None, nullable=True)
+    
     # ── [NEW] Super Intelligence Profile ──
     
     # Relationships
@@ -171,15 +174,14 @@ class Notification(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", index=True)
     title: str
     message: str
-    category: str # AI Skills | Certifications | Placement | Job Switch | Package Growth | Roadmap Reminder
+    category: str = "general"  # AI Skills | Certifications | Placement | Job Switch | Package Growth | Roadmap Reminder
     is_read: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    role_context: str
-    title: str
-    summary: str
-    impact_level: str # High | Medium | Low
-    source_tech: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    # Extended fields (nullable for backward compatibility)
+    role_context: Optional[str] = None
+    summary: Optional[str] = None
+    impact_level: Optional[str] = None  # High | Medium | Low
+    source_tech: Optional[str] = None
 
 
 
@@ -851,6 +853,7 @@ class Goal(SQLModel, table=True):
     location: Optional[str] = None
     daily_minutes: int = 120
     preferred_days: str = "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday"
+    target_companies: Optional[str] = None   # Comma-separated target companies
     status: str = "active"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -1159,3 +1162,48 @@ class CareerReadinessLog(SQLModel, table=True):
     role_id: int = Field(foreign_key="careerrole.id", index=True)
     readiness_score: float = Field(default=0.0)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ── Presentation Coach Models ──
+
+class PresentationSession(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    session_id: str = Field(index=True, unique=True)
+    scenario: str
+    title: str = "Presentation Practice"
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ended_at: Optional[datetime] = None
+    duration_seconds: Optional[int] = None
+    presentation_text: Optional[str] = None
+    completion_status: str = "RECORDING" # RECORDING | COMPLETED | FAILED
+    
+    attempts: List["PresentationAttempt"] = Relationship(back_populates="session")
+
+class PresentationAttempt(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    session_id: str = Field(foreign_key="presentationsession.session_id", index=True)
+    attempt_number: int
+    duration_seconds: int
+    
+    # Measured Visual Signals
+    hand_zone_violations: int = 0
+    posture_changes: int = 0
+    eye_contact_proxy_score: float = 0.0 # Percentage 0-100
+    
+    # Measured Speech Signals
+    filler_word_count: int = 0
+    words_per_minute: int = 0
+    pause_count: int = 0
+    
+    # Raw JSON snapshots for comparison if needed
+    raw_visual_metrics: Optional[str] = None 
+    raw_speech_metrics: Optional[str] = None
+    
+    # AI Feedback
+    slide_analysis: Optional[str] = None
+    judge_qa: Optional[str] = None
+    improvement_recommendations: Optional[str] = None
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    session: Optional["PresentationSession"] = Relationship(back_populates="attempts")
