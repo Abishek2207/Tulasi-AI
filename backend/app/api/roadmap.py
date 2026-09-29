@@ -68,34 +68,11 @@ def generate_roadmap(
         f"STRENGTHS: {intelligence.get('strengths', [])}. GAPS: {intelligence.get('gaps', [])}."
     )
     
-    prompt = f"""You are an elite career technical advisor. A student wants to become a "{req.goal}". 
-User Context: {user_context}
-
-Create a detailed, step-by-step learning roadmap divided into exactly 5 logical phases/milestones.
-IMPORTANT: Tailor symbols, depth, and starting point to their STRENGTHS and GAPS. If they have gaps in fundamental logic, start there. 
-If they match the role already, provide advanced, elite MAANG-level scaling challenges.
-
-Output strictly as a valid JSON object matching this exact schema:
-{{
-  "title": "Roadmap to {req.goal}",
-  "description": "A 2-sentence highly motivating hook.",
-  "estimated_months": 6,
-  "milestones": [
-    {{
-      "phase": "1",
-      "title": "Name of Phase",
-      "duration": "e.g. Weeks 1-4",
-      "topics": ["Topic 1", "Topic 2", "Topic 3"],
-      "project_idea": "A small project to cement learning for this phase",
-      "resources": [
-        {{"name": "Course Title", "url": "https://youtube.com/something"}},
-        {{"name": "Official Docs", "url": "https://..."}}
-      ]
-    }}
-  ]
-}}
-
-Return ONLY raw JSON, nothing else."""
+    prompt = f"""Create a career roadmap for: {req.goal}.
+User type: {current_user.user_type}, Level: {current_user.level}.
+Return ONLY valid JSON (no markdown) exactly matching this schema:
+{{"title":"string","description":"string","estimated_months":6,"milestones":[{{"phase":"1","title":"string","duration":"string","topics":["string"],"project_idea":"string","resources":[{{"name":"string","url":"string"}}]}}]}}
+Include 3 phases total."""
 
     # Universal Resilience: Never 500
     fallback_data = ROADMAP_FALLBACKS.get(req.goal) or ROADMAP_FALLBACKS.get((current_user.profile.target_role if getattr(current_user, 'profile', None) else '')) or ROADMAP_FALLBACKS["Software Engineer"]

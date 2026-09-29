@@ -64,7 +64,11 @@ async def get_daily_nudge(
     db: Session = Depends(get_session)
 ):
     """Generates a personalized daily nudge based purely on verified data."""
-    context = await get_verified_context(current_user, db)
+    try:
+        context = await get_verified_context(current_user, db)
+    except Exception as ctx_err:
+        print(f"⚠️ Jarvis context error: {ctx_err}")
+        context = f"User: {current_user.role}, Streak: {current_user.streak} days"
     
     prompt = f"""You are Jarvis, the user's accountability assistant.
 Based ONLY on the following verified data, generate a single short, motivating daily nudge sentence (max 15 words).

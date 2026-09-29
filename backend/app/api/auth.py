@@ -202,7 +202,7 @@ def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "name": current_user.name,
         "username": current_user.username,
-        "bio": (current_user.profile.bio if getattr(current_user, "profile", None) else "") or "",
+        "bio": "",  # Profile model has no bio field
         "skills": (current_user.profile.current_skills if getattr(current_user, "profile", None) else "") or "",
         "role": current_user.role,
         "avatar": current_user.avatar,
@@ -216,9 +216,9 @@ def get_me(current_user: User = Depends(get_current_user)):
         "pro_expiry_date": "Unlimited Lifetime Access",
         "user_type": getattr(current_user, "user_type", "student") or "student",
         "is_onboarded": getattr(current_user, "is_onboarded", False) or False,
-        "department": (current_user.profile.department if getattr(current_user, "profile", None) else ""),
-        "target_role": (current_user.profile.target_role if getattr(current_user, "profile", None) else ""),
-        "interest_areas": (current_user.profile.interest_areas if getattr(current_user, "profile", None) else ""),
+        "department": (current_user.profile.department if getattr(current_user, "profile", None) else "") or "",
+        "target_role": (current_user.profile.target_role if getattr(current_user, "profile", None) else "") or "",
+        "interest_areas": "",  # Profile model has no interest_areas field
     }
 
 

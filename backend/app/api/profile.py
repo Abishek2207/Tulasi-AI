@@ -43,6 +43,8 @@ async def update_my_profile(
         db.refresh(profile)
 
         # Index into RAG Memory for instant Jarvis awareness
+        # IMPORTANT: This runs AFTER profile save in a separate try/except.
+        # A vector indexing failure must NEVER roll back the profile save.
         try:
             context_parts = []
             if current_user.user_type:

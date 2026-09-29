@@ -16,7 +16,7 @@ class ProfileContextRequest(BaseModel):
 
 @router.post("/market-trends")
 async def api_market_trends(req: ProfileContextRequest, current_user: User = Depends(get_current_user)):
-    target = (req.profile.target_role if getattr(req, "profile", None) else "") or req.current_role
+    target = req.target_role or req.current_role
     return fetch_market_trends(req.current_role, target)
 
 @router.post("/risk-analysis")

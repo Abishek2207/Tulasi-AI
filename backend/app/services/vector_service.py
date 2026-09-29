@@ -45,15 +45,31 @@ class VectorService:
         return self._get_model().encode(text).tolist()
 
     def store_embeddings(self, user_id: int, text: str, db: Session):
-        """Generates embeddings and stores the conversational memory chunk."""
-        vector = self.embed_documents(text)
-        chunk = UserMemoryChunk(
-            user_id=user_id, 
-            content=text, 
-            embedding=json.dumps(vector)
-        )
-        db.add(chunk)
-        db.commit()
+        """Generates embeddings and stores the conversational memory chunk.
+        
+        FIX: pgvector Vector(768) requires a plain Python list[float].
+        json.dumps() returns a str which causes 'expected list or ndarray' ValueError.
+        We now pass the raw list directly. SQLite fallback stores as JSON string via
+        VectorType.process_bind_param.
+        """
+        try:
+            vector = self.embed_documents(text)
+            from app.core.database import is_sqlite
+            # pgvector needs raw list; SQLite VectorType handles serialization itself
+            embedding_value = json.dumps(vector) if is_sqlite else vector
+            chunk = UserMemoryChunk(
+                user_id=user_id,
+                content=text,
+                embedding=embedding_value
+            )
+            db.add(chunk)
+            db.commit()
+        except Exception as e:
+            print(f"⚠️ store_embeddings failed (non-fatal): {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
 
     def store_batch_embeddings(self, user_id: int, texts: list[str], db: Session):
         """Batch generates embeddings to completely bypass 429 Rate Limits on free cloud APIs."""
