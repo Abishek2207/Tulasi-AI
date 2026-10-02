@@ -49,7 +49,7 @@ def set_rls_context(session, transaction, connection):
     Also drops BYPASSRLS privileges by assuming the authenticated role.
     """
     user_id = session.info.get("current_user_id")
-    if user_id is not None:
+    if user_id is not None and connection.dialect.name != "sqlite":
         # Drop superuser/bypassrls privileges for this transaction
         connection.execute(text("SET LOCAL ROLE authenticated"))
         connection.execute(

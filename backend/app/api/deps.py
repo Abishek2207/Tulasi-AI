@@ -29,10 +29,11 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     db.info["current_user_id"] = user.id
     # 2. Inject context into the *current* flighted transaction (since it already began)
     from sqlalchemy.sql import text
-    db.execute(
-        text("SELECT set_config('app.current_user_id', :uid, true)"),
-        {"uid": str(user.id)}
-    )
+    if db.bind.dialect.name != "sqlite":
+        db.execute(
+            text("SELECT set_config('app.current_user_id', :uid, true)"),
+            {"uid": str(user.id)}
+        )
 
     # Best-effort last_seen update — do NOT commit here (causes SQLite write-lock under load)
     try:

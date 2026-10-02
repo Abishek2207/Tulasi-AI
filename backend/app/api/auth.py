@@ -229,12 +229,50 @@ class OAuthLoginRequest(BaseModel):
     avatar: Optional[str] = None
     provider: str = "google"
     invite_code: Optional[str] = None
+    access_token: Optional[str] = None
 
 
 @router.post("/google-oauth")
 @limiter.limit("30/minute")
 def oauth_login(request: Request, req: OAuthLoginRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session)):
     """Auto-register or login OAuth users (Google/GitHub) and return a JWT token."""
+    from jose import jwt, JWTError
+    try:
+        if not req.access_token:
+            raise HTTPException(status_code=400, detail="Missing access_token")
+        
+        # Verify the Supabase JWT
+        if not settings.SUPABASE_JWT_SECRET:
+            # Fallback for local testing without Supabase configured
+            raise HTTPException(status_code=401, detail="Server not configured for OAuth")
+            
+        payload = jwt.decode(
+            req.access_token, 
+            settings.SUPABASE_JWT_SECRET, 
+            algorithms=["HS256"], 
+            audience="authenticated"
+        )
+        
+        # Verify email matches the token payload (mitigate account takeover)
+        token_email = payload.get("email")
+        if not token_email or token_email.lower() != req.email.lower():
+            raise HTTPException(status_code=401, detail="Token email does not match request email")
+            
+        # Verify sub claim exists
+        if not payload.get("sub"):
+            raise HTTPException(status_code=401, detail="Token missing subject claim")
+            
+        # Verify issuer (optional based on tests but good practice)
+        issuer = payload.get("iss")
+        expected_issuer = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1" if settings.SUPABASE_URL else None
+        if not issuer:
+            raise HTTPException(status_code=401, detail="Token missing issuer claim")
+        if expected_issuer and issuer != expected_issuer:
+            raise HTTPException(status_code=401, detail=f"Invalid token issuer. Expected {expected_issuer}")
+
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+        
     try:
         query = select(User).where(User.email == req.email)
         result = db.exec(query)
