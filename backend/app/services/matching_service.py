@@ -56,7 +56,15 @@ class MatchingService:
                 mastery = next((m.mastery_score for m in user_skills_objs if m.skill_name == s.name), 0.0)
                 skill_map[s.id] = mastery
 
-        target = user.target_role or "Software Engineer"
+        from app.models.models import CareerIntelligenceProfile, UserProfile
+        cip = db.exec(select(CareerIntelligenceProfile).where(CareerIntelligenceProfile.user_id == user_id)).first()
+        up = db.exec(select(UserProfile).where(UserProfile.user_id == user_id)).first()
+        target = "Software Engineer"
+        if cip and getattr(cip, 'target_role', None):
+            target = cip.target_role
+        elif up and getattr(up, 'target_role', None):
+            target = up.target_role
+
         user_profile_text = f"Role: {target}. Skills: {', '.join(skill_names)}."
         user_embedding = get_embedding(user_profile_text)
         if not user_embedding:
