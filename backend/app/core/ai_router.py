@@ -108,14 +108,21 @@ def get_embedding(text: str) -> Optional[List[float]]:
         from app.core.config import settings
         
         client = genai.Client(api_key=settings.effective_gemini_key)
-        response = client.models.embed_content(
-            model='text-embedding-004',
-            contents=text,
-        )
+        try:
+            response = client.models.embed_content(
+                model='text-embedding-004',
+                contents=text,
+            )
+        except Exception as e1:
+            print(f"text-embedding-004 failed: {e1}, trying embedding-001")
+            response = client.models.embed_content(
+                model='models/embedding-001',
+                contents=text,
+            )
         return response.embeddings[0].values
     except Exception as e:
         print(f"Embedding error: {e}")
-        raise HTTPException(status_code=503, detail=f"SERVICE_UNAVAILABLE: AI providers unavailable. {str(e) if locals().get('e') else ''}")
+        return None
 
 
 
