@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone
+import json
 
 from app.core.database import get_session
 from app.models.models import User, SavedResume, ATSReport, UsageLog
