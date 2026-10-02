@@ -799,10 +799,10 @@ def submit_feedback(
 
 
 @router.get("/history/{session_id}")
-def get_history(session_id: str, db: Session = Depends(get_session)):
+def get_history(session_id: str, db: Session = Depends(get_session), user: User = Depends(get_current_user)):
     statement = (
         select(ChatMessage)
-        .where(ChatMessage.session_id == session_id)
+        .where(ChatMessage.session_id == session_id, ChatMessage.user_id == user.id)
         .order_by(ChatMessage.created_at)
     )
     db_messages = db.exec(statement).all()
@@ -813,8 +813,8 @@ def get_history(session_id: str, db: Session = Depends(get_session)):
 
 
 @router.delete("/history/{session_id}")
-def clear_history(session_id: str, db: Session = Depends(get_session)):
-    statement = select(ChatMessage).where(ChatMessage.session_id == session_id)
+def clear_history(session_id: str, db: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    statement = select(ChatMessage).where(ChatMessage.session_id == session_id, ChatMessage.user_id == user.id)
     for m in db.exec(statement).all():
         db.delete(m)
     db.commit()
