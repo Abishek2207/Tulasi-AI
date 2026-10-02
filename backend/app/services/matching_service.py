@@ -56,9 +56,9 @@ class MatchingService:
                 mastery = next((m.mastery_score for m in user_skills_objs if m.skill_name == s.name), 0.0)
                 skill_map[s.id] = mastery
 
-        from app.models.models import CareerIntelligenceProfile, UserProfile
+        from app.models.models import CareerIntelligenceProfile, Profile
         cip = db.exec(select(CareerIntelligenceProfile).where(CareerIntelligenceProfile.user_id == user_id)).first()
-        up = db.exec(select(UserProfile).where(UserProfile.user_id == user_id)).first()
+        up = db.exec(select(Profile).where(Profile.user_id == user_id)).first()
         target = "Software Engineer"
         if cip and getattr(cip, 'target_role', None):
             target = cip.target_role
