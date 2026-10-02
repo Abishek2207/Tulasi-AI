@@ -599,15 +599,15 @@ export const jobsApi = internshipsApi;
 // ─── Roadmap ─────────────────────────────────────────────────────────────────
 
 export const roadmapApi = {
-  getRoadmaps: (token: string) => request<{ roadmaps: Roadmap[], completed_milestones: string[] }>("/api/roadmap/", {}, token),
-  getRoadmap: (id: string, token: string) => request<Roadmap>(`/api/roadmap/${id}`, {}, token),
+  getRoadmaps: (token: string) => request<{ roadmaps: Roadmap[], completed_milestones: string[] }>("/api/roadmap-legacy/", {}, token),
+  getRoadmap: (id: string, token: string) => request<Roadmap>(`/api/roadmap-legacy/${id}`, {}, token),
   logProgress: (roadmap_id: string, milestone_id: string, token: string) =>
-    request<{ message: string; xp_earned: number }>("/api/roadmap/progress", {
+    request<{ message: string; xp_earned: number }>("/api/roadmap-legacy/progress", {
       method: "POST",
       body: JSON.stringify({ roadmap_id, milestone_id }),
     }, token),
   generate: (goal: string, token: string) =>
-    request<{ roadmap: Roadmap }>("/api/roadmap/generate", {
+    request<{ roadmap: Roadmap }>("/api/roadmap-legacy/generate", {
       method: "POST",
       body: JSON.stringify({ goal }),
     }, token),

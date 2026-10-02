@@ -73,6 +73,8 @@ async def generate_career_roadmap(
             "ai_note": "Real Roadmap generated successfully.",
             "tasks": [t.dict() for t in roadmap_data.daily_tasks]
         }
+    except HTTPException as he:
+        raise he
     except Exception as e:
         print(f"Roadmap Gen Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
