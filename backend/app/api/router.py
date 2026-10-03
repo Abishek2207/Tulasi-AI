@@ -9,7 +9,8 @@ from app.api import (
     agents_api, opportunities_api, portfolio_api, career_intelligence, 
     practice, learn, subscriptions, payments, ats_engine,
     research, certifications, focus, intelligence_v2, project_builder,
-    ws, professional_api, code_review, negotiator, career_coach, career_execution
+    ws, professional_api, code_review, negotiator, career_coach, career_execution,
+    presentation_coach
 )
 from app.websockets import signaling
 
@@ -94,6 +95,7 @@ api_router.include_router(learning.skills_router)
 api_router.include_router(code_review.router, prefix="/api/code-review", tags=["Code Review"])
 api_router.include_router(negotiator.router, prefix="/api/negotiator", tags=["Negotiator"])
 api_router.include_router(career_coach.router, prefix="/api/career-coach", tags=["Career Coach"])
+api_router.include_router(presentation_coach.router, prefix="/api/presentation-coach", tags=["Presentation Coach"])
 
 # WebSocket / WebRTC
 api_router.include_router(ws.router, tags=["WebSocket Chat"])
