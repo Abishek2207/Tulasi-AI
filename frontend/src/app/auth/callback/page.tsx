@@ -42,7 +42,12 @@ export default function AuthCallbackPage() {
         const res = await fetch(`${API_URL}/api/auth/google-oauth`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: userEmail, name: userName, provider }),
+          body: JSON.stringify({ 
+            email: userEmail, 
+            name: userName, 
+            provider,
+            access_token: session.access_token
+          }),
         });
 
         if (!res.ok) {
