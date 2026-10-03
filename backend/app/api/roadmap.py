@@ -62,7 +62,7 @@ def generate_roadmap(
     session: Session = Depends(get_session)
 ):
     # Fetch intelligence context
-    intelligence = json.loads((current_user.profile.user_intelligence_profile if getattr(current_user, 'profile', None) else "{}") or "{}")
+    intelligence = json.loads((getattr(current_user.profile, 'user_intelligence_profile', None) if getattr(current_user, 'profile', None) else "{}") or "{}")
     user_context = (
         f"USER: {current_user.user_type}, Role: {(current_user.profile.target_role if getattr(current_user, 'profile', None) else '') or 'General SE'}, Level: {current_user.level}. "
         f"STRENGTHS: {intelligence.get('strengths', [])}. GAPS: {intelligence.get('gaps', [])}."
